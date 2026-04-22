@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv*/
+.venv*/
+env*/
+.env
+build/
+dist/
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Node/Vite
+node_modules/
+.DS_Store
+dist-ssr/
+*.local
+
+# IDEs
+.vscode/
+.idea/
+
+# Mobile
+android/
+ios/
+*.log

@@ -1,0 +1,154 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap&font-display=swap');
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+[id] {
+  scroll-margin-top: 100px;
+}
+
+@theme {
+  /* Colors */
+  --color-primary: #064E3B;
+  --color-primary-light: #065F46;
+  --color-secondary: #D97706;
+  --color-secondary-light: #F59E0B;
+  --color-accent: #10B981;
+  --color-surface: #f8fafc;
+  --color-background: #ffffff;
+  --color-text: #0f172a;
+  --color-text-light: #64748b;
+
+  /* Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-display: "Outfit", sans-serif;
+  --font-arabic: "Amiri", serif;
+
+  /* Effects */
+  --shadow-premium: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  .font-arabic {
+    font-family: var(--font-arabic);
+  }
+}
+
+@layer base {
+  :root {
+    --primary: var(--color-primary);
+    --primary-light: var(--color-primary-light);
+    --secondary: var(--color-secondary);
+    --secondary-light: var(--color-secondary-light);
+    --accent: var(--color-accent);
+    --background: var(--color-background);
+    --surface: var(--color-surface);
+    --text: var(--color-text);
+    --text-light: var(--color-text-light);
+
+    --glass: rgba(255, 255, 255, 0.8);
+    --glass-dark: rgba(0, 0, 0, 0.6);
+    --shadow: var(--shadow-premium);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-8;
+  }
+
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
+
+
+  .btn {
+    @apply inline-block px-6 py-3 rounded-full font-semibold transition-all duration-300 cursor-pointer border-none;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-light hover:-translate-y-0.5 hover:shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-light hover:-translate-y-0.5;
+  }
+}
+
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-light);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Section Padding */
+section {
+  @apply py-20;
+}

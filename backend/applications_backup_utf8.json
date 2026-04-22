@@ -1,0 +1,386 @@
+﻿[
+{
+  "model": "applications.trialapplication",
+  "pk": 1,
+  "fields": {
+    "first_name": "Ukasha",
+    "last_name": null,
+    "email": "charkida@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "KKGG",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-10T20:10:50.354Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 2,
+  "fields": {
+    "first_name": "KABIR",
+    "last_name": null,
+    "email": "charkida@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "HKGK",
+    "status": "rejected",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-10T20:30:01.995Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 3,
+  "fields": {
+    "first_name": "Ukasha",
+    "last_name": null,
+    "email": "uyaumusa@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "TO LEARN",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T09:54:35.227Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 4,
+  "fields": {
+    "first_name": "ukshat",
+    "last_name": null,
+    "email": "uyaumusa@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "knowledge",
+    "status": "approved",
+    "assigned_tutor": "Hafiz Ibrahim",
+    "scheduled_at": "2026-01-10T19:56:00Z",
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T10:27:27.742Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 5,
+  "fields": {
+    "first_name": "muslimah",
+    "last_name": null,
+    "email": "uyaumusa@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "teaching",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T11:13:37.609Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 6,
+  "fields": {
+    "first_name": "salim",
+    "last_name": null,
+    "email": "uyaumusa@gmail.com",
+    "phone": "07062566616",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "learn",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T18:35:03.189Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 7,
+  "fields": {
+    "first_name": "muhammad Auwal Abubakar",
+    "last_name": null,
+    "email": "ukashayaumusa14@gmail.com",
+    "phone": "09139220977",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "to try",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T19:42:00.124Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 8,
+  "fields": {
+    "first_name": "m auwal",
+    "last_name": null,
+    "email": "4740muhammad@gmail.com",
+    "phone": "09139220977",
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": "learn",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-13T20:10:39.479Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 9,
+  "fields": {
+    "first_name": "shuaibu",
+    "last_name": "muhammad",
+    "email": "uyaumusa@gmail.com",
+    "phone": "+2347062566616",
+    "country": "Nigeria",
+    "course_interested": "Hifz Program",
+    "preferred_day": "Monday",
+    "preferred_time": "Morning",
+    "preferred_time_exact": null,
+    "message": "",
+    "status": "approved",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-14T10:22:01.719Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 10,
+  "fields": {
+    "first_name": "shuaibu",
+    "last_name": "muhammad",
+    "email": "uyaumusa@gmail.com",
+    "phone": "+2347062566616",
+    "country": "Nigeria",
+    "course_interested": "Hifz Program",
+    "preferred_day": "Monday",
+    "preferred_time": "Morning",
+    "preferred_time_exact": null,
+    "message": "",
+    "status": "approved",
+    "assigned_tutor": "Ustadha Fatima",
+    "scheduled_at": "2026-01-08T01:58:00Z",
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-14T10:22:01.720Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 11,
+  "fields": {
+    "first_name": "Ukasha",
+    "last_name": "musa",
+    "email": "uyaumusa@gmail.com",
+    "phone": "+2347062566616",
+    "country": "Nigeria",
+    "course_interested": "Quranic Recitation",
+    "preferred_day": "Monday",
+    "preferred_time": "Morning",
+    "preferred_time_exact": "3pm",
+    "message": "",
+    "status": "pending",
+    "assigned_tutor": null,
+    "scheduled_at": null,
+    "duration": 40,
+    "reminder_sent": false,
+    "created_at": "2026-01-15T19:38:35.484Z"
+  }
+},
+{
+  "model": "applications.trialapplication",
+  "pk": 12,
+  "fields": {
+    "first_name": "Test",
+    "last_name": "Reminder",
+    "email": "test@example.com",
+    "phone": null,
+    "country": null,
+    "course_interested": "Quranic Recitation",
+    "preferred_day": null,
+    "preferred_time": null,
+    "preferred_time_exact": null,
+    "message": null,
+    "status": "approved",
+    "assigned_tutor": "Sheikh Ahmad",
+    "scheduled_at": "2026-01-15T20:01:17.208Z",
+    "duration": 40,
+    "reminder_sent": true,
+    "created_at": "2026-01-15T19:46:17.217Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 1,
+  "fields": {
+    "application": 2,
+    "meeting_id": "87134115045",
+    "join_url": "https://us05web.zoom.us/j/87134115045?pwd=sjhPJnV0IP4mqIQgu0Cba2eGh1LEJb.1",
+    "start_url": "https://us05web.zoom.us/s/87134115045?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4NzEzNDExNTA0NSIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjMxMWY1MTk3NjQ3NzRjNzI4MTgwZGE0NWM4MmY3YmQ0Iiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMDQxODAsImlhdCI6MTc2ODI5Njk4MCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.Qf6nCEYHR65fhwFZw3s3tDnblELxyCt48hBwvCYJfNk",
+    "password": "mq0yaX",
+    "created_at": "2026-01-13T09:36:23.897Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 2,
+  "fields": {
+    "application": 1,
+    "meeting_id": "81855817393",
+    "join_url": "https://us05web.zoom.us/j/81855817393?pwd=71KSsVeTNli0m8K1RFpQC8rCuRP111.1",
+    "start_url": "https://us05web.zoom.us/s/81855817393?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4MTg1NTgxNzM5MyIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjE4MDJlNjQyMjRkMzRlNmY4MWZjYzNjNzA0Y2VhZmVhIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMDQyMDQsImlhdCI6MTc2ODI5NzAwNCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.WisyztdRDgU57l1Ie2coUn7-UEuIyQS5R2SGMgCCMyc",
+    "password": "PkrN8R",
+    "created_at": "2026-01-13T09:36:47.713Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 3,
+  "fields": {
+    "application": 3,
+    "meeting_id": "84628592878",
+    "join_url": "https://us05web.zoom.us/j/84628592878?pwd=FnKhMUOOqcIza5tTPz95aDnVPIthbK.1",
+    "start_url": "https://us05web.zoom.us/s/84628592878?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4NDYyODU5Mjg3OCIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjUxYjNmZWNiNDcyMTRhYThiZDg4MTVjZjNjOGZjODk5Iiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMDY3MTcsImlhdCI6MTc2ODI5OTUxNywiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9._paPeerhMFeNNfZIawT3JjUMMMqplLkeoqm4B-zlKBw",
+    "password": "vs5Z30",
+    "created_at": "2026-01-13T10:18:40.851Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 4,
+  "fields": {
+    "application": 4,
+    "meeting_id": "81695463391",
+    "join_url": "https://us05web.zoom.us/j/81695463391?pwd=foFYeQneX3k4BnpmTg09RVOAKaxbII.1",
+    "start_url": "https://us05web.zoom.us/s/81695463391?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4MTY5NTQ2MzM5MSIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjUyMzQzNjM2NTE2ZjQzMzM5OWQ4OWNmOThlMGU4MDEyIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMDk1MDksImlhdCI6MTc2ODMwMjMwOSwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.9nh0qoHZp8Swr-7tiagQ0hSF5QR0IZfcng5BNsJv9tc",
+    "password": "Uqkst8",
+    "created_at": "2026-01-13T11:05:12.945Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 5,
+  "fields": {
+    "application": 5,
+    "meeting_id": "83709866209",
+    "join_url": "https://us05web.zoom.us/j/83709866209?pwd=GwRsHZHZogyp2jmNaGWUMHX8lxcjZq.1",
+    "start_url": "https://us05web.zoom.us/s/83709866209?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4MzcwOTg2NjIwOSIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjE4YTBhZGRlOTYxYjQwOTNiMzQxNzhjNDcyMWE4MmMyIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMTAwNzAsImlhdCI6MTc2ODMwMjg3MCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.FsqyFr5bToe2OnHBPJh0OMJ5V-Ie7BvonmWjJzIQSyU",
+    "password": "RFC7vA",
+    "created_at": "2026-01-13T11:14:41.500Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 6,
+  "fields": {
+    "application": 6,
+    "meeting_id": "86200984474",
+    "join_url": "https://us05web.zoom.us/j/86200984474?pwd=WM3VbPJNLfMuqHIajhxgtkkd9khFsj.1",
+    "start_url": "https://us05web.zoom.us/s/86200984474?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4NjIwMDk4NDQ3NCIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjA0MDE1Zjk3MmM1YTRiNzVhMDNiZjI5Yzk4NTIwMjMxIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzMzY1MzEsImlhdCI6MTc2ODMyOTMzMSwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.wlV0bRCaWNvv65kTl2mWqb2bsZLh8Pvub8fgIJBmtbs",
+    "password": "pZV0kG",
+    "created_at": "2026-01-13T18:35:34.154Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 7,
+  "fields": {
+    "application": 7,
+    "meeting_id": "81792363519",
+    "join_url": "https://us05web.zoom.us/j/81792363519?pwd=dhl7aeqqGX2eBVi8iLvKcYE3inizJr.1",
+    "start_url": "https://us05web.zoom.us/s/81792363519?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4MTc5MjM2MzUxOSIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6ImM3ZWFhY2IzYzc3MDQ3N2ZiODkzMWJmODMzNzM5MzFiIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzNDA2NTAsImlhdCI6MTc2ODMzMzQ1MCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.pZ4NBJsEBqlpdwPLVjs0fJfStRzxBg7ZcqUAa05faoo",
+    "password": "2isv1T",
+    "created_at": "2026-01-13T19:44:13.465Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 8,
+  "fields": {
+    "application": 8,
+    "meeting_id": "82372556973",
+    "join_url": "https://us05web.zoom.us/j/82372556973?pwd=I39CPexoAGKJuuXih1zoqUXa1aqZ1i.1",
+    "start_url": "https://us05web.zoom.us/s/82372556973?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4MjM3MjU1Njk3MyIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6IjYzYzU4ZjY1YzA3NzRkOGE4NzY4NDEwODRhNTQ5YjY5Iiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3NjgzNDIzNDQsImlhdCI6MTc2ODMzNTE0NCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.ci-OfN_Ns7V3EXCF_qYGsN3s8Xq1mhdOE-stSuH3qz4",
+    "password": "4gTT9b",
+    "created_at": "2026-01-13T20:12:27.839Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 9,
+  "fields": {
+    "application": 10,
+    "meeting_id": "88912210319",
+    "join_url": "https://us05web.zoom.us/j/88912210319?pwd=x5XifRt8UlzYZEUAoAQrFZCZa9z51l.1",
+    "start_url": "https://us05web.zoom.us/s/88912210319?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4ODkxMjIxMDMxOSIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6ImM5NTA2MmFiMTcxYjQyZTRiMmU0NWU4N2Q5NTYyN2IwIiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3Njg0OTk4ODAsImlhdCI6MTc2ODQ5MjY4MCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.LtaMA6YERyPKzGS-XyfQ3F77jMxkdtv3LBos6CaLeMw",
+    "password": "sTCT90",
+    "created_at": "2026-01-15T15:58:02.454Z"
+  }
+},
+{
+  "model": "applications.zoomclass",
+  "pk": 10,
+  "fields": {
+    "application": 9,
+    "meeting_id": "87393872774",
+    "join_url": "https://us05web.zoom.us/j/87393872774?pwd=MeNorA7epOeNHmDbCyKXwHLtnwPiQQ.1",
+    "start_url": "https://us05web.zoom.us/s/87393872774?zak=eyJ0eXAiOiJKV1QiLCJzdiI6IjAwMDAwMiIsInptX3NrbSI6InptX28ybSIsImFsZyI6IkhTMjU2In0.eyJpc3MiOiJ3ZWIiLCJjbHQiOjAsIm1udW0iOiI4NzM5Mzg3Mjc3NCIsImF1ZCI6ImNsaWVudHNtIiwidWlkIjoidExjZnVfTkxSM1NBMmMteTdDb1FxQSIsInppZCI6ImVjMmU1MzVlY2QxMjQ1NzQ4YjliZGJmODhkYTNlYWM2Iiwic2siOiIwIiwic3R5IjoxMDAsIndjZCI6InVzMDUiLCJleHAiOjE3Njg0OTk5MDAsImlhdCI6MTc2ODQ5MjcwMCwiYWlkIjoiYnhvR0ZiblhUU1N4bVk1eVZTN3ZXdyIsImNpZCI6IiJ9.yIclR5FEtr3_1X5fpwHcC6JXpyNGVpS-M_0iLJWjsb4",
+    "password": "WrC440",
+    "created_at": "2026-01-15T15:58:21.520Z"
+  }
+}
+]

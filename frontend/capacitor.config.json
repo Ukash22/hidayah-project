@@ -1,0 +1,8 @@
+{
+  "appId": "com.hidayah.app",
+  "appName": "Hidayah",
+  "webDir": "dist",
+  "server": {
+    "cleartext": true
+  }
+}

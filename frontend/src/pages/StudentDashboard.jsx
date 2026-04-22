@@ -1,0 +1,1247 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    LayoutDashboard, BookOpen, GraduationCap, CreditCard, 
+    Bell, MessageSquare, Download, Plus, ArrowRight,
+    PlayCircle, FileText, Music, Wallet, CheckCircle2,
+    Calendar, Clock, User, ShieldCheck, X, Search,
+    TrendingUp, ExternalLink, AlertCircle
+} from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
+import ComplaintModal from '../components/ComplaintModal';
+import RescheduleModal from '../components/RescheduleModal';
+import QuranMushaf from '../components/QuranMushaf';
+import JambCBT from '../components/JambCBT';
+
+const StudentDashboard = () => {
+    const { user, token } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const [profile, setProfile] = useState(null);
+    const [classes, setClasses] = useState([]);
+    const [materials, setMaterials] = useState([]);
+    const [complaints, setComplaints] = useState({ filed_by_me: [], filed_against_me: [] });
+    const [notifications, setNotifications] = useState([]);
+    const [tutorRequests, setTutorRequests] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const isImpersonating = !!localStorage.getItem('parent_access');
+
+    const handleReturnToParent = () => {
+        const parentAccess = localStorage.getItem('parent_access');
+        const parentRefresh = localStorage.getItem('parent_refresh');
+        if (parentAccess && parentRefresh) {
+            localStorage.setItem('access', parentAccess);
+            localStorage.setItem('refresh', parentRefresh);
+            localStorage.removeItem('parent_access');
+            localStorage.removeItem('parent_refresh');
+            window.location.href = '/parent';
+        }
+    };
+    
+    // Check URL params for active tab, default to overview
+    const [activeTab, setActiveTab] = useState(new URLSearchParams(location.search).get('tab') || 'overview');
+    const [showComplaintModal, setShowComplaintModal] = useState(false);
+    const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+    const [selectedSessionId, setSelectedSessionId] = useState(null);
+    const [selectedSessionType, setSelectedSessionType] = useState('REGULAR');
+
+    const [showEnrollModal, setShowEnrollModal] = useState(false);
+    const [availableSubjects, setAvailableSubjects] = useState([]);
+    const [availableTutors, setAvailableTutors] = useState([]);
+    const [enrollData, setEnrollData] = useState({
+        subject_id: '', tutor_id: '', hours_per_week: 1, days_per_week: 1,
+        schedule: [{ day: '', time: '' }],
+        preferred_start_date: '',
+        active_tutor_rate: 0
+    });
+    const [selectedDays, setSelectedDays] = useState([]);
+    const [selectedTutorAvailability, setSelectedTutorAvailability] = useState(null);
+    const [enrolling, setEnrolling] = useState(false);
+    const daysArray = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Any'];
+
+    const [examAssignments, setExamAssignments] = useState([]);
+    const [examResults, setExamResults] = useState([]);
+
+    const getAuthHeader = () => token ? { Authorization: `Bearer ${token}` } : {};
+
+    const fetchData = async () => {
+        if (!token) return;
+        try {
+            const [profRes, classRes, compRes, matRes, reqRes, bookingRes, transactionsRes, examAsgnRes, examResRes] = await Promise.all([
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/sessions/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/my/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/scheduling/requests/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/booking/request/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/wallet/transactions/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/`, { headers: getAuthHeader() }),
+                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/results/`, { headers: getAuthHeader() })
+            ]);
+            setProfile(profRes.data);
+            setClasses(Array.isArray(classRes.data) ? classRes.data : classRes.data.classes || []);
+            setComplaints(compRes.data);
+            setMaterials(matRes.data);
+            setTutorRequests(reqRes.data);
+            setBookings(bookingRes.data);
+            setTransactions(transactionsRes.data);
+            setExamAssignments(examAsgnRes.data);
+            setExamResults(examResRes.data);
+            // Actually transactionsRes is the 6th element in Promise.all
+
+            try {
+                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/`, { headers: getAuthHeader() });
+                setNotifications(notifRes.data.slice(0, 3));
+            } catch (e) { console.error("Notif fetch failed", e); }
+
+            const subRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() });
+            setAvailableSubjects(subRes.data);
+
+        } catch (err) {
+            console.error("Failed to fetch dashboard data", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchData(); }, [token]);
+
+    const handleDownloadReceipt = (t) => {
+        try {
+            const doc = new jsPDF();
+            
+            // Brand Header
+            doc.setFillColor(16, 185, 129); // Emerald
+            doc.rect(0, 0, 210, 40, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.text("HIDAYAH INTERNATIONAL", 105, 18, { align: "center" });
+            doc.setFontSize(10);
+            doc.text("TUTOR PLATFORM | ISLAMIC & WESTERN EDUCATION", 105, 28, { align: "center" });
+            
+            // Receipt Info
+            doc.setTextColor(50, 50, 50);
+            doc.setFontSize(16);
+            doc.text("OFFICIAL TRANSACTION RECEIPT", 20, 55);
+            
+            doc.setFontSize(10);
+            doc.text(`Receipt Date: ${new Date().toLocaleString()}`, 20, 65);
+            doc.text(`Reference ID: #${t.id || 'N/A'}`, 20, 72);
+            
+            // Grid Data
+            const rows = [
+                ["Transaction For", `${profile?.user?.first_name} ${profile?.user?.last_name || ''}`],
+                ["Email Address", profile?.user?.email || "N/A"],
+                ["Activity Type", (t.transaction_type || "Payment").replace('_', ' ').toUpperCase()],
+                ["Amount Paid", `NGN ${parseFloat(t.amount || 0).toLocaleString()}`],
+                ["Date", new Date(t.timestamp || t.created_at).toLocaleDateString()],
+                ["Description", t.description || "Course Enrollment / Wallet Activity"]
+            ];
+            
+            autoTable(doc, {
+                startY: 85,
+                head: [['Description', 'Detail']],
+                body: rows,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 23, 42] }, // Navy
+                styles: { fontSize: 10, cellPadding: 5 }
+            });
+            
+            // Footer
+            const finalY = doc.lastAutoTable?.finalY || 150;
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text("Thank you for choosing Hidayah International.", 105, finalY + 20, { align: "center" });
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text("This is a computer-generated receipt and requires no signature.", 105, finalY + 30, { align: "center" });
+            
+            doc.save(`Hidayah_Receipt_${t.id}.pdf`);
+        } catch (err) {
+            console.error("Receipt generation failed:", err);
+            alert("Failed to generate receipt. Please try again.");
+        }
+    };
+
+    const toggleDay = (day) => {
+        setSelectedDays(prev => {
+            let newDays;
+            if (day === 'Any') {
+                newDays = prev.includes('Any') ? [] : ['Any'];
+            } else {
+                newDays = prev.filter(d => d !== 'Any');
+                newDays = newDays.includes(day) ? newDays.filter(d => d !== day) : [...newDays, day];
+            }
+            // If "Any", we set days_per_week to 7 (every day)
+            setEnrollData(current => ({ ...current, days_per_week: newDays.includes('Any') ? 7 : newDays.length || 1 }));
+            return newDays;
+        });
+    };
+
+    // Pre-fill Modal from Profile/Registration Data
+    useEffect(() => {
+        if (showEnrollModal && profile && !profile.enrollments?.length) {
+            if (profile.enrolled_course && availableSubjects.length > 0) {
+                const subjSubstr = profile.enrolled_course.split(',')[0].trim();
+                const subj = availableSubjects.find(s => 
+                    s.name.toLowerCase().includes(subjSubstr.toLowerCase()) ||
+                    subjSubstr.toLowerCase().includes(s.name.toLowerCase())
+                );
+                if (subj) {
+                    setEnrollData(prev => ({ 
+                        ...prev, 
+                        subject_id: String(subj.id),
+                        tutor_id: profile.preferred_tutor_id ? String(profile.preferred_tutor_id) : prev.tutor_id
+                    }));
+                    fetchTutorsForSubject(subj.name);
+                }
+            }
+            if (profile.preferred_days?.toLowerCase().includes('any')) {
+                setSelectedDays(['Any']);
+                setEnrollData(prev => ({ ...prev, days_per_week: 7 }));
+            } else if (profile.preferred_days) {
+                const dpw = profile.preferred_days.split(', ').filter(d => d);
+                setSelectedDays(dpw);
+                setEnrollData(prev => ({ ...prev, days_per_week: dpw.length }));
+            }
+            if (profile.preferred_time) {
+                setEnrollData(prev => ({ ...prev, preferred_time: profile.preferred_time }));
+            }
+        }
+    }, [showEnrollModal, profile, availableSubjects]);
+
+    const fetchTutorsForSubject = async (subjectName) => {
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
+            setAvailableTutors(res.data);
+            if (res.data.length > 0) {
+                const t = res.data[0];
+                const uid = t.user?.id || t.user_id || t.id;
+                const rate = parseFloat(String(t.hourly_rate || 0).replace(/[^0-9.]/g, '')) || 0;
+                setEnrollData(prev => ({ 
+                    ...prev, 
+                    tutor_id: String(uid), 
+                    active_tutor_rate: rate,
+                    schedule: [{ day: '', time: '' }] 
+                }));
+                setSelectedTutorAvailability({ 
+                    availabilities: t.availabilities || [],
+                    busy_slots: t.busy_slots || [] 
+                });
+            }
+        } catch (e) { console.error("Tutor fetch failed"); }
+    };
+
+    const handleEnroll = async () => {
+        if (!enrollData.subject_id || !enrollData.tutor_id) return;
+        setEnrolling(true);
+        // Use the fields we selected in the modal
+        const finalData = { 
+            ...enrollData,
+            days_per_week: enrollData.schedule.length
+        };
+        try {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/students/enroll-subject/`, finalData, { headers: getAuthHeader() });
+            alert("✅ Enrollment requested! Tutor has been notified.");
+            setShowEnrollModal(false);
+            fetchData();
+        } catch (err) { alert("❌ Error: " + (err.response?.data?.error || "Failed")); }
+        finally { setEnrolling(false); }
+    };
+
+    const handleJoinClass = async (cls) => {
+        if (!profile || profile.wallet_balance <= 0) {
+            alert("Your wallet balance is empty. Please fund your account to continue accessing classes.");
+            navigate('/payment');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${cls.id}/join/`, {}, { headers: getAuthHeader() });
+            
+            let url = res.data.join_url;
+            if (url) {
+                // Append student name, date, and day to Jitsi links (or pass as params)
+                const dateObj = new Date(cls.scheduled_at);
+                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                const dateString = dateObj.toLocaleDateString();
+                const studentName = profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'Student';
+                const subject = cls.course || 'Class';
+                
+                const displayName = encodeURIComponent(`${studentName} (${subject}) - ${dayName}, ${dateString}`);
+                
+                if (url.includes('meet.jit.si') || url.includes('8x8.vc')) {
+                    const hashDivider = url.includes('#') ? '&' : '#';
+                    url = `${url}${hashDivider}userInfo.displayName="${displayName}"`;
+                }
+                
+                window.open(url, '_blank');
+            } else {
+                alert("No meeting link found for this class.");
+            }
+        } catch (e) {
+            console.error("Join class failed", e);
+            alert("Unable to join class. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const calculateScheduleStatus = () => {
+        if (!enrollData.preferred_days || !enrollData.preferred_time || !selectedTutorAvailability) return { status: 'pending', message: null };
+        
+        const day = enrollData.preferred_days;
+        const time = enrollData.preferred_time;
+        
+        // 1. Check if tutor works on this day
+        const worksThisDay = selectedTutorAvailability.availabilities?.find(av => av.day.toUpperCase() === day.toUpperCase());
+        if (!worksThisDay) return { status: 'error', message: `Tutor does not work on ${day.toLowerCase()}s.` };
+
+        // 2. Check if within working hours
+        const [h, m] = time.split(':').map(Number);
+        const selectedMinutes = h * 60 + m;
+        const [startH, startM] = worksThisDay.start_time.split(':').map(Number);
+        const [endH, endM] = worksThisDay.end_time.split(':').map(Number);
+        const startMin = startH * 60 + startM;
+        const endMin = endH * 60 + endM;
+
+        if (selectedMinutes < startMin || selectedMinutes > endMin) {
+            return { status: 'error', message: `Tutor works from ${worksThisDay.start_time.slice(0,5)} to ${worksThisDay.end_time.slice(0,5)}.` };
+        }
+
+        // 3. Check for busy slots (overlaps)
+        const selectedDate = enrollData.preferred_start_date;
+        if (!selectedDate) return { status: 'pending', message: 'Select a start date' };
+        
+        const selectedDateTime = new Date(`${selectedDate}T${time}:00`);
+        const conflict = selectedTutorAvailability.busy_slots?.find(slot => {
+            const start = new Date(slot.start);
+            const end = new Date(slot.end);
+            return selectedDateTime >= start && selectedDateTime < end;
+        });
+
+        if (conflict) return { status: 'error', message: 'Tutor is already busy at this time!' };
+
+        return { status: 'success', message: 'Tutor is available for this slot!' };
+    };
+
+    const scheduleStatus = calculateScheduleStatus();
+
+    if (loading) return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-950">
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)]" />
+        </div>
+    );
+
+    const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+    const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
+    
+    // Find active/upcoming closest class
+    const activeClass = classes.find(cls => {
+        const classTime = new Date(cls.scheduled_at).getTime();
+        const now = Date.now();
+        // Active if within 30 minutes before or 60 minutes after
+        return now >= classTime - 30*60*1000 && now <= classTime + 60*60*1000;
+    });
+
+    return (
+        <div className="min-h-screen bg-[#0a0c10] text-slate-300 font-sans selection:bg-emerald-500/30">
+            {isImpersonating && (
+                <div className="bg-amber-500 text-white px-6 py-4 flex items-center justify-between shadow-2xl relative z-[100] animate-in fade-in slide-in-from-top duration-700">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                            <ShieldCheck className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 leading-none mb-1.5">Parent Access Mode</p>
+                            <p className="text-base font-bold tracking-tight">Viewing Dashboard: <span className="text-white">{profile?.user?.first_name} {profile?.user?.last_name}</span></p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={handleReturnToParent}
+                        className="bg-white text-amber-600 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-amber-50 active:scale-95 transition-all shadow-xl flex items-center gap-2 group"
+                    >
+                        <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Parent Portal
+                    </button>
+                </div>
+            )}
+            <Navbar />
+            
+            {/* Mesh Background */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute top-[10%] left-[5%] w-[40%] h-[40%] bg-emerald-600/30 blur-[150px] rounded-full"></div>
+                <div className="absolute bottom-[10%] right-[5%] w-[40%] h-[40%] bg-blue-600/30 blur-[150px] rounded-full"></div>
+            </div>
+
+            <main className="container pt-32 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto">
+                <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="space-y-10"
+                >
+                    {activeClass && (
+                        <div className="bg-emerald-600 rounded-[3rem] p-10 md:p-12 mb-10 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
+                             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full translate-x-1/2 translate-y-[-50%] group-hover:scale-110 transition-transform"></div>
+                             <div className="flex items-center gap-10 relative z-10 w-full md:w-auto">
+                                 <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-[2rem] flex items-center justify-center text-4xl shadow-2xl">
+                                     🏫
+                                 </div>
+                                 <div className="text-left">
+                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-100/60 mb-1">Session In Progress</p>
+                                     <h4 className="text-white font-black text-xl">Live Class Now Active!</h4>
+                                     <p className="text-emerald-100 text-sm font-medium">Your {activeClass.course} session is starting now.</p>
+                                 </div>
+                             </div>
+                             <button 
+                                 onClick={() => handleJoinClass(activeClass)} 
+                                 className="bg-white text-emerald-700 hover:bg-emerald-50 px-8 py-3 rounded-2xl font-black uppercase tracking-widest text-xs transition-all w-full md:w-auto text-center shadow-lg flex-shrink-0 relative z-10"
+                             >
+                                 Join Class Now
+                             </button>
+                         </div>
+                    )}
+
+                    {profile?.approval_status === 'APPROVED' && profile?.payment_status === 'UNPAID' && (
+                        <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 rounded-[3rem] p-10 md:p-12 mb-12 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group border border-white/10">
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full translate-x-1/2 translate-y-[-50%]"></div>
+                            <div className="flex items-center gap-8 relative z-10">
+                                <div className="w-24 h-24 bg-white/20 backdrop-blur-2xl rounded-[2.5rem] flex items-center justify-center text-5xl shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
+                                    🎉
+                                </div>
+                                <div>
+                                    <h4 className="text-3xl font-display font-black text-white mb-2 uppercase tracking-tighter">Welcome to Hidayah!</h4>
+                                    <p className="text-indigo-100 font-bold opacity-90 max-w-lg leading-relaxed">
+                                        Congratulations! Your admission has been <span className="underline decoration-emerald-400 decoration-2">automatically approved</span>. 
+                                        To start your journey, please download your admission letter and complete your first monthly payment.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto relative z-10">
+                                {profile.admission_letter && (
+                                    <a 
+                                        href={profile.admission_letter} 
+                                        target="_blank"
+                                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all text-center flex items-center justify-center gap-3"
+                                    >
+                                        <Download size={16} /> Admission Letter
+                                    </a>
+                                )}
+                                <button 
+                                    onClick={() => setActiveTab('finance')}
+                                    className="bg-white text-indigo-700 hover:bg-indigo-50 px-12 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-black/20"
+                                >
+                                    Pay Now & Start →
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Header Section */}
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
+                        <div>
+                            <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-display font-black text-white tracking-tight mb-2">
+                                Learning <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">Portal</span>
+                            </motion.h1>
+                            <motion.p variants={itemVariants} className="text-slate-400 font-medium text-sm flex items-center gap-2">
+                                Welcome back, {user?.first_name} <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            </motion.p>
+                        </div>
+                        
+                        <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
+                            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-3 flex items-center gap-4">
+                                <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+                                    <ShieldCheck size={20} />
+                                </div>
+                                <div className="text-left">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60">Admission ID</p>
+                                    <p className="text-sm font-mono font-bold text-white tracking-widest">{user?.admission_number || 'TBA'}</p>
+                                </div>
+                            </div>
+                            
+                            <motion.button 
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => navigate('/booking/request')}
+                                className="bg-gradient-to-r from-emerald-600 to-emerald-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 flex items-center gap-3"
+                            >
+                                <Search size={16} /> Find Tutors
+                            </motion.button>
+                        </motion.div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[
+                            { label: 'Wallet Balance', value: `₦${parseFloat(profile?.wallet_balance || 0).toLocaleString()}`, icon: Wallet, color: 'emerald', link: '/payment', action: 'Top up' },
+                            { 
+                                label: 'Active Subjects', 
+                                value: (profile?.enrollments?.length > 0 ? profile.enrollments.length : (profile?.enrolled_course ? profile.enrolled_course.split(',').filter(s=>s.trim()).length : 0)) + bookings.filter(b => b.paid).length, 
+                                icon: BookOpen, color: 'blue' 
+                            },
+                            { label: 'Total Classes', value: classes.length, icon: GraduationCap, color: 'indigo' },
+                            { label: 'Notifications', value: notifications.length, icon: Bell, color: 'amber' }
+                        ].map((stat, i) => (
+                            <motion.div 
+                                key={i}
+                                variants={itemVariants}
+                                whileHover={{ y: -5 }}
+                                className="bg-white/5 backdrop-blur-md border border-white/5 rounded-[2.5rem] p-8 relative overflow-hidden group"
+                            >
+                                <div className={`absolute -right-4 -bottom-4 w-24 h-24 bg-${stat.color}-500/10 rounded-full blur-2xl group-hover:bg-${stat.color}-500/20 transition-all`} />
+                                <div className="relative z-10">
+                                    <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-500/10 flex items-center justify-center text-${stat.color}-500 mb-6`}>
+                                        <stat.icon size={24} />
+                                    </div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{stat.label}</p>
+                                    <h3 className="text-3xl font-display font-black text-white mb-4">{stat.value}</h3>
+                                    {stat.link && (
+                                        <a href={stat.link} className="text-[10px] font-black uppercase text-emerald-500 flex items-center gap-2 hover:gap-3 transition-all">
+                                            {stat.action} <ArrowRight size={12} />
+                                        </a>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    {/* Navigation Tabs */}
+                    <nav className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-sm rounded-[1.5rem] border border-white/5 w-fit max-w-full overflow-x-auto">
+                        {[
+                            'overview', 'classes', 'library', 'assessments', 
+                            (['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(profile?.level) || 
+                             (profile?.enrolled_course && ['Prep', 'JAMB', 'WAEC', 'NECO', 'BECE'].some(s => profile.enrolled_course.includes(s))) 
+                             ? 'jamb' : null),
+                            'finance', 'feedback'
+                        ].filter(Boolean).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                {tab === 'jamb' ? 'JAMB CBT' : tab}
+                            </button>
+                        ))}
+                    </nav>
+
+                    {/* Content Section */}
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-12"
+                        >
+                            {/* Overview Tab */}
+                             {activeTab === 'overview' && (
+                                <div className="grid lg:grid-cols-3 gap-10">
+                                    <div className="lg:col-span-2 space-y-10">
+                                        {/* Bookings Awaiting Action */}
+                                        {bookings.some(b => b.status === 'APPROVED' && !b.paid) && (
+                                            <div className="bg-amber-500/10 border border-amber-500/20 rounded-[3rem] p-10 animate-pulse">
+                                                <h3 className="text-xl font-display font-black text-white mb-6 flex items-center gap-4">
+                                                    <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                                                    Pending Payments
+                                                </h3>
+                                                <div className="space-y-4">
+                                                    {bookings.filter(b => b.status === 'APPROVED' && !b.paid).map(b => (
+                                                        <div key={b.id} className="bg-black/20 p-6 rounded-2xl flex justify-between items-center">
+                                                            <div>
+                                                                <h4 className="text-white font-bold">{b.subject} with {b.tutor_name}</h4>
+                                                                <p className="text-xs text-slate-400">Total Price: ₦{b.price?.toLocaleString()}</p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => navigate(`/payment?booking_id=${b.id}`)}
+                                                                className="bg-emerald-500 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                                            >
+                                                                Pay Now
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Exam Assignments Summary */}
+                                        {examAssignments.some(ea => !ea.is_completed) && (
+                                            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-[3rem] p-10">
+                                                <h3 className="text-xl font-display font-black text-white mb-6 flex items-center gap-4">
+                                                    <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                                    New Assessments
+                                                </h3>
+                                                <div className="grid sm:grid-cols-2 gap-4">
+                                                    {examAssignments.filter(ea => !ea.is_completed).length > 0 ? (
+                                                        examAssignments.filter(ea => !ea.is_completed).map(ea => (
+                                                            <div key={ea.id} className="bg-white/5 border border-white/5 rounded-[2rem] p-8 hover:bg-white/[0.08] transition-all group">
+                                                                 <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 group-hover:scale-110 transition-transform">
+                                                                     <ShieldCheck size={28} />
+                                                                 </div>
+                                                                 <h4 className="text-xl font-bold text-white mb-2">{ea.exam_title}</h4>
+                                                                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6">Subject: {ea.subject_name}</p>
+                                                                 <div className="flex justify-between items-center bg-black/20 p-4 rounded-xl">
+                                                                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'No limit'}</span>
+                                                                     <button 
+                                                                         onClick={() => window.location.href = `/exam/practice/${ea.exam}`}
+                                                                         className="text-emerald-500 hover:text-emerald-400 font-bold text-xs flex items-center gap-2"
+                                                                     >
+                                                                         Start <ArrowRight size={14} />
+                                                                     </button>
+                                                                 </div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="col-span-full py-32 text-center bg-white/[0.02] rounded-[3rem] border border-dashed border-white/10">
+                                                            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8 animate-pulse text-indigo-500">
+                                                                {profile?.wallet_balance <= 0 ? '🔒' : '📝'}
+                                                            </div>
+                                                            <h4 className="text-xl font-bold text-white mb-2">{profile?.wallet_balance <= 0 ? 'Assessments Locked' : 'All Caught Up'}</h4>
+                                                            <p className="text-slate-500 font-bold italic max-w-sm mx-auto">
+                                                                {profile?.wallet_balance <= 0 
+                                                                    ? 'Your examinations and tests are locked. Please complete your monthly payment to access assessments.' 
+                                                                    : 'You have no pending assignments or exams at the moment.'}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Enrollments Showcase */}
+                                        <div className="bg-white/[0.02] border border-white/5 rounded-[3rem] p-10">
+                                            <h3 className="text-xl font-display font-black text-white mb-8 flex items-center gap-4">
+                                                <div className="w-1.5 h-6 bg-emerald-500 rounded-full" />
+                                                Education Roadmap
+                                            </h3>
+                                            <div className="grid sm:grid-cols-2 gap-6">
+                                                {profile?.enrollments?.map((enr, i) => (
+                                                    <div key={i} className="bg-white/5 rounded-[2rem] p-6 border border-white/5 hover:border-emerald-500/30 transition-all group">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-xl shadow-lg ring-1 ring-white/10">
+                                                                {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name.includes(s)) ? '🌙' : '🧪'}
+                                                            </div>
+                                                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                                {enr.status}
+                                                            </span>
+                                                        </div>
+                                                        <h4 className="text-lg font-bold text-white mb-1">{enr.subject_name}</h4>
+                                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{enr.tutor_name || 'Tutor: TBA'}</p>
+                                                        <div className="mt-6 pt-6 border-t border-white/5 flex gap-4 text-[9px] font-black text-slate-400 uppercase">
+                                                            <span className="flex items-center gap-1.5"><Calendar size={12} /> {enr.preferred_days?.split(',')[0]}</span>
+                                                            <span className="flex items-center gap-1.5"><Clock size={12} /> {enr.preferred_time}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {(!profile?.enrollments || profile.enrollments.length === 0) && (
+                                                    <div className="col-span-full py-16 text-center bg-white/5 rounded-3xl border border-dashed border-white/10">
+                                                        <p className="text-slate-500 font-bold italic">No subjects enrolled yet. Explore our curriculum to get started.</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Recent Sessions */}
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-display font-black text-white flex items-center gap-4">
+                                                <div className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                                Upcoming Sessions
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {classes.slice(0, 3).map((cls, i) => (
+                                                    <div key={i} className="bg-white/[0.03] backdrop-blur-md border border-white/5 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 group hover:bg-white/[0.05] transition-all">
+                                                        <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform">🎓</div>
+                                                        <div className="flex-1 text-center md:text-left">
+                                                            <h4 className="text-lg font-bold text-white">{cls.course}</h4>
+                                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mt-1">Scheduled for {new Date(cls.scheduled_at).toLocaleDateString()}</p>
+                                                        </div>
+                                                        <button onClick={() => handleJoinClass(cls)} className="bg-white/5 hover:bg-white/10 border border-white/10 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all">Enter Classroom</button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sidebar Components */}
+                                    <div className="space-y-10">
+                                        {profile?.admission_letter_url && profile?.approval_status === 'APPROVED' && (
+                                            <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-[2.5rem] p-8 shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl rounded-full" />
+                                                <div className="relative z-10 flex flex-col items-center text-center">
+                                                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-xl backdrop-blur-md">📄</div>
+                                                    <h4 className="text-xl font-display font-black text-white mb-2">Admission Letter</h4>
+                                                    <p className="text-indigo-100 text-xs font-medium mb-8 leading-relaxed">Your official enrollment confirmation is ready for download.</p>
+                                                    <a href={profile.admission_letter_url} download target="_blank" className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
+                                                        <Download size={16} /> Download PDF
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] p-8">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 mb-6 flex items-center gap-2">
+                                                <Bell size={12} className="animate-bounce" /> Dashboard Alerts
+                                            </h4>
+                                            <div className="space-y-4">
+                                                {notifications.map(n => (
+                                                    <div key={n.id} className="bg-emerald-500/5 p-4 rounded-2xl border border-emerald-500/10 hover:border-emerald-500/30 transition-all">
+                                                        <p className="text-xs font-bold text-white mb-1 leading-tight">{n.title}</p>
+                                                        <p className="text-[10px] text-slate-500 leading-relaxed">{n.message}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Classes Tab */}
+                            {activeTab === 'classes' && (
+                                <div className="space-y-10">
+                                    <div className="flex justify-between items-center">
+                                        <h2 className="text-2xl font-display font-black text-white">Live Learning Sessions</h2>
+                                        <div className="bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20 text-[10px] font-black text-emerald-500 uppercase flex items-center gap-2">
+                                            <LayoutDashboard size={12} /> Manage Schedule
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="grid gap-6">
+                                        {classes.length > 0 ? classes.map((cls, i) => (
+                                            // ... existing class card code ...
+                                            <div key={i} className="bg-white/5 border border-white/5 rounded-[2.5rem] p-10 flex flex-col lg:flex-row justify-between items-center gap-10 hover:bg-white/[0.07] transition-all">
+                                                <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
+                                                    <div className="w-24 h-24 bg-slate-900 rounded-[2rem] flex items-center justify-center text-4xl shadow-2xl ring-1 ring-white/10 group-hover:scale-110 transition-transform">🏫</div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">{cls.type || 'REGULAR COURSE'}</p>
+                                                        <h4 className="text-3xl font-display font-black text-white mb-3">{cls.subject}</h4>
+                                                        <div className="flex flex-wrap gap-4 font-bold text-[10px] text-slate-500 uppercase bg-black/20 p-3 rounded-2xl w-fit">
+                                                            <span className="flex items-center gap-2"><Calendar size={12} className="text-emerald-500" /> {new Date(cls.scheduled_at).toLocaleDateString()}</span>
+                                                            <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-500" /> {new Date(cls.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                                            <span className="flex items-center gap-2"><User size={12} className="text-blue-500" /> Tutor: {cls.tutor_name}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setSelectedSessionId(cls.db_id);
+                                                            setSelectedSessionType(cls.type || 'REGULAR');
+                                                            setShowRescheduleModal(true);
+                                                        }}
+                                                        className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-10 py-5 rounded-3xl font-black uppercase text-xs tracking-widest transition-all shadow-xl"
+                                                    >
+                                                        Reschedule
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleJoinClass(cls)}
+                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-12 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-emerald-500/20 active:scale-95 transition-all"
+                                                    >
+                                                        Join Live Class →
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )) : (
+                                            <div className="py-32 text-center bg-white/[0.02] rounded-[3rem] border border-dashed border-white/10">
+                                                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8 animate-pulse">
+                                                    {profile?.wallet_balance <= 0 ? '🔒' : '📅'}
+                                                </div>
+                                                <h4 className="text-xl font-bold text-white mb-2">{profile?.wallet_balance <= 0 ? 'Access Locked' : 'No Classes Scheduled'}</h4>
+                                                <p className="text-slate-500 font-bold italic max-w-md mx-auto">
+                                                    {profile?.wallet_balance <= 0 
+                                                        ? 'Please fund your wallet specifically for this month to access your live classes.' 
+                                                        : 'No classes are currently scheduled for your courses. Check back later.'}
+                                                </p>
+                                                {profile?.wallet_balance <= 0 && (
+                                                    <button 
+                                                        onClick={() => navigate('/student?tab=finance')}
+                                                        className="mt-8 bg-emerald-500/10 text-emerald-500 px-8 py-3 rounded-2xl border border-emerald-500/20 font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 hover:text-white transition-all"
+                                                    >
+                                                        Top Up Wallet
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Library Tab */}
+                            {activeTab === 'library' && (
+                                <div className="space-y-10">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                        <h2 className="text-2xl font-display font-black text-white">Digital Learning Bank</h2>
+                                        <div className="relative w-full md:w-96">
+                                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                                            <input type="text" placeholder="Search resources..." className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-14 text-sm font-bold white outline-none focus:border-emerald-500/30 transition-all" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                        {materials.length > 0 ? materials.map((mat, i) => (
+                                            <motion.div 
+                                                key={i} 
+                                                whileHover={{ y: -5 }} 
+                                                className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8 group hover:bg-white/10 transition-all"
+                                            >
+                                                <div className="flex justify-between items-start mb-8">
+                                                    <div className="w-16 h-16 bg-slate-900 rounded-3xl flex items-center justify-center text-3xl shadow-xl ring-1 ring-white/10">
+                                                        {mat.material_type === 'VIDEO' ? <PlayCircle className="text-emerald-500" /> : mat.material_type === 'PDF' ? <FileText className="text-indigo-500" /> : <Music className="text-amber-500" />}
+                                                    </div>
+                                                    <button className="text-slate-500 hover:text-white transition-colors"><ExternalLink size={20} /></button>
+                                                </div>
+                                                <h4 className="text-2xl font-display font-black text-white mb-2 leading-tight line-clamp-2">{mat.title}</h4>
+                                                <p className="text-sm font-medium text-slate-500 leading-relaxed line-clamp-2 mb-8">{mat.description}</p>
+                                                <div className="pt-8 border-t border-white/5 flex justify-between items-center">
+                                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{mat.material_type}</span>
+                                                    <a href={mat.file || mat.external_url} target="_blank" className="bg-emerald-600/10 text-emerald-500 p-3 rounded-xl hover:bg-emerald-600 hover:text-white transition-all">
+                                                        <Download size={18} />
+                                                    </a>
+                                                </div>
+                                            </motion.div>
+                                        )) : (
+                                            <div className="col-span-full py-32 text-center bg-white/[0.02] rounded-[3rem] border border-dashed border-white/10">
+                                                <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8 animate-pulse text-indigo-500">
+                                                    {profile?.wallet_balance <= 0 ? '🔒' : '📚'}
+                                                </div>
+                                                <h4 className="text-xl font-bold text-white mb-2">{profile?.wallet_balance <= 0 ? 'Library Locked' : 'No Materials Found'}</h4>
+                                                <p className="text-slate-500 font-bold italic max-w-sm mx-auto">
+                                                    {profile?.wallet_balance <= 0 
+                                                        ? 'Your learning materials are locked. Please complete your monthly payment to access the library.' 
+                                                        : 'No learning resources have been uploaded for your courses yet.'}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Assessments Tab */}
+                            {activeTab === 'assessments' && (
+                                <div className="space-y-12">
+                                    <div>
+                                        <h2 className="text-2xl font-display font-black text-white mb-8">Pending Examinations</h2>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {examAssignments.filter(ea => !ea.is_completed).length > 0 ? (
+                                                examAssignments.filter(ea => !ea.is_completed).map(ea => (
+                                                    <div key={ea.id} className="bg-white/5 border border-white/5 rounded-[2rem] p-8 hover:bg-white/[0.08] transition-all group">
+                                                        <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 mb-6 group-hover:scale-110 transition-transform">
+                                                            <FileText size={24} />
+                                                        </div>
+                                                        <h4 className="text-lg font-bold text-white mb-2 leading-tight">{ea.exam_title}</h4>
+                                                        <div className="flex flex-col gap-2 mb-8">
+                                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assigned by {ea.tutor_name || 'System'}</p>
+                                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'Immediate'}</p>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => window.location.href = `/exam/practice/${ea.exam}`}
+                                                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-indigo-500/20"
+                                                        >
+                                                            Launch CBT Simulator
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="col-span-full py-16 text-center bg-white/[0.02] rounded-3xl border border-dashed border-white/10">
+                                                    <p className="text-slate-500 font-bold italic">No pending exams at the moment.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h2 className="text-2xl font-display font-black text-white mb-8">Performance History</h2>
+                                        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] overflow-hidden">
+                                            <div className="grid grid-cols-4 p-6 bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-white/5">
+                                                <div className="col-span-2">Examination</div>
+                                                <div>Score</div>
+                                                <div>Date Attempted</div>
+                                            </div>
+                                            <div className="divide-y divide-white/5">
+                                                {examResults.length > 0 ? examResults.map(res => (
+                                                    <div key={res.id} className="grid grid-cols-4 p-6 hover:bg-white/[0.03] transition-all items-center">
+                                                        <div className="col-span-2">
+                                                            <h5 className="text-sm font-bold text-white">{res.exam_title}</h5>
+                                                            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Aggregate Performance</p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-sm font-black ${parseFloat(res.score) >= 50 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                                                {Math.round(res.score)}%
+                                                            </span>
+                                                            <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden hidden sm:block">
+                                                                <div className={`h-full ${parseFloat(res.score) >= 50 ? 'bg-emerald-500' : 'bg-red-500'}`} style={{ width: `${res.score}%` }} />
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-[10px] font-bold text-slate-400">
+                                                            {new Date(res.date_taken).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                )) : (
+                                                    <div className="p-12 text-center text-slate-500 font-bold italic">No results recorded yet.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Finance Tab */}
+                            {activeTab === 'finance' && (
+                                <div className="grid lg:grid-cols-3 gap-10">
+                                    <div className="lg:col-span-2 space-y-10">
+                                        <div className="bg-gradient-to-br from-emerald-600 to-emerald-900 rounded-[3rem] p-12 shadow-2xl relative overflow-hidden group">
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[80px] rounded-full" />
+                                            <div className="relative z-10">
+                                                <div className="flex justify-between items-start mb-12">
+                                                    <div>
+                                                        <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300 mb-2">Available Credits</p>
+                                                        <h3 className="text-6xl font-display font-black text-white tracking-tighter">₦{parseFloat(profile?.wallet_balance || 0).toLocaleString()}</h3>
+                                                    </div>
+                                                    <div className="w-16 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
+                                                        <span className="text-white text-xs font-black">PAY</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col sm:flex-row gap-4">
+                                                    <a href="/payment" className="flex-1 py-5 bg-white text-emerald-600 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                                                        <Plus size={18} /> Add Funds to Wallet
+                                                    </a>
+                                                    <button className="flex-1 py-5 bg-black/20 hover:bg-black/40 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-widest transition-all">Export Transactions</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white/5 border border-white/5 rounded-[3rem] p-10">
+                                            <h4 className="text-xl font-display font-black text-white mb-8 flex items-center gap-4">
+                                                <TrendingUp size={20} className="text-emerald-500" /> Ledger Analytics
+                                            </h4>
+                                            <div className="grid gap-4">
+                                                {transactions.map(t => (
+                                                    <div key={t.id} className="bg-white/[0.03] p-6 rounded-2xl border border-white/5 flex justify-between items-center group hover:bg-white/[0.05] transition-all">
+                                                        <div className="flex items-center gap-6">
+                                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${t.transaction_type === 'DEPOSIT' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                                {t.transaction_type === 'DEPOSIT' ? '+' : '-'}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-white">{t.description}</p>
+                                                                <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right flex flex-col items-end gap-2">
+                                                            <div className="text-sm font-black tabular-nums text-white">
+                                                                ₦{parseFloat(t.amount).toLocaleString()}
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleDownloadReceipt(t)}
+                                                                className="text-[9px] font-black uppercase text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1"
+                                                            >
+                                                                <Download size={10} /> Receipt
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="space-y-6">
+                                        <div className="bg-white/5 border border-white/5 rounded-[2.5rem] p-8">
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Card Management</h4>
+                                            <div className="p-8 bg-slate-800 rounded-3xl border border-white/5 group hover:border-white/20 transition-all cursor-pointer relative overflow-hidden">
+                                                <div className="flex justify-between items-start mb-10 relative z-10">
+                                                    <div className="w-8 h-8 rounded-full border border-white/20" />
+                                                    <ShieldCheck size={18} className="text-emerald-500" />
+                                                </div>
+                                                <div className="relative z-10">
+                                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
+                                                    <p className="text-xs font-bold text-white">READY FOR BILLING</p>
+                                                </div>
+                                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </div>
+                                        </div>
+                                        <div className="p-8 bg-amber-500/5 border border-amber-500/10 rounded-[2.5rem] flex items-start gap-4">
+                                            <AlertCircle className="text-amber-500 shrink-0" size={20} />
+                                            <div>
+                                                <h5 className="text-[10px] font-black uppercase text-amber-500 tracking-widest mb-1">Billing Policy</h5>
+                                                <p className="text-[10px] text-slate-500 leading-relaxed font-bold">Payments are non-refundable after a session has been successfully completed by the assigned tutor.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Feedback Tab */}
+                            {activeTab === 'feedback' && (
+                                <div className="max-w-4xl mx-auto space-y-12">
+                                    <div className="text-center">
+                                        <h2 className="text-4xl font-display font-black text-white mb-4">Quality & Support</h2>
+                                        <p className="text-slate-500 font-medium">We monitor every session to ensure global educational standards.</p>
+                                    </div>
+
+                                    <div className="grid md:grid-cols-2 gap-10">
+                                        <div className="space-y-6">
+                                            <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
+                                                <MessageSquare className="text-emerald-500" /> My Activity Log
+                                            </h4>
+                                            {complaints.filed_by_me.map(c => (
+                                                <div key={c.id} className="bg-white/5 p-8 rounded-[2rem] border border-white/5">
+                                                    <div className="flex justify-between items-center mb-4">
+                                                        <span className="bg-white/5 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-400">{c.status}</span>
+                                                        <span className="text-[10px] font-bold text-slate-600">{new Date(c.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <h5 className="text-lg font-bold text-white mb-2">{c.subject}</h5>
+                                                    <p className="text-xs text-slate-500 leading-relaxed">{c.description}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="bg-emerald-600/5 rounded-[3rem] p-10 border border-emerald-500/10 flex flex-col items-center text-center">
+                                            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-3xl mb-8">📣</div>
+                                            <h4 className="text-2xl font-display font-black text-white mb-4 text-emerald-500">Need Assistance?</h4>
+                                            <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed">If you have any issues with your tutor or the platform, our support team is available 24/7 to resolve them.</p>
+                                            <button 
+                                                onClick={() => setShowComplaintModal(true)}
+                                                className="w-full py-5 bg-white text-emerald-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl hover:scale-[1.02] transition-all"
+                                            >
+                                                File Formal Report →
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* JAMB CBT Tab */}
+                            {activeTab === 'jamb' && (
+                                <div className="space-y-10">
+                                    <JambCBT token={token} studentProfile={profile} />
+                                </div>
+                            )}
+                        </motion.div>
+                    </AnimatePresence>
+                </motion.div>
+                
+                {/* Quran Section - Pushed to bottom or shown based on enrollment */}
+                {profile?.enrolled_course && ['Quran', 'Arabic', 'Tajweed'].some(s => profile.enrolled_course.includes(s)) && (
+                    <motion.div variants={itemVariants} className="mt-20">
+                        <QuranMushaf token={token} />
+                    </motion.div>
+                )}
+            </main>
+
+            {/* Modals */}
+            <ComplaintModal isOpen={showComplaintModal} onClose={() => setShowComplaintModal(false)} filedAgainstId={profile?.assigned_tutor_details?.id} filedAgainstName={profile?.assigned_tutor_details?.full_name} token={token} />
+            <RescheduleModal isOpen={showRescheduleModal} onClose={() => setShowRescheduleModal(false)} sessionId={selectedSessionId} sessionType={selectedSessionType} initiatedBy="STUDENT" token={token} onSuccess={fetchData} />
+
+            {/* Premium Enrollment Modal */}
+            <AnimatePresence>
+                {showEnrollModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowEnrollModal(false)} className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl" />
+                        
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0, y: 40 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 40 }}
+                            className="bg-[#11141b] w-full max-w-2xl rounded-[3rem] border border-white/10 shadow-3xl overflow-hidden relative z-10 flex flex-col md:flex-row"
+                        >
+                            {/* Modal Left: Info Panel */}
+                            <div className="hidden md:block w-72 bg-gradient-to-br from-emerald-600 to-emerald-900 p-10 text-white relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full" />
+                                <div className="h-full flex flex-col justify-between relative z-10">
+                                    <div>
+                                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl mb-8 backdrop-blur-md">✨</div>
+                                        <h3 className="text-2xl font-display font-black mb-4">New Subject</h3>
+                                        <p className="text-emerald-100 text-xs font-medium leading-relaxed uppercase tracking-widest opacity-60">Expand your intellectual journey with our expert tutors.</p>
+                                    </div>
+                                    <div className="p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">Estimated Impact</p>
+                                        <p className="text-white text-md font-bold">+15 Lessons Monthly</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Right: Form Panel */}
+                            <div className="flex-1 p-8 md:p-12 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+                                <button onClick={() => setShowEnrollModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors group">
+                                    <X size={24} className="group-hover:rotate-90 transition-transform" />
+                                </button>
+                                
+                                <div className="space-y-10">
+                                    <div className="space-y-8">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Academic Program</label>
+                                            <select
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white focus:border-emerald-500/30 outline-none appearance-none transition-all"
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    const subj = availableSubjects.find(s => s.id == val);
+                                                    setEnrollData(prev => ({ ...prev, subject_id: val, tutor_id: '' }));
+                                                    setSelectedTutorAvailability(null);
+                                                    if (subj) fetchTutorsForSubject(subj.name);
+                                                }}
+                                            >
+                                                <option value="" className="bg-slate-900">Select Subject</option>
+                                                {availableSubjects.map(s => (
+                                                    <option key={s.id} value={s.id} className="bg-slate-900">{s.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Expert Tutor Replacement</label>
+                                            <select
+                                                className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white focus:border-emerald-500/30 outline-none appearance-none transition-all"
+                                                value={enrollData.tutor_id}
+                                                onChange={(e) => {
+                                                    const uid = e.target.value;
+                                                    const t = availableTutors.find(item => String(item.user?.id || item.user_id || item.id) === String(uid));
+                                                    if (t) {
+                                                        const rate = parseFloat(String(t.hourly_rate || 0).replace(/[^0-9.]/g, '')) || 0;
+                                                        setEnrollData(prev => ({ ...prev, tutor_id: uid, active_tutor_rate: rate }));
+                                                        setSelectedTutorAvailability({ 
+                                                            availabilities: Array.isArray(t.availabilities) ? t.availabilities : [],
+                                                            busy_slots: Array.isArray(t.busy_slots) ? t.busy_slots : [] 
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <option value="" className="bg-slate-900">Select Preferred Tutor</option>
+                                                {availableTutors.map(t => (
+                                                    <option key={t.user?.id || t.id || t.user_id} value={t.user?.id || t.id || t.user_id} className="bg-slate-900">{t.user?.first_name ? `${t.user.first_name} ${t.user.last_name}` : t.full_name} (₦{t.hourly_rate}/hr)</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
+                                       {/* Availability Status */}
+                                    {selectedTutorAvailability && (
+                                        <div className="bg-white/5 border border-white/5 rounded-3xl p-6">
+                                            <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Tutor Working Hours</h5>
+                                            <div className="space-y-3">
+                                                {selectedTutorAvailability.availabilities?.length > 0 ? (
+                                                    selectedTutorAvailability.availabilities.map((av, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center text-[10px] bg-black/20 p-3 rounded-xl border border-white/5">
+                                                            <span className="font-bold text-white uppercase tracking-widest">{av.day}</span>
+                                                            <span className="text-emerald-500 font-black">{av.start_time.slice(0, 5)} - {av.end_time.slice(0, 5)}</span>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-[10px] text-slate-500 font-bold italic">No specific availability slots listed.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Days Selection */}
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Preferred Start Date</label>
+                                        <input 
+                                            type="date" 
+                                            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white outline-none focus:border-emerald-500/30 transition-all"
+                                            min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                                            onChange={(e) => setEnrollData(prev => ({ ...prev, preferred_start_date: e.target.value }))}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between items-center px-1">
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Weekly Schedule</label>
+                                            <button 
+                                                onClick={() => setEnrollData(prev => ({ ...prev, schedule: [...prev.schedule, { day: '', time: '' }] }))}
+                                                className="text-[10px] font-black uppercase text-emerald-500 hover:text-emerald-400 transition-colors"
+                                            >
+                                                + Add Day
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            {enrollData.schedule.map((slot, index) => (
+                                                <div key={index} className="flex gap-3 items-end group/slot">
+                                                    <div className="flex-1 space-y-1">
+                                                        <select 
+                                                            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white focus:border-emerald-500/30 outline-none transition-all"
+                                                            value={slot.day}
+                                                            onChange={(e) => {
+                                                                const newSchedule = [...enrollData.schedule];
+                                                                newSchedule[index].day = e.target.value.toUpperCase();
+                                                                setEnrollData(prev => ({ ...prev, schedule: newSchedule }));
+                                                            }}
+                                                        >
+                                                            <option value="" className="bg-slate-900">Select Day</option>
+                                                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => (
+                                                                <option key={d} value={d} className="bg-slate-900">{d}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="w-32 space-y-1">
+                                                        <input
+                                                            type="time"
+                                                            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white focus:border-emerald-500/30 outline-none transition-all"
+                                                            value={slot.time}
+                                                            onChange={(e) => {
+                                                                const newSchedule = [...enrollData.schedule];
+                                                                newSchedule[index].time = e.target.value;
+                                                                setEnrollData(prev => ({ ...prev, schedule: newSchedule }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    {enrollData.schedule.length > 1 && (
+                                                        <button 
+                                                            onClick={() => setEnrollData(prev => ({ ...prev, schedule: prev.schedule.filter((_, i) => i !== index) }))}
+                                                            className="bg-red-500/10 text-red-500 p-4 rounded-2xl border border-red-500/20 hover:bg-red-500/20 transition-all mb-0"
+                                                        >
+                                                            <X size={20} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Conflict / Availability Warning */}
+                                    {scheduleStatus.message && (
+                                        <div className={`p-4 border rounded-2xl flex items-center gap-3 ${scheduleStatus.status === 'error' ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
+                                            {scheduleStatus.status === 'error' ? <AlertCircle className="text-red-500" size={16} /> : <CheckCircle2 className="text-emerald-500" size={16} />}
+                                            <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${scheduleStatus.status === 'error' ? 'text-red-500' : 'text-emerald-500'}`}>
+                                                {scheduleStatus.message}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {enrollData.active_tutor_rate > 0 && (
+                                        <div className="bg-white/5 rounded-[2rem] p-8 border border-white/10 relative overflow-hidden">
+                                            <div className="flex justify-between items-baseline gap-4 mb-2">
+                                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Estimated Monthly Tuition</span>
+                                                <span className="text-3xl font-black text-white tabular-nums">₦{(enrollData.active_tutor_rate * enrollData.hours_per_week * enrollData.schedule.length * 4).toLocaleString()}</span>
+                                            </div>
+                                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic leading-relaxed">Calculated based on {enrollData.schedule.length} sessions per week at tutor's current hourly rate.</p>
+                                        </div>
+                                    )}
+
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={handleEnroll}
+                                        disabled={enrolling || !enrollData.subject_id || !enrollData.tutor_id || scheduleStatus.status === 'error'}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-[0.3em] shadow-3xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
+                                    >
+                                        {enrolling ? (<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />) : (<><CheckCircle2 size={20} /> Submit Enrollment →</>)}
+                                    </motion.button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+export default StudentDashboard;
