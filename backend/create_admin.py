@@ -16,31 +16,36 @@ def create_or_update_admin():
     email = 'admin@hidayah.com'
     
     try:
-        user, created = User.objects.get_or_create(
-            username=username,
-            defaults={
-                'email': email,
-                'is_active': True,
-                'is_staff': True,
-                'is_superuser': True,
-                'role': 'ADMIN'
-            }
-        )
+        print(f"Checking for user: {username}...")
+        user = User.objects.filter(username=username).first()
         
-        if not created:
-            user.set_password(password)
-            user.is_staff = True
-            user.is_superuser = True
-            user.role = 'ADMIN'
-            user.save()
-            print(f"Successfully updated admin user: {username}")
+        if not user:
+            print(f"User {username} not found. Creating...")
+            user = User.objects.create_superuser(
+                username=username,
+                email=email,
+                password=password
+            )
+            created = True
         else:
+            print(f"User {username} found. Updating password and roles...")
             user.set_password(password)
-            user.save()
-            print(f"Successfully created admin user: {username}")
+            created = False
+            
+        user.role = 'ADMIN'
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_active = True
+        user.save()
+        
+        status = "created" if created else "updated"
+        print(f"Successfully {status} admin user: {username} with role {user.role}")
+        print(f"User details: ID={user.id}, Active={user.is_active}, Staff={user.is_staff}, Super={user.is_superuser}")
             
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"FAILED to handle admin user: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     create_or_update_admin()
