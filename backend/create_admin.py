@@ -12,8 +12,8 @@ User = get_user_model()
 
 def create_or_update_admin():
     username = 'admin'
-    password = 'admin123'
-    email = 'admin@example.com'
+    password = 'H!d@y@h#2026$Admin'
+    email = 'admin@hidayah.com'
     
     try:
         user, created = User.objects.get_or_create(
