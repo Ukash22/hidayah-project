@@ -12,7 +12,7 @@ User = get_user_model()
 
 def create_or_update_admin():
     username = 'admin'
-    password = 'H!d@y@h#2026$Admin'
+    password = 'Hidaya123#'
     email = 'admin@hidayah.com'
     
     try:
