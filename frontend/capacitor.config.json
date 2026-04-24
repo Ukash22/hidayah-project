@@ -3,6 +3,7 @@
   "appName": "Hidayah",
   "webDir": "dist",
   "server": {
-    "cleartext": true
+    "cleartext": true,
+    "androidScheme": "https"
   }
 }
