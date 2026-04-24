@@ -39,7 +39,14 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-mz8str1t$b3(46n3@)^99ije#l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+
+# In case the env variable is set but doesn't include the backend domain, explicitly add it
+if "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(["*", "hidayah-backend-zgix.onrender.com", "localhost", "127.0.0.1"])
+
+# Needed on Render because it sits behind a proxy router that handles SSL/TLS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
