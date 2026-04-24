@@ -1,11 +1,6 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
-
-
-# type: ignore
-# pyre-ignore-all-errors
-# pylint: skip-file
 """
 Django settings for core project.
 
@@ -140,7 +135,8 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL', 'postgresql://hidayah_user:hidayah_pass@localhost:5432/hidayah'),
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require=not DEBUG
     )
 }
 
