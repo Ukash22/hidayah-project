@@ -48,6 +48,12 @@ if "*" not in ALLOWED_HOSTS:
 # Needed on Render because it sits behind a proxy router that handles SSL/TLS
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
+# Add CSRF_TRUSTED_ORIGINS to allow logging into the admin panel on Render
+CSRF_TRUSTED_ORIGINS = [
+    'https://hidayah-backend-zgix.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:5174',
+]
 
 # Application definition
 
