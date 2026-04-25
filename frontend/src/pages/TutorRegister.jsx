@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { 
@@ -293,7 +293,7 @@ const TutorRegister = () => {
                             <motion.button type="submit" disabled={loading} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50">
                                 {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <ArrowRight size={20} /></>}
                             </motion.button>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-6 leading-6">Existing Instructor? <a href="/login" className="text-emerald-500 underline ml-2 decoration-2 underline-offset-4">Sign In Portal</a></p>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-6 leading-6">Existing Instructor? <Link to="/login" className="text-emerald-500 underline ml-2 decoration-2 underline-offset-4">Sign In Portal</Link></p>
                         </div>
                     </form>
                 </motion.div>

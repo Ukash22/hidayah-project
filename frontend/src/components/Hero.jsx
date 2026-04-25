@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
     return (
@@ -28,10 +29,10 @@ const Hero = () => {
                             <span>Apply for Free Trial Class</span>
                             <span className="text-xl">🚀</span>
                         </a>
-                        <a href="/exam-practice" className="btn bg-white border border-slate-200 text-primary px-8 py-4 hover:bg-slate-50 flex items-center justify-center gap-2">
+                        <Link to="/exam-practice" className="btn bg-white border border-slate-200 text-primary px-8 py-4 hover:bg-slate-50 flex items-center justify-center gap-2">
                             <span>HITIS CBT Center</span>
                             <span className="px-2 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-full uppercase animate-pulse">New</span>
-                        </a>
+                        </Link>
                     </div>
 
                     {/* Highlights Grid */}

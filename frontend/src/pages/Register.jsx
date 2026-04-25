@@ -1043,7 +1043,7 @@ const Register = () => {
                             </motion.button>
 
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                Registered Scholar? <a href="/login" className="text-emerald-500 underline ml-2">Sign In Portal</a>
+                                Registered Scholar? <Link to="/login" className="text-emerald-500 underline ml-2">Sign In Portal</Link>
                             </p>
                         </div>
                     </form>

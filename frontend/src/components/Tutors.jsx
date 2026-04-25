@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 /* ─── Embedded Mini Trial Form ─────────────────────────────────────── */
@@ -344,12 +345,12 @@ const Tutors = () => {
                                     </button>
 
                                     {/* Register as Student Button */}
-                                    <a
-                                        href={`/register?tutor_id=${tutor.id}&tutor_name=${encodeURIComponent(tutor.full_name)}`}
+                                    <Link
+                                        to={`/register?tutor_id=${tutor.id}&tutor_name=${encodeURIComponent(tutor.full_name)}`}
                                         className="bg-emerald-600 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:scale-105 transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <span>✍️</span> Register as Student
-                                    </a>
+                                    </Link>
                                 </div>
                             </motion.div>
                         ))}

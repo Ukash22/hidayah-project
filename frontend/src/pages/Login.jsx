@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
@@ -103,7 +103,7 @@ const Login = () => {
                     </form>
 
                     <p className="text-center mt-10 text-xs text-text-light font-bold">
-                        Need an account? <a href="/register" className="text-secondary font-black hover:underline uppercase ml-1">Register Now</a>
+                        Need an account? <Link to="/register" className="text-secondary font-black hover:underline uppercase ml-1">Register Now</Link>
                     </p>
                 </div>
             </div>
