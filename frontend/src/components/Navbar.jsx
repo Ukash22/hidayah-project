@@ -74,7 +74,7 @@ const Navbar = () => {
           ) : (
             <div className="flex items-center gap-4">
               <Link to="/login" className="font-black uppercase text-[10px] tracking-widest text-primary hover:text-secondary px-4 py-2">Login</Link>
-              <Link to="/contact" className="btn btn-secondary text-sm">Free Trial</Link>
+              <Link to="/register" className="btn btn-secondary text-sm">Free Trial</Link>
             </div>
           )}
         </div>
@@ -105,7 +105,7 @@ const Navbar = () => {
           ) : (
             <div className="flex flex-col gap-6 w-full items-center">
               <Link to="/login" onClick={() => setIsOpen(false)} className="font-bold text-primary text-xl">Login</Link>
-              <Link to="/contact" onClick={() => setIsOpen(false)} className="btn btn-secondary w-full max-w-xs text-center">Get Free Trial</Link>
+              <Link to="/register" onClick={() => setIsOpen(false)} className="btn btn-secondary w-full max-w-xs text-center">Get Free Trial</Link>
             </div>
           )}
         </div>
