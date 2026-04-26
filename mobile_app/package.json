@@ -1,20 +1,21 @@
 {
-  "name": "hidayah-mobile-app",
+  "name": "mobile_app",
   "version": "1.0.0",
-  "description": "Capacitor mobile wrapper for Hidayah Platform",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "sync": "npx cap sync",
-    "open:android": "npx cap open android",
-    "open:ios": "npx cap open ios",
-    "copy": "npx cap copy",
-    "update": "npx cap update"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
-    "@capacitor/ios": "^8.3.0"
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.3.0"
+    "@capacitor/cli": "^8.3.1"
   }
 }

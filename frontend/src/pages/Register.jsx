@@ -70,15 +70,19 @@ const Register = () => {
         const fetchSubjects = async () => {
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`);
-                const grouped = res.data.reduce((acc, sub) => {
-                    const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education' :
-                        sub.program_type === 'WESTERN' ? 'Western Education' :
-                            'Exam Preparation';
-                    if (!acc[label]) acc[label] = [];
-                    acc[label].push(sub.name);
-                    return acc;
-                }, {});
-                setSubjectsByCategory(grouped);
+                if (Array.isArray(res.data)) {
+                    const grouped = res.data.reduce((acc, sub) => {
+                        const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education' :
+                            sub.program_type === 'WESTERN' ? 'Western Education' :
+                                'Exam Preparation';
+                        if (!acc[label]) acc[label] = [];
+                        acc[label].push(sub.name);
+                        return acc;
+                    }, {});
+                    setSubjectsByCategory(grouped);
+                } else {
+                    throw new Error("Invalid subjects data format");
+                }
             } catch (err) {
                 console.error("Failed to fetch subjects:", err);
                 // Fallback to minimal list in case of API failure

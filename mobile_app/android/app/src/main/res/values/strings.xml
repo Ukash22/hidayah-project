@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Hidayah</string>
-    <string name="title_activity_main">Hidayah</string>
-    <string name="package_name">com.hidayah.app</string>
-    <string name="custom_url_scheme">com.hidayah.app</string>
+    <string name="app_name">Hidayah Test</string>
+    <string name="title_activity_main">Hidayah Test</string>
+    <string name="package_name">com.hidayah.testapp</string>
+    <string name="custom_url_scheme">com.hidayah.testapp</string>
 </resources>

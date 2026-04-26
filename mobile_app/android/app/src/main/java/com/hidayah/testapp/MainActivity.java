@@ -1,4 +1,4 @@
-package com.hidayah.app;
+package com.hidayah.testapp;
 
 import com.getcapacitor.BridgeActivity;
 

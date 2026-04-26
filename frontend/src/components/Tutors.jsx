@@ -311,7 +311,7 @@ const Tutors = () => {
                                         <div className="flex justify-between pt-1 mt-1">
                                             <span className="font-semibold text-slate-400 mt-0.5">Availability</span>
                                             <div className="flex flex-col items-end gap-1">
-                                                {tutor.availabilities && tutor.availabilities.length > 0 ? (
+                                                {Array.isArray(tutor.availabilities) && tutor.availabilities.length > 0 ? (
                                                     tutor.availabilities.map((slot, i) => (
                                                         <span key={i} className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                             {slot.day}: {to12hr(slot.start_time)} - {to12hr(slot.end_time)}

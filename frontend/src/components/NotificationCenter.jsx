@@ -19,8 +19,13 @@ const NotificationCenter = () => {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/`, {
                 headers: getAuthHeader()
             });
-            setNotifications(res.data);
-            setUnreadCount(res.data.filter(n => !n.is_read).length);
+            if (Array.isArray(res.data)) {
+                setNotifications(res.data);
+                setUnreadCount(res.data.filter(n => !n.is_read).length);
+            } else {
+                setNotifications([]);
+                setUnreadCount(0);
+            }
         } catch (err) {
             console.error("Failed to fetch notifications", err);
         }
