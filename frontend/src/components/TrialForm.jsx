@@ -24,7 +24,11 @@ const TrialForm = () => {
             setLoadingTutors(true);
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${encodeURIComponent(formData.courseInterested)}`);
-                setAvailableTutors(res.data);
+                if (Array.isArray(res.data)) {
+                    setAvailableTutors(res.data);
+                } else {
+                    setAvailableTutors([]);
+                }
             } catch (err) {
                 console.error("Failed to fetch tutors", err);
                 setAvailableTutors([]);

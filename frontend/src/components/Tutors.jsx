@@ -182,7 +182,11 @@ const Tutors = () => {
         const fetchTutors = async () => {
             try {
                 const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/public/`);
-                setTutors(res.data);
+                if (Array.isArray(res.data)) {
+                    setTutors(res.data);
+                } else {
+                    setTutors([]);
+                }
             } catch (err) {
                 console.error("Failed to fetch tutors", err);
             } finally {
@@ -215,7 +219,7 @@ const Tutors = () => {
         }
     ];
 
-    const displayTutors = tutors.length > 0 ? tutors : staticTutors;
+    const displayTutors = Array.isArray(tutors) && tutors.length > 0 ? tutors : staticTutors;
 
     return (
         <section id="tutors" className="py-20 bg-slate-50 relative overflow-hidden">
@@ -318,11 +322,12 @@ const Tutors = () => {
                                                         </span>
                                                     ))
                                                 ) : (
-                                                    tutor.availability_hours.split(',').map((h, i) => {
+                                                    (tutor.availability_hours || '').split(',').map((h, i) => {
                                                         const match = h.trim().match(/^(.*?):\s*(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})$/);
                                                         const label = match
                                                             ? `${match[1]}: ${to12hr(match[2])} - ${to12hr(match[3])}`
                                                             : h.trim();
+                                                        if (!label) return null;
                                                         return (
                                                             <span key={i} className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                                 {label}
