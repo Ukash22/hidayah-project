@@ -18,8 +18,8 @@ def get_rate_by_level(level):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'role', 'phone', 'first_name', 'last_name', 'admission_number', 'dob', 'country', 'timezone', 'preferred_language')
-        read_only_fields = ('id', 'role', 'admission_number')
+        fields = ('id', 'username', 'email', 'role', 'phone', 'first_name', 'last_name', 'admission_number', 'dob', 'country', 'timezone', 'preferred_language', 'is_superuser', 'is_staff')
+        read_only_fields = ('id', 'role', 'admission_number', 'is_superuser', 'is_staff')
 
 class PendingStudentSerializer(serializers.ModelSerializer):
     profile_data = serializers.SerializerMethodField()
@@ -87,7 +87,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def generate_admission_number(self, course_code="GEN"):
         year = date.today().year
-        serial = random.randint(1000, 9999)
+        serial = random.randint(10000, 99999) # Increased range to 5 digits
         return f"HEMI/{year}/{course_code}/{serial}"
 
     def calculate_age(self, born):
@@ -281,9 +281,17 @@ class RegisterSerializer(serializers.ModelSerializer):
                             if t_user and t_user.tutor_profile and t_user.tutor_profile.hourly_rate:
                                 current_rate = t_user.tutor_profile.hourly_rate
 
+                            # Ensure numeric values for math
+                            try:
+                                d_per_w = int(days_per_week)
+                                h_per_w = float(hours_per_week)
+                            except (ValueError, TypeError):
+                                d_per_w = 3
+                                h_per_w = 1.0
+
                             # CRITICAL MATH FIX: Backend Enrollment expects Hours PER SESSION
                             # hours_per_week in serializer is TOTAL WEEKLY HOURS
-                            hours_per_session = hours_per_week / days_per_week if days_per_week > 0 else hours_per_week
+                            hours_per_session = h_per_w / d_per_w if d_per_w > 0 else h_per_w
 
                             Enrollment.objects.create(
                                 student=profile,

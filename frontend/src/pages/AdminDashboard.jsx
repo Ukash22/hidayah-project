@@ -1028,66 +1028,94 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen font-sans flex text-slate-800 bg-slate-50">
             {/* Left Sidebar Navigation */}
-            <div className="w-64 bg-slate-900 border-r border-slate-800 text-slate-300 flex flex-col fixed h-full shadow-2xl z-50">
-                <div className="p-6 border-b border-slate-800/80 bg-slate-900/50">
-                    <h1 className="text-xl font-black text-white font-display tracking-tight flex items-center gap-2">
-                        <img src="/logo.png" alt="Hidayah" className="w-16 h-16 object-contain" />
+            <div className="w-64 bg-slate-900 border-r border-white/5 text-slate-300 flex flex-col fixed h-full shadow-[20px_0_40px_rgba(0,0,0,0.2)] z-50 overflow-hidden">
+                {/* Glossy Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none opacity-50" />
+                
+                <div className="p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-xl relative z-10">
+                    <h1 className="text-2xl font-black text-white font-display tracking-tight flex items-center gap-3">
+                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
+                             <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
+                        </div>
                         Hidayah
                     </h1>
-                    <p className="text-[9px] uppercase tracking-widest text-slate-500 font-bold mt-1">Global Admin Center</p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-black">Global Control</p>
+                    </div>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1 hide-scrollbar">
-                    <div className="text-[9px] font-black uppercase text-slate-600 tracking-widest pl-2 mb-2">Core Hub</div>
+                <div className="flex-1 overflow-y-auto py-8 px-4 space-y-1.5 hide-scrollbar relative z-10">
+                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4">Core Infrastructure</div>
                     <SidebarButton active={activeTab === 'admissions'} onClick={() => setActiveTab('admissions')} icon="📥" label="Admissions" badge={stats.pending} />
                     <SidebarButton active={activeTab === 'students'} onClick={() => setActiveTab('students')} icon="🎓" label="Students" />
                     <SidebarButton active={activeTab === 'tutors'} onClick={() => setActiveTab('tutors')} icon="👨‍🏫" label="Tutors" />
                     <SidebarButton active={activeTab === 'tutor_recruitment'} onClick={() => setActiveTab('tutor_recruitment')} icon="👔" label="Recruitment" badge={tutorApps.filter(a => a.status === 'PENDING').length} />
                     
-                    <div className="text-[9px] font-black uppercase text-slate-600 tracking-widest pl-2 mb-2 mt-6">Operations</div>
+                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4 mt-8">Operations Hub</div>
                     <SidebarButton active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon="📅" label="Bookings" badge={pendingBookings.length} />
                     <SidebarButton active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} icon="📚" label="Classes" />
                     <SidebarButton active={activeTab === 'trials'} onClick={() => setActiveTab('trials')} icon="🧪" label="Trials" />
                     <SidebarButton active={activeTab === 'curriculum'} onClick={() => setActiveTab('curriculum')} icon="📖" label="Curriculum" />
                     <SidebarButton active={activeTab === 'exams'} onClick={() => setActiveTab('exams')} icon="📝" label="Exams" />
                     
-                    <div className="text-[9px] font-black uppercase text-slate-600 tracking-widest pl-2 mb-2 mt-6">Financials & Support</div>
+                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4 mt-8">Financial & Support</div>
                     <SidebarButton active={activeTab === 'financials'} onClick={() => setActiveTab('financials')} icon="💳" label="Transactions" />
                     <SidebarButton active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} icon="💸" label="Payouts" badge={pendingPayouts.length} />
                     <SidebarButton active={activeTab === 'withdrawals'} onClick={() => setActiveTab('withdrawals')} icon="🏦" label="Withdrawals" badge={withdrawalRequests.length} />
                     <SidebarButton active={activeTab === 'complaints'} onClick={() => setActiveTab('complaints')} icon="💬" label="Complaints" badge={allComplaints.filter(c => !c.resolved_at).length} />
                 </div>
+
+                <div className="p-4 border-t border-white/5 bg-slate-900/60 backdrop-blur-xl relative z-10">
+                    <button 
+                        onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all font-bold text-xs group"
+                    >
+                        <span className="group-hover:scale-110 transition-transform">Logout</span>
+                    </button>
+                </div>
             </div>
 
             {/* Main Content Pane */}
-            <div className="flex-1 ml-64 p-8 min-h-screen bg-[#f8fafc]">
-                <div className="max-w-7xl mx-auto space-y-8">
+            <div className="flex-1 ml-64 p-10 min-h-screen bg-[#fcfdfe]">
+                <div className="max-w-7xl mx-auto space-y-10">
                     {/* Top Global Navigation Bar */}
-                    <div className="flex justify-between items-center bg-white/70 backdrop-blur-md p-4 rounded-2xl shadow-sm border border-slate-100">
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl drop-shadow-md">🌍</span>
+                    <div className="flex flex-col md:flex-row justify-between items-center bg-white/40 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        
+                        <div className="flex items-center gap-5 relative z-10">
+                            <div className="w-14 h-14 bg-white rounded-2xl shadow-xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-500">
+                                🌍
+                            </div>
                             <div>
-                                <h2 className="text-sm font-black text-slate-800">Global Administration Active</h2>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System Time: {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({Intl.DateTimeFormat().resolvedOptions().timeZone})</p>
+                                <h2 className="text-lg font-black text-slate-800 tracking-tight">Command Center Active</h2>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest opacity-70">
+                                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {Intl.DateTimeFormat().resolvedOptions().timeZone}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
+                        
+                        <div className="flex gap-3 w-full md:w-auto mt-6 md:mt-0 relative z-10">
+                            <div className="relative flex-1 md:w-80">
                                 <input
                                     type="text"
-                                    placeholder="Global Search..."
+                                    placeholder="Intelligent Global Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                                    className="w-full pl-12 pr-4 py-3.5 bg-white/80 border border-slate-100 rounded-2xl text-xs outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-bold placeholder:text-slate-400 shadow-sm"
                                 />
-                                <span className="absolute left-3 top-2.5 text-[12px]">🔍</span>
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
                             </div>
                             <button
                                 onClick={fetchApplications}
-                                className="p-2 px-3 flex items-center gap-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-colors shadow-sm text-xs font-bold uppercase"
-                                title="Refresh Dashboard"
+                                className="p-3.5 px-6 flex items-center gap-3 bg-slate-900 text-white rounded-2xl hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95 group/btn"
+                                title="Synchronize Data"
                             >
-                                <span>🔄</span> Sync
+                                <span className="group-hover/btn:rotate-180 transition-transform duration-700">🔄</span> 
+                                <span className="text-[11px] font-black uppercase tracking-widest">Sync</span>
                             </button>
                         </div>
                     </div>
@@ -3413,19 +3441,32 @@ const AdminDashboard = () => {
 
 
 const StatCard = ({ icon, label, value, sub, alert, color, isDark }) => (
-    <div className={`${color} p-4 rounded-xl shadow-sm border flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all duration-300`}>
+    <div className={`p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 flex flex-col justify-between relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-500 bg-white/60 backdrop-blur-md`}>
+        {/* Subtle Gradient Hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
         <div className="flex justify-between items-start z-10">
             <div>
-                <p className={`text-[9px] uppercase font-black tracking-widest mb-1 ${isDark ? 'text-white/60' : 'text-slate-400'}`}>{label}</p>
-                <div className={`text-2xl font-black font-display leading-none mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    {value}
+                <p className={`text-[10px] uppercase font-black tracking-[0.2em] mb-3 text-slate-400 group-hover:text-primary transition-colors duration-500`}>{label}</p>
+                <div className={`text-4xl font-black font-display tracking-tight leading-none mb-3 text-slate-900`}>
+                    {typeof value === 'number' ? value.toLocaleString() : value}
                 </div>
-                {sub && <p className={`text-[9px] font-bold ${isDark ? 'text-white/40' : 'text-slate-400'}`}>{sub}</p>}
+                {sub && (
+                    <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-primary/40" />
+                        <p className={`text-[11px] font-bold text-slate-400`}>{sub}</p>
+                    </div>
+                )}
             </div>
-            <div className={`text-2xl ${isDark ? 'opacity-20' : 'opacity-10'} group-hover:scale-110 transition-transform`}>{icon}</div>
+            <div className={`w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-primary group-hover:text-white transition-all duration-500 group-hover:shadow-lg group-hover:shadow-primary/20 group-hover:rotate-6`}>
+                {icon}
+            </div>
         </div>
         {alert && (
-            <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 animate-pulse ring-4 ring-white/10"></div>
+            <div className="absolute top-4 right-4 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </div>
         )}
     </div>
 );
@@ -3433,16 +3474,20 @@ const StatCard = ({ icon, label, value, sub, alert, color, isDark }) => (
 const SidebarButton = ({ active, onClick, icon, label, badge }) => (
     <button
         onClick={onClick}
-        className={`w-full text-left px-4 py-3 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-3 relative overflow-hidden group ${active
-            ? 'bg-primary/20 text-primary shadow-lg shadow-primary/5'
-            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+        className={`w-full text-left px-4 py-3.5 rounded-2xl text-xs font-black transition-all duration-500 flex items-center gap-4 relative overflow-hidden group ${active
+            ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] scale-[1.02]'
+            : 'text-slate-400 hover:bg-white/5 hover:text-white'
             }`}
     >
-        {active && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-md"></div>}
-        <span className={`text-lg transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>{icon}</span>
-        <span className="flex-1">{label}</span>
+        {active && (
+            <div className="absolute inset-0 bg-white/10 opacity-20 pointer-events-none" />
+        )}
+        <span className={`text-xl transition-all duration-500 ${active ? 'scale-110 rotate-3 drop-shadow-lg' : 'group-hover:scale-110 group-hover:rotate-6 opacity-60 group-hover:opacity-100'}`}>{icon}</span>
+        <span className={`flex-1 tracking-wide ${active ? 'translate-x-1' : 'group-hover:translate-x-1'} transition-transform duration-300`}>{label}</span>
         {badge > 0 && (
-            <span className="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-sm animate-pulse min-w-[20px] text-center">
+            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm transition-all duration-500 ${
+                active ? 'bg-white text-primary' : 'bg-red-500 text-white animate-pulse'
+            }`}>
                 {badge > 99 ? '99+' : badge}
             </span>
         )}
@@ -3452,13 +3497,18 @@ const SidebarButton = ({ active, onClick, icon, label, badge }) => (
 const StatusBadge = ({ status }) => {
     const s = status?.toUpperCase();
     const styles = {
-        PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        APPROVED: 'bg-green-100 text-green-800 border-green-200',
-        REJECTED: 'bg-red-100 text-red-800 border-red-200',
+        APPROVED: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        PENDING: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+        REJECTED: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+        ACTIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        COMPLETED: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+        CANCELLED: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+        UNPAID: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+        PAID: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        QUERY: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
         LIVE_STARTED: 'bg-emerald-600 text-white border-emerald-500 font-black shadow-emerald-200',
         LIVE_WAITING: 'bg-red-500 text-white border-red-400 animate-pulse font-black shadow-red-200',
-        UPCOMING: 'bg-blue-50 text-blue-600 border-blue-100 font-bold',
-        COMPLETED: 'bg-slate-100 text-slate-500 border-slate-200 font-bold',
+        UPCOMING: 'bg-blue-500/10 text-blue-600 border-blue-500/10 font-bold',
         ENDED: 'bg-slate-50 text-slate-400 border-slate-100 italic'
     };
 
@@ -3471,7 +3521,7 @@ const StatusBadge = ({ status }) => {
     };
 
     return (
-        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm transition-all duration-300 ${styles[s] || 'bg-slate-100 text-slate-600'}`}>
+        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm transition-all duration-300 ${styles[s] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
             {labels[s] || s}
         </span>
     );

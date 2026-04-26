@@ -22,8 +22,8 @@ const Login = () => {
             const data = await login(formData.username, formData.password);
             const userRole = (data.user?.role || '').toUpperCase();
 
-            // Redirect based on role
-            if (userRole === 'ADMIN') {
+            // Redirect based on role or staff status
+            if (userRole === 'ADMIN' || data.user?.is_superuser || data.user?.is_staff) {
                 // Force reload to ensure fresh auth state/token lookup for admin
                 window.location.href = '/admin';
             }

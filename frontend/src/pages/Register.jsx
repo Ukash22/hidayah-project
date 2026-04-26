@@ -345,8 +345,11 @@ const Register = () => {
 
             alert("✨ Congratulations! You have been automatically admitted to Hidayah International. Your admission letter has been sent to your email.");
 
-            if (data.user.role === 'ADMIN') navigate('/admin');
-            else navigate('/payment');
+            if (data.user?.role === 'ADMIN' || data.user?.is_superuser || data.user?.is_staff) {
+                window.location.href = '/admin';
+            } else {
+                navigate('/payment');
+            }
         } catch (err) {
             console.error("Registration Error details:", err.response?.data);
 
