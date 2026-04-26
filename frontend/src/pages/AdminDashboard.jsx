@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import React, { useState, useEffect, useMemo, Component } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
@@ -64,16 +64,16 @@ const AdminDashboard = () => {
     const [allComplaints, setAllComplaints] = useState([]);
     const [allClasses, setAllClasses] = useState([]);
     const [financials, setFinancials] = useState(null);
-    const [loadingFinancials, setLoadingFinancials] = useState(false);
+    const [_loadingFinancials, setLoadingFinancials] = useState(false);
     const [approvedTutors, setApprovedTutors] = useState([]);
     const [pendingPayouts, setPendingPayouts] = useState([]);
     const [pendingBookings, setPendingBookings] = useState([]);
-    const [paymentAnalytics, setPaymentAnalytics] = useState(null);
+    const [_paymentAnalytics, setPaymentAnalytics] = useState(null);
     const [analyticsChartMode, setAnalyticsChartMode] = useState('monthly'); // 'daily','weekly','monthly'
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [filter, setFilter] = useState('all');
+    const [filter, _setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIds, setSelectedIds] = useState([]);
     const [showModal, setShowModal] = useState(false);
@@ -87,21 +87,21 @@ const AdminDashboard = () => {
     const [globalSuccess, setGlobalSuccess] = useState(false);
     const [selectedApp, setSelectedApp] = useState(null);
     const [selectedStudent, setSelectedStudent] = useState(null);
-    const [selectedTutor, setSelectedTutorProfile] = useState(null);
+    const [selectedTutor, _setSelectedTutorProfile] = useState(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [tutors, setTutors] = useState([]);
     const [tutorApps, setTutorApps] = useState([]);
     const [selectedTutorApp, setSelectedTutorApp] = useState(null);
     const [materials, setMaterials] = useState([]);
     const [adminBookings, setAdminBookings] = useState([]);
-    const [adminBookingStatus, setAdminBookingStatus] = useState('pending');
-    const [selectedBooking, setSelectedBooking] = useState(null);
-    const [showBookingModal, setShowBookingModal] = useState(false);
-    const [bookingForm, setBookingForm] = useState({
+    const [adminBookingStatus, _setAdminBookingStatus] = useState('pending');
+    const [_selectedBooking, setSelectedBooking] = useState(null);
+    const [_showBookingModal, setShowBookingModal] = useState(false);
+    const [_bookingForm, setBookingForm] = useState({
         tutor_id: '',
         subject: ''
     });
-    const [updatingBooking, setUpdatingBooking] = useState(false);
+    const [_updatingBooking, _setUpdatingBooking] = useState(false);
 
 
     // Wallet Action State
@@ -160,7 +160,7 @@ const AdminDashboard = () => {
                 minute: '2-digit',
                 hour12: true
             });
-        } catch (e) {
+        } catch (_err) {
             return "Invalid TZ";
         }
     };
@@ -179,13 +179,13 @@ const AdminDashboard = () => {
         return flags[country] || '🌍';
     };
 
-    const fetchFinancials = async () => {
+    const _fetchFinancials = async () => {
         setLoadingFinancials(true);
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/financials/`, { headers: getAuthHeader() });
             setFinancials(res.data);
-        } catch (err) {
-            console.error("Failed to fetch financials", err);
+        } catch (_err) {
+            console.error("Failed to fetch financials", _err);
         } finally {
             setLoadingFinancials(false);
         }
@@ -246,8 +246,8 @@ const AdminDashboard = () => {
             doc.text("This is a computer-generated receipt and requires no signature.", 105, finalY + 30, { align: "center" });
             
             doc.save(`Hidayah_Receipt_${data.ref || data.reference || data.id}.pdf`);
-        } catch (err) {
-            console.error("Receipt generation failed:", err);
+        } catch (_err) {
+            console.error("Receipt generation failed:", _err);
             alert("Failed to generate receipt. Please try again.");
         }
     };
@@ -256,8 +256,8 @@ const AdminDashboard = () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/stats/`, { headers: getAuthHeader() });
             setStats(res.data);
-        } catch (err) {
-            console.error("Failed to fetch admin stats", err);
+        } catch (_err) {
+            console.error("Failed to fetch admin stats", _err);
         }
     };
 
@@ -266,7 +266,7 @@ const AdminDashboard = () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/?status=${adminBookingStatus}`, { headers: getAuthHeader() });
             setAdminBookings(res.data);
-        } catch (err) { console.error("Bookings fetch failed"); }
+        } catch (_err) { console.error("Bookings fetch failed"); }
     };
 
     const countryData = React.useMemo(() => {
@@ -369,9 +369,9 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/?status=pending`, { headers: getAuthHeader() });
             setPendingBookings(response.data);
-        } catch (err) {
-            console.error("Failed to fetch bookings", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) {
+            console.error("Failed to fetch bookings", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -379,8 +379,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/analytics/`, { headers: getAuthHeader() });
             setPaymentAnalytics(response.data);
-        } catch (err) {
-            console.error("Failed to fetch analytics", err);
+        } catch (_err) {
+            console.error("Failed to fetch analytics", _err);
         }
     };
 
@@ -388,8 +388,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() });
             setSubjects(response.data);
-        } catch (err) {
-            console.error("Failed to fetch subjects", err);
+        } catch (_err) {
+            console.error("Failed to fetch subjects", _err);
         }
     };
 
@@ -397,7 +397,7 @@ const AdminDashboard = () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/settings/`, { headers: getAuthHeader() });
             setGlobalSettings(res.data);
-        } catch (err) { console.error("Settings fetch failed"); }
+        } catch (_err) { console.error("Settings fetch failed"); }
     };
 
     const handleUpdateGlobalCommission = async (val) => {
@@ -411,7 +411,7 @@ const AdminDashboard = () => {
             setGlobalSettings(res.data);
             setGlobalSuccess(true);
             setTimeout(() => setGlobalSuccess(false), 3000);
-        } catch (err) {
+        } catch (_err) {
             alert("Failed to update global share. Please ensure value is valid.");
         } finally {
             setUpdatingGlobal(false);
@@ -425,21 +425,21 @@ const AdminDashboard = () => {
             setSavingStatus(prev => ({ ...prev, [id]: 'success' }));
             fetchSubjects();
             setTimeout(() => setSavingStatus(prev => ({ ...prev, [id]: 'idle' })), 2000);
-        } catch (err) {
-            console.error("Failed to update subject commission", err);
+        } catch (_err) {
+            console.error("Failed to update subject commission", _err);
             setSavingStatus(prev => ({ ...prev, [id]: 'idle' }));
             alert("Failed to update commission. Please check the value.");
         }
     };
 
-    const handleBookingAction = async (id, action) => {
+    const _handleBookingAction = async (id, action) => {
         if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${id}/action/`, { action }, { headers: getAuthHeader() });
             alert(`Booking ${action}ed successfully!`);
             fetchBookings();
-        } catch (err) {
-            alert(`Failed to ${action} booking: ` + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert(`Failed to ${action} booking: ` + (_err.response?.data?.error || _err.message));
         }
     };
 
@@ -448,9 +448,9 @@ const AdminDashboard = () => {
             // Use admin/list endpoint to get TutorProfile objects with proper IDs
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/?status=APPROVED`, { headers: getAuthHeader() });
             setTutors(response.data);
-        } catch (err) {
-            console.error("Failed to fetch tutors", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) {
+            console.error("Failed to fetch tutors", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -458,9 +458,9 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/admin/all/`, { headers: getAuthHeader() });
             setAllStudents(response.data);
-        } catch (err) {
-            console.error("Failed to fetch students", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) {
+            console.error("Failed to fetch students", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -473,8 +473,8 @@ const AdminDashboard = () => {
             fetchStudents(); // Refresh students to remove them if backend filters them or track role update
             fetchTutors();
             fetchTutorApps();
-        } catch (err) {
-            alert(`Failed to promote student: ` + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert(`Failed to promote student: ` + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -493,8 +493,8 @@ const AdminDashboard = () => {
             // Refresh selected student to show new data
             const updated = allStudents.find(s => s.id === selectedStudent.id);
             if (updated) setSelectedStudent({ ...selectedStudent, ...studentForm });
-        } catch (err) {
-            alert("Failed to update student: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to update student: " + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -504,8 +504,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/transactions/`, { headers: getAuthHeader() });
             setTransactions(response.data);
-        } catch (err) {
-            console.error("Failed to fetch transactions", err);
+        } catch (_err) {
+            console.error("Failed to fetch transactions", _err);
         }
     };
 
@@ -513,8 +513,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/`, { headers: getAuthHeader() });
             setTutorApps(response.data);
-        } catch (err) {
-            console.error("Failed to fetch tutor applications", err);
+        } catch (_err) {
+            console.error("Failed to fetch tutor applications", _err);
         }
     };
 
@@ -522,8 +522,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/?status=APPROVED`, { headers: getAuthHeader() });
             setApprovedTutors(response.data);
-        } catch (err) {
-            console.error("Failed to fetch approved tutors", err);
+        } catch (_err) {
+            console.error("Failed to fetch approved tutors", _err);
         }
     };
 
@@ -531,8 +531,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/withdrawals/pending/`, { headers: getAuthHeader() });
             setWithdrawalRequests(response.data);
-        } catch (err) {
-            console.error("Failed to fetch withdrawals", err);
+        } catch (_err) {
+            console.error("Failed to fetch withdrawals", _err);
         }
     };
 
@@ -540,8 +540,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/admin/all/`, { headers: getAuthHeader() });
             setAllComplaints(response.data);
-        } catch (err) {
-            console.error("Failed to fetch complaints", err);
+        } catch (_err) {
+            console.error("Failed to fetch complaints", _err);
         }
     };
 
@@ -549,8 +549,8 @@ const AdminDashboard = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/unified-list/`, { headers: getAuthHeader() });
             setAllClasses(response.data);
-        } catch (err) {
-            console.error("Failed to fetch classes", err);
+        } catch (_err) {
+            console.error("Failed to fetch classes", _err);
         }
     };
 
@@ -564,8 +564,8 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/withdrawal/approve/${id}/`, {}, { headers: getAuthHeader() });
             alert(`Withdrawal approved successfully!`);
             fetchWithdrawals();
-        } catch (err) {
-            alert(`Failed to approve withdrawal: ` + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert(`Failed to approve withdrawal: ` + (_err.response?.data?.error || _err.message));
         }
     };
 
@@ -576,8 +576,8 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/admin/${id}/resolve/`, { response: responseText }, { headers: getAuthHeader() });
             alert("Complaint resolved and response sent!");
             fetchComplaints();
-        } catch (err) {
-            alert("Failed to resolve complaint: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to resolve complaint: " + (_err.response?.data?.error || _err.message));
         }
     };
 
@@ -588,8 +588,8 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/approve-student/${id}/`, {}, { headers: getAuthHeader() });
             alert("✅ Student approved! Admission letter generated and sent via email.");
             fetchApplications(); // Refresh both applications and pending students
-        } catch (err) {
-            alert("Failed to approve student: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to approve student: " + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -607,8 +607,8 @@ const AdminDashboard = () => {
             setPendingStudents(pendResponse.data);
 
             setLoading(false);
-        } catch (err) {
-            if (err.response?.status === 401) {
+        } catch (_err) {
+            if (_err.response?.status === 401) {
                 setError('Authentication Failed: Please login again.');
                 localStorage.removeItem('access');
                 // Optional: window.location.href = '/login';
@@ -623,9 +623,9 @@ const AdminDashboard = () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() });
             setMaterials(res.data);
-        } catch (err) { 
-            console.error("Failed to fetch materials", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) { 
+            console.error("Failed to fetch materials", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -634,9 +634,9 @@ const AdminDashboard = () => {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() });
             // For now, we just log or store if state exists, but the UI shows a Link to Central Exam Engine
             console.log("Exams fetched:", res.data);
-        } catch (err) {
-            console.error("Failed to fetch exams", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) {
+            console.error("Failed to fetch exams", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -645,9 +645,9 @@ const AdminDashboard = () => {
             // Corrected Path: applications.urls is at api/
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/classes/pending-payouts/`, { headers: getAuthHeader() });
             setPendingPayouts(response.data);
-        } catch (err) {
-            console.error("Failed to fetch pending payouts", err);
-            if (err.response?.status === 401) setError('Unauthorized: Session Expired');
+        } catch (_err) {
+            console.error("Failed to fetch pending payouts", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
     };
 
@@ -659,8 +659,8 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/classes/${sessionId}/release-payout/`, {}, { headers: getAuthHeader() });
             alert("✅ Payout released successfully!");
             fetchPendingPayouts();
-        } catch (err) {
-            alert("Failed to release payout: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to release payout: " + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -692,8 +692,8 @@ const AdminDashboard = () => {
             alert("✅ Tutor records updated successfully!");
             setShowTutorModal(false);
             fetchTutorApps(); // Refresh list
-        } catch (err) {
-            alert("Failed to update tutor: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to update tutor: " + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -704,7 +704,7 @@ const AdminDashboard = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/toggle-public/${id}/`, {}, { headers: getAuthHeader() });
             alert("Visibility toggled!");
             fetchTutorApps();
-        } catch (err) { alert("Failed to toggle visibility"); }
+        } catch (_err) { alert("Failed to toggle visibility"); }
     };
 
     const openApprovalModal = (app, isEdit = false) => {
@@ -796,9 +796,9 @@ const AdminDashboard = () => {
                 alert(msg);
             }
 
-        } catch (err) {
-            console.error("Action error:", err);
-            const errorMsg = err.response?.data?.error || err.message;
+        } catch (_err) {
+            console.error("Action error:", _err);
+            const errorMsg = _err.response?.data?.error || _err.message;
             alert(`Failed to process: ${errorMsg}`);
         } finally {
             setActionLoading(false);
@@ -817,8 +817,8 @@ const AdminDashboard = () => {
                 app.id === id ? { ...app, status: 'rejected' } : app
             ));
             alert('✅ Application rejected and email sent.');
-        } catch (err) {
-            const errorMsg = err.response?.data?.error || err.message;
+        } catch (_err) {
+            const errorMsg = _err.response?.data?.error || _err.message;
             alert(`Failed to reject: ${errorMsg}`);
         } finally {
             setActionLoading(false);
@@ -845,8 +845,8 @@ const AdminDashboard = () => {
             setShowStudentModal(false);
             setWalletAction({ amount: '', type: 'DEPOSIT', description: 'Bank Transfer' });
             fetchStudents(); // Refresh list
-        } catch (err) {
-            const errorMsg = err.response?.data?.error || err.message;
+        } catch (_err) {
+            const errorMsg = _err.response?.data?.error || _err.message;
             alert(`Failed: ${errorMsg}`);
         } finally {
             setActionLoading(false);
@@ -873,8 +873,8 @@ const AdminDashboard = () => {
             alert("✅ Tutor assigned successfully!");
             fetchStudents();
             setShowStudentModal(false);
-        } catch (err) {
-            alert("Failed to assign tutor: " + (err.response?.data?.error || err.message));
+        } catch (_err) {
+            alert("Failed to assign tutor: " + (_err.response?.data?.error || _err.message));
         } finally {
             setActionLoading(false);
         }
@@ -905,8 +905,8 @@ const AdminDashboard = () => {
                 }
 
                 successCount++;
-            } catch (err) {
-                console.error(`Bulk ${action} failed for ID ${id}`, err);
+            } catch (_err) {
+                console.error(`Bulk ${action} failed for ID ${id}`, _err);
             }
         }
 
@@ -999,8 +999,8 @@ const AdminDashboard = () => {
         }
         
         const dateObj = new Date(session.scheduled_at);
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const dateString = dateObj.toLocaleDateString();
+        const _dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+        const _dateString = dateObj.toLocaleDateString();
         
         const tutorName = session.tutor_name || session.assigned_tutor || 'Tutor';
         const studentName = session.student_name || session.first_name || 'Student';
@@ -1400,8 +1400,8 @@ const AdminDashboard = () => {
                                                                 }, { headers: getAuthHeader() });
                                                                 alert("✅ Interview Scheduled Successfully!");
                                                                 fetchTutorApps();
-                                                            } catch (err) {
-                                                                alert("❌ Failed to schedule interview: " + (err.response?.data?.error || err.message));
+                                                            } catch (_err) {
+                                                                alert("❌ Failed to schedule interview: " + (_err.response?.data?.error || _err.message));
                                                             } finally {
                                                                 setActionLoading(false);
                                                             }
@@ -1427,8 +1427,8 @@ const AdminDashboard = () => {
                                                                 }, { headers: getAuthHeader() });
                                                                 alert("✅ Schedule Updated!");
                                                                 fetchTutorApps();
-                                                            } catch (err) {
-                                                                alert("❌ Failed: " + (err.response?.data?.error || err.message));
+                                                            } catch (_err) {
+                                                                alert("❌ Failed: " + (_err.response?.data?.error || _err.message));
                                                             } finally {
                                                                 setActionLoading(false);
                                                             }
@@ -1447,7 +1447,7 @@ const AdminDashboard = () => {
                                                                         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, { action: 'APPROVE' }, { headers: getAuthHeader() });
                                                                         alert("Tutor Approved!");
                                                                         fetchTutorApps();
-                                                                    } catch (err) { alert("Failed to approve"); }
+                                                                    } catch (_err) { alert("Failed to approve"); }
                                                                 }
                                                             }}
                                                             className="px-2 py-1 bg-emerald-600 text-white rounded text-[9px] font-black uppercase"
@@ -1462,7 +1462,7 @@ const AdminDashboard = () => {
                                                                         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, { action: 'REJECT', reason }, { headers: getAuthHeader() });
                                                                         alert("Tutor Rejected");
                                                                         fetchTutorApps();
-                                                                    } catch (err) { alert("Failed to reject"); }
+                                                                    } catch (_err) { alert("Failed to reject"); }
                                                                 }
                                                             }}
                                                             className="text-[9px] text-red-500 font-bold underline"
@@ -1651,7 +1651,7 @@ const AdminDashboard = () => {
                                                         try {
                                                             await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public }, { headers: getAuthHeader() });
                                                             fetchMaterials();
-                                                        } catch (err) { alert("Failed to update status"); }
+                                                        } catch (_err) { alert("Failed to update status"); }
                                                     }}
                                                     className={`px-2 py-1 rounded text-[9px] font-black uppercase ${mat.is_public ? 'bg-slate-200 text-slate-600' : 'bg-emerald-500 text-white'}`}
                                                 >
@@ -1663,7 +1663,7 @@ const AdminDashboard = () => {
                                                             try {
                                                                 await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/${mat.id}/`, { headers: getAuthHeader() });
                                                                 fetchMaterials();
-                                                            } catch (err) { alert("Failed to delete material"); }
+                                                            } catch (_err) { alert("Failed to delete material"); }
                                                         }
                                                     }}
                                                     className="text-red-500 hover:text-red-700 transition-colors"
@@ -1902,7 +1902,7 @@ const AdminDashboard = () => {
                                                                     try {
                                                                         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${booking.id}/action/`, { action: 'approve' }, { headers: getAuthHeader() });
                                                                         fetchAdminBookings();
-                                                                    } catch (err) { alert("Approval failed"); }
+                                                                    } catch (_err) { alert("Approval failed"); }
                                                                 }
                                                             }}
                                                             className="px-2 py-1 bg-emerald-500 text-white rounded text-[9px] font-black uppercase hover:bg-emerald-600 flex-1"
@@ -1915,7 +1915,7 @@ const AdminDashboard = () => {
                                                                     try {
                                                                         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${booking.id}/action/`, { action: 'reject' }, { headers: getAuthHeader() });
                                                                         fetchAdminBookings();
-                                                                    } catch (err) { alert("Rejection failed"); }
+                                                                    } catch (_err) { alert("Rejection failed"); }
                                                                 }
                                                             }}
                                                             className="px-2 py-1 bg-red-500 text-white rounded text-[9px] font-black uppercase hover:bg-red-600 flex-1"
@@ -2489,7 +2489,7 @@ const AdminDashboard = () => {
                                                                 </a>
                                                             )}
                                                             <button
-                                                                onClick={() => togglePublicStatus(app.id, app.is_public)}
+                                                                onClick={() => togglePublicVisibility(app.id, app.is_public)}
                                                                 className={`px-3 py-1 rounded-md text-[9px] font-black uppercase transition-all h-8 shadow-sm ${app.is_public ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
                                                             >
                                                                 {app.is_public ? 'Visible' : 'Hidden'}
@@ -3373,7 +3373,7 @@ const AdminDashboard = () => {
                             alert('Tutor Approved!');
                             setSelectedTutorApp(null);
                             fetchTutorApps();
-                        } catch (err) { alert('Failed: ' + (err.response?.data?.error || err.message)); }
+                        } catch (_err) { alert('Failed: ' + (_err.response?.data?.error || _err.message)); }
                         finally { setActionLoading(false); }
                     }}
                     onReject={async () => {
@@ -3385,7 +3385,7 @@ const AdminDashboard = () => {
                             alert('Tutor Rejected');
                             setSelectedTutorApp(null);
                             fetchTutorApps();
-                        } catch (err) { alert('Failed: ' + (err.response?.data?.error || err.message)); }
+                        } catch (_err) { alert('Failed: ' + (_err.response?.data?.error || _err.message)); }
                         finally { setActionLoading(false); }
                     }}
                     onReschedule={async () => {
@@ -3400,7 +3400,7 @@ const AdminDashboard = () => {
                             alert('Schedule Updated!');
                             fetchTutorApps();
                             setSelectedTutorApp(prev => ({ ...prev, interview_at: time, interview_link: link }));
-                        } catch (err) { alert('Failed: ' + (err.response?.data?.error || err.message)); }
+                        } catch (_err) { alert('Failed: ' + (_err.response?.data?.error || _err.message)); }
                         finally { setActionLoading(false); }
                     }}
                 />
@@ -3477,10 +3477,7 @@ const StatusBadge = ({ status }) => {
     );
 };
 
-const TutorProfileModal = ({ app, onClose, onApprove, onReject, onReschedule, actionLoading }) => {
-    if (!app) return null;
-
-    const DocLink = ({ href, label, icon }) => href ? (
+const DocLink = ({ href, label, icon }) => href ? (
         <a href={href} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-all">
             <span>{icon}</span> {label}
@@ -3490,6 +3487,9 @@ const TutorProfileModal = ({ app, onClose, onApprove, onReject, onReschedule, ac
             {icon} {label} {'— Not uploaded'}
         </span>
     );
+
+    const TutorProfileModal = ({ app, onClose, onApprove, onReject, onReschedule, actionLoading }) => {
+    if (!app) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 pt-10">

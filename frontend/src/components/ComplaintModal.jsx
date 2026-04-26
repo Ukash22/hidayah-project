@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, token }) => {

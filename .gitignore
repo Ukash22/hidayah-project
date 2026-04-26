@@ -14,17 +14,21 @@ db.sqlite3
 media/
 staticfiles/
 
-# Node/Vite
+# Node/Vite/Mobile
 node_modules/
-.DS_Store
+dist/
 dist-ssr/
 *.local
+.DS_Store
 
 # IDEs
 .vscode/
 .idea/
 
-# Mobile
-android/
-ios/
+# Mobile Specific
+mobile_app/android/build/
+mobile_app/android/app/build/
+mobile_app/ios/App/build/
+mobile_app/node_modules/
+capacitor-cordova-android-plugins/
 *.log

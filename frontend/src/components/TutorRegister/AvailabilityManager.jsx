@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailabilitySlot, updateAvailabilitySlot, totalWeeklyHours, totalMonthlyHours, monthlyEarnings }) => {

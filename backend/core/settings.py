@@ -46,8 +46,12 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Add CSRF_TRUSTED_ORIGINS to allow logging into the admin panel on Render
 CSRF_TRUSTED_ORIGINS = [
     'https://hidayah-backend-zgix.onrender.com',
+    'https://hidayah-frontend.onrender.com',
     'http://localhost:5173',
     'http://localhost:5174',
+    'https://localhost',
+    'capacitor://localhost',
+    'http://localhost',
 ]
 
 # Security settings for production
@@ -227,7 +231,7 @@ PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
 PAYSTACK_MOCK_MODE = True  # Using Mock Mode to avoid timeouts during dev/testing
 
 # Application Configuration
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5174')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
 
 REST_FRAMEWORK = {

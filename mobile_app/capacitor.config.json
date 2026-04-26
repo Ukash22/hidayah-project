@@ -1,7 +1,7 @@
 {
   "appId": "com.hidayah.app",
   "appName": "Hidayah",
-  "webDir": "dist",
+  "webDir": "../frontend/dist",
   "server": {
     "cleartext": true,
     "androidScheme": "https"

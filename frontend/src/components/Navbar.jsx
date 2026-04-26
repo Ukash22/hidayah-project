@@ -1,12 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationCenter from './NotificationCenter';
 
+const NavLinks = ({ mobile = false, setIsOpen, userRole }) => (
+  <>
+    <Link to="/#about" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>About</Link>
+    <Link to="/#features" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors flex items-center gap-1 ${mobile ? 'text-lg py-2' : ''}`}>
+      Exam Prep
+      <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-full uppercase">New</span>
+    </Link>
+    <Link to="/#curriculum" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Curriculum</Link>
+    {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
+      <>
+        <Link to="/exam-practice" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Exam Practice</Link>
+        <Link to="/ai-hub" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>AI Hub</Link>
+      </>
+    )}
+    <Link to="/#tutors" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Tutors</Link>
+  </>
+);
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const { user, loading, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,30 +49,14 @@ const Navbar = () => {
           '/student'
   ) : '/';
 
-  const NavLinks = ({ mobile = false }) => (
-    <>
-      <Link to="/#about" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>About</Link>
-      <Link to="/#features" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors flex items-center gap-1 ${mobile ? 'text-lg py-2' : ''}`}>
-        Exam Prep
-        <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-full uppercase">New</span>
-      </Link>
-      <Link to="/#curriculum" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Curriculum</Link>
-      {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
-        <>
-          <Link to="/exam-practice" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Exam Practice</Link>
-          <Link to="/ai-hub" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>AI Hub</Link>
-        </>
-      )}
-      <Link to="/#tutors" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Tutors</Link>
-    </>
-  );
+
 
   return (
     <nav className={`fixed w-full z-[100] transition-all duration-300 ${scrolled || isOpen ? 'glass py-3 shadow-md' : 'bg-transparent py-5'}`}>
       <div className="container flex justify-between items-center px-6">
         <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 group">
           <img src="/logo.png" alt="Hidayah International" className="w-16 h-16 object-contain group-hover:scale-110 transition-transform" />
-          <div className="flex flex-col -gap-1">
+          <div className="flex flex-col">
             <span className={`font-black text-lg leading-tight tracking-tighter hover:text-secondary transition-colors ${scrolled ? 'text-primary' : 'text-primary'}`}>HIDAYAH</span>
             <span className="text-[8px] font-black tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
           </div>
@@ -62,7 +64,7 @@ const Navbar = () => {
 
         {/* Desktop Links */}
         <div className="hidden md:flex gap-8 items-center">
-          <NavLinks />
+          <NavLinks setIsOpen={setIsOpen} userRole={userRole} />
           <Link to="/tutor/register" className="font-medium hover:text-secondary transition-colors text-primary border-l pl-4">Teach with Us</Link>
 
           {user ? (
@@ -92,7 +94,7 @@ const Navbar = () => {
       {/* Mobile Menu Drawer */}
       {isOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl shadow-2xl py-10 px-6 animate-fade-in border-t border-slate-100 flex flex-col items-center text-center gap-6 overflow-y-auto max-h-[90vh]">
-          <NavLinks mobile />
+          <NavLinks mobile setIsOpen={setIsOpen} userRole={userRole} />
           <Link to="/tutor/register" onClick={() => setIsOpen(false)} className="font-bold text-primary py-2 text-lg">Teach with Us</Link>
           
           <div className="w-full h-px bg-slate-100 my-4"></div>

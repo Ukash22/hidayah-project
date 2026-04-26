@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -6,8 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 const NotificationCenter = () => {
     const { getAuthHeader: getContextAuthHeader } = useAuth();
     const [notifications, setNotifications] = useState([]);
-    const [showAll, setShowAll] = useState(false);
-    
     const getAuthHeader = () => {
         const token = localStorage.getItem('access');
         return token ? { Authorization: `Bearer ${token}` } : {};
@@ -28,6 +27,7 @@ const NotificationCenter = () => {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchNotifications();
         // Poll for new notifications every 60 seconds
         const interval = setInterval(fetchNotifications, 60000);

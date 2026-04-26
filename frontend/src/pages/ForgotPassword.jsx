@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 
@@ -19,7 +19,7 @@ const ForgotPassword = () => {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/request/`, { email });
             setMessage("If an account exists with this email, you will receive a password reset link shortly.");
             setEmail('');
-        } catch (err) {
+        } catch (_err) {
             setError("Something went wrong. Please try again later.");
         } finally {
             setLoading(false);
@@ -72,7 +72,7 @@ const ForgotPassword = () => {
                     </form>
 
                     <p className="text-center mt-8 text-xs font-bold">
-                        <a href="/login" className="text-slate-400 hover:text-primary transition-colors">← Back to Login</a>
+                        <Link to="/login" className="text-slate-400 hover:text-primary transition-colors">← Back to Login</Link>
                     </p>
                 </div>
             </div>

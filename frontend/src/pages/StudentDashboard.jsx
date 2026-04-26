@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    LayoutDashboard, BookOpen, GraduationCap, CreditCard, 
-    Bell, MessageSquare, Download, Plus, ArrowRight,
-    PlayCircle, FileText, Music, Wallet, CheckCircle2,
-    Calendar, Clock, User, ShieldCheck, X, Search,
-    TrendingUp, ExternalLink, AlertCircle
+    LayoutDashboard, MessageSquare, Download, Plus, 
+    FileText, CheckCircle2, ShieldCheck, X,
+    TrendingUp, ExternalLink, AlertCircle,
+    Wallet, BookOpen, GraduationCap, Bell, ArrowRight
 } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import ComplaintModal from '../components/ComplaintModal';
@@ -20,7 +20,6 @@ import JambCBT from '../components/JambCBT';
 
 const StudentDashboard = () => {
     const { user, token } = useAuth();
-    const location = useLocation();
     const navigate = useNavigate();
     
     const [profile, setProfile] = useState(null);
@@ -28,7 +27,7 @@ const StudentDashboard = () => {
     const [materials, setMaterials] = useState([]);
     const [complaints, setComplaints] = useState({ filed_by_me: [], filed_against_me: [] });
     const [notifications, setNotifications] = useState([]);
-    const [tutorRequests, setTutorRequests] = useState([]);
+
     const [bookings, setBookings] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,7 +47,7 @@ const StudentDashboard = () => {
     };
     
     // Check URL params for active tab, default to overview
-    const [activeTab, setActiveTab] = useState(new URLSearchParams(location.search).get('tab') || 'overview');
+    const [activeTab, setActiveTab] = useState(new URLSearchParams(window.location.search).get('tab') || 'overview');
     const [showComplaintModal, setShowComplaintModal] = useState(false);
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
     const [selectedSessionId, setSelectedSessionId] = useState(null);
@@ -63,11 +62,8 @@ const StudentDashboard = () => {
         preferred_start_date: '',
         active_tutor_rate: 0
     });
-    const [selectedDays, setSelectedDays] = useState([]);
     const [selectedTutorAvailability, setSelectedTutorAvailability] = useState(null);
     const [enrolling, setEnrolling] = useState(false);
-    const daysArray = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday', 'Any'];
-
     const [examAssignments, setExamAssignments] = useState([]);
     const [examResults, setExamResults] = useState([]);
 
@@ -76,7 +72,7 @@ const StudentDashboard = () => {
     const fetchData = async () => {
         if (!token) return;
         try {
-            const [profRes, classRes, compRes, matRes, reqRes, bookingRes, transactionsRes, examAsgnRes, examResRes] = await Promise.all([
+            const [profRes, classRes, compRes, matRes, _reqRes, bookingRes, transactionsRes, examAsgnRes, examResRes] = await Promise.all([
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() }),
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/sessions/`, { headers: getAuthHeader() }),
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/my/`, { headers: getAuthHeader() }),
@@ -91,7 +87,6 @@ const StudentDashboard = () => {
             setClasses(Array.isArray(classRes.data) ? classRes.data : classRes.data.classes || []);
             setComplaints(compRes.data);
             setMaterials(matRes.data);
-            setTutorRequests(reqRes.data);
             setBookings(bookingRes.data);
             setTransactions(transactionsRes.data);
             setExamAssignments(examAsgnRes.data);
@@ -174,20 +169,7 @@ const StudentDashboard = () => {
         }
     };
 
-    const toggleDay = (day) => {
-        setSelectedDays(prev => {
-            let newDays;
-            if (day === 'Any') {
-                newDays = prev.includes('Any') ? [] : ['Any'];
-            } else {
-                newDays = prev.filter(d => d !== 'Any');
-                newDays = newDays.includes(day) ? newDays.filter(d => d !== day) : [...newDays, day];
-            }
-            // If "Any", we set days_per_week to 7 (every day)
-            setEnrollData(current => ({ ...current, days_per_week: newDays.includes('Any') ? 7 : newDays.length || 1 }));
-            return newDays;
-        });
-    };
+
 
     // Pre-fill Modal from Profile/Registration Data
     useEffect(() => {
@@ -208,11 +190,9 @@ const StudentDashboard = () => {
                 }
             }
             if (profile.preferred_days?.toLowerCase().includes('any')) {
-                setSelectedDays(['Any']);
                 setEnrollData(prev => ({ ...prev, days_per_week: 7 }));
             } else if (profile.preferred_days) {
                 const dpw = profile.preferred_days.split(', ').filter(d => d);
-                setSelectedDays(dpw);
                 setEnrollData(prev => ({ ...prev, days_per_week: dpw.length }));
             }
             if (profile.preferred_time) {
@@ -240,7 +220,7 @@ const StudentDashboard = () => {
                     busy_slots: t.busy_slots || [] 
                 });
             }
-        } catch (e) { console.error("Tutor fetch failed"); }
+        } catch (e) { console.error("Tutor fetch failed", e); }
     };
 
     const handleEnroll = async () => {
@@ -508,9 +488,9 @@ const StudentDashboard = () => {
                                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{stat.label}</p>
                                     <h3 className="text-3xl font-display font-black text-white mb-4">{stat.value}</h3>
                                     {stat.link && (
-                                        <a href={stat.link} className="text-[10px] font-black uppercase text-emerald-500 flex items-center gap-2 hover:gap-3 transition-all">
+                                        <Link to={stat.link} className="text-[10px] font-black uppercase text-emerald-500 flex items-center gap-2 hover:gap-3 transition-all">
                                             {stat.action} <ArrowRight size={12} />
-                                        </a>
+                                        </Link>
                                     )}
                                 </div>
                             </motion.div>

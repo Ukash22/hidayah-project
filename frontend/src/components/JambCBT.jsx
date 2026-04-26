@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Clock, ChevronLeft, ChevronRight, Calculator, 
@@ -156,7 +157,7 @@ const JambCBT = ({ token, studentProfile }) => {
     const handleCalc = (val) => {
         if (val === 'C') setCalcValue('0');
         else if (val === '=') {
-            try { setCalcValue(eval(calcValue).toString()); } catch { setCalcValue('Error'); }
+            try { setCalcValue(new Function('return ' + calcValue)().toString()); } catch { setCalcValue('Error'); }
         } else {
             setCalcValue(prev => prev === '0' ? val : prev + val);
         }

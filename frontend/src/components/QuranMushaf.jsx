@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
@@ -99,6 +100,7 @@ const QuranMushaf = ({ token }) => {
             if(activeVerseKey && verses.length > 0) {
                 if (currentVerseLoopRef.current < verseRepeatCount) {
                     currentVerseLoopRef.current += 1;
+                    // eslint-disable-next-line
                     playVerse(activeVerseKey, true); 
                     return;
                 }

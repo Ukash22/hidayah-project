@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -29,7 +30,7 @@ const TutorDashboard = () => {
     const [financials, setFinancials] = useState(null);
     const [exams, setExams] = useState([]);
     const [assignments, setAssignments] = useState([]);
-    const [showExamModal, setShowExamModal] = useState(false);
+
     const [assigningExam, setAssigningExam] = useState(false);
     const [subjects, setSubjects] = useState([]);
     const [showCreateExamModal, setShowCreateExamModal] = useState(false);
@@ -219,7 +220,7 @@ const TutorDashboard = () => {
             const updatedExam = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/${selectedExamForQuestions.id}/`, { headers: getAuthHeader() });
             setSelectedExamForQuestions(updatedExam.data);
             fetchData();
-        } catch (err) {
+        } catch (_err) {
             alert("Error deleting question");
         }
     };
@@ -709,7 +710,7 @@ const TutorDashboard = () => {
                                                                         <span className="font-bold text-slate-300">{s.time}</span>
                                                                     </div>
                                                                 ));
-                                                            } catch (e) {
+                                                            } catch (_e) {
                                                                 return <span className="text-[11px] font-bold text-slate-500 italic">Multiple Slots Requested</span>;
                                                             }
                                                         })()}
@@ -969,7 +970,7 @@ const TutorDashboard = () => {
                                         setUploading(true);
                                         const formData = new FormData(e.target);
                                         try {
-                                            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, formData, {
+                                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, formData, {
                                                 headers: { ...getAuthHeader(), 'Content-Type': 'multipart/form-data' }
                                             });
                                             fetchData();
@@ -1553,7 +1554,7 @@ const TutorDashboard = () => {
                                                                     }, { headers: getAuthHeader() });
                                                                     fetchData();
                                                                 }
-                                                            } catch (err) { alert("Assignment failed"); }
+                                                            } catch (_err) { alert("Assignment failed"); }
                                                             finally { setAssigningSpecific(false); }
                                                         }}
                                                     >
@@ -1594,7 +1595,7 @@ const TutorDashboard = () => {
                                                                 } else {
                                                                     alert("Asset already synchronized.");
                                                                 }
-                                                            } catch (err) { alert("Failed to assign material"); }
+                                                            } catch (_err) { alert("Failed to assign material"); }
                                                             finally { setAssigningSpecific(false); }
                                                         }}
                                                     >
@@ -1657,7 +1658,7 @@ const TutorDashboard = () => {
                             }
                             setAssigningExam(true);
                             try {
-                                const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/exams/`, {
+                                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/exams/`, {
                                     ...examFormData,
                                     assigned_students: selectedStudentsForBulk
                                 }, { headers: getAuthHeader() });

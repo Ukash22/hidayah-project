@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Star, Clock, Calendar, ShieldCheck, ArrowRight, User, X, Play, Music, ChevronDown, ChevronUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -154,24 +155,7 @@ const BookingRequest = () => {
         fetchData();
     }, [token]);
 
-    const calculateScheduleHours = (schedule) => {
-        if (!schedule || schedule.length === 0) return 0;
-        let total = 0;
-        schedule.forEach(slot => {
-            if (!slot.time) return;
-            const times = slot.time.split('-');
-            if (times.length === 2 && times[0] && times[1]) {
-                const [h1, m1] = times[0].split(':').map(Number);
-                const [h2, m2] = times[1].split(':').map(Number);
-                let diff = (h2 + m2/60) - (h1 + m1/60);
-                if (diff <= 0) diff = 1;
-                total += diff;
-            } else {
-                total += 1;
-            }
-        });
-        return total;
-    };
+
 
     const handleRequestBooking = async (tutor) => {
         const bookingData = getBookingData(tutor.id);

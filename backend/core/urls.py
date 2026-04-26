@@ -23,7 +23,6 @@ urlpatterns = [
     path('api/curriculum/', include('curriculum.urls')),
     
     # New HITIS Routes
-    # New HITIS Routes
     path('api/scheduling/', include('scheduling.urls')),
     path('api/exams/', include('exams.urls')),
     path('api/ai/', include('ai_engine.urls')),

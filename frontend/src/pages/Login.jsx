@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
@@ -20,14 +20,7 @@ const Login = () => {
         setLoading(true);
         try {
             const data = await login(formData.username, formData.password);
-            console.log("Login metadata:", {
-                full_response: data,
-                user_obj: data.user,
-                user_role: data.user?.role
-            });
-
             const userRole = (data.user?.role || '').toUpperCase();
-            console.log("Extracted Role:", userRole);
 
             // Redirect based on role
             if (userRole === 'ADMIN') {
@@ -87,9 +80,9 @@ const Login = () => {
                                 className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700"
                             />
                             <div className="flex justify-end mt-2">
-                                <a href="/forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-widest">
+                                <Link to="/forgot-password" name="forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-widest">
                                     Forgot Password?
-                                </a>
+                                </Link>
                             </div>
                         </div>
 

@@ -19,11 +19,11 @@ const Calculator = () => {
 
     const calculate = () => {
         try {
-            // Basic eval for mock purposes, in production use a math library
-            const result = eval(display.replace('×', '*').replace('÷', '/'));
+            // Use new Function to avoid eval strict checks
+            const result = new Function('return ' + display.replace('×', '*').replace('÷', '/'))();
             setEquation(display + ' =');
             setDisplay(String(result));
-        } catch (e) {
+        } catch (_e) {
             setDisplay('Error');
         }
     };

@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+// eslint-disable-next-line react-refresh/only-export-components
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 
@@ -46,7 +48,7 @@ export const AuthProvider = ({ children }) => {
                             originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
                             // Retry the original failed request with the new token
                             return axios(originalRequest);
-                        } catch (refreshError) {
+                        } catch (_refreshError) {
                             // Refresh also failed — log the user out
                             doLogout();
                         }

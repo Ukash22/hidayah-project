@@ -15,10 +15,6 @@ const PaymentCallback = () => {
     const [paymentData, setPaymentData] = useState(null);
     const { user } = useAuth();
 
-    useEffect(() => {
-        verifyPayment();
-    }, []);
-
     const verifyPayment = async () => {
         const reference = searchParams.get('reference');
 
@@ -58,6 +54,12 @@ const PaymentCallback = () => {
             setMessage(err.response?.data?.error || 'Payment verification failed');
         }
     };
+
+    useEffect(() => {
+        verifyPayment();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     const handleDownloadReceipt = () => {
         if (!paymentData) return;

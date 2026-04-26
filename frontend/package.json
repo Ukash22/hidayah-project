@@ -7,17 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "mobile:sync:all": "npm run build && npx cap sync",
-    "mobile:open:ios": "npx cap open ios",
-    "mobile:sync": "npm run build && npx cap sync",
-    "mobile:open:android": "npx cap open android"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.3.0",
-    "@capacitor/cli": "^8.3.0",
-    "@capacitor/core": "^8.3.0",
-    "@capacitor/ios": "^8.3.0",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.14.0",
     "framer-motion": "^12.25.0",

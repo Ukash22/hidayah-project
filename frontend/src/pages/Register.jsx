@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     User, Mail, Lock, Calendar, Globe, Phone, MapPin,
@@ -53,7 +54,7 @@ const Register = () => {
     const [tutorsBySubject, setTutorsBySubject] = useState({});
     const [loadingTutors, setLoadingTutors] = useState({});
     const [selectedTutorForProfile, setSelectedTutorForProfile] = useState(null);
-    const [profileSubjectContext, setProfileSubjectContext] = useState(null);
+
     const [preSelectedTutorId, setPreSelectedTutorId] = useState(null);
     const [preSelectedTutorName, setPreSelectedTutorName] = useState('');
     const [preSelectedTutorData, setPreSelectedTutorData] = useState(null);
@@ -102,6 +103,7 @@ const Register = () => {
                 return updated;
             });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [JSON.stringify(Object.keys(subjectEnrollments)), preSelectedTutorId]);
 
     const { register, login } = useAuth();
@@ -372,6 +374,7 @@ const Register = () => {
         }
     };
 
+    // eslint-disable-next-line no-unused-vars
     const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
         <div className="flex items-center gap-4 mb-10">
             <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 shadow-xl`}>
@@ -919,7 +922,7 @@ const Register = () => {
                                                                             ) : (
                                                                                 <button
                                                                                     type="button"
-                                                                                    onClick={(e) => { e.stopPropagation(); setSelectedTutorForProfile(tutor); setProfileSubjectContext(subject); }}
+                                                                                    onClick={(e) => { e.stopPropagation(); setSelectedTutorForProfile(tutor); }}
                                                                                     className="text-[8px] font-black text-amber-500 underline uppercase tracking-tighter mt-1"
                                                                                 >Intro Video →</button>
                                                                             )}
@@ -1070,7 +1073,7 @@ const Register = () => {
                                             const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
                                             if (isYoutube) {
                                                 let id = '';
-                                                try { id = videoUrl.includes('youtu.be/') ? videoUrl.split('youtu.be/')[1]?.split('?')[0] : new URL(videoUrl).searchParams.get('v'); } catch (e) { }
+                                                try { id = videoUrl.includes('youtu.be/') ? videoUrl.split('youtu.be/')[1]?.split('?')[0] : new URL(videoUrl).searchParams.get('v'); } catch (_e) { /* ignore */ }
                                                 return <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full border-0" title="Intro" />;
                                             }
                                             const finalUrl = videoUrl.startsWith('http') ? videoUrl : `${import.meta.env.VITE_API_BASE_URL}${videoUrl}`;

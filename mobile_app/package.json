@@ -1,0 +1,20 @@
+{
+  "name": "hidayah-mobile-app",
+  "version": "1.0.0",
+  "description": "Capacitor mobile wrapper for Hidayah Platform",
+  "scripts": {
+    "sync": "npx cap sync",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios",
+    "copy": "npx cap copy",
+    "update": "npx cap update"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.3.0"
+  }
+}

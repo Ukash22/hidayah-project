@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -22,22 +23,22 @@ const ParentDashboard = () => {
         fetchChildren();
     }, []);
 
-    const handleImpersonate = async (childId, childName) => {
+    const handleImpersonate = async (childId) => {
         try {
             setLoading(true);
             const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/parents/dashboard/impersonate_child/`, {
                 child_id: childId
             });
             const { access, refresh } = response.data;
-            
+
             // Save current parent session for easy return
             localStorage.setItem('parent_access', localStorage.getItem('access'));
             localStorage.setItem('parent_refresh', localStorage.getItem('refresh'));
-            
+
             // Swap to child session
             localStorage.setItem('access', access);
             localStorage.setItem('refresh', refresh);
-            
+
             // Hard redirect to clear context and remount AuthContext cleanly with new tokens
             window.location.href = '/student';
         } catch (err) {
@@ -136,7 +137,7 @@ const ParentDashboard = () => {
                                                     Admission Letter ↓
                                                 </a>
                                             )}
-                                            <button 
+                                            <button
                                                 onClick={() => handleImpersonate(child.id, child.user_details?.first_name)}
                                                 className="bg-primary text-white text-[10px] font-black uppercase tracking-widest py-2 px-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                             >
@@ -149,7 +150,7 @@ const ParentDashboard = () => {
                         ) : (
                             <div className="col-span-full bg-slate-50/50 p-12 rounded-[2rem] border border-dashed border-slate-200 text-center">
                                 <p className="text-slate-400 font-bold">No children registered under this account.</p>
-                                <a href="/register" className="text-amber-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">Register a Student →</a>
+                                <Link to="/register" className="text-amber-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">Register a Student →</Link>
                             </div>
                         )}
                     </div>

@@ -1,0 +1,55 @@
+﻿
+C:\Users\USER\Desktop\hidayah\frontend\src\components\JambCBT.jsx
+  57:8  warning  React Hook useEffect has a missing dependency: 'submitExam'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\components\NotificationCenter.jsx
+   4:10  error    'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                          no-unused-vars
+   7:28  error    'getContextAuthHeader' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                   no-unused-vars
+  34:8   warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\components\QuranMushaf.jsx
+    4:24  error    'token' is defined but never used. Allowed unused args must match /^_/u                                           no-unused-vars
+   13:22  error    'setReciters' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                       no-unused-vars
+   93:8   warning  React Hook useEffect has a missing dependency: 'selectedSurah'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  124:8   warning  React Hook useEffect has a missing dependency: 'playVerse'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\components\TutorWallet.jsx
+  32:8  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\components\Tutors.jsx
+    2:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  178:12  error  'liveLink' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  178:22  error  'setLiveLink' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\USER\Desktop\hidayah\frontend\src\components\WithdrawalModal.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\USER\Desktop\hidayah\frontend\src\context\AuthContext.jsx
+   1:1   warning  Unused eslint-disable directive (no problems were reported from 'react-refresh/only-export-components')
+   7:14  error    Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  21:8   warning  React Hook useEffect has a missing dependency: 'fetchUser'. Either include it or remove the dependency array                    react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\AdminDashboard.jsx
+  303:8  warning  React Hook useEffect has missing dependencies: 'fetchAdminBookings', 'fetchApplications', 'fetchBookings', 'fetchClasses', 'fetchData', 'fetchGlobalSettings', 'fetchPendingPayouts', 'fetchStudents', 'fetchTutorApps', 'fetchTutors', 'fetchWithdrawals', and 'token'. Either include them or remove the dependency array                                    react-hooks/exhaustive-deps
+  322:8  warning  React Hook useEffect has missing dependencies: 'fetchApprovedTutors', 'fetchBookings', 'fetchClasses', 'fetchComplaints', 'fetchExams', 'fetchMaterials', 'fetchPaymentAnalytics', 'fetchPendingPayouts', 'fetchStudents', 'fetchSubjects', 'fetchTransactions', 'fetchTutorApps', and 'fetchWithdrawals'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  335:8  warning  React Hook useEffect has a missing dependency: 'fetchClasses'. Either include it or remove the dependency array                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\AdmissionPortal.jsx
+  19:8  warning  React Hook useEffect has missing dependencies: 'fetchProfile' and 'navigate'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\BookingRequest.jsx
+  156:8  warning  React Hook useEffect has a missing dependency: 'getAuthHeader'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\ExamHub.jsx
+  41:8  warning  React Hook useEffect has a missing dependency: 'jambYear'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\StudentDashboard.jsx
+  111:39  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array              react-hooks/exhaustive-deps
+  202:8   warning  React Hook useEffect has a missing dependency: 'fetchTutorsForSubject'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Desktop\hidayah\frontend\src\pages\TutorDashboard.jsx
+  113:8  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+Γ£û 25 problems (9 errors, 16 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+

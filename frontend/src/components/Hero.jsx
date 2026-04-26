@@ -1,4 +1,4 @@
-import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
@@ -25,10 +25,10 @@ const Hero = () => {
                         Connect with expert tutors globally. Our international platform brings together <span className="font-bold text-primary">Western Academic Excellence</span> and <span className="font-bold text-secondary">Timeless Islamic Wisdom</span> to your home.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                        <a href="#trial-form" className="btn btn-primary px-8 py-4 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                        <Link to="/#trial-form" className="btn btn-primary px-8 py-4 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
                             <span>Apply for Free Trial Class</span>
                             <span className="text-xl">🚀</span>
-                        </a>
+                        </Link>
                         <Link to="/exam-practice" className="btn bg-white border border-slate-200 text-primary px-8 py-4 hover:bg-slate-50 flex items-center justify-center gap-2">
                             <span>HITIS CBT Center</span>
                             <span className="px-2 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-full uppercase animate-pulse">New</span>

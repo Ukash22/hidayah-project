@@ -1,11 +1,10 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+
 import { 
     CheckCircle2, Sparkles, Briefcase, ArrowRight, X,
-    User, Mail, Lock, Globe, Phone, MapPin, BookOpen, GraduationCap,
-    FileText, Image as ImageIcon, Music, Users, Video, Monitor, Network, DollarSign
+    BookOpen, GraduationCap
 } from 'lucide-react';
 
 // Core Components & Services
@@ -21,6 +20,7 @@ import TechnicalFields from '../components/TutorRegister/TechnicalFields';
 import AvailabilityManager from '../components/TutorRegister/AvailabilityManager';
 
 // Custom file upload box component used across sub-sections
+// eslint-disable-next-line no-unused-vars
 const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, label }) => {
     const inputRef = useRef(null);
     const hasFile = !!file;
@@ -69,6 +69,7 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
     );
 };
 
+// eslint-disable-next-line no-unused-vars
 const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
     <div className="flex items-center gap-4 mb-10">
         <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 shadow-xl`}>

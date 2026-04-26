@@ -40,7 +40,7 @@ const AdminQuestionManager = () => {
                 await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/${examId}/add_question/`, formData);
             }
             window.location.reload();
-        } catch (err) {
+        } catch (_err) {
             alert('Error saving question. Ensure backend supports add_question action.');
         }
     };

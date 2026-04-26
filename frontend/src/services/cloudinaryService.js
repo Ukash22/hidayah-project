@@ -67,7 +67,7 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
  */
 export const uploadMultipleToCloudinary = async (files, foldersMapped = {}) => {
     const urls = {};
-    const fileEntries = Object.entries(files).filter(([_, file]) => file !== null);
+    const fileEntries = Object.entries(files).filter(([, file]) => file !== null);
 
     for (const [key, file] of fileEntries) {
         const folder = foldersMapped[key] || 'tutor_media';

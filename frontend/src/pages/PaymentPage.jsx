@@ -25,6 +25,7 @@ const PaymentPage = () => {
             fetchBookingDetail(bId);
         }
         fetchPaymentStatus();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchBookingDetail = async (id) => {
