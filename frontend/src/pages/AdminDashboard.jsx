@@ -503,7 +503,7 @@ const AdminDashboard = () => {
     const fetchTransactions = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/transactions/`, { headers: getAuthHeader() });
-            setTransactions(response.data);
+            setTransactions(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch transactions", _err);
         }
@@ -512,7 +512,7 @@ const AdminDashboard = () => {
     const fetchTutorApps = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/`, { headers: getAuthHeader() });
-            setTutorApps(response.data);
+            setTutorApps(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch tutor applications", _err);
         }
@@ -521,7 +521,7 @@ const AdminDashboard = () => {
     const fetchApprovedTutors = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/?status=APPROVED`, { headers: getAuthHeader() });
-            setApprovedTutors(response.data);
+            setApprovedTutors(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch approved tutors", _err);
         }
@@ -530,7 +530,7 @@ const AdminDashboard = () => {
     const fetchWithdrawals = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/withdrawals/pending/`, { headers: getAuthHeader() });
-            setWithdrawalRequests(response.data);
+            setWithdrawalRequests(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch withdrawals", _err);
         }
@@ -539,7 +539,7 @@ const AdminDashboard = () => {
     const fetchComplaints = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/admin/all/`, { headers: getAuthHeader() });
-            setAllComplaints(response.data);
+            setAllComplaints(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch complaints", _err);
         }
@@ -548,7 +548,7 @@ const AdminDashboard = () => {
     const fetchClasses = async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/unified-list/`, { headers: getAuthHeader() });
-            setAllClasses(response.data);
+            setAllClasses(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch classes", _err);
         }
@@ -600,11 +600,11 @@ const AdminDashboard = () => {
         setError(null);
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/`, { headers: getAuthHeader() });
-            setApplications(response.data);
+            setApplications(Array.isArray(response.data) ? response.data : []);
 
             // Fetch Pending Students (New Workflow)
             const pendResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/pending-students/`, { headers: getAuthHeader() });
-            setPendingStudents(pendResponse.data);
+            setPendingStudents(Array.isArray(pendResponse.data) ? pendResponse.data : []);
 
             setLoading(false);
         } catch (_err) {
@@ -622,7 +622,7 @@ const AdminDashboard = () => {
     const fetchMaterials = async () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() });
-            setMaterials(res.data);
+            setMaterials(Array.isArray(res.data) ? res.data : []);
         } catch (_err) { 
             console.error("Failed to fetch materials", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
@@ -1793,9 +1793,9 @@ const AdminDashboard = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {allClasses.filter(c => c.type !== 'TRIAL').length === 0 ? (
+                                                {(Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).length === 0 ? (
                                                     <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No regular classes found.</td></tr>
-                                                ) : allClasses.filter(c => c.type !== 'TRIAL').map(cls => (
+                                                ) : (Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).map(cls => (
                                                     <tr key={cls.id} className={`bg-white hover:bg-slate-50 transition-all shadow-sm border border-slate-100 rounded-xl group ${cls.is_live ? 'ring-2 ring-red-100 translate-x-1' : ''}`}>
                                                         <td className="py-2 px-4 first:rounded-l-2xl">
                                                             <div className="flex items-center justify-center">

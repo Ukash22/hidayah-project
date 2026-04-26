@@ -85,12 +85,12 @@ const StudentDashboard = () => {
             ]);
             setProfile(profRes.data);
             setClasses(Array.isArray(classRes.data) ? classRes.data : classRes.data.classes || []);
-            setComplaints(compRes.data);
-            setMaterials(matRes.data);
-            setBookings(bookingRes.data);
-            setTransactions(transactionsRes.data);
-            setExamAssignments(examAsgnRes.data);
-            setExamResults(examResRes.data);
+            setComplaints(compRes.data && Array.isArray(compRes.data.filed_by_me) ? compRes.data : { filed_by_me: [], filed_against_me: [] });
+            setMaterials(Array.isArray(matRes.data) ? matRes.data : []);
+            setBookings(Array.isArray(bookingRes.data) ? bookingRes.data : []);
+            setTransactions(Array.isArray(transactionsRes.data) ? transactionsRes.data : []);
+            setExamAssignments(Array.isArray(examAsgnRes.data) ? examAsgnRes.data : []);
+            setExamResults(Array.isArray(examResRes.data) ? examResRes.data : []);
             // Actually transactionsRes is the 6th element in Promise.all
 
             try {

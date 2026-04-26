@@ -57,19 +57,19 @@ const TutorDashboard = () => {
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() }),
                 axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/booking/approval/`, { headers: getAuthHeader() })
             ]);
-            setSchedule(schRes.data);
-            setAssignedStudents(studRes.data);
-            setComplaints(compRes.data);
-            setMaterials(matRes.data);
-            setRequests(reqRes.data);
+            setSchedule(Array.isArray(schRes.data) ? schRes.data : []);
+            setAssignedStudents(Array.isArray(studRes.data) ? studRes.data : []);
+            setComplaints(compRes.data && Array.isArray(compRes.data.filed_by_me) ? compRes.data : { filed_by_me: [], filed_against_me: [] });
+            setMaterials(Array.isArray(matRes.data) ? matRes.data : []);
+            setRequests(Array.isArray(reqRes.data) ? reqRes.data : []);
 
             // Fetch Exams, Assignments, Subjects independently to prevent one failure from blocking others
             axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() })
-                .then(res => setExams(res.data?.results || res.data)).catch(e => console.error("Exams fetch failed", e));
+                .then(res => setExams(Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []))).catch(e => console.error("Exams fetch failed", e));
             axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/`, { headers: getAuthHeader() })
-                .then(res => setAssignments(res.data?.results || res.data)).catch(e => console.error("Assignments fetch failed", e));
+                .then(res => setAssignments(Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []))).catch(e => console.error("Assignments fetch failed", e));
             axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() })
-                .then(res => setSubjects(res.data?.results || res.data)).catch(e => console.error("Subjects fetch failed", e));
+                .then(res => setSubjects(Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []))).catch(e => console.error("Subjects fetch failed", e));
 
             // If Admin, fetch all students
             if (user?.role === 'ADMIN') {
