@@ -666,8 +666,9 @@ const StudentDashboard = () => {
                                                         <Download size={16} /> Download PDF
                                                     </a>
                                                 </div>
-                                            )}
-                                            <div className="bg-blue-50 border border-blue-100 rounded-[2.5rem] p-8 shadow-sm">
+                                            </div>
+                                        )}
+                                        <div className="bg-blue-50 border border-blue-100 rounded-[2.5rem] p-8 shadow-sm">
                                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center gap-2">
                                                 <Bell size={12} className="animate-bounce" /> Dashboard Alerts
                                             </h4>
@@ -682,7 +683,6 @@ const StudentDashboard = () => {
                                         </div>
                              </div>
                                     </div>
-                                </div>
                             )}
 
                             {/* Classes Tab */}
