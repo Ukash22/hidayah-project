@@ -11,11 +11,11 @@ html {
 
 @theme {
   /* Colors */
-  --color-primary: #064E3B;
-  --color-primary-light: #065F46;
-  --color-secondary: #D97706;
-  --color-secondary-light: #F59E0B;
-  --color-accent: #10B981;
+  --color-primary: #1e40af;
+  --color-primary-light: #3b82f6;
+  --color-secondary: #0ea5e9;
+  --color-secondary-light: #7dd3fc;
+  --color-accent: #2563eb;
   --color-surface: #f8fafc;
   --color-background: #ffffff;
   --color-text: #0f172a;

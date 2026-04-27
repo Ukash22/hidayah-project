@@ -317,7 +317,7 @@ const Tutors = () => {
                                             <div className="flex flex-col items-end gap-1">
                                                 {Array.isArray(tutor.availabilities) && tutor.availabilities.length > 0 ? (
                                                     tutor.availabilities.map((slot, i) => (
-                                                        <span key={i} className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        <span key={i} className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                             {slot.day}: {to12hr(slot.start_time)} - {to12hr(slot.end_time)}
                                                         </span>
                                                     ))
@@ -329,7 +329,7 @@ const Tutors = () => {
                                                             : h.trim();
                                                         if (!label) return null;
                                                         return (
-                                                            <span key={i} className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            <span key={i} className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                                 {label}
                                                             </span>
                                                         );
@@ -353,7 +353,7 @@ const Tutors = () => {
                                     {/* Register as Student Button */}
                                     <Link
                                         to={`/register?tutor_id=${tutor.id}&tutor_name=${encodeURIComponent(tutor.full_name)}`}
-                                        className="bg-emerald-600 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 hover:scale-105 transition-all flex items-center justify-center gap-1.5"
+                                        className="bg-indigo-600 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <span>✍️</span> Register as Student
                                     </Link>

@@ -57,7 +57,7 @@ const ParentDashboard = () => {
                 <div className="bg-white rounded-[2.5rem] shadow-xl p-12 border border-slate-100">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12">
                         <div className="flex items-center gap-6">
-                            <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center text-amber-600 text-3xl font-black">
+                            <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-600 text-3xl font-black border border-blue-600/10">
                                 {user?.first_name?.[0]?.toUpperCase()}
                             </div>
                             <div>
@@ -68,21 +68,21 @@ const ParentDashboard = () => {
                     </div>
 
                     <h2 className="text-2xl font-display text-primary mb-8 flex items-center gap-3">
-                        <span className="w-1.5 h-8 bg-amber-500 rounded-full"></span>
+                        <span className="w-1.5 h-8 bg-blue-600 rounded-full shadow-lg shadow-blue-600/20"></span>
                         My Registered Children
                     </h2>
 
                     <div className="grid md:grid-cols-2 gap-8">
                         {children.length > 0 ? (
                             children.map((child, idx) => (
-                                <div key={idx} className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 hover:border-amber-200 transition-all group">
+                                <div key={idx} className="bg-white p-8 rounded-[2rem] border border-slate-100 hover:border-blue-600/20 transition-all group shadow-sm hover:shadow-xl">
                                     <div className="flex items-center gap-6 mb-6">
                                         <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">🧒</div>
                                         <div className="flex-1">
                                             <h4 className="text-xl font-bold text-primary">{child.full_name || child.user_details?.first_name + ' ' + (child.user_details?.last_name || '')}</h4>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">Admission ID: {child.user_details?.admission_number}</p>
                                         </div>
-                                        <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest ${child.payment_status === 'PAID' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}>
+                                        <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest ${child.payment_status === 'PAID' ? 'bg-blue-600/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'}`}>
                                             {child.payment_status}
                                         </span>
                                     </div>
@@ -113,7 +113,7 @@ const ParentDashboard = () => {
                                                     </a>
                                                 )}
                                                 {child.whiteboard_link && (
-                                                    <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-amber-600 hover:underline uppercase tracking-widest">
+                                                    <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest">
                                                         Whiteboard ✏
                                                     </a>
                                                 )}
@@ -132,7 +132,7 @@ const ParentDashboard = () => {
                                                     href={child.admission_letter_url}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="text-[10px] font-black uppercase tracking-widest text-amber-600 hover:underline flex items-center gap-1"
+                                                    className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:underline flex items-center gap-1"
                                                 >
                                                     Admission Letter ↓
                                                 </a>
@@ -150,7 +150,7 @@ const ParentDashboard = () => {
                         ) : (
                             <div className="col-span-full bg-slate-50/50 p-12 rounded-[2rem] border border-dashed border-slate-200 text-center">
                                 <p className="text-slate-400 font-bold">No children registered under this account.</p>
-                                <Link to="/register" className="text-amber-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">Register a Student →</Link>
+                                <Link to="/register" className="text-blue-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">Register a Student →</Link>
                             </div>
                         )}
                     </div>

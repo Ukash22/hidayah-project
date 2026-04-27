@@ -17,7 +17,7 @@ const HITISFeatures = () => {
             description: "Generate personalized practice questions based on your specific curriculum and year range.",
             icon: "✨",
             link: "/ai-hub",
-            color: "from-amber-500 to-amber-700",
+            color: "from-indigo-600 to-blue-800",
             badge: "Smart AI"
         }
     ];

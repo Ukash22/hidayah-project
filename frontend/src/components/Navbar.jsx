@@ -8,13 +8,13 @@ const NavLinks = ({ mobile = false, setIsOpen, userRole }) => (
     <Link to="/#about" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>About</Link>
     <Link to="/#features" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors flex items-center gap-1 ${mobile ? 'text-lg py-2' : ''}`}>
       Exam Prep
-      <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-black rounded-full uppercase">New</span>
+      <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[8px] font-black rounded-full uppercase">New</span>
     </Link>
     <Link to="/#curriculum" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Curriculum</Link>
     {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
       <>
-        <Link to="/exam-practice" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Exam Practice</Link>
-        <Link to="/ai-hub" onClick={() => setIsOpen(false)} className={`font-medium hover:text-amber-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>AI Hub</Link>
+        <Link to="/exam-practice" onClick={() => setIsOpen(false)} className={`font-medium hover:text-blue-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Exam Practice</Link>
+        <Link to="/ai-hub" onClick={() => setIsOpen(false)} className={`font-medium hover:text-blue-600 transition-colors ${mobile ? 'text-lg py-2' : ''}`}>AI Hub</Link>
       </>
     )}
     <Link to="/#tutors" onClick={() => setIsOpen(false)} className={`font-medium hover:text-secondary transition-colors ${mobile ? 'text-lg py-2' : ''}`}>Tutors</Link>

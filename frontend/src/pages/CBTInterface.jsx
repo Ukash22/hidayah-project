@@ -156,29 +156,29 @@ const CBTInterface = () => {
     }, [timeLeft, exams, isFinished, handleSubmit]);
 
     if (isLoading || isSubmitting) return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#1e293b] text-white gap-6">
-            <div className="w-16 h-16 border-4 border-amber-500/30 border-t-amber-500 rounded-full animate-spin"></div>
-            <p className="font-display text-xl animate-pulse text-slate-300">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white text-slate-900 gap-6">
+            <div className="w-16 h-16 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="font-display text-xl animate-pulse text-slate-500 font-bold">
                 {isSubmitting ? 'Synchronizing Academic Records...' : 'Initializing Exam Engine...'}
             </p>
         </div>
     );
 
     if (loadError) return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[#1e293b] text-white gap-6 p-8">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white text-slate-900 gap-6 p-8">
             <div className="text-6xl">⚠️</div>
-            <h2 className="text-2xl font-black text-amber-500">Cannot Load Exam</h2>
-            <p className="text-slate-400 text-center max-w-md leading-relaxed">{loadError}</p>
+            <h2 className="text-2xl font-black text-blue-600">Cannot Load Exam</h2>
+            <p className="text-slate-500 text-center max-w-md leading-relaxed">{loadError}</p>
             <div className="flex gap-4 mt-4">
                 <button
                     onClick={() => window.history.back()}
-                    className="px-8 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+                    className="px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-black uppercase tracking-widest text-xs transition-all border border-slate-200"
                 >
                     ← Go Back
                 </button>
                 <button
                     onClick={() => window.location.href = '/student'}
-                    className="px-8 py-3 bg-amber-500 hover:bg-amber-400 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-600/20"
                 >
                     Dashboard
                 </button>
@@ -222,8 +222,8 @@ const CBTInterface = () => {
                                                 <span className="font-bold text-slate-700">{res.title}</span>
                                                 <span className="font-black text-primary">{res.score}/{res.total}</span>
                                             </div>
-                                            <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                                                <div className="h-full bg-amber-500 transition-all" style={{ width: `${res.percentage}%` }}></div>
+                                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="h-full bg-blue-600 transition-all" style={{ width: `${res.percentage}%` }}></div>
                                             </div>
                                         </div>
                                     ))}
@@ -237,18 +237,18 @@ const CBTInterface = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#1e293b] text-slate-200 font-sans flex flex-col">
+        <div className="min-h-screen bg-white text-slate-900 font-sans flex flex-col">
             {/* JAMB Header */}
-            <div className="bg-slate-900 border-b border-slate-700 p-4 flex justify-between items-center sticky top-0 z-50">
+            <div className="bg-slate-50 border-b border-slate-100 p-4 flex justify-between items-center sticky top-0 z-50">
                 <div className="flex items-center gap-6">
-                    <span className="text-2xl font-black tracking-tighter text-white">HITIS <span className="text-amber-500 underline decoration-4 underline-offset-4">CBT</span></span>
-                    <div className="h-8 w-[2px] bg-slate-700"></div>
+                    <span className="text-2xl font-black tracking-tighter text-blue-600">HITIS <span className="text-slate-900 underline decoration-4 underline-offset-4 decoration-blue-600">CBT</span></span>
+                    <div className="h-8 w-[2px] bg-slate-200"></div>
                     <div className="flex items-center gap-3">
                         {exams.map((exam, i) => (
                             <button
                                 key={exam.id}
                                 onClick={() => { setActiveExamIdx(i); setCurrentQuestionIdx(0); }}
-                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeExamIdx === i ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                                className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeExamIdx === i ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-400 hover:text-slate-600 border border-slate-100'}`}
                             >
                                 {exam.subject_name.split(' ')[0]}
                             </button>
@@ -258,14 +258,14 @@ const CBTInterface = () => {
                 <div className="flex items-center gap-8">
                     <button
                         onClick={() => setShowCalculator(!showCalculator)}
-                        className={`p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-all ${showCalculator ? 'text-amber-500' : 'text-slate-400'}`}
+                        className={`p-2 rounded-lg transition-all ${showCalculator ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
                         title="Calculator"
                     >
                         🧮
                     </button>
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Time Remaining</span>
-                        <span className={`font-mono text-2xl font-bold ${timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                        <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Time Remaining</span>
+                        <span className={`font-mono text-2xl font-bold ${timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-slate-900'}`}>
                             {formatTime(timeLeft)}
                         </span>
                     </div>
@@ -286,7 +286,7 @@ const CBTInterface = () => {
 
                     <div className="max-w-3xl mx-auto">
                         <div className="flex items-center gap-4 mb-12">
-                            <span className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center font-black text-xl text-amber-500 border border-slate-700">
+                            <span className="w-12 h-12 rounded-2xl bg-blue-600/10 flex items-center justify-center font-black text-xl text-blue-600 border border-blue-600/10">
                                 {currentQuestionIdx + 1}
                             </span>
                             <div>
@@ -295,8 +295,8 @@ const CBTInterface = () => {
                             </div>
                         </div>
 
-                        <div className="prose prose-invert prose-lg mb-12">
-                            <h2 className="text-2xl font-bold leading-relaxed">{currentQuestion.text}</h2>
+                        <div className="prose prose-slate prose-lg mb-12">
+                            <h2 className="text-2xl font-bold leading-relaxed text-slate-800">{currentQuestion.text}</h2>
                         </div>
 
                         <div className="grid gap-4">
@@ -313,9 +313,9 @@ const CBTInterface = () => {
                                                 [currentQuestion.id]: key
                                             }
                                         })}
-                                        className={`group relative flex items-center gap-6 p-6 rounded-3xl border-2 text-left transition-all ${isSelected ? 'bg-amber-500 border-amber-500 text-white shadow-xl shadow-amber-500/20' : 'bg-slate-800 border-slate-700 hover:border-slate-500 text-slate-300'}`}
+                                        className={`group relative flex items-center gap-6 p-6 rounded-3xl border-2 text-left transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20' : 'bg-white border-slate-100 hover:border-blue-600/20 text-slate-700'}`}
                                     >
-                                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-colors ${isSelected ? 'bg-white text-amber-500' : 'bg-slate-700 group-hover:bg-slate-600'}`}>
+                                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-colors ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-600/10 group-hover:text-blue-600'}`}>
                                             {key}
                                         </span>
                                         <span className="font-bold">{currentQuestion[`option_${opt}`]}</span>
@@ -328,7 +328,7 @@ const CBTInterface = () => {
                             <button
                                 disabled={currentQuestionIdx === 0}
                                 onClick={() => setCurrentQuestionIdx(prev => prev - 1)}
-                                className="px-8 py-4 rounded-2xl bg-slate-800 text-slate-400 font-black uppercase tracking-widest text-xs hover:bg-slate-700 transition-all disabled:opacity-20"
+                                className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-400 font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-all disabled:opacity-20"
                             >
                                 ← Previous
                             </button>
@@ -343,7 +343,7 @@ const CBTInterface = () => {
                                     activeExamIdx < exams.length - 1 ? (
                                         <button
                                             onClick={() => { setActiveExamIdx(prev => prev + 1); setCurrentQuestionIdx(0); }}
-                                            className="px-12 py-4 rounded-2xl bg-amber-500 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-amber-500/20 hover:-translate-y-1 transition-all"
+                                            className="px-12 py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 hover:-translate-y-1 transition-all"
                                         >
                                             Next Subject →
                                         </button>
@@ -358,7 +358,7 @@ const CBTInterface = () => {
                                 ) : (
                                     <button
                                         onClick={() => setCurrentQuestionIdx(prev => prev + 1)}
-                                        className="px-12 py-4 rounded-2xl bg-amber-500 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-amber-500/20 hover:-translate-y-1 transition-all"
+                                        className="px-12 py-4 rounded-2xl bg-blue-600 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-600/20 hover:-translate-y-1 transition-all"
                                     >
                                         Next Question →
                                     </button>
@@ -369,8 +369,8 @@ const CBTInterface = () => {
                 </div>
 
                 {/* Side Grid - Question Navigator */}
-                <div className="w-80 bg-slate-900 border-l border-slate-800 p-8 overflow-y-auto hidden xl:block">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8">Navigation Grid</h3>
+                <div className="w-80 bg-slate-50 border-l border-slate-100 p-8 overflow-y-auto hidden xl:block">
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-8">Navigation Grid</h3>
                     <div className="grid grid-cols-4 gap-3">
                         {currentExam.questions.map((q, idx) => {
                             const isAnswered = !!answers[currentExam.id]?.[q.id];
@@ -379,7 +379,7 @@ const CBTInterface = () => {
                                 <button
                                     key={q.id}
                                     onClick={() => setCurrentQuestionIdx(idx)}
-                                    className={`w-full aspect-square rounded-xl text-xs font-black transition-all border-2 ${isCurrent ? 'bg-amber-500 border-amber-500 text-white scale-110 shadow-lg' : isAnswered ? 'bg-slate-700 border-slate-700 text-slate-100' : 'bg-transparent border-slate-800 text-slate-600 hover:border-slate-700'}`}
+                                    className={`w-full aspect-square rounded-xl text-xs font-black transition-all border-2 ${isCurrent ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg' : isAnswered ? 'bg-blue-600/10 border-blue-600/20 text-blue-600' : 'bg-transparent border-slate-100 text-slate-400 hover:border-slate-200'}`}
                                 >
                                     {idx + 1}
                                 </button>
@@ -389,15 +389,15 @@ const CBTInterface = () => {
 
                     <div className="mt-12 space-y-4">
                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-                            <span className="w-3 h-3 bg-amber-500 rounded-full"></span>
+                            <span className="w-3 h-3 bg-blue-600 rounded-full"></span>
                             Current Question
                         </div>
                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-                            <span className="w-3 h-3 bg-slate-700 rounded-full"></span>
+                            <span className="w-3 h-3 bg-blue-600/20 rounded-full"></span>
                             Answered
                         </div>
                         <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500">
-                            <span className="w-3 h-3 border border-slate-800 rounded-full"></span>
+                            <span className="w-3 h-3 border border-slate-200 rounded-full"></span>
                             Unanswered
                         </div>
                     </div>

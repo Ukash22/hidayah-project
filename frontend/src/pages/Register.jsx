@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -384,26 +384,26 @@ const Register = () => {
     // eslint-disable-next-line no-unused-vars
     const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
         <div className="flex items-center gap-4 mb-10">
-            <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 shadow-xl`}>
+            <div className={`w-12 h-12 ${colorClass || 'bg-blue-600/10 text-blue-600'} rounded-2xl flex items-center justify-center font-black text-lg border border-slate-100 shadow-xl`}>
                 {step || <Icon size={24} />}
             </div>
             <div>
-                <h3 className="text-xl font-bold text-white tracking-tight uppercase">{title}</h3>
-                <div className="h-0.5 w-12 bg-white/10 mt-2 rounded-full overflow-hidden">
-                    <div className={`h-full w-2/3 ${colorClass?.replace('text', 'bg') || 'bg-emerald-500'}`}></div>
+                <h3 className="text-xl font-bold text-slate-900 tracking-tight uppercase">{title}</h3>
+                <div className="h-0.5 w-12 bg-slate-100 mt-2 rounded-full overflow-hidden">
+                    <div className={`h-full w-2/3 ${colorClass?.replace('text', 'bg') || 'bg-blue-600'}`}></div>
                 </div>
             </div>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-300 selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-500/30">
             <Navbar />
 
             {/* Ambient Background Elements */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-emerald-600/10 blur-[150px] rounded-full"></div>
-                <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-blue-600/10 blur-[150px] rounded-full"></div>
+                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-600/5 blur-[150px] rounded-full"></div>
+                <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-indigo-600/5 blur-[150px] rounded-full"></div>
             </div>
 
             <div className="container pt-32 pb-20 px-4 relative z-10">
@@ -413,14 +413,14 @@ const Register = () => {
                     className="max-w-5xl mx-auto"
                 >
                     <div className="text-center mb-16">
-                        <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-white/10 shadow-2xl relative">
-                            <GraduationCap size={48} className="text-emerald-500" />
-                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse">
+                        <div className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-blue-100 shadow-xl relative">
+                            <GraduationCap size={48} className="text-blue-600" />
+                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
                                 <Sparkles size={12} className="text-white" />
                             </div>
                         </div>
-                        <h1 className="text-5xl font-display font-black text-white mb-4 tracking-tighter uppercase">Student <span className="text-emerald-500">Admission</span></h1>
-                        <p className="text-slate-400 max-w-xl mx-auto font-medium tracking-wide">Join Hidayah International’s world-class learning platform. Your journey to excellence starts here.</p>
+                        <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Student <span className="text-blue-600">Admission</span></h1>
+                        <p className="text-slate-500 max-w-xl mx-auto font-medium tracking-wide">Join Hidayah International’s world-class learning platform. Your journey to excellence starts here.</p>
                     </div>
 
                     {error && (
@@ -441,37 +441,37 @@ const Register = () => {
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl hover:bg-white/[0.07] transition-all"
+                                className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all"
                             >
-                                <SectionHeader step="01" title="Account Access" colorClass="bg-emerald-500/10 text-emerald-500" />
+                                <SectionHeader step="01" title="Account Access" colorClass="bg-blue-600/10 text-blue-600" />
                                 <div className="space-y-6">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Universal Username *</label>
+                                        <label htmlFor="username" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Universal Username *</label>
                                         <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                            <input type="text" name="username" value={formData.username} onChange={handleChange} required placeholder="Student ID or Name" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all" />
+                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <input id="username" type="text" name="username" value={formData.username} onChange={handleChange} required placeholder="Student ID or Name" autoComplete="username" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Institutional Email *</label>
+                                        <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Institutional Email *</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                            <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all" />
+                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" autoComplete="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Password *</label>
+                                            <label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Password *</label>
                                             <div className="relative">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                                <input type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="••••••••" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all" />
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input id="password" type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Confirm *</label>
+                                            <label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Confirm *</label>
                                             <div className="relative">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="••••••••" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all" />
+                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input id="confirmPassword" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                     </div>
@@ -483,44 +483,44 @@ const Register = () => {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 }}
-                                className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl hover:bg-white/[0.07] transition-all"
+                                className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all"
                             >
-                                <SectionHeader step="02" title="Student Profile" colorClass="bg-blue-500/10 text-blue-500" />
+                                <SectionHeader step="02" title="Student Profile" colorClass="bg-indigo-600/10 text-indigo-600" />
                                 <div className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">First Name *</label>
-                                            <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blue-500/30 transition-all" />
+                                            <label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">First Name *</label>
+                                            <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" autoComplete="given-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Last Name</label>
-                                            <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blue-500/30 transition-all" />
+                                            <label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Last Name</label>
+                                            <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" autoComplete="family-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Birth Date *</label>
+                                            <label htmlFor="dob" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Birth Date *</label>
                                             <div className="relative">
-                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                                <input type="date" name="dob" value={formData.dob} onChange={handleChange} required className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-blue-500/30 transition-all" />
+                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input id="dob" type="date" name="dob" value={formData.dob} onChange={handleChange} required autoComplete="bday" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Gender</label>
-                                            <select name="gender" value={formData.gender} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-blue-500/30 transition-all appearance-none cursor-pointer">
-                                                <option className="bg-[#0a0c10]">Male</option>
-                                                <option className="bg-[#0a0c10]">Female</option>
+                                            <label htmlFor="gender" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Gender</label>
+                                            <select id="gender" name="gender" value={formData.gender} onChange={handleChange} autoComplete="sex" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
+                                                <option className="bg-white">Male</option>
+                                                <option className="bg-white">Female</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Country</label>
+                                            <label htmlFor="country" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Country</label>
                                             <div className="relative">
-                                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                                <select name="country" value={formData.country} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-blue-500/30 transition-all appearance-none cursor-pointer">
-                                                    <option value="" className="bg-[#0a0c10]">Select Country</option>
-                                                    <optgroup label="Africa" className="bg-[#0a0c10]">
+                                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <select id="country" name="country" value={formData.country} onChange={handleChange} autoComplete="country-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
+                                                    <option value="" className="bg-white">Select Country</option>
+                                                    <optgroup label="Africa" className="bg-white">
                                                         <option value="Nigeria">Nigeria</option>
                                                         <option value="Ghana">Ghana</option>
                                                         <option value="South Africa">South Africa</option>
@@ -529,7 +529,7 @@ const Register = () => {
                                                         <option value="Morocco">Morocco</option>
                                                         <option value="Ethiopia">Ethiopia</option>
                                                     </optgroup>
-                                                    <optgroup label="Asia & Middle East" className="bg-[#0a0c10]">
+                                                    <optgroup label="Asia & Middle East" className="bg-white">
                                                         <option value="Saudi Arabia">Saudi Arabia</option>
                                                         <option value="United Arab Emirates">United Arab Emirates</option>
                                                         <option value="Qatar">Qatar</option>
@@ -539,7 +539,7 @@ const Register = () => {
                                                         <option value="India">India</option>
                                                         <option value="Turkey">Turkey</option>
                                                     </optgroup>
-                                                    <optgroup label="Europe & America" className="bg-[#0a0c10]">
+                                                    <optgroup label="Europe & America" className="bg-white">
                                                         <option value="United Kingdom">United Kingdom</option>
                                                         <option value="United States">United States</option>
                                                         <option value="Canada">Canada</option>
@@ -547,22 +547,22 @@ const Register = () => {
                                                         <option value="Germany">Germany</option>
                                                         <option value="Australia">Australia</option>
                                                     </optgroup>
-                                                    <option value="Other" className="bg-[#0a0c10]">Other</option>
+                                                    <option value="Other" className="bg-white">Other</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Phone Number</label>
+                                            <label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Phone Number</label>
                                             <div className="relative">
-                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                                                <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="+234..." className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-blue-500/30 transition-all" />
+                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <input id="phone" type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="+234..." autoComplete="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2 col-span-full">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Residential Address *</label>
+                                            <label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Residential Address *</label>
                                             <div className="relative">
-                                                <MapPin className="absolute left-4 top-4 text-slate-600" size={18} />
-                                                <textarea name="address" value={formData.address} onChange={handleChange} required placeholder="Street Name, House Number, City, State" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-blue-500/30 transition-all min-h-[100px] resize-none" />
+                                                <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
+                                                <textarea id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="Street Name, House Number, City, State" autoComplete="street-address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all min-h-[100px] resize-none" />
                                             </div>
                                         </div>
                                     </div>
@@ -575,28 +575,28 @@ const Register = () => {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden"
+                            className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full translate-x-1/2 translate-y-[-50%]"></div>
-                            <SectionHeader step="03" title="Educational Roadmap" colorClass="bg-emerald-500/10 text-emerald-500" />
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-3xl rounded-full translate-x-1/2 translate-y-[-50%]"></div>
+                            <SectionHeader step="03" title="Educational Roadmap" colorClass="bg-blue-600/10 text-blue-600" />
 
                             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Learning Level</label>
-                                    <select name="level" value={formData.level} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-emerald-500/30 transition-all appearance-none cursor-pointer">
-                                        <option value="PRIMARY" className="bg-[#0a0c10]">Primary School</option>
-                                        <option value="SECONDARY" className="bg-[#0a0c10]">Secondary School</option>
-                                        <option value="JUNIOR_WAEC" className="bg-[#0a0c10]">Junior WAEC (BECE)</option>
-                                        <option value="JAMB" className="bg-[#0a0c10]">JAMB Prep</option>
-                                        <option value="WAEC" className="bg-[#0a0c10]">WAEC Prep</option>
-                                        <option value="NECO" className="bg-[#0a0c10]">NECO Prep</option>
+                                    <select name="level" value={formData.level} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
+                                        <option value="PRIMARY" className="bg-white">Primary School</option>
+                                        <option value="SECONDARY" className="bg-white">Secondary School</option>
+                                        <option value="JUNIOR_WAEC" className="bg-white">Junior WAEC (BECE)</option>
+                                        <option value="JAMB" className="bg-white">JAMB Prep</option>
+                                        <option value="WAEC" className="bg-white">WAEC Prep</option>
+                                        <option value="NECO" className="bg-white">NECO Prep</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Class Structure</label>
-                                    <select name="classType" value={formData.classType} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-emerald-500/30 transition-all appearance-none cursor-pointer">
-                                        <option value="ONE_ON_ONE" className="bg-[#0a0c10]">One-on-One</option>
-                                        <option value="GROUP" className="bg-[#0a0c10]">Group Batch</option>
+                                    <select name="classType" value={formData.classType} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
+                                        <option value="ONE_ON_ONE" className="bg-white">One-on-One</option>
+                                        <option value="GROUP" className="bg-white">Group Batch</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2">
@@ -760,23 +760,23 @@ const Register = () => {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl"
+                            className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
                         >
-                            <SectionHeader step="04" title="Academic Selection" colorClass="bg-violet-500/10 text-violet-500" />
+                            <SectionHeader step="04" title="Academic Selection" colorClass="bg-blue-600/10 text-blue-600" />
 
                             <div className="space-y-10">
                                 {Object.keys(subjectsByCategory).length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center p-12 bg-white/5 rounded-[2rem] border border-dashed border-white/10 text-slate-500 font-black uppercase text-[10px] tracking-widest gap-4">
-                                        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 text-slate-400 font-black uppercase text-[10px] tracking-widest gap-4">
+                                        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                         Organizing Academic Catalogue...
                                     </div>
                                 ) : Object.entries(subjectsByCategory).map(([category, subjects]) => (
                                     <div key={category} className="space-y-6">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${category === 'Islamic Education' ? 'bg-emerald-500/20 text-emerald-500' : category === 'Exam Preparation' ? 'bg-indigo-500/20 text-indigo-500' : 'bg-blue-500/20 text-blue-500'}`}>
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${category === 'Islamic Education' ? 'bg-indigo-600/20 text-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600/20 text-blue-600' : 'bg-blue-500/20 text-blue-500'}`}>
                                                 {category === 'Islamic Education' ? <Users size={16} /> : category === 'Exam Preparation' ? <GraduationCap size={16} /> : <BookOpen size={16} />}
                                             </div>
-                                            <h4 className="text-xs font-black uppercase tracking-widest text-white/60">{category}</h4>
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">{category}</h4>
                                         </div>
                                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                             {subjects.map(subject => {
@@ -790,15 +790,15 @@ const Register = () => {
                                                         onClick={() => toggleSubject(subject)}
                                                         className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center relative overflow-hidden group ${isSelected
                                                             ? category === 'Islamic Education'
-                                                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-lg shadow-emerald-500/10'
+                                                                ? 'bg-indigo-600/10 border-indigo-600 text-indigo-600 shadow-lg shadow-indigo-600/10'
                                                                 : category === 'Exam Preparation'
-                                                                    ? 'bg-indigo-500/10 border-indigo-500 text-indigo-500 shadow-lg shadow-indigo-500/10'
-                                                                    : 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-lg shadow-blue-500/10'
-                                                            : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/10'
+                                                                    ? 'bg-blue-600/10 border-blue-600 text-blue-600 shadow-lg shadow-blue-600/10'
+                                                                    : 'bg-sky-500/10 border-sky-500 text-sky-500 shadow-lg shadow-sky-500/10'
+                                                            : 'bg-slate-50 border-slate-50 text-slate-400 hover:border-slate-200'
                                                             }`}
                                                     >
                                                         {isSelected && (
-                                                            <div className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in ${category === 'Islamic Education' ? 'bg-emerald-500' : category === 'Exam Preparation' ? 'bg-indigo-500' : 'bg-blue-500'}`}>
+                                                            <div className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in ${category === 'Islamic Education' ? 'bg-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600' : 'bg-sky-500'}`}>
                                                                 <CheckCircle2 size={10} className="text-white" />
                                                             </div>
                                                         )}
@@ -819,32 +819,32 @@ const Register = () => {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 20 }}
-                                    className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl"
+                                    className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
                                 >
-                                    <SectionHeader step="05" title="Tutor Assignments" colorClass="bg-amber-500/10 text-amber-500" />
+                                    <SectionHeader step="05" title="Tutor Assignments" colorClass="bg-blue-600/10 text-blue-600" />
 
                                     {/* ── Pre-selected tutor locked banner ── */}
                                     {preSelectedTutorId ? (
                                         <div className="space-y-4">
                                             {/* Locked tutor card */}
-                                            <div className="bg-amber-500/5 border border-amber-500/20 rounded-[2rem] p-6 flex items-center gap-5">
-                                                <div className="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-amber-500/30 shrink-0">
+                                            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 flex items-center gap-5">
+                                                <div className="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-blue-600/30 shrink-0">
                                                     {preSelectedTutorData?.image
-                                                        ? <img src={preSelectedTutorData.image.startsWith('http') ? preSelectedTutorData.image : `${import.meta.env.VITE_API_BASE_URL}${preSelectedTutorData.image}`} alt={preSelectedTutorName} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(preSelectedTutorName)}&background=d97706&color=fff&size=128`; }} />
-                                                        : <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-2xl font-black text-amber-500">{preSelectedTutorName?.[0]}</div>
+                                                        ? <img src={preSelectedTutorData.image.startsWith('http') ? preSelectedTutorData.image : `${import.meta.env.VITE_API_BASE_URL}${preSelectedTutorData.image}`} alt={preSelectedTutorName} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(preSelectedTutorName)}&background=1e40af&color=fff&size=128`; }} />
+                                                        : <div className="w-full h-full bg-blue-600/10 flex items-center justify-center text-2xl font-black text-blue-600">{preSelectedTutorName?.[0]}</div>
                                                     }
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/70 mb-1">Registering with</p>
-                                                    <h4 className="text-lg font-black text-white uppercase tracking-tight">{preSelectedTutorName}</h4>
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Registering with</p>
+                                                    <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">{preSelectedTutorName}</h4>
                                                     {preSelectedTutorData?.qualification && (
                                                         <p className="text-[10px] font-bold text-slate-400 mt-0.5">{preSelectedTutorData.qualification}</p>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col items-end gap-2">
-                                                    <span className="text-[8px] font-black bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 uppercase tracking-widest">✓ Confirmed</span>
+                                                    <span className="text-[8px] font-black bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full border border-blue-600/20 uppercase tracking-widest">✓ Confirmed</span>
                                                     {preSelectedTutorData?.hourly_rate && (
-                                                        <span className="text-[10px] font-black text-amber-500">₦{parseFloat(preSelectedTutorData.hourly_rate).toLocaleString()}/hr</span>
+                                                        <span className="text-[10px] font-black text-slate-900">₦{parseFloat(preSelectedTutorData.hourly_rate).toLocaleString()}/hr</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -852,18 +852,18 @@ const Register = () => {
                                             {/* Per-subject assignment summary */}
                                             <div className="grid md:grid-cols-2 gap-3">
                                                 {selectedSubjects.map(subject => (
-                                                    <div key={subject} className="flex items-center justify-between bg-black/30 border border-white/5 rounded-2xl px-5 py-3">
+                                                    <div key={subject} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-                                                            <span className="text-[10px] font-black text-white uppercase tracking-widest">{subject}</span>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                                                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{subject}</span>
                                                         </div>
-                                                        <span className="text-[8px] font-black bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-lg border border-emerald-500/20 uppercase tracking-widest">Assigned</span>
+                                                        <span className="text-[8px] font-black bg-indigo-600/10 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-600/20 uppercase tracking-widest">Assigned</span>
                                                     </div>
                                                 ))}
                                             </div>
 
                                             <p className="text-[9px] font-bold text-slate-500 text-center uppercase tracking-widest pt-2">
-                                                Want a different tutor? <button type="button" onClick={() => { setPreSelectedTutorId(null); setPreSelectedTutorName(''); setPreSelectedTutorData(null); }} className="text-amber-500 underline ml-1">Browse all tutors</button>
+                                                Want a different tutor? <button type="button" onClick={() => { setPreSelectedTutorId(null); setPreSelectedTutorName(''); setPreSelectedTutorData(null); }} className="text-blue-600 underline ml-1">Browse all tutors</button>
                                             </p>
                                         </div>
                                     ) : (
@@ -875,23 +875,23 @@ const Register = () => {
                                                 const selectedTutorId = subjectEnrollments[subject];
 
                                                 return (
-                                                    <div key={subject} className="bg-black/40 border border-white/5 rounded-[2.5rem] p-6 space-y-6">
+                                                    <div key={subject} className="bg-white border border-slate-100 rounded-[2.5rem] p-6 space-y-6 shadow-sm">
                                                         <div className="flex justify-between items-center px-2">
-                                                            <h4 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                                                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                                                                 {subject}
                                                             </h4>
                                                             {selectedTutorId ?
-                                                                <span className="text-[8px] font-black bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg uppercase tracking-widest border border-emerald-500/20">Assigned</span> :
-                                                                <span className="text-[8px] font-black bg-amber-500/10 text-amber-500 px-2 py-1 rounded-lg uppercase tracking-widest border border-amber-500/20">Pending Selection</span>
+                                                                <span className="text-[8px] font-black bg-indigo-600/10 text-indigo-600 px-2 py-1 rounded-lg uppercase tracking-widest border border-indigo-600/20">Assigned</span> :
+                                                                <span className="text-[8px] font-black bg-blue-600/10 text-blue-600 px-2 py-1 rounded-lg uppercase tracking-widest border border-blue-600/20">Pending Selection</span>
                                                             }
                                                         </div>
 
-                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto px-1 pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto px-1 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
                                                             {isLoading ? (
-                                                                <div className="flex items-center justify-center p-8"><div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>
+                                                                <div className="flex items-center justify-center p-8"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>
                                                             ) : tutors.length === 0 ? (
-                                                                <p className="text-[9px] text-slate-500 italic text-center py-6 bg-white/5 rounded-2xl">No dedicated tutors available. A specialist will be matched upon admission.</p>
+                                                                <p className="text-[9px] text-slate-500 italic text-center py-6 bg-slate-50 rounded-2xl">No dedicated tutors available. A specialist will be matched upon admission.</p>
                                                             ) : tutors.map(tutor => {
                                                                 const hasConflict = checkTutorConflicts(tutor).length > 0;
                                                                 return (
@@ -902,11 +902,11 @@ const Register = () => {
                                                                         className={`p-4 rounded-2xl border transition-all flex gap-4 items-center group relative overflow-hidden ${hasConflict
                                                                             ? 'bg-rose-500/5 border-rose-500/10 cursor-not-allowed opacity-80'
                                                                             : selectedTutorId === tutor.id
-                                                                                ? 'bg-amber-500/10 border-amber-500/30 cursor-pointer shadow-lg shadow-amber-500/5'
-                                                                                : 'bg-white/5 border-white/5 hover:bg-white/[0.08] cursor-pointer'}`}
+                                                                                ? 'bg-blue-600/5 border-blue-600/30 cursor-pointer shadow-lg shadow-blue-600/5'
+                                                                                : 'bg-slate-50 border-slate-100 hover:bg-slate-100 cursor-pointer'}`}
                                                                     >
-                                                                        <div className="w-12 h-12 bg-slate-900 rounded-xl overflow-hidden ring-1 ring-white/10 shrink-0 relative">
-                                                                            {tutor.image ? <img src={tutor.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-amber-500 bg-amber-500/5">{tutor.user?.first_name?.[0]}</div>}
+                                                                        <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-200 shrink-0 relative">
+                                                                            {tutor.image ? <img src={tutor.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-blue-600 bg-blue-600/5">{tutor.user?.first_name?.[0]}</div>}
                                                                             {checkTutorConflicts(tutor).length > 0 && (
                                                                                 <div className="absolute inset-0 bg-rose-500/40 backdrop-blur-[2px] flex items-center justify-center">
                                                                                     <span className="text-[7px] font-black text-white uppercase tracking-tighter">Busy</span>
@@ -915,14 +915,14 @@ const Register = () => {
                                                                         </div>
                                                                         <div className="flex-1 min-w-0">
                                                                             <div className="flex justify-between items-start">
-                                                                                <h5 className="font-bold text-white text-xs truncate uppercase tracking-tighter">Tutor {tutor.user?.first_name} {tutor.user?.last_name}</h5>
+                                                                                <h5 className="font-bold text-slate-900 text-xs truncate uppercase tracking-tighter">Tutor {tutor.user?.first_name} {tutor.user?.last_name}</h5>
                                                                                 {checkTutorConflicts(tutor).length > 0 && (
                                                                                     <span className="text-[7px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest animate-pulse">Conflict</span>
                                                                                 )}
                                                                             </div>
                                                                             <div className="flex justify-between items-center mt-0.5">
                                                                                 <span className="text-[9px] text-slate-500 font-bold truncate tracking-widest">{tutor.qualification || 'Certified Expert'}</span>
-                                                                                <span className="text-[10px] font-black text-white/80 shrink-0 ml-4">₦{parseFloat(tutor.hourly_rate).toLocaleString()}</span>
+                                                                                <span className="text-[10px] font-black text-slate-900/80 shrink-0 ml-4">₦{parseFloat(tutor.hourly_rate).toLocaleString()}</span>
                                                                             </div>
                                                                             {checkTutorConflicts(tutor).length > 0 ? (
                                                                                 <span className="text-[8px] font-black text-rose-500 uppercase tracking-tighter mt-1 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20">Change Time or Choose Another</span>
@@ -930,11 +930,11 @@ const Register = () => {
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={(e) => { e.stopPropagation(); setSelectedTutorForProfile(tutor); }}
-                                                                                    className="text-[8px] font-black text-amber-500 underline uppercase tracking-tighter mt-1"
+                                                                                    className="text-[8px] font-black text-blue-600 underline uppercase tracking-tighter mt-1"
                                                                                 >Intro Video →</button>
                                                                             )}
                                                                         </div>
-                                                                        {selectedTutorId === tutor.id && <div className="absolute top-0 right-0 h-full w-1.5 bg-amber-500"></div>}
+                                                                        {selectedTutorId === tutor.id && <div className="absolute top-0 right-0 h-full w-1.5 bg-blue-600"></div>}
                                                                     </motion.div>
                                                                 );
                                                             })}
@@ -955,35 +955,35 @@ const Register = () => {
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="bg-amber-500/5 border border-amber-500/10 rounded-[3rem] p-8 md:p-10 shadow-2xl space-y-8"
+                                    className="bg-blue-600/5 border border-blue-600/10 rounded-[3rem] p-8 md:p-10 shadow-2xl space-y-8"
                                 >
                                     <div className="flex items-center justify-between px-2">
-                                        <SectionHeader step="06" title="Guardian Oversight" colorClass="bg-amber-500/10 text-amber-500" />
-                                        <span className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] animate-pulse">Required (Minor)</span>
+                                        <SectionHeader step="06" title="Guardian Oversight" colorClass="bg-blue-600/10 text-blue-600" />
+                                        <span className="bg-blue-600/20 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] animate-pulse">Required (Minor)</span>
                                     </div>
 
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent First Name *</label>
-                                            <input type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required placeholder="Guardian Name" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-amber-500/30 transition-all" />
+                                            <input type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required placeholder="Guardian Name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Relationship</label>
-                                            <select name="relationship" value={formData.relationship} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-amber-500/30 transition-all appearance-none cursor-pointer">
-                                                <option className="bg-[#0a0c10]">Father</option>
-                                                <option className="bg-[#0a0c10]">Mother</option>
-                                                <option className="bg-[#0a0c10]">Guardian</option>
+                                            <select name="relationship" value={formData.relationship} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all appearance-none cursor-pointer">
+                                                <option className="bg-white">Father</option>
+                                                <option className="bg-white">Mother</option>
+                                                <option className="bg-white">Guardian</option>
                                             </select>
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent Email *</label>
-                                            <input type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required placeholder="parent@email.com" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-amber-500/30 transition-all" />
+                                            <input type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required placeholder="parent@email.com" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent Password *</label>
-                                            <input type="password" name="parentPassword" value={formData.parentPassword} onChange={handleChange} required placeholder="Access Key" className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-white font-bold outline-none focus:border-amber-500/30 transition-all" />
+                                            <input type="password" name="parentPassword" value={formData.parentPassword} onChange={handleChange} required placeholder="Access Key" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -1030,9 +1030,9 @@ const Register = () => {
                                 });
                                 
                                 return selectedSubjects.length > 0 ? (
-                                    <div className="bg-emerald-500/10 border border-emerald-500/20 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">Calculated Monthly Rate</p>
-                                        <h3 className="text-4xl font-black text-white">₦{total.toLocaleString()}</h3>
+                                    <div className="bg-blue-600/5 border border-blue-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Calculated Monthly Rate</p>
+                                        <h3 className="text-4xl font-black text-slate-900">₦{total.toLocaleString()}</h3>
                                         <p className="text-slate-400 text-[10px] mt-2 font-medium">Auto-renewed each month</p>
                                     </div>
                                 ) : null;
@@ -1043,7 +1043,7 @@ const Register = () => {
                                 disabled={loading}
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
-                                className="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                                className="w-full max-w-md bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
                             >
                                 {loading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -1052,8 +1052,8 @@ const Register = () => {
                                 )}
                             </motion.button>
 
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                                Registered Scholar? <Link to="/login" className="text-emerald-500 underline ml-2">Sign In Portal</Link>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                                Registered Scholar? <Link to="/login" className="text-blue-600 underline ml-2">Sign In Portal</Link>
                             </p>
                         </div>
                     </form>
@@ -1063,17 +1063,17 @@ const Register = () => {
             {/* Tutor Profile Modal */}
             <AnimatePresence>
                 {selectedTutorForProfile && (
-                    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[#0a0c10] border border-white/10 rounded-[3rem] w-full max-w-4xl overflow-hidden relative shadow-2xl"
+                            className="bg-white border border-slate-100 rounded-[3rem] w-full max-w-4xl overflow-hidden relative shadow-2xl"
                         >
-                            <button onClick={() => setSelectedTutorForProfile(null)} className="absolute top-6 right-6 w-12 h-12 bg-white/5 hover:bg-white/10 rounded-full flex items-center justify-center text-white z-20 border border-white/10">✕</button>
+                            <button onClick={() => setSelectedTutorForProfile(null)} className="absolute top-6 right-6 w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 z-20 border border-slate-200">✕</button>
 
                             <div className="grid md:grid-cols-2">
-                                <div className="bg-black aspect-video md:aspect-auto relative">
+                                <div className="bg-slate-900 aspect-video md:aspect-auto relative">
                                     {(() => {
                                         const videoUrl = selectedTutorForProfile.video_url || selectedTutorForProfile.intro_video;
                                         if (videoUrl) {
@@ -1087,16 +1087,16 @@ const Register = () => {
                                             return <video src={finalUrl} controls className="w-full h-full object-cover" />;
                                         }
                                         return (
-                                            <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-12 bg-gradient-to-br from-slate-900 to-black">
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-12 bg-gradient-to-br from-slate-800 to-slate-900">
                                                 <div className="w-28 h-28 rounded-[2rem] overflow-hidden border-4 border-white/10 shadow-2xl">
                                                     {selectedTutorForProfile.image
-                                                        ? <img src={selectedTutorForProfile.image.startsWith('http') ? selectedTutorForProfile.image : `${import.meta.env.VITE_API_BASE_URL}${selectedTutorForProfile.image}`} alt={selectedTutorForProfile.user?.first_name} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((selectedTutorForProfile.user?.first_name || '') + '+' + (selectedTutorForProfile.user?.last_name || ''))}&background=1a5276&color=fff&size=128`; }} />
-                                                        : <div className="w-full h-full bg-amber-500/10 flex items-center justify-center text-4xl font-black text-amber-500">{selectedTutorForProfile.user?.first_name?.[0]}</div>
+                                                        ? <img src={selectedTutorForProfile.image.startsWith('http') ? selectedTutorForProfile.image : `${import.meta.env.VITE_API_BASE_URL}${selectedTutorForProfile.image}`} alt={selectedTutorForProfile.user?.first_name} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((selectedTutorForProfile.user?.first_name || '') + '+' + (selectedTutorForProfile.user?.last_name || ''))}&background=1e40af&color=fff&size=128`; }} />
+                                                        : <div className="w-full h-full bg-blue-600/10 flex items-center justify-center text-4xl font-black text-blue-600">{selectedTutorForProfile.user?.first_name?.[0]}</div>
                                                     }
                                                 </div>
                                                 <div className="text-center">
                                                     <h4 className="text-white font-black text-lg uppercase tracking-tight">{selectedTutorForProfile.user?.first_name} {selectedTutorForProfile.user?.last_name}</h4>
-                                                    <p className="text-amber-500 text-[10px] font-black uppercase tracking-widest mt-1">{selectedTutorForProfile.qualification || 'Certified Educator'}</p>
+                                                    <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">{selectedTutorForProfile.qualification || 'Certified Educator'}</p>
                                                 </div>
                                                 <span className="text-[9px] font-black text-white/20 uppercase tracking-widest border border-white/10 px-3 py-1 rounded-full">No intro video uploaded</span>
                                             </div>
@@ -1106,40 +1106,40 @@ const Register = () => {
                                 <div className="p-10 space-y-6 flex flex-col justify-between max-h-[80vh] overflow-y-auto">
                                     <div className="space-y-5">
                                         <div>
-                                            <h3 className="text-2xl font-black text-white leading-tight uppercase tracking-tighter">Tutor {selectedTutorForProfile.user?.first_name} {selectedTutorForProfile.user?.last_name}</h3>
-                                            <p className="text-emerald-500 font-bold text-[10px] mt-1 uppercase tracking-widest">{selectedTutorForProfile.qualification || 'Certified Global Educator'}</p>
+                                            <h3 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tighter">Tutor {selectedTutorForProfile.user?.first_name} {selectedTutorForProfile.user?.last_name}</h3>
+                                            <p className="text-blue-600 font-bold text-[10px] mt-1 uppercase tracking-widest">{selectedTutorForProfile.qualification || 'Certified Global Educator'}</p>
                                         </div>
                                         {selectedTutorForProfile.bio && (
-                                            <p className="text-slate-400 text-xs font-medium leading-relaxed italic border-l-2 border-emerald-500/30 pl-4">"{selectedTutorForProfile.bio}"</p>
+                                            <p className="text-slate-500 text-xs font-medium leading-relaxed italic border-l-2 border-blue-600/30 pl-4">"{selectedTutorForProfile.bio}"</p>
                                         )}
                                         <div className="space-y-2 pt-2">
                                             {selectedTutorForProfile.hourly_rate && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-white/5">
-                                                    <span className="text-slate-500">Rate</span>
-                                                    <span className="text-amber-500">₦{parseFloat(selectedTutorForProfile.hourly_rate).toLocaleString()} / hr</span>
+                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
+                                                    <span className="text-slate-400">Rate</span>
+                                                    <span className="text-blue-600">₦{parseFloat(selectedTutorForProfile.hourly_rate).toLocaleString()} / hr</span>
                                                 </div>
                                             )}
                                             {selectedTutorForProfile.experience_years && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-white/5">
-                                                    <span className="text-slate-500">Experience</span>
-                                                    <span className="text-white">{selectedTutorForProfile.experience_years} Years</span>
+                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
+                                                    <span className="text-slate-400">Experience</span>
+                                                    <span className="text-slate-900">{selectedTutorForProfile.experience_years} Years</span>
                                                 </div>
                                             )}
                                             {selectedTutorForProfile.languages && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-white/5">
-                                                    <span className="text-slate-500">Languages</span>
-                                                    <span className="text-white text-right w-1/2">{selectedTutorForProfile.languages}</span>
+                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
+                                                    <span className="text-slate-400">Languages</span>
+                                                    <span className="text-slate-900 text-right w-1/2">{selectedTutorForProfile.languages}</span>
                                                 </div>
                                             )}
                                             {selectedTutorForProfile.subjects_to_teach && (
                                                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2">
-                                                    <span className="text-slate-500">Teaches</span>
-                                                    <span className="text-emerald-500 text-right w-1/2">{selectedTutorForProfile.subjects_to_teach}</span>
+                                                    <span className="text-slate-400">Teaches</span>
+                                                    <span className="text-blue-600 text-right w-1/2">{selectedTutorForProfile.subjects_to_teach}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <button onClick={() => setSelectedTutorForProfile(null)} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]">Close Profile</button>
+                                    <button onClick={() => setSelectedTutorForProfile(null)} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]">Close Profile</button>
                                 </div>
                             </div>
                         </motion.div>

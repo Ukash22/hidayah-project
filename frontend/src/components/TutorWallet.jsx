@@ -88,11 +88,11 @@ const TutorWallet = ({ token }) => {
 
     const getStatusBadge = (status) => {
         const styles = {
-            PENDING: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-            COMPLETED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-            REJECTED: 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+            PENDING: 'bg-blue-600/10 text-blue-600 border-blue-600/20',
+            COMPLETED: 'bg-indigo-600/10 text-indigo-600 border-indigo-600/20',
+            REJECTED: 'bg-rose-500/10 text-rose-500 border-rose-500/20'
         };
-        return styles[status] || 'bg-white/10 text-slate-400 border-white/10';
+        return styles[status] || 'bg-slate-100 text-slate-400 border-slate-200';
     };
 
     const getTypeIcon = (type) => {
@@ -108,89 +108,89 @@ const TutorWallet = ({ token }) => {
     if (loading) {
         return (
             <div className="flex justify-center items-center py-24">
-                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-8">
-            <div className="flex flex-col md:flex-row justify-between items-center bg-white/5 p-8 rounded-[2.5rem] border border-white/10 gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-100 gap-6 shadow-sm">
                 <div>
-                    <h2 className="text-3xl font-display font-black text-white mb-1">Financial Center</h2>
+                    <h2 className="text-3xl font-display font-black text-slate-900 mb-1">Financial Center</h2>
                     <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-black">Manage your earnings, rates, and withdrawals.</p>
                 </div>
             </div>
 
             {/* Wallet Summary */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-900/40 border border-emerald-500/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group hover:border-emerald-500/50 transition-all">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/20 blur-3xl -mr-16 -mt-16 rounded-full group-hover:bg-emerald-500/30 transition-all"></div>
+                <div className="bg-gradient-to-br from-blue-600 to-indigo-900 border border-blue-500/30 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-all">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16 rounded-full group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-8">
                         <div>
-                            <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                            <h3 className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
                                 Available Balance
                             </h3>
                             <p className="text-5xl font-black text-white tracking-tight">₦{parseFloat(profile?.balance || 0).toLocaleString()}</p>
                         </div>
                         <button
                             onClick={() => setShowWithdrawalModal(true)}
-                            className="w-full bg-emerald-500 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all text-center"
+                            className="w-full bg-white text-blue-600 px-6 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:bg-slate-50 transition-all text-center"
                         >
                             Request Bank Transfer →
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between group hover:border-white/20 transition-all">
+                <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between group hover:border-blue-600/20 transition-all">
                     <div>
-                        <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-indigo-500/20 text-indigo-400">⏱️</div>
-                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Base Hourly Rate</h3>
-                        <p className="text-3xl font-black text-white">₦{profile?.hourly_rate?.toLocaleString() || '0'}<span className="text-sm text-slate-500 ml-2">/ hr</span></p>
+                        <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-blue-600/20 text-blue-600">⏱️</div>
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Base Hourly Rate</h3>
+                        <p className="text-3xl font-black text-slate-900">₦{profile?.hourly_rate?.toLocaleString() || '0'}<span className="text-sm text-slate-400 ml-2">/ hr</span></p>
                     </div>
-                    <p className="text-[9px] font-black uppercase text-indigo-400 tracking-widest bg-indigo-500/10 inline-block px-3 py-1.5 rounded-lg border border-indigo-500/10 mt-6 self-start">Active Rate</p>
+                    <p className="text-[9px] font-black uppercase text-blue-600 tracking-widest bg-blue-600/10 inline-block px-3 py-1.5 rounded-lg border border-blue-600/10 mt-6 self-start">Active Rate</p>
                 </div>
             </div>
 
             {/* Transaction History */}
-            <div className="bg-white/5 rounded-[2.5rem] shadow-sm p-8 border border-white/10">
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                    <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+            <div className="bg-white rounded-[2.5rem] shadow-sm p-8 border border-slate-100">
+                <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-600/20"></span>
                     Transaction Ledger
                 </h3>
 
                 {transactions.length === 0 ? (
-                    <div className="py-20 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
-                        <p className="text-slate-500 font-bold">No financial activities recorded yet.</p>
+                    <div className="py-20 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
+                        <p className="text-slate-400 font-bold">No financial activities recorded yet.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/5">
+                    <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100">
                         <table className="w-full text-left bg-transparent">
                             <thead>
-                                <tr className="bg-white/5 border-b border-white/10">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:table-cell">Description</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Receipt</th>
+                                <tr className="bg-slate-50 border-b border-slate-100">
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Description</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Receipt</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-slate-100">
                                 {transactions.map((transaction) => (
-                                    <tr key={transaction.id} className="hover:bg-white/5 transition-colors group">
+                                    <tr key={transaction.id} className="hover:bg-slate-50 transition-colors group">
                                         <td className="px-6 py-5 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-xl bg-white/5 flex items-center justify-center text-sm border border-white/5">
+                                                <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-sm border border-slate-200">
                                                     {getTypeIcon(transaction.transaction_type)}
                                                 </div>
-                                                <span className="text-[11px] font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">
+                                                <span className="text-[11px] font-black text-slate-900 group-hover:text-blue-600 transition-colors uppercase tracking-tight">
                                                     {transaction.transaction_type}
                                                 </span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-5 whitespace-nowrap font-black text-white text-sm">
+                                        <td className="px-6 py-5 whitespace-nowrap font-black text-slate-900 text-sm">
                                             ₦{parseFloat(transaction.amount).toLocaleString()}
                                         </td>
                                         <td className="px-6 py-5 whitespace-nowrap">
@@ -201,13 +201,13 @@ const TutorWallet = ({ token }) => {
                                         <td className="px-6 py-5 whitespace-nowrap text-[10px] font-bold text-slate-400">
                                             {new Date(transaction.created_at).toLocaleDateString()}
                                         </td>
-                                        <td className="px-6 py-5 text-[11px] text-slate-300 hidden md:table-cell max-w-xs truncate">
+                                        <td className="px-6 py-5 text-[11px] text-slate-600 hidden md:table-cell max-w-xs truncate">
                                             {transaction.description || '-'}
                                         </td>
                                         <td className="px-6 py-5 text-right">
                                             <button 
                                                 onClick={() => handleDownloadReceipt(transaction)}
-                                                className="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 border border-transparent hover:border-emerald-500/20 transition-all opacity-0 group-hover:opacity-100"
+                                                className="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-600/10 border border-transparent hover:border-blue-600/20 transition-all opacity-0 group-hover:opacity-100"
                                                 title="Download Receipt PDF"
                                             >
                                                 ↓

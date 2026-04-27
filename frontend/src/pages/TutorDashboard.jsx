@@ -119,11 +119,11 @@ const TutorDashboard = () => {
 
     const getStatusBadge = (status) => {
         const colors = {
-            OPEN: 'bg-yellow-100 text-yellow-800',
-            UNDER_REVIEW: 'bg-blue-100 text-blue-800',
-            RESOLVED: 'bg-green-100 text-green-800'
+            OPEN: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+            UNDER_REVIEW: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+            RESOLVED: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
         };
-        return colors[status] || 'bg-gray-100 text-gray-800';
+        return colors[status] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     };
 
     const handleApproveRequest = async (id) => {
@@ -286,17 +286,17 @@ const TutorDashboard = () => {
 
     if (tutorProfile && tutorProfile.status !== 'APPROVED') {
         return (
-            <div className="min-h-screen bg-[#0a0c10] text-slate-200">
+            <div className="min-h-screen bg-slate-50 text-slate-900">
                 <Navbar />
                 <div className="container pt-32 pb-20 px-4">
-                    <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-                    <div className="bg-white/5 backdrop-blur-xl rounded-[2.5rem] shadow-2xl p-10 border border-white/10 max-w-2xl mx-auto text-center relative overflow-hidden">
-                        <div className="w-24 h-24 bg-amber-500/10 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 border border-amber-500/20 shadow-inner">
+                    <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100 max-w-2xl mx-auto text-center relative overflow-hidden">
+                        <div className="w-24 h-24 bg-blue-600/10 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 border border-blue-600/20 shadow-inner">
                             ⏳
                         </div>
-                        <h1 className="text-3xl font-display text-white font-black mb-2">Application Under Review</h1>
-                        <p className="text-[10px] font-black tracking-[0.3em] uppercase text-amber-500 mb-8 block">Pending Administration Approval</p>
-                        <p className="text-slate-400 mb-8 text-sm leading-relaxed font-medium">
+                        <h1 className="text-3xl font-display text-slate-900 font-black mb-2">Application Under Review</h1>
+                        <p className="text-[10px] font-black tracking-[0.3em] uppercase text-blue-600 mb-8 block">Pending Administration Approval</p>
+                        <p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">
                             Your application is currently being reviewed by our administration team. 
                             We will notify you once your profile has been approved and you can start teaching.
                         </p>
@@ -306,9 +306,9 @@ const TutorDashboard = () => {
                                 <p>{tutorProfile.rejection_reason || "Unfortunately, your application was not approved at this time."}</p>
                             </div>
                         )}
-                        <div className="bg-[#0a0c10]/50 rounded-3xl p-8 border border-white/5">
-                            <h3 className="font-black text-[10px] text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span> Next Steps</h3>
-                            <ul className="text-xs text-slate-400 space-y-3 text-left font-medium">
+                        <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100">
+                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> Next Steps</h3>
+                            <ul className="text-xs text-slate-500 space-y-3 text-left font-medium">
                                 <li>Wait for an email from our admin team regarding your interview.</li>
                                 <li>Ensure your phone is reachable if we need to contact you.</li>
                                 <li>Prepare your teaching materials and workspace setup.</li>
@@ -331,21 +331,21 @@ const TutorDashboard = () => {
     });
 
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-200 selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-600/30">
             <Navbar />
             
             <main className="container pt-32 pb-20 px-4 relative">
                 {/* Ambient Background Glows */}
-                <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-                <div className="fixed bottom-0 right-1/4 w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[100px] -z-10 animate-pulse delay-700"></div>
+                <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] -z-10 animate-pulse"></div>
+                <div className="fixed bottom-0 right-1/4 w-[400px] h-[400px] bg-indigo-600/5 rounded-full blur-[100px] -z-10 animate-pulse delay-700"></div>
 
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass-card bg-white/5 backdrop-blur-xl rounded-[2.5rem] p-10 border border-white/10 shadow-2xl relative overflow-hidden"
+                    className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-2xl relative overflow-hidden"
                 >
                     {activeClass && (
-                        <div className="bg-gradient-to-r from-secondary to-indigo-600 rounded-[2rem] p-6 shadow-2xl shadow-secondary/20 border border-secondary/30 flex flex-col md:flex-row justify-between items-center gap-6 animate-pulse mb-12">
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 shadow-2xl shadow-blue-600/20 border border-blue-400/30 flex flex-col md:flex-row justify-between items-center gap-6 animate-pulse mb-12">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white text-xl">
                                     🔔
@@ -357,7 +357,7 @@ const TutorDashboard = () => {
                             </div>
                             <button 
                                 onClick={() => handleJoinClass(activeClass)} 
-                                className="bg-white/10 text-white hover:bg-emerald-500 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all w-full md:w-auto text-center shadow-2xl flex-shrink-0 border border-white/5 hover:border-emerald-500"
+                                className="bg-white text-blue-600 hover:bg-slate-50 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all w-full md:w-auto text-center shadow-2xl flex-shrink-0"
                             >
                                 Join Class Now
                             </button>
@@ -365,13 +365,13 @@ const TutorDashboard = () => {
                     )}
 
                     <div className="flex flex-col md:flex-row items-center gap-6 mb-12">
-                        <div className="w-20 h-20 bg-emerald-500/20 rounded-3xl flex items-center justify-center text-emerald-400 text-3xl font-black border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
+                        <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-600 text-3xl font-black border border-blue-600/20 shadow-lg shadow-blue-600/5">
                             {user?.first_name?.[0]?.toUpperCase()}
                         </div>
                         <div className="text-center md:text-left">
-                            <h1 className="text-4xl font-display text-white font-black tracking-tight leading-tight">Tutor Control Room</h1>
-                            <p className="text-emerald-500 font-black uppercase tracking-[0.2em] text-xs mt-2 flex items-center gap-2 justify-center md:justify-start">
-                                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <h1 className="text-4xl font-display text-slate-900 font-black tracking-tight leading-tight">Tutor Control Room</h1>
+                            <p className="text-blue-600 font-black uppercase tracking-[0.2em] text-xs mt-2 flex items-center gap-2 justify-center md:justify-start">
+                                <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
                                 Welcome back, {user?.first_name}
                             </p>
                         </div>
@@ -380,22 +380,22 @@ const TutorDashboard = () => {
                     {/* Notifications Widget */}
                     {notifications.length > 0 && (
                         <div className="mb-12">
-                            <div className="bg-amber-500/10 rounded-[2rem] p-6 border border-amber-500/20 backdrop-blur-sm relative overflow-hidden">
-                                <div className="absolute -top-10 -right-10 w-20 h-20 bg-amber-500/20 rounded-full blur-xl"></div>
-                                <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 relative z-10">
+                            <div className="bg-blue-600/5 rounded-[2rem] p-6 border border-blue-600/10 relative overflow-hidden">
+                                <div className="absolute -top-10 -right-10 w-20 h-20 bg-blue-600/10 rounded-full blur-xl"></div>
+                                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2 relative z-10">
                                     <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
                                     </span>
                                     System Alerts
                                 </h3>
                                 <div className="space-y-3">
                                     {notifications.map(n => (
-                                        <div key={n.id} className="bg-[#0a0c10]/40 border border-white/5 p-4 rounded-xl flex justify-between items-center group hover:border-amber-500/30 transition-all">
+                                        <div key={n.id} className="bg-white border border-slate-100 p-4 rounded-xl flex justify-between items-center group hover:border-blue-600/30 transition-all shadow-sm">
                                             <div className="flex items-start gap-3">
-                                                <div className="mt-1 w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></div>
+                                                <div className="mt-1 w-2 h-2 rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.5)]"></div>
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-black text-white">{n.title}</p>
+                                                    <p className="text-sm font-black text-slate-900">{n.title}</p>
                                                     <p className="text-[11px] font-medium text-slate-400 line-clamp-1">{n.message}</p>
                                                 </div>
                                             </div>
@@ -405,7 +405,7 @@ const TutorDashboard = () => {
                                                         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/${n.id}/read/`, {}, { headers: getAuthHeader() });
                                                         setNotifications(prev => prev.filter(item => item.id !== n.id));
                                                     }}
-                                                    className="w-8 h-8 rounded-full bg-white/5 text-slate-400 hover:bg-amber-500 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ml-4 border border-white/5 hover:border-amber-500"
+                                                    className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ml-4 border border-slate-100 hover:border-blue-600"
                                                 >
                                                     ✕
                                                 </button>
@@ -418,7 +418,7 @@ const TutorDashboard = () => {
                     )}
 
                     {/* Tabs */}
-                    <div className="flex gap-2 mb-10 p-1.5 bg-white/5 rounded-2xl border border-white/10 overflow-x-auto no-scrollbar">
+                    <div className="flex gap-2 mb-10 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar shadow-inner">
                         {[
                             { id: 'schedule', icon: '📅', label: 'Schedule' },
                             { id: 'requests', icon: '📩', label: 'Requests' },
@@ -433,8 +433,8 @@ const TutorDashboard = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                                    : 'text-slate-400 hover:text-blue-600 hover:bg-white'
                                     }`}
                             >
                                 <span>{tab.icon}</span>
@@ -458,45 +458,45 @@ const TutorDashboard = () => {
                             <div className="grid md:grid-cols-2 gap-8 mb-12">
                                 <motion.div 
                                     whileHover={{ translateY: -5 }}
-                                    className="bg-white/5 p-8 rounded-3xl border border-white/10 hover:border-emerald-500/30 transition-all group"
+                                    className="bg-white p-8 rounded-3xl border border-slate-100 hover:border-blue-600/30 transition-all group shadow-sm"
                                 >
-                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-emerald-500/20 group-hover:scale-110 transition-transform">📅</div>
-                                    <h3 className="text-lg font-bold text-white mb-2">My Schedule</h3>
+                                    <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-blue-600/20 group-hover:scale-110 transition-transform text-blue-600">📅</div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">My Schedule</h3>
                                     <p className="text-slate-400 text-sm">You have {schedule.length} upcoming classes.</p>
                                 </motion.div>
                                 <motion.div 
                                     whileHover={{ translateY: -5 }}
-                                    className="bg-white/5 p-8 rounded-3xl border border-white/10 hover:border-secondary/30 transition-all group"
+                                    className="bg-white p-8 rounded-3xl border border-slate-100 hover:border-indigo-600/30 transition-all group shadow-sm"
                                 >
-                                    <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-secondary/20 group-hover:scale-110 transition-transform">🎓</div>
-                                    <h3 className="text-lg font-bold text-white mb-2">My Students</h3>
+                                    <div className="w-12 h-12 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-indigo-600/20 group-hover:scale-110 transition-transform text-indigo-600">🎓</div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">My Students</h3>
                                     <p className="text-slate-400 text-sm">You are teaching {assignedStudents.length} students.</p>
                                 </motion.div>
                                 <motion.div 
                                     whileHover={{ translateY: -5 }}
-                                    className="bg-gradient-to-br from-emerald-500/20 to-indigo-500/20 p-8 rounded-3xl border border-white/10 hover:border-emerald-500/30 transition-all group md:col-span-2 relative overflow-hidden"
+                                    className="bg-gradient-to-br from-blue-600 to-indigo-900 p-8 rounded-3xl border border-blue-500/30 transition-all group md:col-span-2 relative overflow-hidden shadow-2xl"
                                 >
                                     <div className="flex justify-between items-start relative z-10">
                                         <div>
                                             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-white/20 group-hover:scale-110 transition-transform">💰</div>
                                             <h3 className="text-lg font-bold text-white mb-1">Total Balance</h3>
-                                            <p className="text-4xl font-black text-emerald-400">₦{parseFloat(tutorProfile?.wallet_balance || 0).toLocaleString()}</p>
+                                            <p className="text-4xl font-black text-white">₦{parseFloat(tutorProfile?.wallet_balance || 0).toLocaleString()}</p>
                                         </div>
                                         <button 
                                             onClick={() => setActiveTab('wallet')}
-                                            className="bg-emerald-500 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+                                            className="bg-white text-blue-600 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-lg"
                                         >
                                             View Wallet
                                         </button>
                                     </div>
                                     {/* Abstract Circle Decoration */}
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
                                 </motion.div>
                             </div>
 
 
-                            <h2 className="text-2xl font-display text-white mb-8 flex items-center gap-3">
-                                <span className="w-1.5 h-8 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                            <h2 className="text-2xl font-display text-slate-900 mb-8 flex items-center gap-3">
+                                <span className="w-1.5 h-8 bg-blue-600 rounded-full shadow-lg shadow-blue-600/20"></span>
                                 Upcoming Trial Classes
                             </h2>
 
@@ -506,15 +506,15 @@ const TutorDashboard = () => {
                                         <motion.div 
                                             key={idx} 
                                             whileHover={{ scale: 1.01 }}
-                                            className="bg-white/5 p-6 rounded-[2rem] border border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-emerald-500/20 transition-all group"
+                                            className="bg-white shadow-sm border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-blue-600/20 transition-all group"
                                         >
                                             <div className="flex items-center gap-6">
-                                                <div className="bg-emerald-500/10 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-emerald-500/10 group-hover:scale-110 transition-transform">📖</div>
+                                                <div className="bg-blue-600/10 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-blue-600/10 group-hover:scale-110 transition-transform">📖</div>
                                                 <div>
-                                                    <h4 className="text-xl font-bold text-white">Trial: {trial.student_name || trial.first_name}</h4>
+                                                    <h4 className="text-xl font-bold text-slate-900">Trial: {trial.student_name || trial.first_name}</h4>
                                                     <p className="text-slate-400 text-sm font-bold flex items-center gap-2">
                                                         <span>🗓</span> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleString() : 'Pending'}
-                                                        <span className="text-white/10">|</span>
+                                                        <span className="text-slate-900/10">|</span>
                                                         <span>📍 {trial.country || 'Global'}</span>
                                                     </p>
                                                 </div>
@@ -522,14 +522,14 @@ const TutorDashboard = () => {
 
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right hidden md:block">
-                                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500">Course</span>
+                                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Course</span>
                                                     <span className="text-xs font-bold text-emerald-400">{trial.course_interested}</span>
                                                 </div>
                                                 {trial.zoom_start_url ? (
                                                     <>
                                                         <button
                                                             onClick={() => handleJoinClass(trial)}
-                                                            className="bg-emerald-500 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-center"
+                                                            className="bg-blue-600 text-slate-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all text-center"
                                                         >
                                                             Start Class
                                                         </button>
@@ -538,26 +538,26 @@ const TutorDashboard = () => {
                                                                 href={trial.whiteboard_url}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="bg-amber-500 text-white px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-all text-center"
+                                                                className="bg-amber-500 text-slate-900 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-all text-center"
                                                             >
                                                                 Whiteboard
                                                             </a>
                                                         )}
                                                     </>
                                                 ) : (
-                                                    <span className="text-xs text-slate-500 italic font-bold">Room Pending</span>
+                                                    <span className="text-xs text-slate-400 italic font-bold">Room Pending</span>
                                                 )}
                                             </div>
                                         </motion.div>
                                     ))
                                 ) : (
                                     <div className="bg-white/5 p-12 rounded-[2rem] border border-dashed border-white/10 text-center">
-                                        <p className="text-slate-500 font-bold">No trial classes assigned to you yet.</p>
+                                        <p className="text-slate-400 font-bold">No trial classes assigned to you yet.</p>
                                     </div>
                                 )}
                             </div>
 
-                            <h2 className="text-2xl font-display text-white mb-8 flex items-center gap-3">
+                            <h2 className="text-2xl font-display text-slate-900 mb-8 flex items-center gap-3">
                                 <span className="w-1.5 h-8 bg-secondary rounded-full shadow-lg shadow-secondary/20"></span>
                                 My Regular Students
                             </h2>
@@ -568,7 +568,7 @@ const TutorDashboard = () => {
                                         <motion.div 
                                             key={idx} 
                                             whileHover={{ y: -5 }}
-                                            className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-xl hover:border-emerald-500/30 transition-all"
+                                            className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-xl hover:border-blue-600/30 transition-all"
                                         >
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-4">
@@ -576,9 +576,9 @@ const TutorDashboard = () => {
                                                         {session.student_name?.[0] || 'S'}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-bold text-white leading-tight">{session.student_name}</h4>
+                                                        <h4 className="font-bold text-slate-900 leading-tight">{session.student_name}</h4>
                                                         <div className="flex flex-col gap-0.5 mt-0.5">
-                                                            <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">{session.course_interested || 'Regular Class'}</span>
+                                                            <span className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{session.course_interested || 'Regular Class'}</span>
                                                             {(session.schedule_days || session.schedule_time) && (
                                                                 <div className="flex items-center gap-2 text-[9px] text-slate-400 font-bold">
                                                                     {session.schedule_days && <span className="flex items-center gap-1">📅 {session.schedule_days}</span>}
@@ -589,10 +589,10 @@ const TutorDashboard = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1">
-                                                    <div className="text-[9px] font-black uppercase text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                                                    <div className="text-[9px] font-black uppercase text-blue-600 bg-blue-600/10 px-2 py-1 rounded-lg border border-blue-600/20">
                                                         {new Date(session.scheduled_at).toLocaleDateString()}
                                                     </div>
-                                                    <div className="text-[8px] font-black uppercase text-slate-500">
+                                                    <div className="text-[8px] font-black uppercase text-slate-400">
                                                         {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </div>
                                                 </div>
@@ -1515,15 +1515,15 @@ const TutorDashboard = () => {
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-[#0f172a]/90 rounded-[3rem] w-full max-w-2xl p-10 relative border border-white/10 shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
+                        className="bg-white rounded-[3rem] w-full max-w-2xl p-10 relative border border-slate-100 shadow-3xl max-h-[90vh] flex flex-col overflow-hidden"
                     >
-                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 blur-[100px] rounded-full"></div>
+                        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/5 blur-[100px] rounded-full"></div>
                         
-                        <button onClick={() => setShowAssignmentModal(false)} className="absolute top-8 right-8 w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all">✕</button>
+                        <button onClick={() => setShowAssignmentModal(false)} className="absolute top-8 right-8 w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-slate-900 transition-all">✕</button>
                         
                         <div className="mb-10">
-                            <h2 className="text-3xl font-display text-white font-black mb-2 flex items-center gap-3">
-                                <span className="w-1.5 h-8 bg-indigo-500 rounded-full"></span>
+                            <h2 className="text-3xl font-display text-slate-900 font-black mb-2 flex items-center gap-3">
+                                <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
                                 Assignment Hub
                             </h2>
                             <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Provisioning resources for {selectedStudentForAssign.full_name || selectedStudentForAssign.username}</p>
@@ -1534,13 +1534,13 @@ const TutorDashboard = () => {
                                 <>
                                     {/* Exams Section */}
                                     <div className="space-y-5">
-                                        <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] ml-2">Academic Assessments</h3>
+                                        <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em] ml-2">Academic Assessments</h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             {exams.map(exam => {
                                                 const isAssigned = assignments.some(a => a.student === selectedStudentForAssign.id && a.exam === exam.id);
                                                 return (
                                                     <div key={exam.id} 
-                                                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group ${isAssigned ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-white/5 border-white/5 hover:border-indigo-500/20' }`}
+                                                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group ${isAssigned ? 'bg-blue-600/5 border-blue-600/20' : 'bg-slate-50 border-slate-100 hover:border-indigo-500/20' }`}
                                                         onClick={async () => {
                                                             if (assigningSpecific) return;
                                                             setAssigningSpecific(true);
@@ -1559,15 +1559,15 @@ const TutorDashboard = () => {
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-500 shadow-inner'}`}>
+                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-indigo-500 text-slate-900 shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-500 shadow-inner'}`}>
                                                                 {isAssigned ? '✓' : '📝'}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-black text-white mb-1 group-hover:text-indigo-400 transition-colors">{exam.title}</p>
+                                                                <p className="text-sm font-black text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{exam.title}</p>
                                                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{exam.subject_name || 'General Protocol'}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-400/10 px-3 py-1 rounded-full border border-indigo-400/10">Active</span>}
+                                                        {isAssigned && <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-600/10 px-3 py-1 rounded-full border border-blue-600/10">Active</span>}
                                                     </div>
                                                 );
                                             })}
@@ -1582,7 +1582,7 @@ const TutorDashboard = () => {
                                                 const isAssigned = mat.assigned_students?.includes(selectedStudentForAssign.id);
                                                 return (
                                                     <div key={mat.id} 
-                                                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group ${isAssigned ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-white/5 border-white/5 hover:border-emerald-500/20' }`}
+                                                        className={`p-6 rounded-[2rem] border transition-all cursor-pointer flex items-center justify-between group ${isAssigned ? 'bg-blue-600/5 border-blue-600/20' : 'bg-slate-50 border-slate-100 hover:border-emerald-500/20' }`}
                                                         onClick={async () => {
                                                             if (assigningSpecific) return;
                                                             setAssigningSpecific(true);
@@ -1600,15 +1600,15 @@ const TutorDashboard = () => {
                                                         }}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-500 shadow-inner'}`}>
+                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-emerald-500 text-slate-900 shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-500 shadow-inner'}`}>
                                                                 {isAssigned ? '✓' : '📚'}
                                                             </div>
                                                             <div>
-                                                                <p className="text-sm font-black text-white mb-1 group-hover:text-emerald-400 transition-colors">{mat.title}</p>
+                                                                <p className="text-sm font-black text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{mat.title}</p>
                                                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{mat.material_type}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/10">Synchronized</span>}
+                                                        {isAssigned && <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-600/10 px-3 py-1 rounded-full border border-emerald-400/10">Synchronized</span>}
                                                     </div>
                                                 );
                                             })}
@@ -1624,7 +1624,7 @@ const TutorDashboard = () => {
                         </div>
 
                         <div className="mt-10 pt-8 border-t border-white/5">
-                            <button onClick={() => setShowAssignmentModal(false)} className="w-full bg-indigo-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">
+                            <button onClick={() => setShowAssignmentModal(false)} className="w-full bg-indigo-500 text-slate-900 py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-indigo-500/30 hover:scale-[1.02] active:scale-95 transition-all">
                                 Finalize Assignments →
                             </button>
                         </div>
@@ -1638,16 +1638,16 @@ const TutorDashboard = () => {
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        className="bg-[#0f172a]/90 rounded-[3rem] w-full max-w-2xl p-10 relative border border-white/10 shadow-2xl overflow-hidden"
+                        className="bg-white rounded-[3rem] border border-slate-100 shadow-3xl overflow-hidden"
                     >
-                        <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/10 blur-[100px] rounded-full"></div>
+                        <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/5 blur-[100px] rounded-full"></div>
                         
                         <div className="flex justify-between items-start mb-10">
                             <div>
-                                <h3 className="text-3xl font-display font-black text-white mb-2">{examFormData.id ? 'Edit' : 'New'} Assessment</h3>
+                                <h3 className="text-3xl font-display font-black text-slate-900 mb-2">{examFormData.id ? 'Edit' : 'New'} Assessment</h3>
                                 <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Configure your academic evaluation parameters.</p>
                             </div>
-                            <button onClick={() => setShowCreateExamModal(false)} className="w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all">✕</button>
+                            <button onClick={() => setShowCreateExamModal(false)} className="w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-slate-900 transition-all">✕</button>
                         </div>
 
                         <form className="space-y-8" onSubmit={async (e) => {
@@ -1679,14 +1679,14 @@ const TutorDashboard = () => {
                                         required 
                                         value={examFormData.title} 
                                         onChange={e => setExamFormData({...examFormData, title: e.target.value})}
-                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 outline-none focus:border-emerald-500/50 transition-all font-bold text-white" 
+                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-50 border border-slate-100 text-slate-900 font-bold placeholder:text-slate-400 focus:border-blue-600/50 transition-all" 
                                         placeholder="Final Term Exam"
                                     />
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Subject</label>
                                     <select
-                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-900 outline-none focus:border-emerald-500/50 transition-all font-bold text-white text-xs"
+                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-50 border border-slate-100 text-slate-900 font-bold focus:border-blue-600/50 transition-all text-xs"
                                         value={examFormData.subject}
                                         onChange={e => setExamFormData({ ...examFormData, subject: e.target.value })}
                                         required
@@ -1712,7 +1712,7 @@ const TutorDashboard = () => {
                                     <select 
                                         value={examFormData.exam_type} 
                                         onChange={e => setExamFormData({...examFormData, exam_type: e.target.value})}
-                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-900 outline-none focus:border-emerald-500/50 transition-all font-bold text-white text-xs"
+                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-50 border border-slate-100 text-slate-900 font-bold focus:border-blue-600/50 transition-all text-xs"
                                     >
                                         <option value="INTERNAL">Internal</option>
                                         <option value="JAMB">JAMB Simulation</option>
@@ -1727,7 +1727,7 @@ const TutorDashboard = () => {
                                         type="number" 
                                         value={examFormData.year} 
                                         onChange={e => setExamFormData({...examFormData, year: e.target.value})}
-                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 outline-none focus:border-emerald-500/50 transition-all font-bold text-white" 
+                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-50 border border-slate-100 text-slate-900 font-bold placeholder:text-slate-400 focus:border-blue-600/50 transition-all" 
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -1736,7 +1736,7 @@ const TutorDashboard = () => {
                                         type="number" 
                                         value={examFormData.duration_minutes} 
                                         onChange={e => setExamFormData({...examFormData, duration_minutes: e.target.value})}
-                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 outline-none focus:border-emerald-500/50 transition-all font-bold text-white" 
+                                        className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-50 border border-slate-100 text-slate-900 font-bold placeholder:text-slate-400 focus:border-blue-600/50 transition-all" 
                                     />
                                 </div>
                             </div>
@@ -1756,7 +1756,7 @@ const TutorDashboard = () => {
                                                         if (isSelected) setSelectedStudentsForBulk(selectedStudentsForBulk.filter(id => id !== sId));
                                                         else setSelectedStudentsForBulk([...selectedStudentsForBulk, sId]);
                                                     }}
-                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isSelected ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-500 border-white/5 hover:border-emerald-500/30'}`}
+                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-blue-600/20' : 'bg-white/5 text-slate-500 border-white/5 hover:border-emerald-500/30'}`}
                                                 >
                                                     {student.full_name || student.user_details?.first_name}
                                                 </button>
@@ -1770,7 +1770,7 @@ const TutorDashboard = () => {
                             <button 
                                 type="submit" 
                                 disabled={assigningExam}
-                                className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-3"
+                                className="w-full bg-emerald-500 text-slate-900 py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 mt-4 flex items-center justify-center gap-3"
                             >
                                 {assigningExam ? (
                                     <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> INITIALIZING...</>
@@ -1787,20 +1787,20 @@ const TutorDashboard = () => {
                     <motion.div 
                         initial={{ opacity: 0, y: 100 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-[#0f172a] rounded-[3rem] w-full max-w-5xl max-h-[90vh] p-12 relative border border-white/10 shadow-2xl overflow-y-auto no-scrollbar"
+                        className="bg-white rounded-[3rem] w-full max-w-5xl max-h-[90vh] p-12 relative border border-slate-100 shadow-3xl overflow-y-auto no-scrollbar"
                     >
-                        <button onClick={() => setShowQuestionModal(false)} className="absolute top-8 right-8 w-12 h-12 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all text-xl">✕</button>
+                        <button onClick={() => setShowQuestionModal(false)} className="absolute top-8 right-8 w-12 h-12 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all text-xl">✕</button>
                         
                         <div className="mb-12">
-                            <h2 className="text-4xl font-display font-black text-white mb-2">{selectedExamForQuestions.title}</h2>
+                            <h2 className="text-4xl font-display font-black text-slate-900 mb-2">{selectedExamForQuestions.title}</h2>
                             <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.3em]">Knowledge Base Architect • {selectedExamForQuestions.subject_name}</p>
                         </div>
 
                         <div className="grid lg:grid-cols-2 gap-16">
                             {/* Add Question Form */}
                             <div className="space-y-8">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                                    <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                                    <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-600/20"></span>
                                     Question Entry
                                 </h3>
                                 <form className="space-y-6" onSubmit={handleAddQuestion}>
@@ -1810,7 +1810,7 @@ const TutorDashboard = () => {
                                             required 
                                             name="text"
                                             rows="4"
-                                            className="w-full px-6 py-5 rounded-3xl border border-white/10 bg-white/5 focus:bg-white/10 focus:border-emerald-500/30 outline-none transition-all font-medium text-slate-300 placeholder:text-slate-600 leading-relaxed no-scrollbar"
+                                            className="w-full px-6 py-5 rounded-3xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-600/30 outline-none transition-all font-medium text-slate-700 placeholder:text-slate-400 leading-relaxed no-scrollbar"
                                             placeholder="Formulate the assessment query here..."
                                         ></textarea>
                                     </div>
@@ -1818,20 +1818,20 @@ const TutorDashboard = () => {
                                         {['A','B','C','D'].map(opt => (
                                             <div key={opt} className="space-y-2">
                                                 <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Option {opt}</label>
-                                                <input required name={`option_${opt.toLowerCase()}`} className="w-full px-5 py-3 rounded-xl border border-white/10 bg-white/5 outline-none focus:border-emerald-500/30 transition-all font-bold text-slate-300 text-xs" />
+                                                <input required name={`option_${opt.toLowerCase()}`} className="w-full px-5 py-3 rounded-xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/30 transition-all font-bold text-slate-700 text-xs" />
                                             </div>
                                         ))}
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black uppercase text-emerald-500 tracking-widest ml-1">Correct Solution</label>
-                                        <select name="correct_option" className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-slate-900 outline-none focus:border-emerald-500/50 transition-all font-bold text-white text-xs">
+                                        <label className="text-[10px] font-black uppercase text-blue-600 tracking-widest ml-1">Correct Solution</label>
+                                        <select name="correct_option" className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900 text-xs">
                                             <option value="A">Choice A</option>
                                             <option value="B">Choice B</option>
                                             <option value="C">Choice C</option>
                                             <option value="D">Choice D</option>
                                         </select>
                                     </div>
-                                    <button type="submit" className="w-full bg-emerald-500 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-emerald-500/30 hover:scale-[1.02] active:scale-95 transition-all mt-4">
+                                    <button type="submit" className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-blue-600/30 hover:scale-[1.02] active:scale-95 transition-all mt-4">
                                         Sync to Bank →
                                     </button>
                                 </form>
@@ -1839,21 +1839,21 @@ const TutorDashboard = () => {
 
                             {/* Existing Questions List */}
                             <div className="space-y-8">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                                    <span className="w-1.5 h-6 bg-indigo-500 rounded-full shadow-lg shadow-indigo-500/20"></span>
+                                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
+                                    <span className="w-1.5 h-6 bg-indigo-600 rounded-full shadow-lg shadow-indigo-600/20"></span>
                                     Synchronized Items ({selectedExamForQuestions.questions?.length || 0})
                                 </h3>
                                 <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-4 no-scrollbar">
                                     {(selectedExamForQuestions.questions || []).map((q, i) => (
-                                        <div key={q.id} className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5 group hover:border-white/10 transition-all">
+                                        <div key={q.id} className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 group hover:border-blue-600/20 transition-all">
                                             <div className="flex justify-between items-start mb-6">
-                                                <span className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center text-[10px] font-black text-emerald-500 border border-white/5">{i + 1}</span>
+                                                <span className="w-10 h-10 rounded-2xl bg-blue-600/10 flex items-center justify-center text-[10px] font-black text-blue-600 border border-blue-600/10">{i + 1}</span>
                                                 <button onClick={() => handleDeleteQuestion(q.id)} className="w-8 h-8 rounded-lg text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 italic">✕</button>
                                             </div>
-                                            <p className="text-sm font-bold text-slate-300 mb-6 leading-relaxed">{q.text}</p>
+                                            <p className="text-sm font-bold text-slate-700 mb-6 leading-relaxed">{q.text}</p>
                                             <div className="grid grid-cols-2 gap-3">
                                                 {['A','B','C','D'].map(opt => (
-                                                    <div key={opt} className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${q.correct_option === opt ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-slate-500 text-opacity-60 border border-white/5'}`}>
+                                                    <div key={opt} className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest ${q.correct_option === opt ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-600 border border-slate-100'}`}>
                                                         {opt}: {q[`option_${opt.toLowerCase()}`].slice(0, 20)}...
                                                     </div>
                                                 ))}
@@ -1861,8 +1861,8 @@ const TutorDashboard = () => {
                                         </div>
                                     ))}
                                     {(!selectedExamForQuestions.questions || selectedExamForQuestions.questions.length === 0) && (
-                                        <div className="py-24 text-center bg-white/5 rounded-[3rem] border border-dashed border-white/10 opacity-30">
-                                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] italic">Knowledge Bank Depleted</p>
+                                        <div className="py-24 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
+                                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Knowledge Bank Depleted</p>
                                         </div>
                                     )}
                                 </div>

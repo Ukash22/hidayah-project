@@ -193,16 +193,16 @@ const TrialForm = () => {
                                 </div>
 
                                 {formData.preferredTutor && (
-                                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex justify-between items-center animate-fade-in">
+                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl flex justify-between items-center animate-fade-in">
                                         <div>
-                                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Premium Session Estimate</p>
+                                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Premium Session Estimate</p>
                                             <h4 className="text-lg font-bold text-primary">
                                                 ₦{parseFloat(availableTutors.find(t => t.full_name === formData.preferredTutor)?.hourly_rate || 0).toLocaleString()}
                                                 <span className="text-xs font-normal text-slate-400"> / per hour session</span>
                                             </h4>
                                         </div>
                                         <div className="text-right">
-                                            <span className="inline-block px-3 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full uppercase">Special Rate</span>
+                                            <span className="inline-block px-3 py-1 bg-blue-600 text-white text-[10px] font-bold rounded-full uppercase">Special Rate</span>
                                         </div>
                                     </div>
                                 )}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Briefcase, Languages, DollarSign, FileText, GraduationCap } from 'lucide-react';
 
-const ExperienceFields = ({ formData, handleChange, handleFileChange, files }) => {
+const ExperienceFields = ({ formData, handleChange, handleFileChange, files, FileUploadBox }) => {
     return (
         <div className="space-y-8">
             <div className="grid md:grid-cols-3 gap-6">
