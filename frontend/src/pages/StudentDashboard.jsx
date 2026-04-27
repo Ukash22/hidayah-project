@@ -8,7 +8,8 @@ import {
     LayoutDashboard, MessageSquare, Download, Plus, 
     FileText, CheckCircle2, ShieldCheck, X,
     TrendingUp, ExternalLink, AlertCircle,
-    Wallet, BookOpen, GraduationCap, Bell, ArrowRight
+    Wallet, BookOpen, GraduationCap, Bell, ArrowRight,
+    Search, User, Clock, Calendar, PlayCircle, Music
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -115,7 +116,7 @@ const StudentDashboard = () => {
             const doc = new jsPDF();
             
             // Brand Header
-            doc.setFillColor(16, 185, 129); // Emerald
+            doc.setFillColor(30, 64, 175); // Blue-800
             doc.rect(0, 0, 210, 40, 'F');
             
             doc.setTextColor(255, 255, 255);
@@ -320,8 +321,8 @@ const StudentDashboard = () => {
     const scheduleStatus = calculateScheduleStatus();
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950">
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)]" />
+        <div className="min-h-screen flex items-center justify-center bg-white">
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full shadow-[0_0_20px_rgba(37,99,235,0.2)]" />
         </div>
     );
 
@@ -337,9 +338,9 @@ const StudentDashboard = () => {
     });
 
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-300 font-sans selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-white text-slate-600 font-sans selection:bg-blue-500/30">
             {isImpersonating && (
-                <div className="bg-amber-500 text-white px-6 py-4 flex items-center justify-between shadow-2xl relative z-[100] animate-in fade-in slide-in-from-top duration-700">
+                <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between shadow-2xl relative z-[100] animate-in fade-in slide-in-from-top duration-700">
                     <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
                             <ShieldCheck className="w-6 h-6 text-white" />
@@ -351,7 +352,7 @@ const StudentDashboard = () => {
                     </div>
                     <button 
                         onClick={handleReturnToParent}
-                        className="bg-white text-amber-600 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-amber-50 active:scale-95 transition-all shadow-xl flex items-center gap-2 group"
+                        className="bg-white text-blue-600 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-2 group"
                     >
                         <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Parent Portal
                     </button>
@@ -404,7 +405,7 @@ const StudentDashboard = () => {
                                 <div>
                                     <h4 className="text-3xl font-display font-black text-white mb-2 uppercase tracking-tighter">Welcome to Hidayah!</h4>
                                     <p className="text-indigo-100 font-bold opacity-90 max-w-lg leading-relaxed">
-                                        Congratulations! Your admission has been <span className="underline decoration-emerald-400 decoration-2">automatically approved</span>. 
+                                        Congratulations! Your admission has been <span className="underline decoration-blue-400 decoration-2">automatically approved</span>. 
                                         To start your journey, please download your admission letter and complete your first monthly payment.
                                     </p>
                                 </div>
@@ -530,9 +531,9 @@ const StudentDashboard = () => {
                                     <div className="lg:col-span-2 space-y-10">
                                         {/* Bookings Awaiting Action */}
                                         {bookings.some(b => b.status === 'APPROVED' && !b.paid) && (
-                                            <div className="bg-amber-50 border border-amber-100 rounded-[3rem] p-10 shadow-sm">
+                                            <div className="bg-blue-50 border border-blue-100 rounded-[3rem] p-10 shadow-sm">
                                                 <h3 className="text-xl font-display font-black text-slate-900 mb-6 flex items-center gap-4">
-                                                    <div className="w-1.5 h-6 bg-amber-500 rounded-full" />
+                                                    <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
                                                     Pending Payments
                                                 </h3>
                                                 <div className="space-y-4">
@@ -611,7 +612,7 @@ const StudentDashboard = () => {
                                                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl shadow-inner ring-1 ring-slate-100">
                                                                 {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name.includes(s)) ? '🌙' : '🧪'}
                                                             </div>
-                                                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-blue-600/10 text-blue-600' : 'bg-amber-500/10 text-amber-500'}`}>
+                                                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-blue-600/10 text-blue-600' : 'bg-indigo-500/10 text-indigo-500'}`}>
                                                                 {enr.status}
                                                             </span>
                                                         </div>
@@ -773,7 +774,7 @@ const StudentDashboard = () => {
                                             >
                                                 <div className="flex justify-between items-start mb-8">
                                                     <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-3xl shadow-inner ring-1 ring-slate-100">
-                                                        {mat.material_type === 'VIDEO' ? <PlayCircle className="text-blue-600" /> : mat.material_type === 'PDF' ? <FileText className="text-indigo-600" /> : <Music className="text-amber-600" />}
+                                                        {mat.material_type === 'VIDEO' ? <PlayCircle className="text-blue-600" /> : mat.material_type === 'PDF' ? <FileText className="text-indigo-600" /> : <Music className="text-sky-600" />}
                                                     </div>
                                                     <button className="text-slate-400 hover:text-slate-900 transition-colors"><ExternalLink size={20} /></button>
                                                 </div>
@@ -945,10 +946,10 @@ const StudentDashboard = () => {
                                                 <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             </div>
                                         </div>
-                                        <div className="p-8 bg-amber-50 border border-amber-100 rounded-[2.5rem] flex items-start gap-4 shadow-sm">
-                                            <AlertCircle className="text-amber-500 shrink-0" size={20} />
+                                        <div className="p-8 bg-blue-50 border border-blue-100 rounded-[2.5rem] flex items-start gap-4 shadow-sm">
+                                            <AlertCircle className="text-blue-500 shrink-0" size={20} />
                                             <div>
-                                                <h5 className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-1">Billing Policy</h5>
+                                                <h5 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Billing Policy</h5>
                                                 <p className="text-[10px] text-slate-500 leading-relaxed font-bold">Payments are non-refundable after a session has been successfully completed by the assigned tutor.</p>
                                             </div>
                                         </div>
