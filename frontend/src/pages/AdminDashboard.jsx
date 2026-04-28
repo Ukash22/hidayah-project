@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import React, { useState, useEffect, Component } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { 
@@ -49,9 +49,6 @@ class AdminErrorBoundary extends Component {
     }
 }
 
-// Configure axios defaults
-axios.defaults.withCredentials = false;
-axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 const AdminDashboard = () => {
     const { token } = useAuth();
@@ -182,7 +179,7 @@ const AdminDashboard = () => {
     const _fetchFinancials = async () => {
         setLoadingFinancials(true);
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/financials/`, { headers: getAuthHeader() });
+            const res = await api.get('/api/payments/admin/financials/');
             setFinancials(res.data);
         } catch (_err) {
             console.error("Failed to fetch financials", _err);
@@ -254,7 +251,7 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/stats/`, { headers: getAuthHeader() });
+            const res = await api.get('/api/payments/admin/stats/');
             setStats(res.data);
         } catch (_err) {
             console.error("Failed to fetch admin stats", _err);
@@ -264,8 +261,8 @@ const AdminDashboard = () => {
 
     const fetchAdminBookings = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/?status=${adminBookingStatus}`, { headers: getAuthHeader() });
-            setAdminBookings(res.data);
+            const res = await api.get(`/api/classes/admin/bookings/?status=${adminBookingStatus}`);
+            setAdminBookings(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Bookings fetch failed"); }
     };
 
@@ -367,8 +364,8 @@ const AdminDashboard = () => {
 
     const fetchBookings = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/?status=pending`, { headers: getAuthHeader() });
-            setPendingBookings(response.data);
+            const response = await api.get('/api/classes/admin/bookings/?status=pending');
+            setPendingBookings(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (_err) {
             console.error("Failed to fetch bookings", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
@@ -377,7 +374,7 @@ const AdminDashboard = () => {
 
     const fetchPaymentAnalytics = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/analytics/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/payments/admin/analytics/');
             setPaymentAnalytics(response.data);
         } catch (_err) {
             console.error("Failed to fetch analytics", _err);
@@ -386,8 +383,8 @@ const AdminDashboard = () => {
 
     const fetchSubjects = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() });
-            setSubjects(response.data);
+            const response = await api.get('/api/programs/subjects/');
+            setSubjects(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (_err) {
             console.error("Failed to fetch subjects", _err);
         }
@@ -395,7 +392,7 @@ const AdminDashboard = () => {
 
     const fetchGlobalSettings = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/settings/`, { headers: getAuthHeader() });
+            const res = await api.get('/api/payments/admin/settings/');
             setGlobalSettings(res.data);
         } catch (_err) { console.error("Settings fetch failed"); }
     };
@@ -403,10 +400,9 @@ const AdminDashboard = () => {
     const handleUpdateGlobalCommission = async (val) => {
         setUpdatingGlobal(true);
         try {
-            const res = await axios.patch(
-                `${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/settings/`, 
-                { default_commission_percentage: val },
-                { headers: getAuthHeader() }
+            const res = await api.patch(
+                '/api/payments/admin/settings/', 
+                { default_commission_percentage: val }
             );
             setGlobalSettings(res.data);
             setGlobalSuccess(true);
@@ -421,7 +417,7 @@ const AdminDashboard = () => {
     const handleUpdateSubjectCommission = async (id, val) => {
         setSavingStatus(prev => ({ ...prev, [id]: 'saving' }));
         try {
-            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/${id}/`, { admin_percentage: val }, { headers: getAuthHeader() });
+            await api.patch(`/api/programs/subjects/${id}/`, { admin_percentage: val });
             setSavingStatus(prev => ({ ...prev, [id]: 'success' }));
             fetchSubjects();
             setTimeout(() => setSavingStatus(prev => ({ ...prev, [id]: 'idle' })), 2000);
@@ -435,7 +431,7 @@ const AdminDashboard = () => {
     const _handleBookingAction = async (id, action) => {
         if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${id}/action/`, { action }, { headers: getAuthHeader() });
+            await api.post(`/api/classes/admin/bookings/${id}/action/`, { action });
             alert(`Booking ${action}ed successfully!`);
             fetchBookings();
         } catch (_err) {
@@ -446,7 +442,7 @@ const AdminDashboard = () => {
     const fetchTutors = async () => {
         try {
             // Use admin/list endpoint to get TutorProfile objects with proper IDs
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/?status=APPROVED`, { headers: getAuthHeader() });
+            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
             setTutors(response.data);
         } catch (_err) {
             console.error("Failed to fetch tutors", _err);
@@ -456,7 +452,7 @@ const AdminDashboard = () => {
 
     const fetchStudents = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/admin/all/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/students/admin/all/');
             setAllStudents(response.data);
         } catch (_err) {
             console.error("Failed to fetch students", _err);
@@ -468,7 +464,7 @@ const AdminDashboard = () => {
         if (!window.confirm(`Are you sure you want to promote ${name} to a Tutor? This will put their profile under review.`)) return;
         setActionLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/students/admin/${id}/promote/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/students/admin/${id}/promote/`, {});
             alert(`✅ ${name} successfully promoted to Tutor (Under Review)!`);
             fetchStudents(); // Refresh students to remove them if backend filters them or track role update
             fetchTutors();
@@ -486,7 +482,7 @@ const AdminDashboard = () => {
 
         setActionLoading(true);
         try {
-            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/students/admin/${selectedStudent.id}/update/`, studentForm, { headers: getAuthHeader() });
+            await api.patch(`/api/students/admin/${selectedStudent.id}/update/`, studentForm);
             alert("✅ Student updated successfully!");
             fetchStudents();
             setEditMode(false);
@@ -502,7 +498,7 @@ const AdminDashboard = () => {
 
     const fetchTransactions = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/transactions/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/payments/admin/transactions/');
             setTransactions(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch transactions", _err);
@@ -511,7 +507,7 @@ const AdminDashboard = () => {
 
     const fetchTutorApps = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/tutors/admin/list/');
             setTutorApps(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch tutor applications", _err);
@@ -520,7 +516,7 @@ const AdminDashboard = () => {
 
     const fetchApprovedTutors = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/list/?status=APPROVED`, { headers: getAuthHeader() });
+            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
             setApprovedTutors(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch approved tutors", _err);
@@ -529,7 +525,7 @@ const AdminDashboard = () => {
 
     const fetchWithdrawals = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/withdrawals/pending/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/payments/admin/withdrawals/pending/');
             setWithdrawalRequests(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch withdrawals", _err);
@@ -538,7 +534,7 @@ const AdminDashboard = () => {
 
     const fetchComplaints = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/admin/all/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/complaints/admin/all/');
             setAllComplaints(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch complaints", _err);
@@ -547,7 +543,7 @@ const AdminDashboard = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/unified-list/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/classes/admin/unified-list/');
             setAllClasses(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch classes", _err);
@@ -561,7 +557,7 @@ const AdminDashboard = () => {
         }
         if (!window.confirm(`Are you sure you want to ${action} this withdrawal? Funds will be deducted from tutor's wallet.`)) return;
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/withdrawal/approve/${id}/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/payments/admin/withdrawal/approve/${id}/`, {});
             alert(`Withdrawal approved successfully!`);
             fetchWithdrawals();
         } catch (_err) {
@@ -573,7 +569,7 @@ const AdminDashboard = () => {
         const responseText = window.prompt("Enter Admin Response:");
         if (!responseText) return;
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/admin/${id}/resolve/`, { response: responseText }, { headers: getAuthHeader() });
+            await api.post(`/api/complaints/admin/${id}/resolve/`, { response: responseText });
             alert("Complaint resolved and response sent!");
             fetchComplaints();
         } catch (_err) {
@@ -585,7 +581,7 @@ const AdminDashboard = () => {
         if (!window.confirm("Approve this student and send an Admission Letter?")) return;
         setActionLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/approve-student/${id}/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/auth/approve-student/${id}/`, {});
             alert("✅ Student approved! Admission letter generated and sent via email.");
             fetchApplications(); // Refresh both applications and pending students
         } catch (_err) {
@@ -599,11 +595,11 @@ const AdminDashboard = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/admin/applications/');
             setApplications(Array.isArray(response.data) ? response.data : []);
 
             // Fetch Pending Students (New Workflow)
-            const pendResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/pending-students/`, { headers: getAuthHeader() });
+            const pendResponse = await api.get('/api/auth/pending-students/');
             setPendingStudents(Array.isArray(pendResponse.data) ? pendResponse.data : []);
 
             setLoading(false);
@@ -621,7 +617,7 @@ const AdminDashboard = () => {
 
     const fetchMaterials = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() });
+            const res = await api.get('/api/curriculum/materials/');
             setMaterials(Array.isArray(res.data) ? res.data : []);
         } catch (_err) { 
             console.error("Failed to fetch materials", _err);
@@ -631,7 +627,7 @@ const AdminDashboard = () => {
 
     const fetchExams = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() });
+            const res = await api.get('/api/exams/list/');
             // For now, we just log or store if state exists, but the UI shows a Link to Central Exam Engine
             console.log("Exams fetched:", res.data);
         } catch (_err) {
@@ -643,7 +639,7 @@ const AdminDashboard = () => {
     const fetchPendingPayouts = async () => {
         try {
             // Corrected Path: applications.urls is at api/
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/classes/pending-payouts/`, { headers: getAuthHeader() });
+            const response = await api.get('/api/admin/classes/pending-payouts/');
             setPendingPayouts(response.data);
         } catch (_err) {
             console.error("Failed to fetch pending payouts", _err);
@@ -656,7 +652,7 @@ const AdminDashboard = () => {
         setActionLoading(true);
         try {
             // Corrected Path: applications.urls is at api/
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/classes/${sessionId}/release-payout/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/admin/classes/${sessionId}/release-payout/`, {});
             alert("✅ Payout released successfully!");
             fetchPendingPayouts();
         } catch (_err) {
@@ -688,7 +684,7 @@ const AdminDashboard = () => {
                     description: tutorActionState.description
                 };
 
-            await axios.post(endpoint, payload, { headers: getAuthHeader() });
+            await api.post(endpoint, payload);
             alert("✅ Tutor records updated successfully!");
             setShowTutorModal(false);
             fetchTutorApps(); // Refresh list
@@ -701,7 +697,7 @@ const AdminDashboard = () => {
 
     const togglePublicVisibility = async (id) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/toggle-public/${id}/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/tutors/admin/toggle-public/${id}/`, {});
             alert("Visibility toggled!");
             fetchTutorApps();
         } catch (_err) { alert("Failed to toggle visibility"); }
@@ -747,12 +743,12 @@ const AdminDashboard = () => {
         try {
             if (selectedApp.isEditMode) {
                 // Handle Update
-                await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/${selectedApp.id}/update/`, {
+                await api.patch(`/api/admin/applications/${selectedApp.id}/update/`, {
                     tutor_id: scheduleData.tutorId,
                     tutor_name: scheduleData.tutorName,
                     start_time: new Date(scheduleData.startTime).toISOString(),
                     duration: parseInt(scheduleData.duration)
-                }, { headers: getAuthHeader() });
+                });
 
                 setApplications(apps => apps.map(app =>
                     app.id === selectedApp.id ? {
@@ -766,13 +762,13 @@ const AdminDashboard = () => {
 
             } else {
                 // Handle Approval
-                const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/${selectedApp.id}/approve/`, {
+                const response = await api.post(`/api/admin/applications/${selectedApp.id}/approve/`, {
                     tutor_id: scheduleData.tutorId,
                     tutor_name: scheduleData.tutorName,
                     start_time: new Date(scheduleData.startTime).toISOString(),
                     duration: parseInt(scheduleData.duration),
                     generate_zoom: scheduleData.generateZoom
-                }, { headers: getAuthHeader() });
+                });
 
                 setApplications(apps => apps.map(app =>
                     app.id === selectedApp.id ? {
@@ -811,7 +807,7 @@ const AdminDashboard = () => {
 
         setActionLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/${id}/reject/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/admin/applications/${id}/reject/`, {});
 
             setApplications(apps => apps.map(app =>
                 app.id === id ? { ...app, status: 'rejected' } : app
@@ -834,12 +830,12 @@ const AdminDashboard = () => {
 
         setActionLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/payments/admin/wallet-action/`, {
+            await api.post('/api/payments/admin/wallet-action/', {
                 student_id: selectedStudent.id,
                 amount: walletAction.amount,
                 action_type: walletAction.type,
                 description: walletAction.description
-            }, { headers: getAuthHeader() });
+            });
 
             alert("✅ Wallet updated successfully!");
             setShowStudentModal(false);
@@ -861,14 +857,14 @@ const AdminDashboard = () => {
 
         setActionLoading(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/assign/`, {
+            await api.post('/api/tutors/assign/', {
                 student_id: studentId,
                 tutor_id: tutorId,
                 meeting_link: meetingLink,
                 generate_zoom: generateZoom,
                 start_time: startTime ? new Date(startTime).toISOString() : null,
                 duration: parseInt(duration)
-            }, { headers: getAuthHeader() });
+            });
 
             alert("✅ Tutor assigned successfully!");
             fetchStudents();
@@ -889,18 +885,18 @@ const AdminDashboard = () => {
         for (const id of selectedIds) {
             try {
                 if (activeTab === 'tutor_recruitment') {
-                    await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${id}/`, {
+                    await api.post(`/api/tutors/admin/action/${id}/`, {
                         action: action === 'approve' ? 'APPROVE' : 'REJECT'
-                    }, { headers: getAuthHeader() });
+                    });
                 } else {
                     // Bulk student apps
                     if (action === 'approve') {
-                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/${id}/${action}/`, {
+                        await api.post(`/api/admin/applications/${id}/${action}/`, {
                             tutor_name: 'Assigned Tutor',
                             duration: 40
-                        }, { headers: getAuthHeader() });
+                        });
                     } else {
-                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/admin/applications/${id}/${action}/`, {}, { headers: getAuthHeader() });
+                        await api.post(`/api/admin/applications/${id}/${action}/`, {});
                     }
                 }
 
@@ -1420,12 +1416,12 @@ const AdminDashboard = () => {
 
                                                             try {
                                                                 setActionLoading(true);
-                                                                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, {
+                                                                await api.post(`/api/tutors/admin/action/${app.id}/`, {
                                                                     action: 'INTERVIEW',
                                                                     interview_at: time,
                                                                     interview_link: link,
                                                                     generate_zoom: useAutoJitsi
-                                                                }, { headers: getAuthHeader() });
+                                                                });
                                                                 alert("✅ Interview Scheduled Successfully!");
                                                                 fetchTutorApps();
                                                             } catch (_err) {
@@ -1447,12 +1443,12 @@ const AdminDashboard = () => {
                                                             const link = window.prompt("Update Interview Meeting Link (leave blank to keep existing):") || app.interview_link;
                                                             try {
                                                                 setActionLoading(true);
-                                                                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, {
+                                                                await api.post(`/api/tutors/admin/action/${app.id}/`, {
                                                                     action: 'INTERVIEW',
                                                                     interview_at: time,
                                                                     interview_link: link,
                                                                     generate_zoom: false
-                                                                }, { headers: getAuthHeader() });
+                                                                });
                                                                 alert("✅ Schedule Updated!");
                                                                 fetchTutorApps();
                                                             } catch (_err) {
@@ -1472,7 +1468,7 @@ const AdminDashboard = () => {
                                                             onClick={async () => {
                                                                 if (window.confirm("Approve this tutor? Appointment Letter will be sent.")) {
                                                                     try {
-                                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, { action: 'APPROVE' }, { headers: getAuthHeader() });
+                                                                        await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'APPROVE' });
                                                                         alert("Tutor Approved!");
                                                                         fetchTutorApps();
                                                                     } catch (_err) { alert("Failed to approve"); }
@@ -1487,7 +1483,7 @@ const AdminDashboard = () => {
                                                                 const reason = window.prompt("Rejection Reason:");
                                                                 if (reason) {
                                                                     try {
-                                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${app.id}/`, { action: 'REJECT', reason }, { headers: getAuthHeader() });
+                                                                        await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'REJECT', reason });
                                                                         alert("Tutor Rejected");
                                                                         fetchTutorApps();
                                                                     } catch (_err) { alert("Failed to reject"); }
@@ -1677,7 +1673,7 @@ const AdminDashboard = () => {
                                                 <button
                                                     onClick={async () => {
                                                         try {
-                                                            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public }, { headers: getAuthHeader() });
+                                                            await api.patch(`/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public });
                                                             fetchMaterials();
                                                         } catch (_err) { alert("Failed to update status"); }
                                                     }}
@@ -1689,7 +1685,7 @@ const AdminDashboard = () => {
                                                     onClick={async () => {
                                                         if (window.confirm("Permanently delete this material?")) {
                                                             try {
-                                                                await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/${mat.id}/`, { headers: getAuthHeader() });
+                                                                await api.delete(`/api/curriculum/materials/${mat.id}/`);
                                                                 fetchMaterials();
                                                             } catch (_err) { alert("Failed to delete material"); }
                                                         }
@@ -1928,7 +1924,7 @@ const AdminDashboard = () => {
                                                             onClick={async () => {
                                                                 if (window.confirm("Approve this booking?")) {
                                                                     try {
-                                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${booking.id}/action/`, { action: 'approve' }, { headers: getAuthHeader() });
+                                                                        await api.post(`/api/classes/admin/bookings/${booking.id}/action/`, { action: 'approve' });
                                                                         fetchAdminBookings();
                                                                     } catch (_err) { alert("Approval failed"); }
                                                                 }
@@ -1941,7 +1937,7 @@ const AdminDashboard = () => {
                                                             onClick={async () => {
                                                                 if (window.confirm("Reject and delete this booking?")) {
                                                                     try {
-                                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/admin/bookings/${booking.id}/action/`, { action: 'reject' }, { headers: getAuthHeader() });
+                                                                        await api.post(`/api/classes/admin/bookings/${booking.id}/action/`, { action: 'reject' });
                                                                         fetchAdminBookings();
                                                                     } catch (_err) { alert("Rejection failed"); }
                                                                 }
@@ -3397,7 +3393,7 @@ const AdminDashboard = () => {
                         if (!window.confirm('Approve this tutor?')) return;
                         try {
                             setActionLoading(true);
-                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${selectedTutorApp.id}/`, { action: 'APPROVE' }, { headers: getAuthHeader() });
+                            await api.post(`/api/tutors/admin/action/${selectedTutorApp.id}/`, { action: 'APPROVE' });
                             alert('Tutor Approved!');
                             setSelectedTutorApp(null);
                             fetchTutorApps();
@@ -3409,7 +3405,7 @@ const AdminDashboard = () => {
                         if (!reason) return;
                         try {
                             setActionLoading(true);
-                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${selectedTutorApp.id}/`, { action: 'REJECT', reason }, { headers: getAuthHeader() });
+                            await api.post(`/api/tutors/admin/action/${selectedTutorApp.id}/`, { action: 'REJECT', reason });
                             alert('Tutor Rejected');
                             setSelectedTutorApp(null);
                             fetchTutorApps();
@@ -3422,9 +3418,9 @@ const AdminDashboard = () => {
                         const link = window.prompt('Update Interview Link (leave blank to keep existing):') || selectedTutorApp.interview_link;
                         try {
                             setActionLoading(true);
-                            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/admin/action/${selectedTutorApp.id}/`, {
+                            await api.post(`/api/tutors/admin/action/${selectedTutorApp.id}/`, {
                                 action: 'INTERVIEW', interview_at: time, interview_link: link, generate_zoom: false
-                            }, { headers: getAuthHeader() });
+                            });
                             alert('Schedule Updated!');
                             fetchTutorApps();
                             setSelectedTutorApp(prev => ({ ...prev, interview_at: time, interview_link: link }));

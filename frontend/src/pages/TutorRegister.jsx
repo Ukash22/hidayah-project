@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { motion } from 'framer-motion';
 
 import { 
@@ -176,7 +176,6 @@ const TutorRegister = () => {
         if (formData.subjects.length === 0) return setError('Select at least one subject');
 
         setLoading(true);
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
 
         try {
             setLoading('Uploading Media...');
@@ -186,7 +185,7 @@ const TutorRegister = () => {
             });
             
             setLoading('Finalizing Application...');
-            await axios.post(`${API_BASE_URL}/api/tutors/register/`, {
+            await api.post('/api/tutors/register/', {
                 ...formData,
                 first_name: formData.firstName,
                 last_name: formData.lastName,

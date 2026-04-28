@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -69,9 +69,12 @@ const Register = () => {
     React.useEffect(() => {
         const fetchSubjects = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`);
-                if (Array.isArray(res.data)) {
-                    const grouped = res.data.reduce((acc, sub) => {
+                const res = await api.get('/api/programs/subjects/');
+                // Ensure res.data exists and is an array or has a results property
+                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                
+                if (data.length > 0) {
+                    const grouped = data.reduce((acc, sub) => {
                         const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education' :
                             sub.program_type === 'WESTERN' ? 'Western Education' :
                                 'Exam Preparation';
@@ -81,7 +84,13 @@ const Register = () => {
                     }, {});
                     setSubjectsByCategory(grouped);
                 } else {
-                    throw new Error("Invalid subjects data format");
+                    // If empty but valid array, still use fallbacks to prevent empty screen
+                    console.warn("Subjects API returned empty list, using fallbacks.");
+                    setSubjectsByCategory({
+                        'Islamic Education': ['Quranic Recitation', 'Arabic Foundation', 'Hifz Program'],
+                        'Western Education': ['Mathematics', 'English Language', 'Science'],
+                        'Exam Preparation': ['JAMB', 'WAEC', 'NECO']
+                    });
                 }
             } catch (err) {
                 console.error("Failed to fetch subjects:", err);
@@ -123,9 +132,10 @@ const Register = () => {
             setPreSelectedTutorId(Number(tid));
             setPreSelectedTutorName(decodeURIComponent(tname || ''));
             // Fetch tutor details for the confirmation banner
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/public/`)
+            api.get('/api/tutors/public/')
                 .then(res => {
-                    const found = res.data.find(t => t.id === Number(tid));
+                    const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                    const found = data.find(t => t.id === Number(tid));
                     if (found) setPreSelectedTutorData(found);
                 })
                 .catch(() => {});
@@ -234,7 +244,7 @@ const Register = () => {
     const fetchTutorsForSubject = async (subject) => {
         setLoadingTutors(prev => ({ ...prev, [subject]: true }));
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${encodeURIComponent(subject)}`);
+            const res = await api.get(`/api/tutors/by_subject/?subject=${encodeURIComponent(subject)}`);
             setTutorsBySubject(prev => ({ ...prev, [subject]: res.data }));
         } catch (err) {
             console.error(`Failed to fetch tutors for ${subject}`, err);
