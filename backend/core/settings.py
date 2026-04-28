@@ -232,7 +232,7 @@ PAYSTACK_MOCK_MODE = True  # Using Mock Mode to avoid timeouts during dev/testin
 
 # Application Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
-BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://hidayah-backend-zgix.onrender.com')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
