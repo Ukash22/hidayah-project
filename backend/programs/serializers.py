@@ -6,10 +6,11 @@ from .models import Program, Subject
 
 class SubjectSerializer(serializers.ModelSerializer):
     program_type = serializers.CharField(source='program.program_type', read_only=True)
+    program_name = serializers.CharField(source='program.name', read_only=True)
     
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'slug', 'program_type', 'admin_percentage']
+        fields = ['id', 'program', 'name', 'slug', 'program_type', 'program_name', 'admin_percentage']
 
 
 class ProgramSerializer(serializers.ModelSerializer):

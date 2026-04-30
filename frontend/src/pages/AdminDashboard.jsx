@@ -100,6 +100,15 @@ const AdminDashboard = () => {
     });
     const [_updatingBooking, _setUpdatingBooking] = useState(false);
 
+    // Subject Management State
+    const [showSubjectModal, setShowSubjectModal] = useState(false);
+    const [programs, setPrograms] = useState([]);
+    const [subjectForm, setSubjectForm] = useState({
+        name: '',
+        program: '',
+        admin_percentage: 5.00
+    });
+
 
     // Wallet Action State
     const [walletAction, setWalletAction] = useState({
@@ -311,7 +320,11 @@ const AdminDashboard = () => {
         if (activeTab === 'tutors') fetchApprovedTutors();
         if (activeTab === 'withdrawals') fetchWithdrawals();
         if (activeTab === 'complaints') fetchComplaints();
-        if (activeTab === 'curriculum') fetchMaterials();
+        if (activeTab === 'curriculum') {
+            fetchMaterials();
+            fetchSubjects();
+            fetchPrograms();
+        }
         if (activeTab === 'exams') fetchExams();
         if (activeTab === 'payouts') fetchPendingPayouts();
         if (activeTab === 'classes') fetchClasses();
@@ -388,6 +401,43 @@ const AdminDashboard = () => {
         } catch (_err) {
             console.error("Failed to fetch subjects", _err);
         }
+    };
+
+    const fetchPrograms = async () => {
+        try {
+            const res = await api.get('/api/programs/');
+            setPrograms(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+        } catch (_err) { console.error("Programs fetch failed"); }
+    };
+
+    const handleAddSubject = async (e) => {
+        if(e) e.preventDefault();
+        if (!subjectForm.name || !subjectForm.program) {
+            alert("Subject Name and Program are required");
+            return;
+        }
+        try {
+            setActionLoading(true);
+            await api.post('/api/programs/subjects/', subjectForm);
+            alert("✅ Subject Added Successfully!");
+            setShowSubjectModal(false);
+            setSubjectForm({ name: '', program: '', admin_percentage: 5.00 });
+            fetchSubjects();
+        } catch (err) {
+            alert("❌ Failed to add subject: " + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteSubject = async (id) => {
+        if (!window.confirm("Permanently delete this subject?")) return;
+        try {
+            setActionLoading(true);
+            await api.delete(`/api/programs/subjects/${id}/`);
+            fetchSubjects();
+        } catch (_err) { alert("Failed to delete subject"); }
+        finally { setActionLoading(false); }
     };
 
     const fetchGlobalSettings = async () => {
@@ -1639,65 +1689,124 @@ const AdminDashboard = () => {
                                     </tr>
                                 ))
                             ) : activeTab === 'curriculum' ? (
-                                /* Curriculum Materials Table */
-                                materials.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No curriculum materials found.</td></tr>
-                                ) : materials.map(mat => (
-                                    <tr key={mat.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="py-2 px-4 shadow-sm"></td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="text-[10px] font-bold text-slate-500">{new Date(mat.created_at).toLocaleDateString()}</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="font-bold text-slate-800 text-xs">{mat.title}</div>
-                                            <div className="text-[10px] text-primary font-black uppercase tracking-tight">{mat.material_type}</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="text-[11px] text-slate-600 font-medium">By {mat.tutor_name}</div>
-                                            <div className={`text-[9px] font-bold uppercase ${mat.is_public ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                                {mat.is_public ? 'Public' : 'Private'}
+                                /* Curriculum Materials & Subjects Section */
+                                <div className="space-y-12 p-2">
+                                    {/* Subjects & Programs Management */}
+                                    <section>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div>
+                                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Platform Curriculum (Subjects)</h3>
+                                                <p className="text-[10px] text-slate-500 font-bold">Manage the subjects available for enrollment and tutor expertise.</p>
                                             </div>
-                                        </td>
-                                        <td className="py-1.5 px-3 text-center">
-                                            <a
-                                                href={mat.file}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="text-[9px] font-black text-secondary hover:underline uppercase"
+                                            <button 
+                                                onClick={() => setShowSubjectModal(true)}
+                                                className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-lg flex items-center gap-2"
                                             >
-                                                View file ↗
-                                            </a>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="flex justify-center items-center gap-2">
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await api.patch(`/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public });
-                                                            fetchMaterials();
-                                                        } catch (_err) { alert("Failed to update status"); }
-                                                    }}
-                                                    className={`px-2 py-1 rounded text-[9px] font-black uppercase ${mat.is_public ? 'bg-slate-200 text-slate-600' : 'bg-emerald-500 text-white'}`}
-                                                >
-                                                    {mat.is_public ? 'Mark Private' : 'Make Public'}
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (window.confirm("Permanently delete this material?")) {
-                                                            try {
-                                                                await api.delete(`/api/curriculum/materials/${mat.id}/`);
-                                                                fetchMaterials();
-                                                            } catch (_err) { alert("Failed to delete material"); }
-                                                        }
-                                                    }}
-                                                    className="text-red-500 hover:text-red-700 transition-colors"
-                                                >
-                                                    <span className="text-xs">🗑️</span>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                                <span>➕</span> Add New Subject
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {subjects.length === 0 ? (
+                                                <div className="col-span-full p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400 italic">
+                                                    No subjects found. Click "Add New Subject" to start.
+                                                </div>
+                                            ) : subjects.map(subj => (
+                                                <div key={subj.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm group hover:shadow-md hover:border-primary/20 transition-all flex justify-between items-start">
+                                                    <div>
+                                                        <div className="text-[9px] font-black text-primary uppercase tracking-tighter mb-1 bg-primary/5 px-2 py-0.5 rounded-full w-fit">
+                                                            {subj.program_name || 'Program'}
+                                                        </div>
+                                                        <h4 className="text-sm font-black text-slate-800">{subj.name}</h4>
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <span className="text-[10px] font-bold text-slate-400">Commission:</span>
+                                                            <span className="text-[10px] font-black text-emerald-600">{subj.admin_percentage}%</span>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleDeleteSubject(subj.id)}
+                                                        className="text-slate-300 hover:text-red-500 transition-colors p-2"
+                                                        title="Delete Subject"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <hr className="border-slate-100" />
+
+                                    {/* Existing Materials Section */}
+                                    <section>
+                                        <div className="mb-6">
+                                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Shared Educational Materials</h3>
+                                            <p className="text-[10px] text-slate-500 font-bold">Files uploaded by tutors for student access.</p>
+                                        </div>
+                                        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                                            <table className="w-full text-left">
+                                                <thead className="bg-slate-50/50 border-b border-slate-100">
+                                                    <tr>
+                                                        <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material</th>
+                                                        <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
+                                                        <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Owner</th>
+                                                        <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-50">
+                                                    {materials.length === 0 ? (
+                                                        <tr><td colSpan="4" className="p-12 text-center text-slate-400 italic">No materials found.</td></tr>
+                                                    ) : materials.map(mat => (
+                                                        <tr key={mat.id} className="hover:bg-slate-50/80 transition-colors">
+                                                            <td className="py-3 px-6">
+                                                                <div className="font-bold text-slate-800 text-xs">{mat.title}</div>
+                                                                <div className="text-[9px] text-slate-400">{new Date(mat.created_at).toLocaleDateString()}</div>
+                                                            </td>
+                                                            <td className="py-3 px-6">
+                                                                <span className="text-[9px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase">{mat.material_type}</span>
+                                                            </td>
+                                                            <td className="py-3 px-6">
+                                                                <div className="text-[11px] text-slate-600 font-medium">Tr. {mat.tutor_name}</div>
+                                                                <div className={`text-[9px] font-bold uppercase ${mat.is_public ? 'text-emerald-500' : 'text-slate-300'}`}>
+                                                                    {mat.is_public ? 'Public' : 'Private'}
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3 px-6">
+                                                                <div className="flex justify-center items-center gap-3">
+                                                                    <a href={mat.file} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-secondary transition-colors" title="View File">👁</a>
+                                                                    <button 
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                await api.patch(`/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public });
+                                                                                fetchMaterials();
+                                                                            } catch (_err) { alert("Failed to update status"); }
+                                                                        }}
+                                                                        className={`text-[9px] font-black uppercase px-2 py-1 rounded ${mat.is_public ? 'bg-slate-100 text-slate-500' : 'bg-emerald-500 text-white'}`}
+                                                                    >
+                                                                        {mat.is_public ? 'Private' : 'Public'}
+                                                                    </button>
+                                                                    <button 
+                                                                        onClick={async () => {
+                                                                            if (window.confirm("Delete this material?")) {
+                                                                                try {
+                                                                                    await api.delete(`/api/curriculum/materials/${mat.id}/`);
+                                                                                    fetchMaterials();
+                                                                                } catch (_err) { alert("Failed to delete"); }
+                                                                            }
+                                                                        }}
+                                                                        className="text-slate-300 hover:text-red-500 transition-colors"
+                                                                    >
+                                                                        🗑️
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </section>
+                                </div>
                             ) : activeTab === 'withdrawals' ? (
                                 /* Withdrawal Requests Table */
                                 withdrawalRequests.length === 0 ? (
@@ -3428,6 +3537,75 @@ const AdminDashboard = () => {
                         finally { setActionLoading(false); }
                     }}
                 />
+            )}
+
+            {/* Subject Creation Modal */}
+            {showSubjectModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in">
+                    <div className="bg-white rounded-[2rem] max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+                        <div className="bg-slate-900 p-6 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="text-lg font-black uppercase tracking-tight">Add New Subject</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Configure platform curriculum</p>
+                            </div>
+                            <button onClick={() => setShowSubjectModal(false)} className="text-slate-500 hover:text-white transition-colors">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleAddSubject} className="p-8 space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Subject Name</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    placeholder="e.g. Further Mathematics"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all"
+                                    value={subjectForm.name}
+                                    onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Parent Program</label>
+                                <select 
+                                    required
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all cursor-pointer"
+                                    value={subjectForm.program}
+                                    onChange={(e) => setSubjectForm({ ...subjectForm, program: e.target.value })}
+                                >
+                                    <option value="">-- Select Program --</option>
+                                    {programs.map(p => (
+                                        <option key={p.id} value={p.id}>{p.name} ({p.program_type})</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Base Commission (%)</label>
+                                <div className="flex items-center gap-3">
+                                    <input 
+                                        type="number" 
+                                        step="0.01"
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary transition-all"
+                                        value={subjectForm.admin_percentage}
+                                        onChange={(e) => setSubjectForm({ ...subjectForm, admin_percentage: e.target.value })}
+                                    />
+                                    <span className="text-slate-400 font-black">%</span>
+                                </div>
+                                <p className="text-[8px] text-slate-400 italic mt-1 font-medium">Default fee taken by the platform for this subject.</p>
+                            </div>
+
+                            <div className="pt-4">
+                                <button 
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-primary hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {actionLoading ? 'Synchronizing...' : 'Create Subject'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
                 </div>
             </div>

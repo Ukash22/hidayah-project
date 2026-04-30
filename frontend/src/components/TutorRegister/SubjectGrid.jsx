@@ -1,8 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, BookOpen, CheckCircle2 } from 'lucide-react';
+import api from '../../services/api';
 import { ISLAMIC_SUBJECTS, WESTERN_SUBJECTS } from '../../constants/registration';
 
 const SubjectGrid = ({ formData, handleSubjectToggle }) => {
+    const [dynamicSubjects, setDynamicSubjects] = useState({ islamic: [], western: [] });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const res = await api.get('/api/programs/subjects/');
+                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                
+                if (data.length > 0) {
+                    const islamic = data.filter(s => s.program_type === 'ISLAMIC').map(s => s.name);
+                    const western = data.filter(s => s.program_type === 'WESTERN').map(s => s.name);
+                    setDynamicSubjects({ islamic, western });
+                }
+            } catch (err) {
+                console.error("Failed to fetch dynamic subjects, using fallbacks", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSubjects();
+    }, []);
+
+    const islamicList = dynamicSubjects.islamic.length > 0 ? dynamicSubjects.islamic : ISLAMIC_SUBJECTS;
+    const westernList = dynamicSubjects.western.length > 0 ? dynamicSubjects.western : WESTERN_SUBJECTS;
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 space-y-4">
+                <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Loading Subject Catalog...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-12">
             <div>
@@ -13,7 +49,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                     <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Islamic Education</h4>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {ISLAMIC_SUBJECTS.map(subj => {
+                    {islamicList.map(subj => {
                         const isSelected = formData.subjects.includes(subj);
                         return (
                             <button
@@ -45,7 +81,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                     <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Western Education</h4>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                    {WESTERN_SUBJECTS.map(subj => {
+                    {westernList.map(subj => {
                         const isSelected = formData.subjects.includes(subj);
                         return (
                             <button

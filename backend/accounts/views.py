@@ -40,11 +40,24 @@ class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
-        username = request.data.get('username')
+        username_or_email = request.data.get('username')
         password = request.data.get('password')
-        user = authenticate(username=username, password=password)
         
+        # Try authenticating with username
+        user = authenticate(username=username_or_email, password=password)
+        
+        # If that fails, try authenticating with email
+        if not user and '@' in username_or_email:
+            try:
+                user_obj = User.objects.get(email__iexact=username_or_email)
+                user = authenticate(username=user_obj.username, password=password)
+            except User.DoesNotExist:
+                pass
+
         if user:
+            if not user.is_active:
+                return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
+            
             refresh = RefreshToken.for_user(user)
             return Response({
                 'refresh': str(refresh),

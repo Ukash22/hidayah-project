@@ -2,6 +2,7 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from django.db import models
+from django.utils.text import slugify
 
 class Program(models.Model):
     PROGRAM_TYPES = (
@@ -23,5 +24,10 @@ class Subject(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     admin_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=5.00, help_text="Default admin commission (%) for this subject")
     
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} - {self.program.name}"
