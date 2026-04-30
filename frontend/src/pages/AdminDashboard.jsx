@@ -155,6 +155,21 @@ const AdminDashboard = () => {
         whiteboard_link: ''
     });
 
+    // Administrative User Management State
+    const [admins, setAdmins] = useState([]);
+    const [showUserModal, setShowUserModal] = useState(false);
+    const [userForm, setUserForm] = useState({
+        username: '',
+        email: '',
+        password: '',
+        role: 'STUDENT',
+        first_name: '',
+        last_name: '',
+        phone: '',
+        is_superuser: false,
+        is_staff: false
+    });
+
     const getAuthHeader = () => token ? { Authorization: `Bearer ${token}` } : {};
 
     const getLocalTime = (timezone) => {
@@ -325,6 +340,7 @@ const AdminDashboard = () => {
             fetchSubjects();
             fetchPrograms();
         }
+        if (activeTab === 'system') fetchAdmins();
         if (activeTab === 'exams') fetchExams();
         if (activeTab === 'payouts') fetchPendingPayouts();
         if (activeTab === 'classes') fetchClasses();
@@ -400,6 +416,57 @@ const AdminDashboard = () => {
             setSubjects(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (_err) {
             console.error("Failed to fetch subjects", _err);
+        }
+    };
+
+    const fetchAdmins = async () => {
+        try {
+            const res = await api.get('/api/accounts/admin/users/?role=ADMIN');
+            setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+        } catch (_err) { console.error("Admins fetch failed"); }
+    };
+
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        try {
+            setActionLoading(true);
+            const payload = { ...userForm };
+            if (payload.role === 'ADMIN') {
+                payload.is_superuser = true;
+                payload.is_staff = true;
+            }
+            await api.post('/api/accounts/admin/users/', payload);
+            alert(`${userForm.role} created successfully!`);
+            setShowUserModal(false);
+            setUserForm({
+                username: '', email: '', password: '', role: 'STUDENT',
+                first_name: '', last_name: '', phone: '', is_superuser: false, is_staff: false
+            });
+            // Refresh current view
+            if (activeTab === 'students') fetchStudents();
+            if (activeTab === 'tutors') fetchApprovedTutors();
+            if (activeTab === 'system') fetchAdmins();
+        } catch (_err) {
+            alert('Failed: ' + JSON.stringify(_err.response?.data || _err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteUser = async (userId, role) => {
+        if (!window.confirm(`Are you sure you want to delete this ${role}? This action cannot be undone.`)) return;
+        try {
+            setActionLoading(true);
+            await api.delete(`/api/accounts/admin/users/${userId}/`);
+            alert(`${role} deleted successfully.`);
+            // Refresh current view
+            if (activeTab === 'students') fetchStudents();
+            if (activeTab === 'tutors') fetchApprovedTutors();
+            if (activeTab === 'system') fetchAdmins();
+        } catch (_err) {
+            alert('Failed: ' + (_err.response?.data?.error || _err.message));
+        } finally {
+            setActionLoading(false);
         }
     };
 
@@ -1272,33 +1339,35 @@ const AdminDashboard = () => {
                         </div>
                     )}
 
+                    {/* Dynamic Tabs Navigation */}
+                    <div className="flex flex-wrap gap-2 mb-10 p-1.5 bg-slate-100/50 rounded-2xl w-fit mx-4">
+                        {[
+                            { id: 'overview', icon: '📊', label: 'Pulse' },
+                            { id: 'students', icon: '👤', label: 'Students' },
+                            { id: 'tutors', icon: '🎓', label: 'Tutors' },
+                            { id: 'bookings', icon: '📩', label: 'Bookings' },
+                            { id: 'finance', icon: '💰', label: 'Financials' },
+                            { id: 'curriculum', icon: '📚', label: 'Content' },
+                            { id: 'withdrawals', icon: '🏧', label: 'Payouts' },
+                            { id: 'admissions', icon: '📄', label: 'Admissions' },
+                            { id: 'system', icon: '⚙️', label: 'System' },
+                            { id: 'complaints', icon: '🚩', label: 'Flags' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:bg-white hover:text-primary'}`}
+                            >
+                                <span>{tab.icon}</span> {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
                     {/* --- MODERN CHARTS SECTION --- */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 px-4">
                         {/* User Distribution Chart */}
                         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1">
                             <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">Platform Demographics</h3>
-                                                 {/* Dynamic Tabs Navigation */}
-                        <div className="flex flex-wrap gap-2 mb-10 p-1.5 bg-slate-100/50 rounded-2xl w-fit">
-                            {[
-                                { id: 'overview', icon: '📊', label: 'Pulse' },
-                                { id: 'students', icon: '👤', label: 'Students' },
-                                { id: 'tutors', icon: '🎓', label: 'Tutors' },
-                                { id: 'bookings', icon: '📩', label: 'Bookings' },
-                                { id: 'finance', icon: '💰', label: 'Financials' },
-                                { id: 'curriculum', icon: '📚', label: 'Content' },
-                                { id: 'withdrawals', icon: '🏧', label: 'Payouts' },
-                                { id: 'admissions', icon: '📄', label: 'Admissions' },
-                                { id: 'complaints', icon: '🚩', label: 'Flags' }
-                            ].map(tab => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:bg-white hover:text-primary'}`}
-                                >
-                                    <span>{tab.icon}</span> {tab.label}
-                                </button>
-                            ))}
-                        </div>
                             <div className="h-48 w-full">
                                 <ResponsiveContainer>
                                     <PieChart>
@@ -1557,137 +1626,181 @@ const AdminDashboard = () => {
                                 ))
                             ) : activeTab === 'tutors' ? (
                                 /* Approved Tutors Table */
-                                tutors.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No approved tutors yet.</td></tr>
-                                ) : tutors.map(tutor => (
-                                    <tr key={tutor.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="py-2 px-4"></td>
-                                        <td className="py-1.5 px-3 whitespace-nowrap">
-                                            <div className="text-xs font-bold text-slate-700">{new Date(tutor.created_at).toLocaleDateString()}</div>
-                                            <div className="text-[9px] text-slate-400 uppercase font-medium">Approved</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="font-bold text-slate-800 text-xs">{tutor.name}</div>
-                                            <div className="text-[10px] text-primary font-black uppercase tracking-tight">{tutor.subjects?.slice(0, 40)}...</div>
-                                        </td>
-                                         <td className="py-1.5 px-3">
-                                            <div className="text-[11px] text-slate-600 font-medium italic">{tutor.email}</div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[12px] shadow-sm rounded-sm" title={tutor.user?.country}>{tutor.user?.country === 'Nigeria' ? '🇳🇬' : '🌍'}</span>
-                                                <span className="text-[9px] text-primary font-black uppercase tracking-tighter bg-primary/5 px-1.5 py-0.5 rounded">
-                                                    🕒 {getLocalTime(tutor.user?.timezone)}
-                                                </span>
-                                            </div>
-                                            <div className="text-[9px] text-slate-400 font-bold uppercase mt-1">{tutor.experience} Years • {tutor.device}</div>
-                                        </td>
-                                        <td className="py-1.5 px-3 text-center">
-                                            <div className="bg-emerald-100 text-emerald-800 border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border mb-1">Active</div>
-                                            <div className="text-[10px] font-black text-slate-700">₦{parseFloat(tutor.wallet_balance || 0).toLocaleString()}</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="flex justify-center items-center gap-2">
+                                <>
+                                    <tr>
+                                        <td colSpan="6" className="p-4 bg-slate-50/50 border-b border-slate-100">
+                                            <div className="flex justify-between items-center px-2">
+                                                <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Platform Tutors</h3>
                                                 <button
-                                                    onClick={() => {
-                                                        alert(`Tutor Profile:\n\nName: ${tutor.name}\nEmail: ${tutor.email}\nSubjects: ${tutor.subjects}\nExperience: ${tutor.experience} years\nLanguages: ${tutor.has_online_exp ? 'Has Online Experience' : 'New to Online Teaching'}\nDevice: ${tutor.device}\nNetwork: ${tutor.network}`);
-                                                    }}
-                                                    className="px-2 py-1 bg-primary text-white rounded text-[9px] font-black uppercase shadow-sm hover:bg-primary/80 transition-colors"
+                                                    onClick={() => { setUserForm({...userForm, role: 'TUTOR'}); setShowUserModal(true); }}
+                                                    className="px-4 py-2 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-amber-600 transition-colors shadow-lg shadow-amber-500/20"
                                                 >
-                                                    📋 View Profile
-                                                </button>
-                                                <button
-                                                    onClick={async () => {
-                                                        if (window.confirm(`Block ${tutor.name}? They will lose access to the platform.`)) {
-                                                            alert("Block functionality coming soon");
-                                                        }
-                                                    }}
-                                                    className="text-[9px] text-red-500 font-bold underline hover:text-red-700"
-                                                >
-                                                    Block
+                                                    + Add Tutor
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                ))
+                                    {tutors.length === 0 ? (
+                                        <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No approved tutors yet.</td></tr>
+                                    ) : tutors.map(tutor => (
+                                        <tr key={tutor.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="py-2 px-4"></td>
+                                            <td className="py-1.5 px-3 whitespace-nowrap">
+                                                <div className="text-xs font-bold text-slate-700">{new Date(tutor.created_at).toLocaleDateString()}</div>
+                                                <div className="text-[9px] text-slate-400 uppercase font-medium">Approved</div>
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="font-bold text-slate-800 text-xs">{tutor.name}</div>
+                                                <div className="text-[10px] text-primary font-black uppercase tracking-tight">{tutor.subjects?.slice(0, 40)}...</div>
+                                            </td>
+                                             <td className="py-1.5 px-3">
+                                                <div className="text-[11px] text-slate-600 font-medium italic">{tutor.email}</div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[12px] shadow-sm rounded-sm" title={tutor.user?.country}>{tutor.user?.country === 'Nigeria' ? '🇳🇬' : '🌍'}</span>
+                                                    <span className="text-[9px] text-primary font-black uppercase tracking-tighter bg-primary/5 px-1.5 py-0.5 rounded">
+                                                        🕒 {getLocalTime(tutor.user?.timezone)}
+                                                    </span>
+                                                </div>
+                                                <div className="text-[9px] text-slate-400 font-bold uppercase mt-1">{tutor.experience} Years • {tutor.device}</div>
+                                            </td>
+                                            <td className="py-1.5 px-3 text-center">
+                                                <div className="bg-emerald-100 text-emerald-800 border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border mb-1">Active</div>
+                                                <div className="text-[10px] font-black text-slate-700">₦{parseFloat(tutor.wallet_balance || 0).toLocaleString()}</div>
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="flex flex-col justify-center items-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            alert(`Tutor Profile:\n\nName: ${tutor.name}\nEmail: ${tutor.email}\nSubjects: ${tutor.subjects}\nExperience: ${tutor.experience} years\nLanguages: ${tutor.has_online_exp ? 'Has Online Experience' : 'New to Online Teaching'}\nDevice: ${tutor.device}\nNetwork: ${tutor.network}`);
+                                                        }}
+                                                        className="px-2 py-1 w-full bg-primary text-white rounded text-[9px] font-black uppercase shadow-sm hover:bg-primary/80 transition-colors"
+                                                    >
+                                                        📋 View Profile
+                                                    </button>
+                                                    <div className="flex gap-1 w-full">
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (window.confirm(`Block ${tutor.name}? They will lose access to the platform.`)) {
+                                                                    alert("Block functionality coming soon");
+                                                                }
+                                                            }}
+                                                            className="flex-1 text-[9px] py-1 bg-slate-100 text-slate-600 rounded font-black uppercase hover:bg-slate-200"
+                                                        >
+                                                            Block
+                                                        </button>
+                                                        <button
+                                                            onClick={() => tutor.user?.id && handleDeleteUser(tutor.user.id, 'Tutor')}
+                                                            className="flex-1 text-[9px] py-1 bg-red-50 text-red-600 rounded font-black uppercase hover:bg-red-100"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </>
                             ) : activeTab === 'students' ? (
                                 /* Active Students Table */
-                                allStudents.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No active students found.</td></tr>
-                                ) : allStudents.map(student => (
-                                    <tr key={student.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="py-2 px-4"></td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="font-bold text-slate-800 text-xs">{student.user.first_name} {student.user.last_name}</div>
-                                            <div className="text-[9px] text-slate-400 uppercase font-black">@{student.user.username}</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="font-bold text-slate-800 text-xs">{student.enrolled_course}</div>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[12px]" title={student.user?.country}>{student.user?.country === 'Nigeria' ? '🇳🇬' : '🌍'}</span>
-                                                <span className="text-[9px] text-amber-600 font-black uppercase bg-amber-50 px-1.5 py-0.5 rounded">
-                                                    🕒 {getLocalTime(student.user?.timezone)}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="text-[10px] font-bold text-slate-600">{student.class_type}</div>
-                                            <div className="text-[9px] text-slate-400">{student.days_per_week} Days/Week • {student.hours_per_week}h</div>
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className={`text-[10px] font-black px-2 py-0.5 rounded-full inline-block ${student.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                    {student.payment_status}
-                                                </div>
-                                                <span className="text-[10px] font-black text-slate-700">₦{parseFloat(student.wallet_balance || 0).toLocaleString()}</span>
-                                            </div>
-                                            <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold flex items-center gap-2">
-                                                <span>{student.assigned_tutor_details ? `✅ ${student.assigned_tutor_details.full_name}` : '❌ No Tutor'}</span>
-                                                <div className="flex gap-1 ml-1">
-                                                    {student.meeting_link && (
-                                                        <a href={student.meeting_link} target="_blank" rel="noreferrer" title="Join Jitsi" className="text-primary hover:scale-110 transition-transform">📹</a>
-                                                    )}
-                                                    {student.whiteboard_link && (
-                                                        <a href={student.whiteboard_link} target="_blank" rel="noreferrer" title="Open Whiteboard" className="text-secondary hover:scale-110 transition-transform">📋</a>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="py-1.5 px-3 text-center">
-                                            <StatusBadge status={student.approval_status} />
-                                        </td>
-                                        <td className="py-1.5 px-3">
-                                            <div className="flex flex-col gap-1 justify-center items-center">
+                                <>
+                                    <tr>
+                                        <td colSpan="6" className="p-4 bg-slate-50/50 border-b border-slate-100">
+                                            <div className="flex justify-between items-center px-2">
+                                                <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">Active Students</h3>
                                                 <button
-                                                    onClick={() => {
-                                                        setSelectedStudent(student);
-                                                        setStudentForm({
-                                                            enrolled_course: student.enrolled_course || '',
-                                                            days_per_week: student.days_per_week || 3,
-                                                            hours_per_week: student.hours_per_week || 1,
-                                                            class_type: student.class_type || 'ONE_ON_ONE',
-                                                            preferred_days: student.preferred_days || '',
-                                                            preferred_time: student.preferred_time || '',
-                                                            preferred_time_exact: student.preferred_time_exact || '',
-                                                            level: student.level || '',
-                                                            assigned_tutor: student.assigned_tutor || '',
-                                                            meeting_link: student.meeting_link || '',
-                                                            whiteboard_link: student.whiteboard_link || ''
-                                                        });
-                                                        setShowStudentModal(true);
-                                                    }}
-                                                    className="px-3 py-1 w-full flex justify-center bg-slate-100 text-slate-600 rounded-md text-[10px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all items-center gap-1 mx-auto"
+                                                    onClick={() => { setUserForm({...userForm, role: 'STUDENT'}); setShowUserModal(true); }}
+                                                    className="px-4 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
                                                 >
-                                                    ⚙️ Manage
-                                                </button>
-                                                <button
-                                                    onClick={() => handlePromoteTutor(student.id, `${student.user.first_name} ${student.user.last_name}`)}
-                                                    className="px-3 py-1 w-full flex text-center justify-center bg-blue-50 text-blue-600 border border-blue-200 rounded-md text-[8px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all items-center gap-1 mx-auto mt-1"
-                                                >
-                                                    🚀 Promote to Tutor
+                                                    + Add Student
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                ))
+                                    {allStudents.length === 0 ? (
+                                        <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No active students found.</td></tr>
+                                    ) : allStudents.map(student => (
+                                        <tr key={student.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="py-2 px-4"></td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="font-bold text-slate-800 text-xs">{student.user.first_name} {student.user.last_name}</div>
+                                                <div className="text-[9px] text-slate-400 uppercase font-black">@{student.user.username}</div>
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="font-bold text-slate-800 text-xs">{student.enrolled_course}</div>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-[12px]" title={student.user?.country}>{student.user?.country === 'Nigeria' ? '🇳🇬' : '🌍'}</span>
+                                                    <span className="text-[9px] text-amber-600 font-black uppercase bg-amber-50 px-1.5 py-0.5 rounded">
+                                                        🕒 {getLocalTime(student.user?.timezone)}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="text-[10px] font-bold text-slate-600">{student.class_type}</div>
+                                                <div className="text-[9px] text-slate-400">{student.days_per_week} Days/Week • {student.hours_per_week}h</div>
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className={`text-[10px] font-black px-2 py-0.5 rounded-full inline-block ${student.payment_status === 'PAID' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {student.payment_status}
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-slate-700">₦{parseFloat(student.wallet_balance || 0).toLocaleString()}</span>
+                                                </div>
+                                                <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold flex items-center gap-2">
+                                                    <span>{student.assigned_tutor_details ? `✅ ${student.assigned_tutor_details.full_name}` : '❌ No Tutor'}</span>
+                                                    <div className="flex gap-1 ml-1">
+                                                        {student.meeting_link && (
+                                                            <a href={student.meeting_link} target="_blank" rel="noreferrer" title="Join Jitsi" className="text-primary hover:scale-110 transition-transform">📹</a>
+                                                        )}
+                                                        {student.whiteboard_link && (
+                                                            <a href={student.whiteboard_link} target="_blank" rel="noreferrer" title="Open Whiteboard" className="text-secondary hover:scale-110 transition-transform">📋</a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-1.5 px-3 text-center">
+                                                <StatusBadge status={student.approval_status} />
+                                            </td>
+                                            <td className="py-1.5 px-3">
+                                                <div className="flex flex-col gap-1 justify-center items-center">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedStudent(student);
+                                                            setStudentForm({
+                                                                enrolled_course: student.enrolled_course || '',
+                                                                days_per_week: student.days_per_week || 3,
+                                                                hours_per_week: student.hours_per_week || 1,
+                                                                class_type: student.class_type || 'ONE_ON_ONE',
+                                                                preferred_days: student.preferred_days || '',
+                                                                preferred_time: student.preferred_time || '',
+                                                                preferred_time_exact: student.preferred_time_exact || '',
+                                                                level: student.level || '',
+                                                                assigned_tutor: student.assigned_tutor || '',
+                                                                meeting_link: student.meeting_link || '',
+                                                                whiteboard_link: student.whiteboard_link || ''
+                                                            });
+                                                            setShowStudentModal(true);
+                                                        }}
+                                                        className="px-3 py-1 w-full flex justify-center bg-slate-100 text-slate-600 rounded-md text-[10px] font-black uppercase tracking-wider hover:bg-slate-200 transition-all items-center gap-1 mx-auto"
+                                                    >
+                                                        ⚙️ Manage
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handlePromoteTutor(student.id, `${student.user.first_name} ${student.user.last_name}`)}
+                                                        className="px-3 py-1 w-full flex text-center justify-center bg-blue-50 text-blue-600 border border-blue-200 rounded-md text-[8px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all items-center gap-1 mx-auto mt-1"
+                                                    >
+                                                        🚀 Promote to Tutor
+                                                    </button>
+                                                    <button
+                                                        onClick={() => student.user?.id && handleDeleteUser(student.user.id, 'Student')}
+                                                        className="px-3 py-1 w-full flex justify-center bg-red-50 text-red-600 rounded-md text-[10px] font-black uppercase tracking-wider hover:bg-red-100 transition-all items-center gap-1 mx-auto"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </>
                             ) : activeTab === 'curriculum' ? (
                                 /* Curriculum Materials & Subjects Section */
                                 <div className="space-y-12 p-2">
@@ -2413,6 +2526,69 @@ const AdminDashboard = () => {
                                         </div>
                                     </td>
                                 </tr>
+                            ) : activeTab === 'system' ? (
+                                /* System Admins Section */
+                                admins.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="p-20 text-center">
+                                            <div className="max-w-md mx-auto space-y-6">
+                                                <div className="text-6xl mb-6">⚙️</div>
+                                                <h3 className="text-2xl font-display font-bold text-slate-800">Admin Management</h3>
+                                                <p className="text-slate-500 text-sm">No administrators found. Add new superusers to manage the platform.</p>
+                                                <button
+                                                    onClick={() => { setUserForm({...userForm, role: 'ADMIN'}); setShowUserModal(true); }}
+                                                    className="inline-block px-10 py-5 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-black uppercase tracking-widest text-sm rounded-2xl shadow-xl shadow-slate-900/20 hover:-translate-y-1 transition-all"
+                                                >
+                                                    + Add System Admin
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    <>
+                                        <tr>
+                                            <td colSpan="6" className="p-4 bg-slate-50/50">
+                                                <div className="flex justify-between items-center px-2">
+                                                    <h3 className="font-black text-slate-800 uppercase tracking-widest text-xs">System Administrators</h3>
+                                                    <button
+                                                        onClick={() => { setUserForm({...userForm, role: 'ADMIN'}); setShowUserModal(true); }}
+                                                        className="px-4 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-primary transition-colors shadow-lg"
+                                                    >
+                                                        + Create Admin
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {admins.map(admin => (
+                                            <tr key={admin.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="py-2 px-4 shadow-sm"></td>
+                                                <td className="py-2 px-3 whitespace-nowrap">
+                                                    <div className="text-xs font-bold text-slate-700">{admin.first_name} {admin.last_name}</div>
+                                                    <div className="text-[9px] text-slate-400 uppercase font-medium">@{admin.username}</div>
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                    <div className="font-bold text-slate-800 text-[11px]">{admin.email}</div>
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                    <span className="bg-slate-900 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm">SUPERUSER</span>
+                                                </td>
+                                                <td className="py-2 px-3 text-center">
+                                                    {admin.phone || 'N/A'}
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                    <div className="flex justify-center items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleDeleteUser(admin.id, 'Admin')}
+                                                            className="px-3 py-1 bg-red-50 text-red-600 border border-red-100 rounded-md text-[9px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </>
+                                )
                             ) : activeTab === 'exams' ? (
                                 /* Exams & CBT Section */
                                 <tr>
@@ -3601,6 +3777,103 @@ const AdminDashboard = () => {
                                     className="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-primary hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50"
                                 >
                                     {actionLoading ? 'Synchronizing...' : 'Create Subject'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* User Creation Modal */}
+            {showUserModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in overflow-y-auto">
+                    <div className="bg-white rounded-[2rem] max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95 my-8">
+                        <div className="bg-slate-900 p-6 text-white flex justify-between items-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-display font-black tracking-tight">Add New {userForm.role === 'ADMIN' ? 'Administrator' : userForm.role === 'TUTOR' ? 'Tutor' : 'Student'}</h3>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">System User Management</p>
+                            </div>
+                            <button onClick={() => setShowUserModal(false)} className="text-white/50 hover:text-white text-2xl transition-colors relative z-10">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleCreateUser} className="p-8 space-y-5">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" required
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={userForm.username}
+                                        onChange={(e) => setUserForm({ ...userForm, username: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Email <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="email" required
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={userForm.email}
+                                        onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="text" required
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={userForm.first_name}
+                                        onChange={(e) => setUserForm({ ...userForm, first_name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
+                                    <input 
+                                        type="text"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={userForm.last_name}
+                                        onChange={(e) => setUserForm({ ...userForm, last_name: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5 col-span-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Password <span className="text-red-500">*</span></label>
+                                    <input 
+                                        type="password" required
+                                        placeholder="Minimum 8 characters"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all"
+                                        value={userForm.password}
+                                        onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5 col-span-2">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Role <span className="text-red-500">*</span></label>
+                                    <select 
+                                        required
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-primary focus:bg-white transition-all cursor-pointer"
+                                        value={userForm.role}
+                                        onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                                    >
+                                        <option value="STUDENT">Student</option>
+                                        <option value="TUTOR">Tutor</option>
+                                        <option value="ADMIN">System Administrator</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="pt-6">
+                                <button 
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="w-full bg-primary text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2"
+                                >
+                                    {actionLoading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        `Create ${userForm.role} Account`
+                                    )}
                                 </button>
                             </div>
                         </form>

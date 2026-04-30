@@ -7,8 +7,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .models import Notification
-from .serializers import UserSerializer, RegisterSerializer, NotificationSerializer, PendingStudentSerializer
+from .serializers import UserSerializer, RegisterSerializer, NotificationSerializer, PendingStudentSerializer, AdminUserManagementSerializer
 from django.contrib.auth import get_user_model
+from rest_framework import viewsets
 
 User = get_user_model()
 
@@ -270,3 +271,14 @@ class SetNewPasswordView(APIView):
             
         except Exception as e:
             return Response({"error": "Something went wrong"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserManagementViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = AdminUserManagementSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        role = self.request.query_params.get('role')
+        if role:
+            return self.queryset.filter(role=role)
+        return self.queryset

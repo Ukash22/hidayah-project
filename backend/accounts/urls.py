@@ -1,11 +1,16 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import RegisterView, LoginView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView
+from .views import RegisterView, LoginView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView, UserManagementViewSet
+
+router = DefaultRouter()
+router.register(r'admin/users', UserManagementViewSet, basename='user_management')
 
 urlpatterns = [
+    path('', include(router.urls)),
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('login/', LoginView.as_view(), name='auth_login'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
