@@ -216,41 +216,70 @@ class TutorViewSet(viewsets.ModelViewSet):
         User = get_user_model()
         data = request.data
         
+        from django.db import transaction
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        print(f"DEBUG: Tutor Registration Attempt - Data: {request.data}")
+        
         try:
-            user = User.objects.create_user(
-                username=data['username'],
-                email=data['email'],
-                password=data['password'],
-                first_name=data['first_name'],
-                last_name=data['last_name'],
-                role='TUTOR',
-                gender=data.get('gender'),
-                country=data.get('country')
-            )
-            
-            profile = TutorProfile.objects.create(
-                user=user,
-                age=data.get('age'),
-                address=data.get('address'),
-                experience_years=data.get('experience_years', 0),
-                subjects_to_teach=data.get('subjects_to_teach'),
-                languages=data.get('languages', 'English'),
-                has_online_exp=data.get('has_online_exp') == 'true',
-                device_type=data.get('device_type', 'COMPUTER'),
-                network_type=data.get('network_type'),
-                availability_days=data.get('availability_days') or (", ".join(list(set([s.split(':')[0].strip() for s in data.get('availability_hours', '').split(',') if ':' in s]))) if data.get('availability_hours') else 'Flexible'),
-                availability_hours=data.get('availability_hours') or 'Contact for details',
-                hourly_rate=data.get('hourly_rate', 1500.00),
-                # Accept either raw files or Cloudinary URLs
-                image=request.FILES.get('image') or data.get('image_url'),
-                intro_video=request.FILES.get('intro_video') or data.get('intro_video_url'),
-                short_recitation=request.FILES.get('short_recitation') or data.get('short_recitation_url'),
-                cv_resume=request.FILES.get('cv_resume') or data.get('cv_url'),
-                credentials=request.FILES.get('credentials') or data.get('credentials_url')
-            )
-            return Response({"message": "Tutor application submitted"}, status=201)
+            with transaction.atomic():
+                # 1. Create User
+                username = data.get('username')
+                email = data.get('email')
+                password = data.get('password')
+                
+                if not username or not email or not password:
+                    return Response({"detail": "Username, Email, and Password are required."}, status=400)
+                
+                if User.objects.filter(username=username).exists():
+                    return Response({"detail": f"Username '{username}' is already taken. Please choose another one."}, status=400)
+                
+                if User.objects.filter(email=email).exists():
+                    return Response({"detail": f"Email '{email}' is already registered. Please login or use a different email."}, status=400)
+
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    first_name=data.get('first_name', ''),
+                    last_name=data.get('last_name', ''),
+                    role='TUTOR',
+                    gender=data.get('gender'),
+                    country=data.get('country')
+                )
+                
+                # 2. Create Profile
+                profile = TutorProfile.objects.create(
+                    user=user,
+                    age=data.get('age'),
+                    address=data.get('address'),
+                    experience_years=data.get('experience_years', 0),
+                    subjects_to_teach=data.get('subjects_to_teach') or 'Not specified',
+                    languages=data.get('languages', 'English'),
+                    has_online_exp=data.get('has_online_exp') == 'true' or data.get('has_online_exp') == True,
+                    device_type=data.get('device_type', 'COMPUTER'),
+                    network_type=data.get('network_type'),
+                    availability_days=data.get('availability_days') or (", ".join(list(set([s.split(':')[0].strip() for s in data.get('availability_hours', '').split(',') if ':' in s]))) if data.get('availability_hours') else 'Flexible'),
+                    availability_hours=data.get('availability_hours') or 'Contact for details',
+                    hourly_rate=data.get('hourly_rate', 1500.00),
+                    # Use provided URLs as strings for the FileFields (Django-Cloudinary handles this if configured)
+                    image=data.get('image_url') or request.FILES.get('image'),
+                    intro_video=data.get('intro_video_url') or request.FILES.get('intro_video'),
+                    short_recitation=data.get('short_recitation_url') or request.FILES.get('short_recitation'),
+                    cv_resume=data.get('cv_url') or request.FILES.get('cv_resume'),
+                    credentials=data.get('credentials_url') or request.FILES.get('credentials')
+                )
+                
+                print(f"DEBUG: Tutor Profile created successfully for {username}")
+                return Response({"message": "Tutor application submitted successfully!"}, status=201)
+                
         except Exception as e:
-            return Response({"error": str(e)}, status=400)
+            error_msg = str(e)
+            print(f"CRITICAL: Tutor Registration Error: {error_msg}")
+            # If we already returned a Response above, this catch won't trigger if it was inside the block, 
+            # but for safety we catch everything here.
+            return Response({"detail": f"Server Error: {error_msg}"}, status=400)
 
     @action(detail=True, methods=['patch'])
     def update_profile(self, request, pk=None):

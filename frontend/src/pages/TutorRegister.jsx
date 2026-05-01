@@ -212,7 +212,8 @@ const TutorRegister = () => {
 
             setSuccess(true);
         } catch (err) {
-            setError(err.response?.data?.detail || 'Registration failed');
+            const serverError = err.response?.data?.detail || err.response?.data?.error || 'Registration failed';
+            setError(serverError);
         } finally {
             setLoading(false);
         }
