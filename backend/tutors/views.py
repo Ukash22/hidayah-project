@@ -249,8 +249,8 @@ class TutorViewSet(viewsets.ModelViewSet):
                 has_online_exp=data.get('has_online_exp') == 'true',
                 device_type=data.get('device_type', 'COMPUTER'),
                 network_type=data.get('network_type'),
-                availability_days=data.get('availability_days'),
-                availability_hours=data.get('availability_hours'),
+                availability_days=data.get('availability_days') or (", ".join(list(set([s.split(':')[0].strip() for s in data.get('availability_hours', '').split(',') if ':' in s]))) if data.get('availability_hours') else 'Flexible'),
+                availability_hours=data.get('availability_hours') or 'Contact for details',
                 hourly_rate=data.get('hourly_rate', 1500.00),
                 # Accept either raw files or Cloudinary URLs
                 image=request.FILES.get('image') or data.get('image_url'),
