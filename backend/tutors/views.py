@@ -34,25 +34,34 @@ class TutorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[])
     def cloudinary_signature(self, request):
         """Generate a signed upload signature for frontend direct-to-cloud uploads."""
-        timestamp = int(time.time())
-        folder = request.query_params.get('folder', 'tutor_media')
-        
-        params = {
-            'timestamp': timestamp,
-            'folder': folder,
-        }
-        
-        signature = cloudinary.utils.api_sign_request(
-            params, 
-            settings.CLOUDINARY_STORAGE['API_SECRET']
-        )
-        
-        return Response({
-            'signature': signature,
-            'timestamp': timestamp,
-            'cloud_name': settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
-            'api_key': settings.CLOUDINARY_STORAGE['API_KEY'],
-        })
+        try:
+            timestamp = int(time.time())
+            folder = request.query_params.get('folder', 'tutor_media')
+            
+            if not hasattr(settings, 'CLOUDINARY_STORAGE') or not settings.CLOUDINARY_STORAGE.get('API_SECRET'):
+                return Response({
+                    "error": "Cloudinary is not configured on the server. Please check environment variables (CLOUDINARY_API_SECRET)."
+                }, status=500)
+            
+            params = {
+                'timestamp': timestamp,
+                'folder': folder,
+            }
+            
+            signature = cloudinary.utils.api_sign_request(
+                params, 
+                settings.CLOUDINARY_STORAGE['API_SECRET']
+            )
+            
+            return Response({
+                'signature': signature,
+                'timestamp': timestamp,
+                'cloud_name': settings.CLOUDINARY_STORAGE['CLOUD_NAME'],
+                'api_key': settings.CLOUDINARY_STORAGE['API_KEY'],
+            })
+        except Exception as e:
+            print(f"Cloudinary Signature Error: {str(e)}")
+            return Response({"error": f"Failed to generate signature: {str(e)}"}, status=500)
     
     def get_serializer_class(self):
         # Use lightweight serializer for lists and public views to improve performance
@@ -200,26 +209,6 @@ class TutorViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=400)
 
-    @action(detail=False, methods=['get'], permission_classes=[])
-    def cloudinary_signature(self, request):
-        import time
-        import cloudinary.utils
-        folder = request.query_params.get('folder', 'tutor_media')
-        timestamp = int(time.time())
-        params = {
-            'timestamp': timestamp,
-            'folder': folder
-        }
-        signature = cloudinary.utils.api_sign_request(
-            params, 
-            settings.CLOUDINARY_STORAGE['API_SECRET']
-        )
-        return Response({
-            'signature': signature,
-            'timestamp': timestamp,
-            'api_key': settings.CLOUDINARY_STORAGE['API_KEY'],
-            'cloud_name': settings.CLOUDINARY_STORAGE['CLOUD_NAME']
-        })
 
     @action(detail=False, methods=['post'], permission_classes=[])
     def register(self, request):
