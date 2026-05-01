@@ -72,13 +72,23 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
  * @returns {Promise<Object>} - Dictionary of resulting URLs (null for failed/skipped)
  */
 export const uploadMultipleToCloudinary = async (files, foldersMapped = {}) => {
-    const urls = {};
     const fileEntries = Object.entries(files).filter(([, file]) => file !== null);
 
-    for (const [key, file] of fileEntries) {
+    // Map each file entry to an upload promise
+    const uploadPromises = fileEntries.map(async ([key, file]) => {
         const folder = foldersMapped[key] || 'tutor_media';
-        urls[key] = await uploadToCloudinary(file, folder);
-    }
+        const url = await uploadToCloudinary(file, folder);
+        return { key, url };
+    });
+
+    // Execute all uploads in parallel
+    const results = await Promise.all(uploadPromises);
+
+    // Reconstruct the urls object
+    const urls = {};
+    results.forEach(({ key, url }) => {
+        urls[key] = url;
+    });
 
     return urls;
 };
