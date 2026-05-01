@@ -55,12 +55,14 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
             config: error.config
         });
         let detail = '';
-        if (error.response?.data?.error?.message) {
+        if (error.response?.status === 413) {
+            detail = ": The file is too large for Cloudinary's free tier. Please compress your video/image and try again.";
+        } else if (error.response?.data?.error?.message) {
             detail = `: ${error.response.data.error.message}`;
         } else if (error.message) {
             detail = `: ${error.message}`;
         }
-        throw new Error(`File upload failed${detail}. Please check your credentials and connection.`);
+        throw new Error(`File upload failed${detail}.`);
     }
 };
 

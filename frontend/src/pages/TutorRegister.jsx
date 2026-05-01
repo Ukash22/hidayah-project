@@ -172,7 +172,18 @@ const TutorRegister = () => {
         if (!files.introVideo) missing.push('Video');
         if (!files.shortRecitation) missing.push('Recitation');
 
-        if (missing.length > 0) return setError(`Missing: ${missing.join(', ')}`);
+        if (missing.length > 0) return setError(`Missing required files: ${missing.join(', ')}`);
+        
+        // Size validation
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+        const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+        const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
+
+        if (files.image.size > MAX_IMAGE_SIZE) return setError('Profile image must be under 5MB');
+        if (files.introVideo.size > MAX_VIDEO_SIZE) return setError('Intro video must be under 50MB');
+        if (files.cv.size > MAX_DOC_SIZE) return setError('CV file must be under 10MB');
+        if (files.shortRecitation?.size > MAX_VIDEO_SIZE) return setError('Recitation file must be under 50MB');
+
         if (formData.subjects.length === 0) return setError('Select at least one subject');
 
         setLoading(true);
