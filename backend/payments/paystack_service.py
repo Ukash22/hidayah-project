@@ -19,7 +19,7 @@ class PaystackService:
         """
         # MOCK MODE CHECK
         if getattr(settings, 'PAYSTACK_MOCK_MODE', False):
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
             print(f"MOCK PAYSTACK: Initializing payment for {email} (Ref: {reference})")
             return {
                 "success": True,

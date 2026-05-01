@@ -348,7 +348,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                         'time': profile.preferred_time_exact or "TBA",
                     })
                 
-                payment_url = f"{settings.FRONTEND_URL}/admission-portal" if hasattr(settings, 'FRONTEND_URL') else "http://localhost:5173/admission-portal"
+                payment_url = f"{settings.FRONTEND_URL}/admission-portal" if hasattr(settings, 'FRONTEND_URL') else "https://hidayah-frontend.onrender.com/admission-portal"
                 
                 letter_path = generate_admission_letter(user, profile, {
                     'enrollments': enrollment_data,
