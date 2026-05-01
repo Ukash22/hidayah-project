@@ -31,17 +31,17 @@ class TutorProfile(models.Model):
     # Personal & Professional
     age = models.IntegerField(null=True, blank=True)
     address = models.TextField(blank=True, null=True)
-    image = models.ImageField(upload_to='tutor_images/', blank=True, null=True)
-    short_recitation = models.FileField(upload_to='tutor_recitations/', blank=True, null=True)
-    cv_resume = models.FileField(upload_to='tutor_credentials/', blank=True, null=True)
-    credentials = models.FileField(upload_to='tutor_credentials/', blank=True, null=True) # Certificates
+    image = models.ImageField(upload_to='tutor_images/', blank=True, null=True, max_length=500)
+    short_recitation = models.FileField(upload_to='tutor_recitations/', blank=True, null=True, max_length=500)
+    cv_resume = models.FileField(upload_to='tutor_credentials/', blank=True, null=True, max_length=500)
+    credentials = models.FileField(upload_to='tutor_credentials/', blank=True, null=True, max_length=500) # Certificates
     experience_years = models.IntegerField(default=0)
     subjects_to_teach = models.TextField(help_text="Comma separated subjects")
     languages = models.TextField(default='English')
     
     # Online Experience
     has_online_exp = models.BooleanField(default=False)
-    intro_video = models.FileField(upload_to='tutor_videos/', blank=True, null=True)
+    intro_video = models.FileField(upload_to='tutor_videos/', blank=True, null=True, max_length=500)
     intro_video_url = models.URLField(blank=True, null=True, help_text="Legacy URL field")
     
     # Technical Requirement
