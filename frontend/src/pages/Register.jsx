@@ -309,8 +309,8 @@ const Register = () => {
                 totalToPay += (rate * hoursPerSubject * 4);
             });
 
-            // Round to 2 decimal places to avoid floating point issues
-            totalToPay = parseFloat(totalToPay.toFixed(2));
+            // Round to 2 decimal places and add flat registration/admission fee
+            totalToPay = parseFloat(totalToPay.toFixed(2)) + 5000;
 
             const payload = {
                 username: formData.username.trim().toLowerCase(),
@@ -340,7 +340,7 @@ const Register = () => {
                     subject: s,
                     preferred_tutor_id: subjectEnrollments[s] || null
                 })),
-                total_amount: totalToPay > 0 ? totalToPay : 1000,
+                total_amount: totalToPay > 0 ? totalToPay : 5000,
                 ...(isMinor && {
                     parent_first_name: formData.parentFirstName,
                     parent_last_name: formData.parentLastName,
@@ -611,12 +611,12 @@ const Register = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Duration / Session</label>
-                                    <select name="hoursPerSession" value={formData.hoursPerSession} onChange={handleChange} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm font-bold text-white outline-none focus:border-emerald-500/30 transition-all appearance-none cursor-pointer">
-                                        <option value="0.5" className="bg-[#0a0c10]">30 Minutes</option>
-                                        <option value="1" className="bg-[#0a0c10]">1.0 Hour</option>
-                                        <option value="1.5" className="bg-[#0a0c10]">1.5 Hours</option>
-                                        <option value="2" className="bg-[#0a0c10]">2.0 Hours</option>
-                                        <option value="3" className="bg-[#0a0c10]">3.0 Hours</option>
+                                    <select name="hoursPerSession" value={formData.hoursPerSession} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
+                                        <option value="0.5" className="bg-white">30 Minutes</option>
+                                        <option value="1" className="bg-white">1.0 Hour</option>
+                                        <option value="1.5" className="bg-white">1.5 Hours</option>
+                                        <option value="2" className="bg-white">2.0 Hours</option>
+                                        <option value="3" className="bg-white">3.0 Hours</option>
                                     </select>
                                 </div>
                             </div>
@@ -1003,7 +1003,7 @@ const Register = () => {
                         {/* Final Submission */}
                         <div className="flex flex-col items-center gap-8 pt-12 pb-20">
                             {(() => {
-                                let total = 0;
+                                let subjectFees = 0;
                                 const numSubjects = selectedSubjects.length || 1;
                                 
                                 // Calculate total weekly hours using the same logic as handleSubmit
@@ -1036,14 +1036,25 @@ const Register = () => {
                                         const tutor = (tutorsBySubject[subject] || []).find(t => t.id === tutorId);
                                         if (tutor && tutor.hourly_rate) rate = parseFloat(tutor.hourly_rate);
                                     }
-                                    total += (rate * hoursPerSubject * 4);
+                                    subjectFees += (rate * hoursPerSubject * 4);
                                 });
+
+                                const registrationFee = 5000;
+                                const total = subjectFees + registrationFee;
                                 
                                 return selectedSubjects.length > 0 ? (
                                     <div className="bg-blue-600/5 border border-blue-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Calculated Monthly Rate</p>
+                                        <div className="flex justify-between w-full text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">
+                                            <span>Subject Fees</span>
+                                            <span>₦{subjectFees.toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex justify-between w-full text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+                                            <span>Admission Fee</span>
+                                            <span>₦{registrationFee.toLocaleString()}</span>
+                                        </div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Total Initial Payment</p>
                                         <h3 className="text-4xl font-black text-slate-900">₦{total.toLocaleString()}</h3>
-                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Auto-renewed each month</p>
+                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Monthly renewal: ₦{subjectFees.toLocaleString()}</p>
                                     </div>
                                 ) : null;
                             })()}

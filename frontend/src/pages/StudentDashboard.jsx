@@ -599,12 +599,22 @@ const StudentDashboard = () => {
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tutor: {enr.tutor_name || 'TBA'}</p>
                                                         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
                                                             <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-400 uppercase">
-                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
+                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg" title="Sessions per week">
                                                                     <Calendar size={12} className="text-blue-600" /> 
+                                                                    <span>{enr.days_per_week || 0} Sessions / WK</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg" title="Hours per session">
+                                                                    <Clock size={12} className="text-blue-600" /> 
+                                                                    <span>{enr.hours_per_week || 0} Hrs / Session</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-400 uppercase">
+                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
+                                                                    <span className="text-indigo-600 font-black">📅</span> 
                                                                     <span className="truncate">{enr.preferred_days || 'Days TBA'}</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
-                                                                    <Clock size={12} className="text-blue-600" /> 
+                                                                    <span className="text-indigo-600 font-black">🕒</span> 
                                                                     <span>{enr.preferred_time || 'Time TBA'}</span>
                                                                 </div>
                                                             </div>
