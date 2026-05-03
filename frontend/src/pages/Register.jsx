@@ -466,7 +466,7 @@ const Register = () => {
                                         <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Institutional Email *</label>
                                         <div className="relative">
                                             <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" autoComplete="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
+                                            <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="umar@email.com" autoComplete="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
@@ -500,11 +500,11 @@ const Register = () => {
                                     <div className="grid md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">First Name *</label>
-                                            <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" autoComplete="given-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
+                                            <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="Umar" autoComplete="given-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                         <div className="space-y-2">
                                             <label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Last Name</label>
-                                            <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" autoComplete="family-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
+                                            <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Muhammad" autoComplete="family-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="grid md:grid-cols-2 gap-4">
