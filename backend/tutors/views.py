@@ -188,11 +188,27 @@ class TutorViewSet(viewsets.ModelViewSet):
                 profile.interview_at = interview_at
                 profile.interview_link = interview_link
                 profile.save()
+                
+                # Send email
+                try:
+                    from applications.email_service import send_tutor_interview_email
+                    send_tutor_interview_email(profile.user, profile, interview_link)
+                except Exception as e:
+                    print(f"Error sending tutor interview email: {e}")
+                    
                 return Response({"message": "Interview scheduled", "link": interview_link})
                 
             elif action_type == 'APPROVE':
                 profile.status = 'APPROVED'
                 profile.save()
+                
+                # Send email
+                try:
+                    from applications.email_service import send_tutor_approval_email
+                    send_tutor_approval_email(profile.user, profile)
+                except Exception as e:
+                    print(f"Error sending tutor approval email: {e}")
+                    
                 return Response({"message": "Tutor approved"})
                 
             elif action_type == 'REJECT':
@@ -200,6 +216,14 @@ class TutorViewSet(viewsets.ModelViewSet):
                 profile.status = 'REJECTED'
                 profile.rejection_reason = reason
                 profile.save()
+                
+                # Send email
+                try:
+                    from applications.email_service import send_tutor_rejection_email
+                    send_tutor_rejection_email(profile.user, reason)
+                except Exception as e:
+                    print(f"Error sending tutor rejection email: {e}")
+                    
                 return Response({"message": "Tutor rejected"})
                 
             return Response({"error": "Invalid action"}, status=400)
