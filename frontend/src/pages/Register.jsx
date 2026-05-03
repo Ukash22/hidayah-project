@@ -1040,10 +1040,26 @@ const Register = () => {
                                 });
 
                                 return selectedSubjects.length > 0 ? (
-                                    <div className="bg-blue-600/5 border border-blue-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Calculated Monthly Rate</p>
+                                    <div className="bg-emerald-600/5 border border-emerald-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4">Accurate Monthly Calculation</p>
+                                        
+                                        <div className="w-full space-y-3 mb-6">
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                                                <span>Total Weekly Effort</span>
+                                                <span>{totalWeeklyHours.toFixed(1)} Hours</span>
+                                            </div>
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
+                                                <span>Avg. Hourly Rate</span>
+                                                <span>₦{baseRate.toLocaleString()}</span>
+                                            </div>
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter border-t border-slate-100 pt-2">
+                                                <span>Monthly Cycle</span>
+                                                <span>4 Weeks</span>
+                                            </div>
+                                        </div>
+
                                         <h3 className="text-4xl font-black text-slate-900">₦{subjectFees.toLocaleString()}</h3>
-                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Auto-renewed each month</p>
+                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Exactly calculated based on selected duration</p>
                                     </div>
                                 ) : null;
                             })()}

@@ -253,11 +253,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             from students.models import StudentProfile
             import uuid
             
-            # FIX: Sanitize preferred_tutor_id (ensure it's int or None)
-            final_tutor_id = None
+            # FIX: Sanitize preferred_tutor_id and verify it exists
+            final_tutor = None
             if preferred_tutor_id and str(preferred_tutor_id).strip():
                 try: 
-                    final_tutor_id = int(preferred_tutor_id)
+                    t_id = int(preferred_tutor_id)
+                    final_tutor = User.objects.filter(id=t_id, role='TUTOR').first()
                 except: 
                     pass
 
@@ -276,8 +277,8 @@ class RegisterSerializer(serializers.ModelSerializer):
                 level=level,
                 target_exam_type=target_exam_type,
                 target_exam_year=target_exam_year,
-                preferred_tutor_id=final_tutor_id,
-                assigned_tutor=User.objects.filter(id=final_tutor_id, role='TUTOR').first() if final_tutor_id else None,
+                preferred_tutor=final_tutor,
+                assigned_tutor=final_tutor,
                 approval_status='APPROVED', # Instant Admission
                 payment_reference=f"HEMI-{uuid.uuid4().hex[:8].upper()}",
                 total_amount=first_payment,
