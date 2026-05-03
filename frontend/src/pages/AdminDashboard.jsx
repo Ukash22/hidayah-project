@@ -577,21 +577,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const handlePromoteTutor = async (id, name) => {
-        if (!window.confirm(`Are you sure you want to promote ${name} to a Tutor? This will put their profile under review.`)) return;
-        setActionLoading(true);
-        try {
-            await api.post(`/api/students/admin/${id}/promote/`, {});
-            alert(`✅ ${name} successfully promoted to Tutor (Under Review)!`);
-            fetchStudents(); // Refresh students to remove them if backend filters them or track role update
-            fetchTutors();
-            fetchTutorApps();
-        } catch (_err) {
-            alert(`Failed to promote student: ` + (_err.response?.data?.error || _err.message));
-        } finally {
-            setActionLoading(false);
-        }
-    };
+
 
     const handleUpdateStudent = async (e) => {
         e.preventDefault();
@@ -1784,12 +1770,7 @@ const AdminDashboard = () => {
                                                     >
                                                         ⚙️ Manage
                                                     </button>
-                                                    <button
-                                                        onClick={() => handlePromoteTutor(student.id, `${student.user.first_name} ${student.user.last_name}`)}
-                                                        className="px-3 py-1 w-full flex text-center justify-center bg-blue-50 text-blue-600 border border-blue-200 rounded-md text-[8px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all items-center gap-1 mx-auto mt-1"
-                                                    >
-                                                        🚀 Promote to Tutor
-                                                    </button>
+
                                                     <button
                                                         onClick={() => student.user?.id && handleDeleteUser(student.user.id, 'Student')}
                                                         className="px-3 py-1 w-full flex justify-center bg-red-50 text-red-600 rounded-md text-[10px] font-black uppercase tracking-wider hover:bg-red-100 transition-all items-center gap-1 mx-auto"
