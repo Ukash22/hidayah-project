@@ -218,15 +218,26 @@ const BookingRequest = () => {
         if (avSlots.length > 0) {
             const invalidSlots = bookingData.schedule.filter(slot => {
                 return !avSlots.some(av => {
-                    if (av.day !== slot.day) return false;
+                    // Match days regardless of shorthand (Mon vs Monday)
+                    const dayMatch = av.day === slot.day || 
+                                   av.day.startsWith(slot.day.slice(0, 3)) || 
+                                   slot.day.startsWith(av.day.slice(0, 3));
+                    
+                    if (!dayMatch) return false;
+                    
                     const slotStartRaw = (slot.time || '').split('-')[0];
                     const slotEndRaw = (slot.time || '').split('-')[1] || slotStartRaw;
                     
                     const slotStart = normalizeTime(slotStartRaw);
                     const slotEnd = normalizeTime(slotEndRaw);
                     
+                    const avStart = normalizeTime(av.start);
+                    const avEnd = normalizeTime(av.end);
+                    
                     if (!slotStart || !slotEnd) return false;
-                    return slotStart >= av.start && slotEnd <= av.end;
+                    
+                    const isInside = slotStart >= avStart && slotEnd <= avEnd;
+                    return isInside;
                 });
             });
             if (invalidSlots.length > 0) {
