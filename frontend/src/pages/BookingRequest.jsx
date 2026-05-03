@@ -173,13 +173,24 @@ const BookingRequest = () => {
             return;
         }
 
-        // Helper to normalize time to HH:MM format with leading zeros
+        // Helper to normalize time to HH:MM format with leading zeros and 24h conversion
         const normalizeTime = (t) => {
             if (!t) return '';
-            const parts = t.split(':');
-            const h = parts[0].padStart(2, '0');
-            const m = (parts[1] || '00').slice(0, 2);
-            return `${h}:${m}`;
+            let timeStr = t.trim().toUpperCase();
+            const isPM = timeStr.includes('PM');
+            const isAM = timeStr.includes('AM');
+            
+            // Remove AM/PM and any non-time characters
+            timeStr = timeStr.replace(/[A-Z\s]/g, '');
+            
+            const parts = timeStr.split(':');
+            let h = parseInt(parts[0]);
+            let m = (parts[1] || '00').slice(0, 2);
+
+            if (isPM && h < 12) h += 12;
+            if (isAM && h === 12) h = 0;
+
+            return `${h.toString().padStart(2, '0')}:${m.padStart(2, '0')}`;
         };
 
         // Validate against structured availabilities or legacy hours
@@ -192,12 +203,13 @@ const BookingRequest = () => {
             : (tutor.availability_hours || '').split(',').map(s => {
                 const parts = s.trim().split(': ');
                 if (parts.length >= 2) {
-                    const timePart = parts[1].replace(/\s/g, ''); // Remove spaces for easier split
-                    const [start, end] = timePart.split('-');
+                    // Handle various dash characters (-, –, —)
+                    const timePart = parts[1].replace(/[\s\u2013\u2014]/g, '-'); 
+                    const [start, end] = timePart.split('-').filter(Boolean);
                     return { 
                         day: parts[0].toUpperCase(), 
-                        start: normalizeTime(start?.trim()), 
-                        end: normalizeTime(end?.trim()) 
+                        start: normalizeTime(start), 
+                        end: normalizeTime(end) 
                     };
                 }
                 return null;
