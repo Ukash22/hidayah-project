@@ -430,11 +430,22 @@ const BookingRequest = () => {
                                                             </div>
                                                         ));
                                                     } else if (tutor.availability_hours) {
-                                                        return tutor.availability_hours.split(',').slice(0, 2).map((h, i) => (
-                                                            <span key={i} className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
-                                                                {h.trim()}
-                                                            </span>
-                                                        ));
+                                                        return tutor.availability_hours.split(',').slice(0, 2).map((h, i) => {
+                                                            const parts = h.trim().split(': ');
+                                                            let display = h.trim();
+                                                            if (parts.length >= 2) {
+                                                                const timePart = parts[1].replace(/\s/g, '');
+                                                                const [start, end] = timePart.split('-');
+                                                                if (start && end) {
+                                                                    display = `${parts[0].slice(0,3)}: ${formatTime12h(start)} - ${formatTime12h(end)}`;
+                                                                }
+                                                            }
+                                                            return (
+                                                                <span key={i} className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                                                                    {display}
+                                                                </span>
+                                                            );
+                                                        });
                                                     }
                                                     return <span className="text-[9px] text-slate-600">Not set</span>;
                                                 })()}
