@@ -131,6 +131,9 @@ class TutorProfileSerializer(serializers.ModelSerializer):
 
     def get_video_url(self, obj):
         if obj.intro_video and obj.intro_video.name:
+            name_str = str(obj.intro_video.name)
+            if name_str.startswith('http'):
+                return name_str
             return obj.intro_video.url
         return obj.intro_video_url or None
 
@@ -146,8 +149,12 @@ class TutorProfileSerializer(serializers.ModelSerializer):
         return None
 
     def get_recitation_url(self, obj):
-        if obj.short_recitation and hasattr(obj.short_recitation, 'url') and obj.short_recitation.name:
-            return obj.short_recitation.url
+        if obj.short_recitation and obj.short_recitation.name:
+            name_str = str(obj.short_recitation.name)
+            if name_str.startswith('http'):
+                return name_str
+            if hasattr(obj.short_recitation, 'url'):
+                return obj.short_recitation.url
         # Fallback: short_recitation might be stored as a URL string
         val = str(obj.short_recitation) if obj.short_recitation else None
         if val and val.startswith('http'):
@@ -164,8 +171,13 @@ class PublicTutorSerializer(TutorProfileSerializer):
                   'experience_years', 'rating', 'bio', 'image']
 
     def get_image(self, obj):
-        if obj.image and hasattr(obj.image, 'url'):
-            return obj.image.url
+        if obj.image:
+            name_str = str(obj.image)
+            if name_str.startswith('http'):
+                return name_str
+            if hasattr(obj.image, 'url'):
+                return obj.image.url
+            return name_str
         return None
 
 
@@ -189,9 +201,12 @@ class LiteTutorSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         if obj.image:
+            name_str = str(obj.image)
+            if name_str.startswith('http'):
+                return name_str
             if hasattr(obj.image, 'url'):
                 return obj.image.url
-            return str(obj.image)
+            return name_str
         return None
 
     def get_rating(self, obj):
@@ -199,6 +214,9 @@ class LiteTutorSerializer(serializers.ModelSerializer):
 
     def get_video_url(self, obj):
         if obj.intro_video and obj.intro_video.name:
+            name_str = str(obj.intro_video.name)
+            if name_str.startswith('http'):
+                return name_str
             return obj.intro_video.url
         return obj.intro_video_url or None
 
@@ -213,8 +231,12 @@ class LiteTutorSerializer(serializers.ModelSerializer):
         return None
 
     def get_recitation_url(self, obj):
-        if obj.short_recitation and hasattr(obj.short_recitation, 'url') and obj.short_recitation.name:
-            return obj.short_recitation.url
+        if obj.short_recitation and obj.short_recitation.name:
+            name_str = str(obj.short_recitation.name)
+            if name_str.startswith('http'):
+                return name_str
+            if hasattr(obj.short_recitation, 'url'):
+                return obj.short_recitation.url
         val = str(obj.short_recitation) if obj.short_recitation else None
         if val and val.startswith('http'):
             return val
