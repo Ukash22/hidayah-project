@@ -221,16 +221,17 @@ const TutorRegister = () => {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-[#0a0c10] text-slate-300">
+            <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white text-slate-700">
                 <Navbar />
                 <div className="max-w-3xl mx-auto pt-32 px-4 text-center">
-                    <div className="bg-white/5 backdrop-blur-3xl border border-white/10 p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
-                        <div className="w-24 h-24 bg-emerald-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-white/10">
+                    <div className="bg-white border border-blue-100 p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl" />
+                        <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-emerald-200">
                             <CheckCircle2 size={48} className="text-emerald-500" />
                         </div>
-                        <h1 className="text-4xl font-display font-black text-white mb-4 tracking-tighter uppercase">Application Submitted!</h1>
-                        <p className="text-slate-400 mb-8 leading-relaxed font-medium">JazakAllahu Khairan. Our team will review your credentials and contact you via email.</p>
-                        <button onClick={() => navigate('/')} className="bg-emerald-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-500 transition-all text-sm">Return Home</button>
+                        <h1 className="text-4xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Application Submitted!</h1>
+                        <p className="text-slate-500 mb-8 leading-relaxed font-medium">JazakAllahu Khairan. Our team will review your credentials and contact you via email.</p>
+                        <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-sm shadow-xl shadow-blue-600/20">Return Home</button>
                     </div>
                 </div>
             </div>
@@ -238,24 +239,24 @@ const TutorRegister = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-300 selection:bg-emerald-500/30">
+        <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white text-slate-700 selection:bg-blue-600/20">
             <Navbar />
             
             {/* Background Ambience */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-emerald-600/10 blur-[150px] rounded-full"></div>
-                <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-blue-600/10 blur-[150px] rounded-full"></div>
+                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-600/10 blur-[150px] rounded-full"></div>
+                <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-indigo-600/5 blur-[150px] rounded-full"></div>
             </div>
 
             <div className="container pt-32 pb-20 px-4 relative z-10">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
                     <div className="text-center mb-16">
-                        <div className="w-20 h-20 bg-white/5 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-white/10 shadow-2xl relative">
-                            <Briefcase size={40} className="text-emerald-500" />
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center animate-pulse"><Sparkles size={10} className="text-white" /></div>
+                        <div className="w-20 h-20 bg-blue-600/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">
+                            <Briefcase size={40} className="text-blue-600" />
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-pulse"><Sparkles size={10} className="text-white" /></div>
                         </div>
-                        <h1 className="text-5xl font-display font-black text-white mb-4 tracking-tighter uppercase">Tutor <span className="text-emerald-500">Application</span></h1>
-                        <p className="text-slate-400 max-w-xl mx-auto font-medium tracking-wide">Join our global faculty and share your knowledge across Western and Islamic sciences.</p>
+                        <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Tutor <span className="text-blue-600">Application</span></h1>
+                        <p className="text-slate-500 max-w-xl mx-auto font-medium tracking-wide">Join our global faculty and share your knowledge across Western and Islamic sciences.</p>
                     </div>
 
                     {error && (
