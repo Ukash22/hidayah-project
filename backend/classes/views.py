@@ -539,6 +539,7 @@ class UserSessionListView(APIView):
                 'is_live': check_is_live(s.scheduled_at, s.duration),
                 'is_started': s.is_started,
                 'meeting_link': s.meeting_link,
+                'tutor_class_link': s.tutor.tutor_profile.live_class_link if hasattr(s.tutor, 'tutor_profile') else None,
                 'whiteboard_link': s.whiteboard_link
             })
             

@@ -14,12 +14,18 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         from .models import Enrollment
         model = Enrollment
-        fields = ('id', 'subject', 'subject_name', 'tutor', 'tutor_name', 'hourly_rate', 'hours_per_week', 'days_per_week', 'preferred_days', 'preferred_time', 'weekly_rate', 'monthly_rate', 'status')
+        fields = ('id', 'subject', 'subject_name', 'tutor', 'tutor_name', 'tutor_class_link', 'hourly_rate', 'hours_per_week', 'days_per_week', 'preferred_days', 'preferred_time', 'weekly_rate', 'monthly_rate', 'status')
 
     def get_tutor_name(self, obj):
         if obj.tutor:
             return f"{obj.tutor.first_name} {obj.tutor.last_name}"
         return "TBA"
+
+    tutor_class_link = serializers.SerializerMethodField()
+    def get_tutor_class_link(self, obj):
+        if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
+            return obj.tutor.tutor_profile.live_class_link
+        return None
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     admission_letter_url = serializers.SerializerMethodField()
@@ -59,7 +65,8 @@ class StudentProfileSerializer(serializers.ModelSerializer):
                 'image': tp.image.url if tp.image else None,
                 'bio': tp.bio,
                 'rating': 5.0, # Placeholder
-                'subjects': tp.subjects_to_teach or tp.subjects or ""
+                'subjects': tp.subjects_to_teach or tp.subjects or "",
+                'live_class_link': tp.live_class_link
             }
         return None
 

@@ -1789,8 +1789,16 @@ const AdminDashboard = () => {
                                                 <div className="text-[9px] text-slate-400 mt-1 uppercase font-bold flex items-center gap-2">
                                                     <span>{student.assigned_tutor_details ? `✅ ${student.assigned_tutor_details.full_name}` : '❌ No Tutor'}</span>
                                                     <div className="flex gap-1 ml-1">
-                                                        {student.meeting_link && (
-                                                            <a href={student.meeting_link} target="_blank" rel="noreferrer" title="Join Jitsi" className="text-primary hover:scale-110 transition-transform">📹</a>
+                                                        {(student.meeting_link || student.assigned_tutor_details?.live_class_link) && (
+                                                            <a 
+                                                                href={student.meeting_link || student.assigned_tutor_details?.live_class_link} 
+                                                                target="_blank" 
+                                                                rel="noreferrer" 
+                                                                title="Join Jitsi" 
+                                                                className="text-primary hover:scale-110 transition-transform"
+                                                            >
+                                                                📹
+                                                            </a>
                                                         )}
                                                         {student.whiteboard_link && (
                                                             <a href={student.whiteboard_link} target="_blank" rel="noreferrer" title="Open Whiteboard" className="text-secondary hover:scale-110 transition-transform">📋</a>

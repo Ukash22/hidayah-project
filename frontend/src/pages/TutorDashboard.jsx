@@ -226,7 +226,7 @@ const TutorDashboard = () => {
     };
 
     const handleJoinClass = async (session) => {
-        let url = session.zoom_start_url || session.meeting_link; // Handle both Trial and Regular
+        let url = session.zoom_start_url || session.meeting_link || session.tutor_class_link; // Handle Trial, Regular, and Tutor Link
         
         if (!url) {
             // Jitsi Fallback

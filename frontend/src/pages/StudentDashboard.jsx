@@ -250,9 +250,10 @@ const StudentDashboard = () => {
 
         try {
             setLoading(true);
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${cls.id}/join/`, {}, { headers: getAuthHeader() });
+            const sessionId = cls.db_id || cls.id;
+            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${sessionId}/join/`, {}, { headers: getAuthHeader() });
             
-            let url = res.data.join_url;
+            let url = res.data.join_url || cls.tutor_class_link;
             if (url) {
                 // Append student name, date, and day to Jitsi links (or pass as params)
                 const dateObj = new Date(cls.scheduled_at);
@@ -596,9 +597,22 @@ const StudentDashboard = () => {
                                                         </div>
                                                         <h4 className="text-lg font-bold text-slate-900 mb-1">{enr.subject_name}</h4>
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{enr.tutor_name || 'Tutor: TBA'}</p>
-                                                        <div className="mt-6 pt-6 border-t border-slate-50 flex gap-4 text-[9px] font-black text-slate-400 uppercase">
-                                                            <span className="flex items-center gap-1.5"><Calendar size={12} /> {enr.preferred_days?.split(',')[0]}</span>
-                                                            <span className="flex items-center gap-1.5"><Clock size={12} /> {enr.preferred_time}</span>
+                                                        <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
+                                                            <div className="flex gap-4 text-[9px] font-black text-slate-400 uppercase">
+                                                                <span className="flex items-center gap-1.5"><Calendar size={12} /> {enr.preferred_days?.split(',')[0]}</span>
+                                                                <span className="flex items-center gap-1.5"><Clock size={12} /> {enr.preferred_time}</span>
+                                                            </div>
+                                                            
+                                                            {enr.status === 'APPROVED' && enr.tutor_class_link && (
+                                                                <a 
+                                                                    href={enr.tutor_class_link} 
+                                                                    target="_blank" 
+                                                                    rel="noreferrer"
+                                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                                                >
+                                                                    Join Classroom ↗
+                                                                </a>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 ))}
