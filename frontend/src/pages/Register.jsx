@@ -309,8 +309,8 @@ const Register = () => {
                 totalToPay += (rate * hoursPerSubject * 4);
             });
 
-            // Round to 2 decimal places and add flat registration/admission fee
-            totalToPay = parseFloat(totalToPay.toFixed(2)) + 5000;
+            // Round to 2 decimal places to avoid floating point issues
+            totalToPay = parseFloat(totalToPay.toFixed(2));
 
             const payload = {
                 username: formData.username.trim().toLowerCase(),
@@ -340,7 +340,7 @@ const Register = () => {
                     subject: s,
                     preferred_tutor_id: subjectEnrollments[s] || null
                 })),
-                total_amount: totalToPay > 0 ? totalToPay : 5000,
+                total_amount: totalToPay > 0 ? totalToPay : 1000,
                 ...(isMinor && {
                     parent_first_name: formData.parentFirstName,
                     parent_last_name: formData.parentLastName,
@@ -1039,22 +1039,11 @@ const Register = () => {
                                     subjectFees += (rate * hoursPerSubject * 4);
                                 });
 
-                                const registrationFee = 5000;
-                                const total = subjectFees + registrationFee;
-                                
                                 return selectedSubjects.length > 0 ? (
                                     <div className="bg-blue-600/5 border border-blue-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
-                                        <div className="flex justify-between w-full text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">
-                                            <span>Subject Fees</span>
-                                            <span>₦{subjectFees.toLocaleString()}</span>
-                                        </div>
-                                        <div className="flex justify-between w-full text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">
-                                            <span>Admission Fee</span>
-                                            <span>₦{registrationFee.toLocaleString()}</span>
-                                        </div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Total Initial Payment</p>
-                                        <h3 className="text-4xl font-black text-slate-900">₦{total.toLocaleString()}</h3>
-                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Monthly renewal: ₦{subjectFees.toLocaleString()}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">Calculated Monthly Rate</p>
+                                        <h3 className="text-4xl font-black text-slate-900">₦{subjectFees.toLocaleString()}</h3>
+                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Auto-renewed each month</p>
                                     </div>
                                 ) : null;
                             })()}
