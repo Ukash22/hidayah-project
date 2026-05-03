@@ -222,7 +222,23 @@ const Register = () => {
         setFormData(prev => {
             const newSchedule = [...prev.schedule];
             newSchedule[index] = { ...newSchedule[index], [field]: value };
-            return { ...prev, schedule: newSchedule };
+
+            // Auto-calculate duration if this is a time change and valid range
+            let autoHours = prev.hoursPerSession;
+            if (field === 'time') {
+                const parts = value.split('-');
+                if (parts.length === 2 && parts[0] && parts[1]) {
+                    const [h1, m1] = parts[0].split(':').map(Number);
+                    const [h2, m2] = parts[1].split(':').map(Number);
+                    let diff = (h2 + m2/60) - (h1 + m1/60);
+                    if (diff > 0) {
+                        // Round to nearest 0.5 for cleaner data if it's very close, or just keep exact
+                        autoHours = parseFloat(diff.toFixed(2)).toString();
+                    }
+                }
+            }
+
+            return { ...prev, schedule: newSchedule, hoursPerSession: autoHours };
         });
     };
 
@@ -607,6 +623,9 @@ const Register = () => {
                                         <option value="1.5" className="bg-white">1.5 Hours</option>
                                         <option value="2" className="bg-white">2.0 Hours</option>
                                         <option value="3" className="bg-white">3.0 Hours</option>
+                                        {![0.5, 1, 1.5, 2, 3].includes(parseFloat(formData.hoursPerSession)) && (
+                                            <option value={formData.hoursPerSession} className="bg-white">{formData.hoursPerSession} Hours (Calculated)</option>
+                                        )}
                                     </select>
                                 </div>
                             </div>
