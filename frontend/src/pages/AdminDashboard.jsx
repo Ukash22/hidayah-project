@@ -472,7 +472,7 @@ const AdminDashboard = () => {
 
     const fetchPrograms = async () => {
         try {
-            const res = await api.get('/api/programs/');
+            const res = await api.get('/api/programs/list/');
             setPrograms(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Programs fetch failed"); }
     };
@@ -1793,7 +1793,10 @@ const AdminDashboard = () => {
                                                 <p className="text-[10px] text-slate-500 font-bold">Manage the subjects available for enrollment and tutor expertise.</p>
                                             </div>
                                             <button 
-                                                onClick={() => setShowSubjectModal(true)}
+                                                onClick={() => {
+                                                    fetchPrograms();
+                                                    setShowSubjectModal(true);
+                                                }}
                                                 className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-all shadow-lg flex items-center gap-2"
                                             >
                                                 <span>➕</span> Add New Subject
