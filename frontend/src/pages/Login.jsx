@@ -95,9 +95,25 @@ const Login = () => {
                         </button>
                     </form>
 
-                    <p className="text-center mt-10 text-xs text-text-light font-bold">
-                        Need an account? <Link to="/register" className="text-secondary font-black hover:underline uppercase ml-1">Register Now</Link>
-                    </p>
+                    <div className="mt-10 pt-6 border-t border-slate-50">
+                        <p className="text-center text-[10px] text-slate-400 font-black uppercase tracking-widest mb-4">Need an account? Register Now</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <Link 
+                                to="/tutor/register" 
+                                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-all group"
+                            >
+                                <span className="text-lg group-hover:scale-110 transition-transform">👨‍🏫</span>
+                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter">Become a Tutor</span>
+                            </Link>
+                            <Link 
+                                to="/register" 
+                                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition-all group"
+                            >
+                                <span className="text-lg group-hover:scale-110 transition-transform">🎓</span>
+                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Enroll Student</span>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
