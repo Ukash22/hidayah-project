@@ -4182,10 +4182,39 @@ const DocLink = ({ href, label, icon }) => href ? (
                         </div>
                         <div>
                             <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Availability</h4>
-                            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">
+                            <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">
                                 <strong>Days:</strong> {app.availability_days || '—'}<br />
-                                <strong>Hours:</strong> {app.availability_hours || '—'}
-                            </p>
+                                <strong>Hours:</strong> {(() => {
+                                    const formatTime12h = (t) => {
+                                        if (!t) return '';
+                                        let timeStr = t.trim().toUpperCase();
+                                        const isPM = timeStr.includes('PM');
+                                        const isAM = timeStr.includes('AM');
+                                        timeStr = timeStr.replace(/[A-Z\s]/g, '');
+                                        const parts = timeStr.split(':');
+                                        let h = parseInt(parts[0]);
+                                        let m = (parts[1] || '00').slice(0, 2);
+                                        if (isPM && h < 12) h += 12;
+                                        if (isAM && h === 12) h = 0;
+                                        
+                                        const displayH = h % 12 || 12;
+                                        const displayAMPM = h >= 12 ? 'pm' : 'am';
+                                        return `${displayH}:${m} ${displayAMPM}`;
+                                    };
+
+                                    return (app.availability_hours || '').split(',').map((h, i) => {
+                                        const parts = h.trim().split(': ');
+                                        if (parts.length >= 2) {
+                                            const timePart = parts[1].replace(/[\s\u2013\u2014]/g, '-');
+                                            const [start, end] = timePart.split('-').filter(Boolean);
+                                            if (start && end) {
+                                                return <div key={i}>{parts[0]}: {formatTime12h(start)} - {formatTime12h(end)}</div>;
+                                            }
+                                        }
+                                        return <div key={i}>{h.trim()}</div>;
+                                    });
+                                })()}
+                            </div>
                         </div>
                     </div>
 

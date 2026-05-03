@@ -242,7 +242,25 @@ const BookingRequest = () => {
             });
             if (invalidSlots.length > 0) {
                 const islot = invalidSlots[0];
-                alert(`The time selected for ${islot.day} at ${islot.time} is outside the tutor's availability.`);
+                const dayAvs = avSlots.filter(av => 
+                    av.day === islot.day || 
+                    av.day.startsWith(islot.day.slice(0, 3)) || 
+                    islot.day.startsWith(av.day.slice(0, 3))
+                );
+                
+                const formatTime12h = (t) => {
+                    let [h, m] = t.split(':');
+                    h = parseInt(h);
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12 || 12;
+                    return `${h}:${m} ${ampm}`;
+                };
+
+                const rangeStr = dayAvs.length > 0 
+                    ? dayAvs.map(av => `${formatTime12h(av.start)} - ${formatTime12h(av.end)}`).join(' or ')
+                    : "not set";
+
+                alert(`The time selected for ${islot.day} (${islot.time}) is outside the tutor's availability.\n\nThis tutor is available on ${islot.day} during: ${rangeStr}.`);
                 return;
             }
         }
