@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import Navbar from '../components/Navbar';
+import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import TutorWallet from '../components/TutorWallet';
 import ComplaintModal from '../components/ComplaintModal';
@@ -284,30 +284,33 @@ const TutorDashboard = () => {
         </div>
     );
 
+    const tutorNavItems = [
+        { id: 'schedule', icon: '📅', label: 'Schedule' },
+        { id: 'requests', icon: '📩', label: 'Requests' },
+        { id: 'wallet', icon: '💰', label: 'Wallet' },
+        { id: 'complaints', icon: '💬', label: 'Feedback' },
+        { id: 'materials', icon: '📚', label: 'Materials' },
+        { id: 'exams', icon: '📝', label: 'Exams' },
+        { id: 'media', icon: '📹', label: 'Media' },
+        { id: 'profile', icon: '⚙️', label: 'Settings' },
+    ];
+
     if (tutorProfile && tutorProfile.status !== 'APPROVED') {
         return (
-            <div className="min-h-screen bg-slate-50 text-slate-900">
-                <Navbar />
-                <div className="container pt-32 pb-20 px-4">
-                    <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100 max-w-2xl mx-auto text-center relative overflow-hidden">
-                        <div className="w-24 h-24 bg-blue-600/10 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 border border-blue-600/20 shadow-inner">
-                            ⏳
-                        </div>
+            <DashboardLayout navItems={tutorNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="blue" role="TUTOR">
+                <div className="max-w-2xl mx-auto py-20 text-center">
+                    <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100">
+                        <div className="w-24 h-24 bg-blue-600/10 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 border border-blue-600/20">⏳</div>
                         <h1 className="text-3xl font-display text-slate-900 font-black mb-2">Application Under Review</h1>
                         <p className="text-[10px] font-black tracking-[0.3em] uppercase text-blue-600 mb-8 block">Pending Administration Approval</p>
-                        <p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">
-                            Your application is currently being reviewed by our administration team. 
-                            We will notify you once your profile has been approved and you can start teaching.
-                        </p>
+                        <p className="text-slate-500 mb-8 text-sm leading-relaxed font-medium">Your application is currently being reviewed by our administration team. We will notify you once your profile has been approved.</p>
                         {tutorProfile.status === 'REJECTED' && (
                             <div className="bg-rose-500/10 text-rose-400 p-6 rounded-2xl mb-6 border border-rose-500/20 text-left">
                                 <h3 className="font-bold mb-2 text-xs uppercase tracking-widest text-rose-500">Application Status: Rejected</h3>
-                                <p>{tutorProfile.rejection_reason || "Unfortunately, your application was not approved at this time."}</p>
+                                <p>{tutorProfile.rejection_reason || 'Unfortunately, your application was not approved at this time.'}</p>
                             </div>
                         )}
                         <div className="bg-slate-50 rounded-3xl p-8 border border-slate-100">
-                            <h3 className="font-black text-[10px] text-slate-400 uppercase tracking-widest mb-4 flex items-center justify-center gap-2"><span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> Next Steps</h3>
                             <ul className="text-xs text-slate-500 space-y-3 text-left font-medium">
                                 <li>Wait for an email from our admin team regarding your interview.</li>
                                 <li>Ensure your phone is reachable if we need to contact you.</li>
@@ -316,7 +319,7 @@ const TutorDashboard = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </DashboardLayout>
         );
     }
 
@@ -331,19 +334,12 @@ const TutorDashboard = () => {
     });
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-blue-600/30">
-            <Navbar />
-            
-            <main className="container pt-32 pb-20 px-4 relative">
-                {/* Ambient Background Glows */}
-                <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-                <div className="fixed bottom-0 right-1/4 w-[400px] h-[400px] bg-indigo-600/5 rounded-full blur-[100px] -z-10 animate-pulse delay-700"></div>
-
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-2xl relative overflow-hidden"
-                >
+        <DashboardLayout navItems={tutorNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="blue" role="TUTOR">
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-8"
+            >
                     {activeClass && (
                         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 shadow-2xl shadow-blue-600/20 border border-blue-400/30 flex flex-col md:flex-row justify-between items-center gap-6 animate-pulse mb-12">
                             <div className="flex items-center gap-4">
@@ -417,30 +413,18 @@ const TutorDashboard = () => {
                         </div>
                     )}
 
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-10 p-1.5 bg-slate-50 rounded-2xl border border-slate-100 overflow-x-auto no-scrollbar shadow-inner">
-                        {[
-                            { id: 'schedule', icon: '📅', label: 'Schedule' },
-                            { id: 'requests', icon: '📩', label: 'Requests' },
-                            { id: 'wallet', icon: '💰', label: 'Wallet' },
-                            { id: 'complaints', icon: '💬', label: 'Feedback' },
-                            { id: 'materials', icon: '📚', label: 'Materials' },
-                            { id: 'exams', icon: '📝', label: 'Exams' },
-                            { id: 'media', icon: '📹', label: 'Media' },
-                            { id: 'profile', icon: '⚙️', label: 'Settings' }
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                                    : 'text-slate-400 hover:text-blue-600 hover:bg-white'
-                                    }`}
-                            >
-                                <span>{tab.icon}</span>
-                                <span>{tab.label}</span>
-                            </button>
-                        ))}
+                    {/* Page Header */}
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-16 h-16 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-600 text-3xl font-black border border-blue-600/20 shadow-lg">
+                            {user?.first_name?.[0]?.toUpperCase()}
+                        </div>
+                        <div className="text-center md:text-left">
+                            <h1 className="text-3xl md:text-4xl font-display text-slate-900 font-black tracking-tight">Tutor Control Room</h1>
+                            <p className="text-blue-600 font-black uppercase tracking-[0.2em] text-xs mt-1 flex items-center gap-2 justify-center md:justify-start">
+                                <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+                                Welcome back, {user?.first_name}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Tab Content with AnimatePresence */}
@@ -1496,8 +1480,8 @@ const TutorDashboard = () => {
                     </motion.div>
                 </AnimatePresence>
             </motion.div>
-        </main>
 
+            {/* Complaint Modal */}
             <ComplaintModal
                 isOpen={showComplaintModal}
                 onClose={() => {
@@ -1871,7 +1855,7 @@ const TutorDashboard = () => {
                     </motion.div>
                 </div>
             )}
-        </div >
+        </DashboardLayout>
     );
 };
 

@@ -12,7 +12,7 @@ import {
     Search, User, Clock, Calendar, PlayCircle, Music
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
 import ComplaintModal from '../components/ComplaintModal';
 import RescheduleModal from '../components/RescheduleModal';
@@ -337,42 +337,37 @@ const StudentDashboard = () => {
         return now >= classTime - 30*60*1000 && now <= classTime + 60*60*1000;
     });
 
-    return (
-        <div className="min-h-screen bg-white text-slate-600 font-sans selection:bg-blue-500/30">
-            {isImpersonating && (
-                <div className="bg-blue-600 text-white px-6 py-4 flex items-center justify-between shadow-2xl relative z-[100] animate-in fade-in slide-in-from-top duration-700">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                            <ShieldCheck className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 leading-none mb-1.5">Parent Access Mode</p>
-                            <p className="text-base font-bold tracking-tight">Viewing Dashboard: <span className="text-white">{profile?.user?.first_name} {profile?.user?.last_name}</span></p>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={handleReturnToParent}
-                        className="bg-white text-blue-600 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-50 active:scale-95 transition-all shadow-xl flex items-center gap-2 group"
-                    >
-                        <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Parent Portal
-                    </button>
-                </div>
-            )}
-            <Navbar />
-            
-            {/* Mesh Background */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
-                <div className="absolute top-[10%] left-[5%] w-[40%] h-[40%] bg-blue-100/50 blur-[150px] rounded-full"></div>
-                <div className="absolute bottom-[10%] right-[5%] w-[40%] h-[40%] bg-indigo-100/50 blur-[150px] rounded-full"></div>
-            </div>
+    const studentNavItems = [
+        { id: 'overview', icon: '🏠', label: 'Overview' },
+        { id: 'classes', icon: '📺', label: 'Classes' },
+        { id: 'library', icon: '📚', label: 'Library' },
+        { id: 'assessments', icon: '📝', label: 'Assessments' },
+        (['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(profile?.level) ||
+         (profile?.enrolled_course && ['Prep', 'JAMB', 'WAEC', 'NECO', 'BECE'].some(s => profile.enrolled_course.includes(s))))
+            ? { id: 'jamb', icon: '🎯', label: 'JAMB CBT' } : null,
+        { id: 'finance', icon: '💳', label: 'Finance' },
+        { id: 'feedback', icon: '💬', label: 'Feedback' },
+    ].filter(Boolean);
 
-            <main className="container pt-32 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto">
-                <motion.div 
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="space-y-10"
-                >
+    return (
+        <DashboardLayout navItems={studentNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="blue" role="STUDENT">
+            <div className="space-y-10">
+                {isImpersonating && (
+                    <div className="bg-blue-600 text-white px-6 py-4 mb-6 flex items-center justify-between shadow-2xl rounded-2xl animate-in fade-in slide-in-from-top duration-700">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
+                                <ShieldCheck className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 leading-none mb-1">Parent Access Mode</p>
+                                <p className="text-base font-bold">Viewing: <span className="text-white">{profile?.user?.first_name} {profile?.user?.last_name}</span></p>
+                            </div>
+                        </div>
+                        <button onClick={handleReturnToParent} className="bg-white text-blue-600 px-6 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-50 transition-all shadow-xl flex items-center gap-2">
+                            ← Return to Parent Portal
+                        </button>
+                    </div>
+                )}
                     {activeClass && (
                         <div className="bg-blue-600 rounded-[3rem] p-10 md:p-12 mb-10 flex flex-col md:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group">
                              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full translate-x-1/2 translate-y-[-50%] group-hover:scale-110 transition-transform"></div>
@@ -497,24 +492,7 @@ const StudentDashboard = () => {
                         ))}
                     </div>
 
-                    {/* Navigation Tabs */}
-                    <nav className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-[1.5rem] border border-slate-200 w-fit max-w-full overflow-x-auto">
-                        {[
-                            'overview', 'classes', 'library', 'assessments', 
-                            (['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(profile?.level) || 
-                             (profile?.enrolled_course && ['Prep', 'JAMB', 'WAEC', 'NECO', 'BECE'].some(s => profile.enrolled_course.includes(s))) 
-                             ? 'jamb' : null),
-                            'finance', 'feedback'
-                        ].filter(Boolean).map(tab => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
-                            >
-                                {tab === 'jamb' ? 'JAMB CBT' : tab}
-                            </button>
-                        ))}
-                    </nav>
+                {/* Navigation Tabs — removed; sidebar handles navigation */}
 
                     {/* Content Section */}
                     <AnimatePresence mode="wait">
@@ -1005,15 +983,13 @@ const StudentDashboard = () => {
                             )}
                         </motion.div>
                     </AnimatePresence>
-                </motion.div>
-                
+
                 {/* Quran Section - Pushed to bottom or shown based on enrollment */}
                 {profile?.enrolled_course && ['Quran', 'Arabic', 'Tajweed'].some(s => profile.enrolled_course.includes(s)) && (
                     <motion.div variants={itemVariants} className="mt-20">
                         <QuranMushaf token={token} />
                     </motion.div>
                 )}
-            </main>
 
             {/* Modals */}
             <ComplaintModal isOpen={showComplaintModal} onClose={() => setShowComplaintModal(false)} filedAgainstId={profile?.assigned_tutor_details?.id} filedAgainstName={profile?.assigned_tutor_details?.full_name} token={token} />
@@ -1219,7 +1195,8 @@ const StudentDashboard = () => {
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+            </div>
+        </DashboardLayout>
     );
 };
 
