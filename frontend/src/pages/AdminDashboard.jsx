@@ -117,6 +117,15 @@ const AdminDashboard = () => {
         description: ''
     });
 
+    // Theme State
+    const [isDark, setIsDark] = useState(() => {
+        return localStorage.getItem('hidayah_theme') === 'dark';
+    });
+    useEffect(() => {
+        localStorage.setItem('hidayah_theme', isDark ? 'dark' : 'light');
+    }, [isDark]);
+    const toggleTheme = () => setIsDark(prev => !prev);
+
 
     // Wallet Action State
     const [walletAction, setWalletAction] = useState({
@@ -1200,18 +1209,29 @@ const AdminDashboard = () => {
                     <SidebarButton active={activeTab === 'complaints'} onClick={() => setActiveTab('complaints')} icon="💬" label="Complaints" badge={allComplaints.filter(c => !c.resolved_at).length} />
                 </div>
 
-                <div className="p-4 border-t border-white/5 bg-slate-900/60 backdrop-blur-xl relative z-10">
+                <div className="p-4 border-t border-white/5 bg-slate-900/60 backdrop-blur-xl relative z-10 space-y-2">
+                    <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10"
+                    >
+                        <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
+                        <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+                        <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-blue-600' : 'bg-slate-600'}`}>
+                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
+                        </div>
+                    </button>
                     <button 
                         onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all font-bold text-xs group"
                     >
+                        <span className="text-lg">🚪</span>
                         <span className="group-hover:scale-110 transition-transform">Logout</span>
                     </button>
                 </div>
             </div>
 
             {/* Main Content Pane */}
-            <div className="flex-1 ml-64 p-10 min-h-screen bg-[#fcfdfe]">
+            <div className={`flex-1 ml-64 p-10 min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-[#fcfdfe] text-slate-800'}`}>
                 <div className="max-w-7xl mx-auto space-y-10">
                     {/* Top Global Navigation Bar */}
                     <div className="flex flex-col md:flex-row justify-between items-center bg-white/40 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
