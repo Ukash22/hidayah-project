@@ -568,7 +568,10 @@ const BookingRequest = () => {
                                                                 <option value="1" className="bg-[#0a0c10]">1.0 Hour</option>
                                                                 <option value="1.5" className="bg-[#0a0c10]">1.5 Hours</option>
                                                                 <option value="2" className="bg-[#0a0c10]">2.0 Hours</option>
+                                                                <option value="2.5" className="bg-[#0a0c10]">2.5 Hours</option>
                                                                 <option value="3" className="bg-[#0a0c10]">3.0 Hours</option>
+                                                                <option value="4" className="bg-[#0a0c10]">4.0 Hours</option>
+                                                                <option value="5" className="bg-[#0a0c10]">5.0 Hours</option>
                                                             </select>
                                                         </div>
                                                         <div className="space-y-1">
@@ -656,20 +659,34 @@ const BookingRequest = () => {
                                                         ))}
                                                     </div>
 
-                                                    {((getBookingData(tutor.id).schedule.length > 0 && tutor.hourly_rate > 0) || getBookingData(tutor.id).hours_per_session > 0) && (
-                                                        <div className="pt-4 border-t border-white/5 text-right relative z-10">
-                                                            <div className="flex flex-col items-end">
-                                                                <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Tuition Summary</p>
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <div className="bg-white/5 px-2 py-1 rounded-lg border border-white/5">
-                                                                        <span className="text-[7px] font-black text-slate-400 uppercase">₦{tutor.hourly_rate?.toLocaleString()} × {getBookingData(tutor.id).hours_per_session} hrs × {getBookingData(tutor.id).schedule.filter(s => s.day).length} days × 4 wks</span>
+                                                    {(() => {
+                                                        const bookingData = getBookingData(tutor.id);
+                                                        const selectedDays = bookingData.schedule.filter(s => s.day).length;
+                                                        const rate = parseFloat(tutor.hourly_rate || 0);
+                                                        const hours = parseFloat(bookingData.hours_per_session || 0);
+                                                        const total = rate * hours * selectedDays * 4;
+
+                                                        if (selectedDays === 0 && hours === 0) return null;
+
+                                                        return (
+                                                            <div className="pt-4 border-t border-white/5 text-right relative z-10">
+                                                                <div className="flex flex-col items-end">
+                                                                    <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Tuition Summary</p>
+                                                                    <div className="flex items-center gap-2 mb-2">
+                                                                        <div className="bg-white/5 px-2 py-1 rounded-lg border border-white/5">
+                                                                            <span className="text-[7px] font-black text-slate-400 uppercase">
+                                                                                ₦{rate.toLocaleString()} × {hours} hrs × {selectedDays} days × 4 wks
+                                                                            </span>
+                                                                        </div>
                                                                     </div>
+                                                                    <p className="text-2xl font-display font-black text-white leading-none">
+                                                                        ₦{total.toLocaleString()}
+                                                                    </p>
+                                                                    <p className="text-[7px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Calculated Monthly Rate</p>
                                                                 </div>
-                                                                <p className="text-2xl font-display font-black text-white leading-none">₦{(tutor.hourly_rate * getBookingData(tutor.id).hours_per_session * getBookingData(tutor.id).schedule.filter(s => s.day).length * 4).toLocaleString()}</p>
-                                                                <p className="text-[7px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Calculated Monthly Rate</p>
                                                             </div>
-                                                        </div>
-                                                    )}
+                                                        );
+                                                    })()}
 
                                                     <button 
                                                         onClick={() => handleRequestBooking(tutor)}
