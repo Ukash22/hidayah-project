@@ -3,6 +3,15 @@ import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailabilitySlot, updateAvailabilitySlot, totalWeeklyHours, totalMonthlyHours, monthlyEarnings }) => {
+    const formatTime12h = (t) => {
+        if (!t) return '';
+        let [h, m] = t.split(':');
+        h = parseInt(h);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${m || '00'} ${ampm}`;
+    };
+
     return (
         <div className="space-y-8 bg-black/40 p-8 rounded-[3rem] border border-white/10 relative overflow-hidden backdrop-blur-3xl shadow-2xl">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
@@ -46,7 +55,10 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">From</label>
+                            <div className="flex justify-between items-center px-1">
+                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">From</label>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase">{formatTime12h(slot.startTime)}</span>
+                            </div>
                             <input 
                                 type="time" 
                                 className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all"
@@ -55,7 +67,10 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                             />
                         </div>
                         <div className="space-y-2 relative">
-                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">To</label>
+                            <div className="flex justify-between items-center px-1">
+                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">To</label>
+                                <span className="text-[8px] font-bold text-slate-500 uppercase">{formatTime12h(slot.endTime)}</span>
+                            </div>
                             <div className="flex gap-3">
                                 <input 
                                     type="time" 

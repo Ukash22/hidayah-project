@@ -173,14 +173,32 @@ const BookingRequest = () => {
             return;
         }
 
+        // Helper to normalize time to HH:MM format with leading zeros
+        const normalizeTime = (t) => {
+            if (!t) return '';
+            const parts = t.split(':');
+            const h = parts[0].padStart(2, '0');
+            const m = (parts[1] || '00').slice(0, 2);
+            return `${h}:${m}`;
+        };
+
         // Validate against structured availabilities or legacy hours
         const avSlots = tutor.availabilities?.length > 0
-            ? tutor.availabilities.map(av => ({ day: av.day.toUpperCase(), start: av.start_time.slice(0, 5), end: av.end_time.slice(0, 5) }))
+            ? tutor.availabilities.map(av => ({ 
+                day: av.day.toUpperCase(), 
+                start: normalizeTime(av.start_time), 
+                end: normalizeTime(av.end_time) 
+            }))
             : (tutor.availability_hours || '').split(',').map(s => {
                 const parts = s.trim().split(': ');
                 if (parts.length >= 2) {
-                    const [start, end] = parts[1].split(' - ');
-                    return { day: parts[0].toUpperCase(), start: start?.trim(), end: end?.trim() };
+                    const timePart = parts[1].replace(/\s/g, ''); // Remove spaces for easier split
+                    const [start, end] = timePart.split('-');
+                    return { 
+                        day: parts[0].toUpperCase(), 
+                        start: normalizeTime(start?.trim()), 
+                        end: normalizeTime(end?.trim()) 
+                    };
                 }
                 return null;
             }).filter(Boolean);
@@ -189,8 +207,11 @@ const BookingRequest = () => {
             const invalidSlots = bookingData.schedule.filter(slot => {
                 return !avSlots.some(av => {
                     if (av.day !== slot.day) return false;
-                    const slotStart = (slot.time || '').split('-')[0];
-                    const slotEnd = (slot.time || '').split('-')[1] || slotStart; // If no end provided, just test start
+                    const slotStartRaw = (slot.time || '').split('-')[0];
+                    const slotEndRaw = (slot.time || '').split('-')[1] || slotStartRaw;
+                    
+                    const slotStart = normalizeTime(slotStartRaw);
+                    const slotEnd = normalizeTime(slotEndRaw);
                     
                     if (!slotStart || !slotEnd) return false;
                     return slotStart >= av.start && slotEnd <= av.end;
@@ -389,24 +410,34 @@ const BookingRequest = () => {
                                         <div className="text-right">
                                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2">Available</p>
                                             <div className="flex flex-col gap-1 items-end">
-                                                {tutor.availabilities && tutor.availabilities.length > 0 ? (
-                                                    tutor.availabilities.slice(0, 2).map((av, i) => (
-                                                        <div key={i} className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                                                            <Calendar size={10} className="text-emerald-500" />
-                                                            <span className="text-[9px] font-black text-emerald-400 uppercase">
-                                                                {av.day.slice(0,3)}: {av.start_time.slice(0,5)}-{av.end_time.slice(0,5)}
+                                                {(() => {
+                                                    const formatTime12h = (t) => {
+                                                        if (!t) return '';
+                                                        let [h, m] = t.split(':');
+                                                        h = parseInt(h);
+                                                        const ampm = h >= 12 ? 'pm' : 'am';
+                                                        h = h % 12 || 12;
+                                                        return `${h}:${m.slice(0,2)} ${ampm}`;
+                                                    };
+
+                                                    if (tutor.availabilities && tutor.availabilities.length > 0) {
+                                                        return tutor.availabilities.slice(0, 2).map((av, i) => (
+                                                            <div key={i} className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+                                                                <Calendar size={10} className="text-emerald-500" />
+                                                                <span className="text-[9px] font-black text-emerald-400 uppercase">
+                                                                    {av.day.slice(0,3)}: {formatTime12h(av.start_time)} - {formatTime12h(av.end_time)}
+                                                                </span>
+                                                            </div>
+                                                        ));
+                                                    } else if (tutor.availability_hours) {
+                                                        return tutor.availability_hours.split(',').slice(0, 2).map((h, i) => (
+                                                            <span key={i} className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
+                                                                {h.trim()}
                                                             </span>
-                                                        </div>
-                                                    ))
-                                                ) : tutor.availability_hours ? (
-                                                    tutor.availability_hours.split(',').slice(0, 2).map((h, i) => (
-                                                        <span key={i} className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 whitespace-nowrap">
-                                                            {h.trim()}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-[9px] text-slate-600">Not set</span>
-                                                )}
+                                                        ));
+                                                    }
+                                                    return <span className="text-[9px] text-slate-600">Not set</span>;
+                                                })()}
                                             </div>
                                         </div>
                                     </div>
@@ -525,7 +556,16 @@ const BookingRequest = () => {
                                                                 </div>
                                                                 <div className="flex gap-2">
                                                                     <div className="w-20">
-                                                                        <label className="text-[7px] font-black uppercase text-slate-500 block mb-0.5 ml-1">From</label>
+                                                                        <div className="flex justify-between items-center mb-0.5 px-1">
+                                                                            <label className="text-[7px] font-black uppercase text-slate-500">From</label>
+                                                                            <span className="text-[6px] font-bold text-emerald-500">{(slot.time || '').split('-')[0] ? (() => {
+                                                                                let [h, m] = (slot.time || '').split('-')[0].split(':');
+                                                                                h = parseInt(h);
+                                                                                const ampm = h >= 12 ? 'PM' : 'AM';
+                                                                                h = h % 12 || 12;
+                                                                                return `${h}:${m || '00'} ${ampm}`;
+                                                                            })() : ''}</span>
+                                                                        </div>
                                                                         <input 
                                                                             type="time" 
                                                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
@@ -534,7 +574,16 @@ const BookingRequest = () => {
                                                                         />
                                                                     </div>
                                                                     <div className="w-20">
-                                                                        <label className="text-[7px] font-black uppercase text-slate-500 block mb-0.5 ml-1">To</label>
+                                                                        <div className="flex justify-between items-center mb-0.5 px-1">
+                                                                            <label className="text-[7px] font-black uppercase text-slate-500">To</label>
+                                                                            <span className="text-[6px] font-bold text-emerald-500">{(slot.time || '').split('-')[1] ? (() => {
+                                                                                let [h, m] = (slot.time || '').split('-')[1].split(':');
+                                                                                h = parseInt(h);
+                                                                                const ampm = h >= 12 ? 'PM' : 'AM';
+                                                                                h = h % 12 || 12;
+                                                                                return `${h}:${m || '00'} ${ampm}`;
+                                                                            })() : ''}</span>
+                                                                        </div>
                                                                         <input 
                                                                             type="time" 
                                                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"

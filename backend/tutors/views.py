@@ -284,7 +284,7 @@ class TutorViewSet(viewsets.ModelViewSet):
                     has_online_exp=data.get('has_online_exp') == 'true' or data.get('has_online_exp') == True,
                     device_type=data.get('device_type', 'COMPUTER'),
                     network_type=data.get('network_type'),
-                    availability_days=data.get('availability_days') or (", ".join(list(set([s.split(':')[0].strip() for s in data.get('availability_hours', '').split(',') if ':' in s]))) if data.get('availability_hours') else 'Flexible'),
+                    availability_days=data.get('availability_days') or (", ".join(list(set([s.get('day', '').strip() for s in data.get('availabilitySlots', []) if s.get('day')]))) if data.get('availabilitySlots') else 'Flexible'),
                     availability_hours=data.get('availability_hours') or 'Contact for details',
                     hourly_rate=data.get('hourly_rate', 1500.00),
                     # Use provided URLs as strings for the FileFields (Django-Cloudinary handles this if configured)
@@ -295,7 +295,22 @@ class TutorViewSet(viewsets.ModelViewSet):
                     credentials=data.get('credentials_url') or request.FILES.get('credentials')
                 )
                 
-                print(f"DEBUG: Tutor Profile created successfully for {username}")
+                # 3. Create Availability Slots
+                from .models import TutorAvailability
+                availability_slots = data.get('availabilitySlots', [])
+                for slot in availability_slots:
+                    day = slot.get('day', '').strip().upper()
+                    start = slot.get('startTime')
+                    end = slot.get('endTime')
+                    if day and start and end:
+                        TutorAvailability.objects.create(
+                            tutor=profile,
+                            day=day,
+                            start_time=start,
+                            end_time=end
+                        )
+                
+                print(f"DEBUG: Tutor Profile & {len(availability_slots)} slots created successfully for {username}")
                 return Response({"message": "Tutor application submitted successfully!"}, status=201)
                 
         except Exception as e:
