@@ -277,18 +277,8 @@ const Register = () => {
             let totalWeeklyHours = 0;
             const validSchedule = formData.schedule.filter(s => s.day && s.time);
             if (validSchedule.length > 0) {
-                validSchedule.forEach(slot => {
-                    const times = slot.time.split('-');
-                    if (times.length === 2 && times[0] && times[1]) {
-                        const [h1, m1] = times[0].split(':').map(Number);
-                        const [h2, m2] = times[1].split(':').map(Number);
-                        let diff = (h2 + m2/60) - (h1 + m1/60);
-                        if (diff <= 0) diff = parseFloat(formData.hoursPerSession) || 1; // Fallback for invalid ranges
-                        totalWeeklyHours += diff;
-                    } else {
-                        totalWeeklyHours += parseFloat(formData.hoursPerSession) || 1;
-                    }
-                });
+                // If they have explicit slots, each slot counts for the selected duration
+                totalWeeklyHours = validSchedule.length * parseFloat(formData.hoursPerSession);
             } else {
                 totalWeeklyHours = (parseInt(formData.daysPerWeek) || 1) * (parseFloat(formData.hoursPerSession) || 1);
             }
@@ -1010,18 +1000,7 @@ const Register = () => {
                                 let totalWeeklyHours = 0;
                                 const validSchedule = formData.schedule.filter(s => s.day && s.time);
                                 if (validSchedule.length > 0) {
-                                    validSchedule.forEach(slot => {
-                                        const times = slot.time.split('-');
-                                        if (times.length === 2 && times[0] && times[1]) {
-                                            const [h1, m1] = times[0].split(':').map(Number);
-                                            const [h2, m2] = times[1].split(':').map(Number);
-                                            let diff = (h2 + m2/60) - (h1 + m1/60);
-                                            if (diff <= 0) diff = parseFloat(formData.hoursPerSession) || 1;
-                                            totalWeeklyHours += diff;
-                                        } else {
-                                            totalWeeklyHours += parseFloat(formData.hoursPerSession) || 1;
-                                        }
-                                    });
+                                    totalWeeklyHours = validSchedule.length * parseFloat(formData.hoursPerSession);
                                 } else {
                                     totalWeeklyHours = (parseInt(formData.daysPerWeek) || 1) * (parseFloat(formData.hoursPerSession) || 1);
                                 }
