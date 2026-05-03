@@ -27,12 +27,49 @@ def check_tutor_conflict(tutor_user, proposed_schedule):
     """
     Checks if a tutor has any schedule overlaps with paid bookings or active enrollments.
     proposed_schedule: Can be:
-        1. List of dicts: [{"day": "Monday", "time": "10:00"}] (Bookings)
+        1. List of dicts: [{"day": "Monday", "time": "10:00-11:00"}] (Bookings)
         2. List of dicts with 'preferred_days'/'preferred_time': [{"preferred_days": "MONDAY", "preferred_time": "10:00"}] (Registration)
     Returns (True, message) if conflict exists, else (False, None)
     """
     from students.models import Enrollment
+    from datetime import datetime
     
+    # Helper to parse time strings like "10:00", "10:00 AM", "10:00-11:00"
+    def parse_time_range(time_str):
+        if not time_str: return None, None
+        
+        # Handle range like "10:00-11:00"
+        if '-' in time_str:
+            start_s, end_s = time_str.split('-', 1)
+        else:
+            start_s = time_str
+            end_s = None # Will default to 1 hour later if needed
+            
+        def to_minutes(s):
+            s = s.strip().upper()
+            if not s: return None
+            
+            is_pm = 'PM' in s
+            is_am = 'AM' in s
+            clean_s = s.replace('AM', '').replace('PM', '').strip()
+            
+            try:
+                parts = clean_s.split(':')
+                h = int(parts[0])
+                m = int(parts[1]) if len(parts) > 1 else 0
+                
+                if is_pm and h < 12: h += 12
+                if is_am and h == 12: h = 0
+                
+                return h * 60 + m
+            except:
+                return None
+
+        start_m = to_minutes(start_s)
+        end_m = to_minutes(end_s) if end_s else (start_m + 60 if start_m is not None else None)
+        
+        return start_m, end_m
+
     # 1. Fetch Paid Bookings
     existing_bookings = Booking.objects.filter(tutor=tutor_user, paid=True)
     
@@ -61,20 +98,28 @@ def check_tutor_conflict(tutor_user, proposed_schedule):
             day = slot.get('day') or slot.get('preferred_days')
             time = slot.get('time') or slot.get('preferred_time')
             if day and time:
-                normalized_proposed.append({'day': day.strip().upper(), 'time': time.strip().upper()})
+                start, end = parse_time_range(time)
+                if start is not None:
+                    normalized_proposed.append({
+                        'day': day.strip().upper(),
+                        'start': start,
+                        'end': end,
+                        'original_time': time
+                    })
 
     # Compare each proposed slot against active slots
-    for proposed_slot in normalized_proposed:
-        p_day = proposed_slot.get('day')
-        p_time = proposed_slot.get('time')
-        
+    for p_slot in normalized_proposed:
         for schedule_list in active_schedules:
             for active_slot in schedule_list:
                 a_day = (active_slot.get('day') or active_slot.get('preferred_days', '')).strip().upper()
                 a_time = (active_slot.get('time') or active_slot.get('preferred_time', '')).strip().upper()
                 
-                if a_day == p_day and a_time == p_time:
-                    return True, f"Tutor is already busy on {p_day} at {p_time}."
+                if a_day == p_slot['day']:
+                    a_start, a_end = parse_time_range(a_time)
+                    if a_start is not None:
+                        # Check for overlap: (StartA < EndB) and (EndA > StartB)
+                        if a_start < p_slot['end'] and a_end > p_slot['start']:
+                            return True, f"Tutor is already busy on {p_slot['day']} during {a_time}."
 
     return False, None
 

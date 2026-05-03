@@ -5,6 +5,7 @@ from .models import Wallet, Transaction, PlatformSettings, Payment
 from classes.models import ScheduledSession, Booking
 from django.utils import timezone
 import logging
+from applications.email_service import send_payment_confirmation_email, send_class_access_email
 
 logger = logging.getLogger(__name__)
 
@@ -222,7 +223,25 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
                         )
                 except Exception as e:
                     logger.error(f"Auto-fulfillment of pending booking {pending.id} failed: {e}")
+                    
     except StudentProfile.DoesNotExist:
-        pass
+        logger.warning(f"StudentProfile not found for {user.username}. Skipping post-payment automation.")
+    except Exception as e:
+        logger.error(f"Post-payment automation failed for {user.username}: {e}")
+
+    # [NEW] Send Payment Confirmation Email
+    try:
+        profile = StudentProfile.objects.get(user=user)
+        send_payment_confirmation_email(user, payment, profile)
+        
+        # If classes were generated, send access email
+        if is_booking or (profile.payment_status == 'PAID' and profile.enrollments.exists()):
+            # Find a meeting link if available
+            session = ScheduledSession.objects.filter(student=user).order_by('-created_at').first()
+            zoom_link = session.meeting_link if session else profile.meeting_link
+            if zoom_link:
+                send_class_access_email(user, profile, zoom_link)
+    except Exception as e:
+        logger.error(f"Post-payment email failed for {user.username}: {e}")
 
     return {"success": True, "payment": payment}

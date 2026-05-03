@@ -210,95 +210,62 @@ const BookingRequest = () => {
             return;
         }
 
-        // Helper to normalize time to HH:MM format with leading zeros and 24h conversion
-        const normalizeTime = (t) => {
-            if (!t) return '';
+        // Helper to normalize time to minutes from midnight
+        const normalizeToMinutes = (t) => {
+            if (!t) return null;
             let timeStr = t.trim().toUpperCase();
             const isPM = timeStr.includes('PM');
             const isAM = timeStr.includes('AM');
             
-            // Remove AM/PM and any non-time characters
             timeStr = timeStr.replace(/[A-Z\s]/g, '');
-            
             const parts = timeStr.split(':');
             let h = parseInt(parts[0]);
-            let m = (parts[1] || '00').slice(0, 2);
+            let m = parseInt(parts[1] || '0');
 
             if (isPM && h < 12) h += 12;
             if (isAM && h === 12) h = 0;
 
-            return `${h.toString().padStart(2, '0')}:${m.padStart(2, '0')}`;
+            return h * 60 + m;
         };
 
-        // Validate against structured availabilities or legacy hours
-        const avSlots = tutor.availabilities?.length > 0
-            ? tutor.availabilities.map(av => ({ 
-                day: av.day.toUpperCase(), 
-                start: normalizeTime(av.start_time), 
-                end: normalizeTime(av.end_time) 
-            }))
-            : (tutor.availability_hours || '').split(',').map(s => {
-                const parts = s.trim().split(': ');
-                if (parts.length >= 2) {
-                    // Handle various dash characters (-, –, —)
-                    const timePart = parts[1].replace(/[\s\u2013\u2014]/g, '-'); 
-                    const [start, end] = timePart.split('-').filter(Boolean);
-                    return { 
-                        day: parts[0].toUpperCase(), 
-                        start: normalizeTime(start), 
-                        end: normalizeTime(end) 
-                    };
-                }
-                return null;
-            }).filter(Boolean);
+        const formatTime12h = (t) => {
+            if (!t) return '';
+            let [h, m] = t.split(':');
+            h = parseInt(h);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m.padStart(2, '0')} ${ampm}`;
+        };
 
-        if (avSlots.length > 0) {
-            const invalidSlots = bookingData.schedule.filter(slot => {
-                return !avSlots.some(av => {
-                    // Match days regardless of shorthand (Mon vs Monday)
-                    const dayMatch = av.day === slot.day || 
-                                   av.day.startsWith(slot.day.slice(0, 3)) || 
-                                   slot.day.startsWith(av.day.slice(0, 3));
-                    
-                    if (!dayMatch) return false;
-                    
-                    const slotStartRaw = (slot.time || '').split('-')[0];
-                    const slotEndRaw = (slot.time || '').split('-')[1] || slotStartRaw;
-                    
-                    const slotStart = normalizeTime(slotStartRaw);
-                    const slotEnd = normalizeTime(slotEndRaw);
-                    
-                    const avStart = normalizeTime(av.start);
-                    const avEnd = normalizeTime(av.end);
-                    
-                    if (!slotStart || !slotEnd) return false;
-                    
-                    const isInside = slotStart >= avStart && slotEnd <= avEnd;
-                    return isInside;
-                });
-            });
-            if (invalidSlots.length > 0) {
-                const islot = invalidSlots[0];
-                const dayAvs = avSlots.filter(av => 
-                    av.day === islot.day || 
-                    av.day.startsWith(islot.day.slice(0, 3)) || 
-                    islot.day.startsWith(av.day.slice(0, 3))
+        // Validate against tutor availability
+        if (tutor.availabilities && tutor.availabilities.length > 0) {
+            for (let slot of bookingData.schedule) {
+                const av = tutor.availabilities.find(a => 
+                    a.day.toUpperCase() === slot.day.toUpperCase() || 
+                    a.day.toUpperCase().startsWith(slot.day.toUpperCase().slice(0, 3))
                 );
-                
-                const formatTime12h = (t) => {
-                    let [h, m] = t.split(':');
-                    h = parseInt(h);
-                    const ampm = h >= 12 ? 'PM' : 'AM';
-                    h = h % 12 || 12;
-                    return `${h}:${m} ${ampm}`;
-                };
 
-                const rangeStr = dayAvs.length > 0 
-                    ? dayAvs.map(av => `${formatTime12h(av.start)} - ${formatTime12h(av.end)}`).join(' or ')
-                    : "not set";
+                if (!av) {
+                    alert(`Tutor is not available on ${slot.day}.`);
+                    return;
+                }
 
-                alert(`The time selected for ${islot.day} (${islot.time}) is outside the tutor's availability.\n\nThis tutor is available on ${islot.day} during: ${rangeStr}.`);
-                return;
+                const [slotStartRaw, slotEndRaw] = (slot.time || '').split('-');
+                const slotStart = normalizeToMinutes(slotStartRaw);
+                const slotEnd = normalizeToMinutes(slotEndRaw || slotStartRaw);
+
+                const avStart = normalizeToMinutes(av.start_time);
+                const avEnd = normalizeToMinutes(av.end_time);
+
+                if (slotStart === null || slotEnd === null) {
+                    alert("Invalid time format selected.");
+                    return;
+                }
+
+                if (slotStart < avStart || slotEnd > avEnd) {
+                    alert(`Selected time ${slot.time} on ${slot.day} is outside tutor's availability (${formatTime12h(av.start_time)} - ${formatTime12h(av.end_time)}).`);
+                    return;
+                }
             }
         }
 

@@ -464,12 +464,12 @@ const StudentDashboard = () => {
                         {[
                             { label: 'Wallet Balance', value: `₦${parseFloat(profile?.wallet_balance || 0).toLocaleString()}`, icon: Wallet, colorClass: 'text-blue-600', bgClass: 'bg-blue-600/10', shadowClass: 'shadow-blue-600/5', link: '/payment', action: 'Top up' },
                             { 
-                                label: 'Active Subjects', 
-                                value: (profile?.enrollments?.length > 0 ? profile.enrollments.length : (profile?.enrolled_course ? profile.enrolled_course.split(',').filter(s=>s.trim()).length : 0)) + bookings.filter(b => b.paid).length, 
+                                label: 'Registered Subjects', 
+                                value: (profile?.enrollments?.length || 0), 
                                 icon: BookOpen, colorClass: 'text-indigo-600', bgClass: 'bg-indigo-600/10', shadowClass: 'shadow-indigo-600/5'
                             },
+                            { label: 'New Bookings', value: bookings.filter(b => !b.paid).length, icon: Calendar, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-600/10', shadowClass: 'shadow-emerald-600/5' },
                             { label: 'Total Classes', value: classes.length, icon: GraduationCap, colorClass: 'text-sky-600', bgClass: 'bg-sky-600/10', shadowClass: 'shadow-sky-600/5' },
-                            { label: 'Notifications', value: notifications.length, icon: Bell, colorClass: 'text-blue-600', bgClass: 'bg-blue-600/10', shadowClass: 'shadow-blue-600/5' }
                         ].map((stat, i) => (
                             <motion.div 
                                 key={i}
@@ -578,29 +578,35 @@ const StudentDashboard = () => {
                                             </div>
                                         )}
 
-                                        {/* Enrollments Showcase */}
+                                        {/* Registered Subjects & Class Links */}
                                         <div className="bg-slate-50/50 border border-slate-100 rounded-[3rem] p-10">
                                             <h3 className="text-xl font-display font-black text-slate-900 mb-8 flex items-center gap-4">
                                                 <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
-                                                Education Roadmap
+                                                Registered Subjects & Class Links
                                             </h3>
                                             <div className="grid sm:grid-cols-2 gap-6">
                                                 {profile?.enrollments?.map((enr, i) => (
                                                     <div key={i} className="bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-blue-600/30 transition-all group shadow-sm">
                                                         <div className="flex justify-between items-start mb-6">
                                                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl shadow-inner ring-1 ring-slate-100">
-                                                                {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name.includes(s)) ? '🌙' : '🧪'}
+                                                                {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name?.includes(s)) ? '🌙' : '🧪'}
                                                             </div>
                                                             <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-blue-600/10 text-blue-600' : 'bg-indigo-500/10 text-indigo-500'}`}>
                                                                 {enr.status}
                                                             </span>
                                                         </div>
                                                         <h4 className="text-lg font-bold text-slate-900 mb-1">{enr.subject_name}</h4>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{enr.tutor_name || 'Tutor: TBA'}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tutor: {enr.tutor_name || 'TBA'}</p>
                                                         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
-                                                            <div className="flex gap-4 text-[9px] font-black text-slate-400 uppercase">
-                                                                <span className="flex items-center gap-1.5"><Calendar size={12} /> {enr.preferred_days?.split(',')[0]}</span>
-                                                                <span className="flex items-center gap-1.5"><Clock size={12} /> {enr.preferred_time}</span>
+                                                            <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-400 uppercase">
+                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
+                                                                    <Calendar size={12} className="text-blue-600" /> 
+                                                                    <span className="truncate">{enr.preferred_days || 'Days TBA'}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
+                                                                    <Clock size={12} className="text-blue-600" /> 
+                                                                    <span>{enr.preferred_time || 'Time TBA'}</span>
+                                                                </div>
                                                             </div>
                                                             
                                                             {enr.status === 'APPROVED' && enr.tutor_class_link && (
@@ -608,17 +614,20 @@ const StudentDashboard = () => {
                                                                     href={enr.tutor_class_link} 
                                                                     target="_blank" 
                                                                     rel="noreferrer"
-                                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all"
+                                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                                                 >
-                                                                    Join Classroom ↗
+                                                                    📹 Join Classroom ↗
                                                                 </a>
+                                                            )}
+                                                            {(!enr.tutor_class_link && enr.status === 'APPROVED') && (
+                                                                <p className="text-[8px] text-amber-600 font-bold text-center bg-amber-50 py-2 rounded-lg italic">Class link will be active shortly.</p>
                                                             )}
                                                         </div>
                                                     </div>
                                                 ))}
                                                 {(!profile?.enrollments || profile.enrollments.length === 0) && (
                                                     <div className="col-span-full py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                                                        <p className="text-slate-400 font-bold italic">No subjects enrolled yet. Explore our curriculum to get started.</p>
+                                                        <p className="text-slate-400 font-bold italic">No registered subjects found. Complete your payment for new bookings to see them here.</p>
                                                     </div>
                                                 )}
                                             </div>
