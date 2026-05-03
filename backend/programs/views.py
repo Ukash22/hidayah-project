@@ -5,10 +5,14 @@ from rest_framework import viewsets, permissions
 from .models import Program, Subject
 from .serializers import ProgramSerializer, SubjectSerializer
 
-class ProgramViewSet(viewsets.ReadOnlyModelViewSet):
+class ProgramViewSet(viewsets.ModelViewSet):
     queryset = Program.objects.all()
     serializer_class = ProgramSerializer
-    permission_classes = [permissions.AllowAny]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAdminUser()]
 
 class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()

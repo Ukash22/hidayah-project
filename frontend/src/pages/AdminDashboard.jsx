@@ -109,6 +109,14 @@ const AdminDashboard = () => {
         admin_percentage: 5.00
     });
 
+    // Program Management State
+    const [showProgramModal, setShowProgramModal] = useState(false);
+    const [programForm, setProgramForm] = useState({
+        name: '',
+        program_type: 'WESTERN',
+        description: ''
+    });
+
 
     // Wallet Action State
     const [walletAction, setWalletAction] = useState({
@@ -504,6 +512,33 @@ const AdminDashboard = () => {
             await api.delete(`/api/programs/subjects/${id}/`);
             fetchSubjects();
         } catch (_err) { alert("Failed to delete subject"); }
+        finally { setActionLoading(false); }
+    };
+
+    const handleCreateProgram = async (e) => {
+        if(e) e.preventDefault();
+        try {
+            setActionLoading(true);
+            await api.post('/api/programs/list/', programForm);
+            alert("✅ Program Created Successfully!");
+            setShowProgramModal(false);
+            setProgramForm({ name: '', program_type: 'WESTERN', description: '' });
+            fetchPrograms();
+        } catch (err) {
+            alert("❌ Failed to create program: " + (err.response?.data?.error || err.message));
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDeleteProgram = async (id) => {
+        if (!window.confirm("Permanently delete this program and all its subjects?")) return;
+        try {
+            setActionLoading(true);
+            await api.delete(`/api/programs/list/${id}/`);
+            fetchPrograms();
+            fetchSubjects();
+        } catch (_err) { alert("Failed to delete program"); }
         finally { setActionLoading(false); }
     };
 
@@ -1785,6 +1820,40 @@ const AdminDashboard = () => {
                             ) : activeTab === 'curriculum' ? (
                                 /* Curriculum Materials & Subjects Section */
                                 <div className="space-y-12 p-2">
+                                    {/* Programs Management */}
+                                    <section>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div>
+                                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Education Programs</h3>
+                                                <p className="text-[10px] text-slate-500 font-bold">Categories for grouping subjects (Islamic, Western, Exams).</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => setShowProgramModal(true)}
+                                                className="px-4 py-2 bg-indigo-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg flex items-center gap-2"
+                                            >
+                                                <span>📂</span> New Program
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {programs.length === 0 ? (
+                                                <div className="col-span-full p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400 italic">
+                                                    No programs defined.
+                                                </div>
+                                            ) : programs.map(p => (
+                                                <div key={p.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
+                                                    <div>
+                                                        <h4 className="text-xs font-black text-slate-800">{p.name}</h4>
+                                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{p.program_type}</span>
+                                                    </div>
+                                                    <button onClick={() => handleDeleteProgram(p.id)} className="text-slate-300 hover:text-red-500 transition-colors">🗑️</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+
+                                    <hr className="border-slate-100" />
+
                                     {/* Subjects & Programs Management */}
                                     <section>
                                         <div className="flex justify-between items-center mb-6">
@@ -3761,6 +3830,67 @@ const AdminDashboard = () => {
                                     className="w-full bg-slate-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-primary hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50"
                                 >
                                     {actionLoading ? 'Synchronizing...' : 'Create Subject'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Program Creation Modal */}
+            {showProgramModal && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[110] p-4 animate-in fade-in">
+                    <div className="bg-white rounded-[2rem] max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+                        <div className="bg-indigo-900 p-6 text-white flex justify-between items-center">
+                            <div>
+                                <h3 className="text-lg font-black uppercase tracking-tight">Add New Program</h3>
+                                <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest mt-1">Create a new subject category</p>
+                            </div>
+                            <button onClick={() => setShowProgramModal(false)} className="text-indigo-400 hover:text-white transition-colors">✕</button>
+                        </div>
+                        
+                        <form onSubmit={handleCreateProgram} className="p-8 space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Program Name</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    placeholder="e.g. Tertiary Entrance Prep"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                                    value={programForm.name}
+                                    onChange={(e) => setProgramForm({ ...programForm, name: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Program Type</label>
+                                <select 
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all cursor-pointer"
+                                    value={programForm.program_type}
+                                    onChange={(e) => setProgramForm({ ...programForm, program_type: e.target.value })}
+                                >
+                                    <option value="WESTERN">Western Education</option>
+                                    <option value="ISLAMIC">Islamic Education</option>
+                                    <option value="EXAM_PREP">Exam Preparation</option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Description (Optional)</label>
+                                <textarea 
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all min-h-[80px] resize-none"
+                                    value={programForm.description}
+                                    onChange={(e) => setProgramForm({ ...programForm, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="pt-4">
+                                <button 
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="w-full bg-indigo-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-indigo-800 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-50"
+                                >
+                                    {actionLoading ? 'Creating...' : 'Create Program'}
                                 </button>
                             </div>
                         </form>
