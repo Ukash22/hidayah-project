@@ -105,10 +105,47 @@ const BookingRequest = () => {
         };
     };
 
+    const addHoursToTime = (timeStr, hours) => {
+        if (!timeStr || !hours) return '';
+        const [h, m] = timeStr.split(':').map(Number);
+        const totalMinutes = h * 60 + (m || 0) + hours * 60;
+        const newH = Math.floor(totalMinutes / 60) % 24;
+        const newM = totalMinutes % 60;
+        return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
+    };
+
     const updateBookingField = (tutorId, field, value) => {
         setBookingStates(prev => {
-            const current = prev[tutorId] || { subject: '', schedule: [{ day: '', time: '' }], preferred_start_date: '', learning_level: 'Primary School', class_structure: 'One-on-One', hours_per_session: 1.0 };
-            return { ...prev, [tutorId]: { ...current, [field]: value } };
+            const current = prev[tutorId] || { 
+                subject: '', 
+                schedule: [{ day: '', time: '' }], 
+                preferred_start_date: '', 
+                learning_level: 'Primary School', 
+                class_structure: 'One-on-One', 
+                hours_per_session: 1.0 
+            };
+            
+            let newSchedule = [...current.schedule];
+            // If hours_per_session changes, update all end times in the schedule
+            if (field === 'hours_per_session') {
+                newSchedule = newSchedule.map(slot => {
+                    const startTime = (slot.time || '').split('-')[0];
+                    if (startTime) {
+                        const endTime = addHoursToTime(startTime, value);
+                        return { ...slot, time: `${startTime}-${endTime}` };
+                    }
+                    return slot;
+                });
+            }
+
+            return { 
+                ...prev, 
+                [tutorId]: { 
+                    ...current, 
+                    [field]: value,
+                    schedule: newSchedule
+                } 
+            };
         });
     };
 
@@ -599,7 +636,32 @@ const BookingRequest = () => {
                                                         
                                                         {getBookingData(tutor.id).schedule.map((slot, index) => (
                                                             <div key={index} className="flex gap-2 items-center">
-                                                                <div className="flex-1">
+                                                                 <div className="flex-1">
+                                                                    <div className="flex justify-between items-center mb-0.5 px-1">
+                                                                        <label className="text-[7px] font-black uppercase text-slate-500">Day</label>
+                                                                        {slot.day && (() => {
+                                                                            const tutorAv = tutor.availabilities?.find(av => 
+                                                                                av.day.toUpperCase() === slot.day || 
+                                                                                av.day.toUpperCase().startsWith(slot.day.slice(0, 3))
+                                                                            ) || (tutor.availability_hours || '').split(',').find(s => s.toUpperCase().startsWith(slot.day.slice(0, 3)));
+                                                                            
+                                                                            if (tutorAv) {
+                                                                                let display = "";
+                                                                                if (typeof tutorAv === 'object') {
+                                                                                    const f = (t) => {
+                                                                                        let [h, m] = t.split(':');
+                                                                                        h = parseInt(h);
+                                                                                        return `${h % 12 || 12}:${m.slice(0,2)}${h >= 12 ? 'pm' : 'am'}`;
+                                                                                    };
+                                                                                    display = `${f(tutorAv.start_time)}-${f(tutorAv.end_time)}`;
+                                                                                } else {
+                                                                                    display = tutorAv.split(': ')[1] || "";
+                                                                                }
+                                                                                return <span className="text-[6px] font-bold text-amber-500 uppercase">Tutor: {display}</span>;
+                                                                            }
+                                                                            return null;
+                                                                        })()}
+                                                                    </div>
                                                                     <select 
                                                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
                                                                         value={slot.day}
@@ -625,12 +687,17 @@ const BookingRequest = () => {
                                                                             type="time" 
                                                                             className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
                                                                             value={(slot.time || '').split('-')[0] || ''}
-                                                                            onChange={(e) => updateSlot(tutor.id, index, 'time', `${e.target.value}-${(slot.time || '').split('-')[1] || ''}`)}
+                                                                            onChange={(e) => {
+                                                                                const startTime = e.target.value;
+                                                                                const duration = getBookingData(tutor.id).hours_per_session;
+                                                                                const endTime = addHoursToTime(startTime, duration);
+                                                                                updateSlot(tutor.id, index, 'time', `${startTime}-${endTime}`);
+                                                                            }}
                                                                         />
                                                                     </div>
                                                                     <div className="w-20">
                                                                         <div className="flex justify-between items-center mb-0.5 px-1">
-                                                                            <label className="text-[7px] font-black uppercase text-slate-500">To</label>
+                                                                            <label className="text-[7px] font-black uppercase text-slate-500">To (Auto)</label>
                                                                             <span className="text-[6px] font-bold text-emerald-500">{(slot.time || '').split('-')[1] ? (() => {
                                                                                 let [h, m] = (slot.time || '').split('-')[1].split(':');
                                                                                 h = parseInt(h);
@@ -641,9 +708,10 @@ const BookingRequest = () => {
                                                                         </div>
                                                                         <input 
                                                                             type="time" 
-                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-slate-500 uppercase outline-none cursor-not-allowed opacity-60"
                                                                             value={(slot.time || '').split('-')[1] || ''}
-                                                                            onChange={(e) => updateSlot(tutor.id, index, 'time', `${(slot.time || '').split('-')[0] || ''}-${e.target.value}`)}
+                                                                            readOnly
+                                                                            title="Automatically calculated based on duration"
                                                                         />
                                                                     </div>
                                                                 </div>
