@@ -100,9 +100,9 @@ const Navbar = () => {
               <span className="text-[10px] font-black text-slate-300 group-hover:text-secondary transition-colors italic">02.</span>
               <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">About Hidayah</span>
             </Link>
-            <Link to="/#curriculum" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
+            <Link to="/#tutors" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
               <span className="text-[10px] font-black text-slate-300 group-hover:text-secondary transition-colors italic">03.</span>
-              <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">Our Curriculum</span>
+              <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">Our Tutors</span>
             </Link>
             
             {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
