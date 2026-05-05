@@ -6,8 +6,11 @@ from .models import Wallet, Transaction
 from students.models import StudentProfile, Enrollment
 from classes.models import ScheduledSession, Booking
 from programs.models import Subject
+import logging
 from .logic import get_commission_rate
 from classes.scheduler import generate_recurring_sessions
+
+logger = logging.getLogger(__name__)
 
 def fulfill_all_student_enrollments(student_user):
     """

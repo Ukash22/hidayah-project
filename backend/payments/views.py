@@ -9,9 +9,11 @@ from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from django.conf import settings
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import Payment, PricingTier, Wallet, Transaction, Withdrawal
 from .serializers import PaymentSerializer, PricingTierSerializer, WalletSerializer, TransactionSerializer, WithdrawalSerializer
@@ -159,7 +161,9 @@ class VerifyPaymentView(APIView):
                         "paid_at": result.get("paid_at")
                     })
                 else:
-                    return Response({"error": flow_result.get("message", "Processing failed")}, status=400)
+                    error_msg = flow_result.get("message", "Processing failed")
+                    logger.error(f"Payment flow failed for {reference}: {error_msg}")
+                    return Response({"error": error_msg}, status=400)
             else:
                 return Response({
                     "success": True,

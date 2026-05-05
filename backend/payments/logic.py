@@ -227,7 +227,8 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
     except StudentProfile.DoesNotExist:
         logger.warning(f"StudentProfile not found for {user.username}. Skipping post-payment automation.")
     except Exception as e:
-        logger.error(f"Post-payment automation failed for {user.username}: {e}")
+        import traceback
+        logger.error(f"Post-payment automation failed for {user.username}: {e}\n{traceback.format_exc()}")
 
     # [NEW] Send Payment Confirmation Email
     try:
