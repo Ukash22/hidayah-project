@@ -51,7 +51,21 @@ const PaymentCallback = () => {
             }
         } catch (err) {
             setStatus('failed');
-            setMessage(err.response?.data?.error || 'Payment verification failed');
+            let detailedError = 'Payment verification failed';
+            
+            if (err.response) {
+                // Server responded with an error status
+                const data = err.response.data;
+                detailedError = data.error || data.detail || data.message || `Server Error (${err.response.status})`;
+            } else if (err.request) {
+                // No response received (Network error, CORS, server down)
+                detailedError = 'Network Error: Cannot connect to server. Please check your internet connection.';
+            } else {
+                detailedError = err.message;
+            }
+            
+            setMessage(detailedError);
+            console.error("Payment Verification Error:", err);
         }
     };
 
