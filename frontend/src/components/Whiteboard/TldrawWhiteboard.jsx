@@ -3,6 +3,47 @@ import { Tldraw, useEditor, createTLStore, defaultShapeUtils } from 'tldraw';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import 'tldraw/tldraw.css';
 
+// Math & Science Toolbar
+const SubjectToolbar = ({ editor }) => {
+    if (!editor) return null;
+    
+    return (
+        <div className="absolute top-20 left-4 z-[1000] bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-2 flex flex-col gap-2">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 text-center">Tools</span>
+            
+            <button 
+                onClick={() => editor.updateInstanceState({ isGridMode: !editor.getInstanceState().isGridMode })}
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-white rounded transition-colors"
+                title="Toggle Graph Grid"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+            </button>
+            
+            <button 
+                onClick={() => {
+                    editor.setCurrentTool('arrow');
+                    // We use any default color that closely resembles Red for physics vectors in Tldraw
+                    editor.setStyleForNextShapes({ color: 'light-red', size: 'm' });
+                }}
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-red-500 rounded transition-colors"
+                title="Physics Vector Arrow"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+            
+            <button 
+                onClick={() => {
+                    alert("Advanced Editor (LaTeX / Kekule.js) modal will launch here.");
+                }}
+                className="p-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded transition-colors flex justify-center items-center"
+                title="Insert Equation / Molecule"
+            >
+                <span className="font-serif italic font-bold">fx</span>
+            </button>
+        </div>
+    );
+};
+
 // Custom Sync Component for Tldraw
 const WhiteboardSync = ({ roomId, role, targetClientId = null }) => {
     const editor = useEditor();
@@ -107,6 +148,8 @@ const WhiteboardSync = ({ roomId, role, targetClientId = null }) => {
 };
 
 const TldrawWhiteboard = ({ roomId, role }) => {
+  const [editor, setEditor] = useState(null);
+
   return (
     <div className="w-full h-full relative flex flex-col">
       {/* Teacher Toolbar */}
@@ -130,9 +173,26 @@ const TldrawWhiteboard = ({ roomId, role }) => {
       )}
 
       <div className="flex-1 relative">
-        <Tldraw inferDarkMode>
+        <Tldraw inferDarkMode onMount={setEditor}>
             <WhiteboardSync roomId={roomId} role={role} />
         </Tldraw>
+        
+        {/* Render our custom Math/Science Tools overlay */}
+        <SubjectToolbar editor={editor} />
+
+        {/* Student Submit Button overlay */}
+        {role === 'STUDENT' && (
+            <button 
+                onClick={async () => {
+                    if(!editor) return;
+                    alert("Taking snapshot and submitting to database...");
+                }}
+                className="absolute bottom-4 right-4 z-[1000] px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+            >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Submit Work
+            </button>
+        )}
       </div>
     </div>
   );
