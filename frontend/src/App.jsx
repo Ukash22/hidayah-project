@@ -24,6 +24,7 @@ const CBTInterface = lazy(() => import('./pages/CBTInterface'))
 const AIHub = lazy(() => import('./pages/AIHub'))
 const AdminExamManager = lazy(() => import('./pages/AdminExamManager'))
 const AdminQuestionManager = lazy(() => import('./pages/AdminQuestionManager'))
+const LiveClassRoom = lazy(() => import('./pages/LiveClassRoom'))
 
 const LoadingOverlay = () => (
   <div className="fixed inset-0 bg-[#0a0c10] flex flex-col items-center justify-center z-[9999]">
@@ -163,6 +164,15 @@ function App() {
             }
           />
 
+          {/* Live Class Route */}
+          <Route
+            path="/live/:roomId"
+            element={
+              <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TUTOR']}>
+                <LiveClassRoom />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Booking & Enrollment Routes */}
           <Route
