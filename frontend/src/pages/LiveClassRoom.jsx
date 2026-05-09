@@ -54,12 +54,23 @@ const LiveClassRoom = () => {
                     configOverwrite={{
                         startWithAudioMuted: true,
                         disableModeratorIndicator: true,
+                        disableWhiteboard: true, // Disable built-in whiteboard
+                        hideConferenceTimer: true,
+                        prejoinPageEnabled: false,
                     }}
                     interfaceConfigOverwrite={{
-                        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true
+                        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+                        TOOLBAR_BUTTONS: [
+                            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
+                            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+                            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
+                            'security'
+                        ],
                     }}
                     userInfo={{
-                        displayName: user?.name || 'Student'
+                        displayName: userName || 'User'
                     }}
                     getIFrameRef={(iframeRef) => { iframeRef.style.height = '100%'; iframeRef.style.width = '100%'; }}
                 />
