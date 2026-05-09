@@ -14,7 +14,7 @@ const LiveClassRoom = () => {
       
       {/* Whiteboard Section (Takes full width) */}
       <div className="flex-1 relative transition-all duration-300">
-        <TldrawWhiteboard roomId={roomId} role={user?.role} />
+        <TldrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
       </div>
 
       {/* Collapsible Jitsi Sidebar */}

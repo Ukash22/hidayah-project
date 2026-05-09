@@ -1790,18 +1790,22 @@ const AdminDashboard = () => {
                                                     <span>{student.assigned_tutor_details ? `✅ ${student.assigned_tutor_details.full_name}` : '❌ No Tutor'}</span>
                                                     <div className="flex gap-1 ml-1">
                                                         {(student.meeting_link || student.assigned_tutor_details?.live_class_link) && (
-                                                            <a 
-                                                                href={student.meeting_link || student.assigned_tutor_details?.live_class_link} 
-                                                                target="_blank" 
-                                                                rel="noreferrer" 
+                                                            <button 
+                                                                onClick={() => navigate(`/live/${student.db_id || student.id}`)}
                                                                 title="Join Jitsi" 
                                                                 className="text-primary hover:scale-110 transition-transform"
                                                             >
                                                                 📹
-                                                            </a>
+                                                            </button>
                                                         )}
                                                         {student.whiteboard_link && (
-                                                            <a href={student.whiteboard_link} target="_blank" rel="noreferrer" title="Open Whiteboard" className="text-secondary hover:scale-110 transition-transform">📋</a>
+                                                            <button 
+                                                                onClick={() => navigate(`/live/${student.db_id || student.id}`)} 
+                                                                title="Open Whiteboard" 
+                                                                className="text-secondary hover:scale-110 transition-transform"
+                                                            >
+                                                                📋
+                                                            </button>
                                                         )}
                                                     </div>
                                                 </div>
@@ -2093,14 +2097,12 @@ const AdminDashboard = () => {
                                                                 <p className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">with {liveCls.tutor_name}</p>
                                                             </div>
                                                         </div>
-                                                        <a 
-                                                            href={liveCls.meeting_link} 
-                                                            target="_blank" 
-                                                            rel="noreferrer" 
+                                                        <button 
+                                                            onClick={() => navigate(`/live/${liveCls.db_id || liveCls.id}`)}
                                                             className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-sm"
                                                         >
                                                             Monitor
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 ))}
                                             </div>
@@ -2161,15 +2163,12 @@ const AdminDashboard = () => {
                                                         </td>
                                                         <td className="py-3 px-3 last:rounded-r-2xl">
                                                             <div className="flex justify-center items-center gap-2">
-                                                                {cls.meeting_link ? (
-                                                                    <a 
-                                                                        href={cls.meeting_link} 
-                                                                        target="_blank" 
-                                                                        rel="noreferrer" 
+                                                                    <button 
+                                                                        onClick={() => navigate(`/live/${cls.db_id || cls.id}`)}
                                                                         className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 ${cls.is_live ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                                                                     >
                                                                         <span className="text-xs">📹</span> {cls.is_live ? 'Join Session' : 'Room Link'}
-                                                                    </a>
+                                                                    </button>
                                                                 ) : (
                                                                     <span className="text-[9px] text-slate-400 font-bold uppercase italic opacity-50">No Link Set</span>
                                                                 )}

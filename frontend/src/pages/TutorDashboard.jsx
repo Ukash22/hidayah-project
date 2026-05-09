@@ -226,47 +226,22 @@ const TutorDashboard = () => {
     };
 
     const handleJoinClass = async (session) => {
-        let url = session.zoom_start_url || session.meeting_link || session.tutor_class_link; // Handle Trial, Regular, and Tutor Link
+        const sessionId = session.db_id || session.id;
         
-        if (!url) {
-            // Jitsi Fallback
-            const sessionId = session.db_id || session.id;
-            const studentId = session.student || session.user_id || '99';
-            const room_id = `HidayahClass-${sessionId}-${studentId}`;
-            url = `https://meet.jit.si/${room_id}`;
-        }
-
         // Notify backend that class has started
         try {
             const isTrial = session.type === 'TRIAL' || !!session.zoom_start_url;
             const endpoint = isTrial 
-                ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/trial/${session.id}/start/`
-                : `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${session.id}/start/`;
+                ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/trial/${sessionId}/start/`
+                : `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`;
             
             await axios.post(endpoint, {}, { headers: getAuthHeader() });
         } catch (err) {
             console.error("Failed to mark session as started", err);
         }
 
-        const dateObj = new Date(session.scheduled_at);
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const dateString = dateObj.toLocaleDateString();
-        
-        const tutorFirstName = user?.first_name || 'Tutor';
-        const tutorLastName = user?.last_name || '';
-        const tutorName = `Tr. ${tutorFirstName} ${tutorLastName}`.trim();
-
-        const studentName = session.student_name || session.first_name || 'Student';
-        const subject = session.course_interested || 'Class';
-        
-        const displayName = encodeURIComponent(`${tutorName} - ${studentName} (${subject}) - ${dayName}, ${dateString}`);
-        
-        if (url.includes('meet.jit.si') || url.includes('8x8.vc')) {
-            const hashDivider = url.includes('#') ? '&' : '#';
-            url = `${url}${hashDivider}userInfo.displayName="${displayName}"`;
-        }
-        
-        window.open(url, '_blank');
+        // Navigate to internal Live Classroom
+        navigate(`/live/${sessionId}`);
     };
 
     if (loading) return (
@@ -517,16 +492,12 @@ const TutorDashboard = () => {
                                                         >
                                                             Start Class
                                                         </button>
-                                                        {trial.whiteboard_url && (
-                                                            <a
-                                                                href={trial.whiteboard_url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="bg-amber-500 text-slate-900 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-all text-center"
-                                                            >
-                                                                Whiteboard
-                                                            </a>
-                                                        )}
+                                                        <button
+                                                            onClick={() => navigate(`/live/${trial.id}`)}
+                                                            className="bg-amber-500 text-slate-900 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-all text-center"
+                                                        >
+                                                            Whiteboard
+                                                        </button>
                                                     </>
                                                 ) : (
                                                     <span className="text-xs text-slate-400 italic font-bold">Room Pending</span>

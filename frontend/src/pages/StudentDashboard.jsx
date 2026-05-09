@@ -251,28 +251,11 @@ const StudentDashboard = () => {
         try {
             setLoading(true);
             const sessionId = cls.db_id || cls.id;
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${sessionId}/join/`, {}, { headers: getAuthHeader() });
+            // Notify backend that student joined
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${sessionId}/join/`, {}, { headers: getAuthHeader() });
             
-            let url = res.data.join_url || cls.tutor_class_link;
-            if (url) {
-                // Append student name, date, and day to Jitsi links (or pass as params)
-                const dateObj = new Date(cls.scheduled_at);
-                const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-                const dateString = dateObj.toLocaleDateString();
-                const studentName = profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'Student';
-                const subject = cls.course || 'Class';
-                
-                const displayName = encodeURIComponent(`${studentName} (${subject}) - ${dayName}, ${dateString}`);
-                
-                if (url.includes('meet.jit.si') || url.includes('8x8.vc')) {
-                    const hashDivider = url.includes('#') ? '&' : '#';
-                    url = `${url}${hashDivider}userInfo.displayName="${displayName}"`;
-                }
-                
-                window.open(url, '_blank');
-            } else {
-                alert("No meeting link found for this class.");
-            }
+            // Navigate to internal Live Classroom
+            navigate(`/live/${sessionId}`);
         } catch (e) {
             console.error("Join class failed", e);
             alert("Unable to join class. Please try again later.");
@@ -620,14 +603,12 @@ const StudentDashboard = () => {
                                                             </div>
                                                             
                                                             {enr.status === 'APPROVED' && enr.tutor_class_link && (
-                                                                <a 
-                                                                    href={enr.tutor_class_link} 
-                                                                    target="_blank" 
-                                                                    rel="noreferrer"
-                                                                    className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-                                                                >
-                                                                    📹 Join Classroom ↗
-                                                                </a>
+                                                                    <button 
+                                                                        onClick={() => navigate(`/live/${enr.id || enr.db_id}`)}
+                                                                        className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                                                                    >
+                                                                        📹 Join Classroom ↗
+                                                                    </button>
                                                             )}
                                                             {(!enr.tutor_class_link && enr.status === 'APPROVED') && (
                                                                 <p className="text-[8px] text-amber-600 font-bold text-center bg-amber-50 py-2 rounded-lg italic">Class link will be active shortly.</p>
