@@ -2169,9 +2169,6 @@ const AdminDashboard = () => {
                                                                     >
                                                                         <span className="text-xs">📹</span> {cls.is_live ? 'Join Session' : 'Room Link'}
                                                                     </button>
-                                                                ) : (
-                                                                    <span className="text-[9px] text-slate-400 font-bold uppercase italic opacity-50">No Link Set</span>
-                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
