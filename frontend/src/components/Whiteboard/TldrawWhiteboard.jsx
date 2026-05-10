@@ -310,16 +310,16 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
     
     // Robust WebSocket URL calculation
     const getWsUrl = () => {
-        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
         // Ensure it starts with ws:// or wss://
         let base = apiBase.replace(/^http/, 'ws');
         if (!base.startsWith('ws')) {
-            // If it's just a domain like "hidayah-backend.onrender.com"
             base = `wss://${base}`;
         }
-        // Clean up trailing slashes and ensure it's absolute
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        return `${cleanBase}/ws/board/${roomId}/`;
+        const finalUrl = `${cleanBase}/ws/board/${roomId}/`;
+        console.log("🔌 Attempting WebSocket Connection to:", finalUrl);
+        return finalUrl;
     };
 
     const socketUrl = getWsUrl();
