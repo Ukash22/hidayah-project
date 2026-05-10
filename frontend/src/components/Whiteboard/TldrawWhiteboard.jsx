@@ -305,115 +305,101 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
     });
-
+    
     // Handle incoming messages
     useEffect(() => {
         if (!lastMessage) return;
         try {
             const data = JSON.parse(lastMessage.data);
             
-            if (data.type === 'send_command') {
-                const action = data.data.action;
+            // Handle command messages
+            if (data.type === 'command') {
+                const action = data.action;
                 if (action === 'push_board' && role === 'STUDENT' && editor) {
                     editor.store.mergeRemoteChanges(() => {
-                        if (data.data.mode === 'overwrite') editor.store.clear();
-                        Object.values(data.data.snapshot).forEach(record => {
-                            if (data.data.mode === 'bg' && record.typeName === 'shape') record.isLocked = true;
+                        if (data.mode === 'overwrite') editor.store.clear();
+                        Object.values(data.snapshot).forEach(record => {
+                            if (data.mode === 'bg' && record.typeName === 'shape') record.isLocked = true;
                             editor.store.put([record]);
                         });
                     });
                 } else if (action === 'clear_boards' && role === 'STUDENT' && editor) {
                     editor.store.clear();
                 } else if (action === 'lock_room') {
-                    setRoomLocked(data.data.locked);
+                    setRoomLocked(data.locked);
                 } else if (action === 'slow_mode') {
-                    setSlowMode(data.data.enabled);
+                    setSlowMode(data.enabled);
                 } else if (action === 'reaction' && role === 'STUDENT') {
-                    if (data.data.targetId === editor?.user?.getId()) {
-                        setReaction(data.data.emoji);
+                    if (data.targetId === editor?.user?.getId()) {
+                        setReaction(data.emoji);
                         setTimeout(() => setReaction(null), 3000);
                     }
                 }
             }
             
-            if (data.type === 'send_thumbnail' && (role === 'TUTOR' || role === 'ADMIN')) {
-                setStudentThumbnails(prev => ({
-                    ...prev,
-                    [data.data.clientId]: {
-                        svg: data.data.svg,
-                        name: data.data.name || 'Student',
-                        updatedAt: Date.now(),
-                        snapshot: data.data.snapshot
-                    }
-                }));
-            }
-            
-            if (data.type === 'send_teacher_snapshot' && role === 'STUDENT') {
-                setTeacherBoardSnapshot(data.data.snapshot);
+            // Handle draw messages (thumbnails & teacher snapshots)
+            if (data.type === 'draw') {
+                if (data.is_thumbnail && (role === 'TUTOR' || role === 'ADMIN')) {
+                    setStudentThumbnails(prev => ({
+                        ...prev,
+                        [data.clientId]: {
+                            svg: data.svg,
+                            name: data.name || 'Student',
+                            updatedAt: Date.now(),
+                            snapshot: data.snapshot
+                        }
+                    }));
+                }
+                
+                if (data.is_teacher_snapshot && role === 'STUDENT') {
+                    setTeacherBoardSnapshot(data.snapshot);
+                }
             }
 
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("WS Message Error:", e); }
     }, [lastMessage, editor, role, setStudentThumbnails, setTeacherBoardSnapshot, setRoomLocked, setSlowMode, setReaction]);
 
-    // Send Live Thumbnails if Student
+    // Send Live Thumbnails if Student (Optimized: single interval)
     useEffect(() => {
         if (!editor || role !== 'STUDENT' || readyState !== ReadyState.OPEN) return;
         
         const interval = setInterval(async () => {
-            if (isSlowMode) return; // Don't auto-send in slow mode
+            if (isSlowMode) return; 
             try {
                 const shapeIds = Array.from(editor.getCurrentPageShapeIds());
+                if (shapeIds.length === 0) return; // Don't send empty boards
+                
                 const svgString = await editor.getSvgString(shapeIds, { padding: 10 });
-                if (svgString) {
-                    sendMessage(JSON.stringify({
-                        type: 'command', // Use command to trick backend into broadcasting, backend consumers need 'command' or 'draw'
-                        action: 'thumbnail', // actually wait, backend only forwards 'send_command' if type='command'.
-                        // To keep it compatible without backend changes, we send 'type: command', and the payload inside.
-                        // But wait! TldrawWhiteboard originally sent `type: 'thumbnail'`. Did it even work before?
-                        // Let's send type: command, action: thumbnail
-                    }));
-                }
-            } catch (e) {}
-        }, 3000); 
-        return () => clearInterval(interval);
-    }, [editor, role, userName, readyState, sendMessage, isSlowMode]);
-    
-    // Fix: the original code sent `{ type: 'thumbnail', clientId: ... }` which the backend consumer ignored!
-    // We must wrap it in `type: 'command'` or `type: 'draw'`. Let's use `draw` for frequent updates.
-    useEffect(() => {
-        if (!editor || role !== 'STUDENT' || readyState !== ReadyState.OPEN) return;
-        const interval = setInterval(async () => {
-            if (isSlowMode) return;
-            try {
-                const shapeIds = Array.from(editor.getCurrentPageShapeIds());
-                const svgString = await editor.getSvgString(shapeIds, { padding: 10 });
-                if (svgString) {
+                if (svgString?.svg) {
                     sendMessage(JSON.stringify({
                         type: 'draw',
                         is_thumbnail: true,
                         clientId: editor.user.getId(),
                         name: userName || 'Student',
-                        svg: svgString?.svg || "",
+                        svg: svgString.svg,
                         snapshot: editor.store.allRecords()
                     }));
                 }
             } catch (e) {}
-        }, 3000); 
+        }, 4000); // 4 seconds is plenty
         return () => clearInterval(interval);
     }, [editor, role, userName, readyState, sendMessage, isSlowMode]);
-
+    
     // Teacher Broadcast
     useEffect(() => {
         if (!editor || (role !== 'TUTOR' && role !== 'ADMIN') || readyState !== ReadyState.OPEN) return;
         const interval = setInterval(async () => {
             try {
+                const records = editor.store.allRecords();
+                if (records.length < 5) return; // Don't broadcast basically empty boards
+
                 sendMessage(JSON.stringify({
                     type: 'draw',
                     is_teacher_snapshot: true,
-                    snapshot: editor.store.allRecords()
+                    snapshot: records
                 }));
             } catch (e) {}
-        }, 3000); 
+        }, 4000); 
         return () => clearInterval(interval);
     }, [editor, role, readyState, sendMessage]);
 
