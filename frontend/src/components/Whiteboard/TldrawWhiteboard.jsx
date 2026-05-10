@@ -47,7 +47,7 @@ const SidebarToolbar = ({ editor, activeTab }) => {
     };
 
     return (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-white p-2 rounded-2xl shadow-2xl border border-slate-200 z-[1000]">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-white p-2 rounded-2xl shadow-2xl border border-slate-200 z-[1000]">
             <ToolButton icon={<path d="M12 19l7-7 3 3-7 7-3-3z M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z M2 2l7.586 7.586 M11 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>} onClick={() => editor.setCurrentTool('draw')} title="Pen" active={editor.getCurrentToolId() === 'draw'} />
             <ToolButton icon={<path d="M21 6a1 1 0 0 0-4-4L3 16a2 2 0 0 0-.5.8l-1.3 4.4a.5.5 0 0 0 .6.6l4.4-1.3a2 2 0 0 0 .8-.5z M15 5l4 4"/>} onClick={() => editor.setCurrentTool('eraser')} title="Eraser" active={editor.getCurrentToolId() === 'eraser'} />
             <div className="h-px w-8 bg-slate-100 mx-auto"></div>
@@ -300,7 +300,9 @@ const ToolButton = ({ icon, onClick, title, active }) => (
 
 const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbnails, setTeacherBoardSnapshot, isSlowMode, setRoomLocked, setSlowMode, setReaction }) => {
     const editor = useEditor();
-    const socketUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}/ws/board/${roomId}/`;
+    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    const wsBase = apiBase.replace('http', 'ws');
+    const socketUrl = `${wsBase}/ws/board/${roomId}/`;
     
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
@@ -588,8 +590,8 @@ const TldrawWhiteboard = ({ roomId, role, userName }) => {
                             isSlowMode={isSlowMode}
                             setRoomLocked={setIsLocked} setSlowMode={setIsSlowMode} setReaction={setStudentReaction}
                         />
-                        <SidebarToolbar editor={editor} activeTab={activeTab} />
                     </Tldraw>
+                    <SidebarToolbar editor={editor} activeTab={activeTab} />
 
                     {role === 'STUDENT' && isSlowMode && (
                         <div className="absolute bottom-6 right-6 z-[1000]">

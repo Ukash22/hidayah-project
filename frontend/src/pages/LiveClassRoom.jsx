@@ -10,7 +10,7 @@ const LiveClassRoom = () => {
   const [isVideoOpen, setIsVideoOpen] = useState(false);
 
   return (
-    <div className="flex h-screen w-full bg-[#f4f5f8] overflow-hidden font-sans">
+    <div className="flex min-h-screen h-screen w-full bg-[#f4f5f8] overflow-hidden font-sans">
       
       {/* Whiteboard Section (Takes full width) */}
       <div className="flex-1 relative transition-all duration-300">
