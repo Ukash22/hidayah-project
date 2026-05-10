@@ -307,9 +307,22 @@ const CustomHeader = ({ editor, activeTab, setActiveTab, role, onPush, onDownloa
  
 const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbnails, setTeacherBoardSnapshot, isSlowMode, setRoomLocked, setSlowMode, setReaction }) => {
     const editor = useEditor();
-    const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-    const wsBase = apiBase.replace('http', 'ws');
-    const socketUrl = `${wsBase}/ws/board/${roomId}/`;
+    
+    // Robust WebSocket URL calculation
+    const getWsUrl = () => {
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+        // Ensure it starts with ws:// or wss://
+        let base = apiBase.replace(/^http/, 'ws');
+        if (!base.startsWith('ws')) {
+            // If it's just a domain like "hidayah-backend.onrender.com"
+            base = `wss://${base}`;
+        }
+        // Clean up trailing slashes and ensure it's absolute
+        const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+        return `${cleanBase}/ws/board/${roomId}/`;
+    };
+
+    const socketUrl = getWsUrl();
     
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
