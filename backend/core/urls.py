@@ -28,4 +28,5 @@ urlpatterns = [
     path('api/ai/', include('ai_engine.urls')),
     path('api/programs/', include('programs.urls')),
     path('api/parents/', include('parents.urls')),
+    path('api/whiteboard/', include('whiteboard.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
