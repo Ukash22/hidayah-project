@@ -316,7 +316,7 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
             base = `wss://${base}`;
         }
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        const finalUrl = `${cleanBase}/ws/board/${roomId}/`;
+        const finalUrl = `${cleanBase}/board/${roomId}/`;
         console.log("🔌 Stable WebSocket URL:", finalUrl);
         return finalUrl;
     }, [roomId]);
