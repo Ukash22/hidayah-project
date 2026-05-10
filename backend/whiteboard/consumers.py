@@ -33,6 +33,9 @@ class BoardConsumer(AsyncWebsocketConsumer):
         event_type = text_data_json.get('type')
 
         # Broadcast the message to room group
+        if event_type == 'ping':
+            return # Just keep alive
+            
         if event_type == 'draw':
             await self.channel_layer.group_send(
                 self.room_group_name,

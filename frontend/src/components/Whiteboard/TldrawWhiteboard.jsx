@@ -323,9 +323,13 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
     
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
-        reconnectAttempts: 20,
-        reconnectInterval: 5000,
-        retryOnError: true,
+        reconnectAttempts: 50,
+        reconnectInterval: 3000,
+        heartbeat: {
+            message: JSON.stringify({ type: 'ping' }),
+            interval: 20000, // 20 seconds
+            timeout: 60000,  // 60 seconds
+        },
         onOpen: () => console.log("✅ Board Connection Established"),
         onClose: () => console.log("❌ Board Connection Lost"),
         onError: (e) => console.log("⚠️ Board Connection Error", e),
