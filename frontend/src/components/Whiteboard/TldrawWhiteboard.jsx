@@ -190,7 +190,7 @@ const CustomHeader = ({ editor, activeTab, setActiveTab, role, onPush, onDownloa
                         <span className="bg-emerald-500 w-8 h-8 rounded-lg flex items-center justify-center">
                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
                         </span>
-                        Hidayah Board
+                        Hidayah Whiteboard
                     </h1>
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Live Classroom</span>
                 </div>
