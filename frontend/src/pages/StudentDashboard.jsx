@@ -242,22 +242,31 @@ const StudentDashboard = () => {
     };
 
     const handleJoinClass = async (cls) => {
-        const sessionId = cls.db_id || cls.id;
-
-        // Notify backend that student joined (non-blocking)
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`,
-                {},
-                { headers: getAuthHeader() }
-            );
-        } catch (e) {
-            // Non-blocking — proceed regardless
-            console.warn("Could not notify backend of join:", e);
-        }
+            const sessionId = cls.db_id || cls.id;
+            if (!sessionId) {
+                alert("Invalid session ID");
+                return;
+            }
 
-        // Navigate to internal Live Classroom
-        navigate(`/live/${sessionId}`);
+            // Notify backend that student joined (non-blocking)
+            try {
+                await axios.post(
+                    `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`,
+                    {},
+                    { headers: getAuthHeader() }
+                );
+            } catch (e) {
+                // Non-blocking — proceed regardless
+                console.warn("Could not notify backend of join:", e);
+            }
+
+            // Force Navigate to internal Live Classroom
+            window.location.href = `/live/${sessionId}`;
+        } catch (err) {
+            console.error("Critical error in handleJoinClass:", err);
+            alert("An error occurred while joining the class.");
+        }
     };
 
     const calculateScheduleStatus = () => {

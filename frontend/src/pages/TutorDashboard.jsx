@@ -227,22 +227,31 @@ const TutorDashboard = () => {
     };
 
     const handleJoinClass = async (session) => {
-        const sessionId = session.db_id || session.id;
-        
-        // Notify backend that class has started
         try {
-            const isTrial = session.type === 'TRIAL' || !!session.zoom_start_url;
-            const endpoint = isTrial 
-                ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/trial/${sessionId}/start/`
-                : `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`;
+            const sessionId = session.db_id || session.id;
+            if (!sessionId) {
+                alert("Invalid session ID");
+                return;
+            }
             
-            await axios.post(endpoint, {}, { headers: getAuthHeader() });
-        } catch (err) {
-            console.error("Failed to mark session as started", err);
-        }
+            // Notify backend that class has started
+            try {
+                const isTrial = session.type === 'TRIAL' || !!session.zoom_start_url;
+                const endpoint = isTrial 
+                    ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/trial/${sessionId}/start/`
+                    : `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`;
+                
+                await axios.post(endpoint, {}, { headers: getAuthHeader() });
+            } catch (err) {
+                console.error("Failed to mark session as started", err);
+            }
 
-        // Navigate to internal Live Classroom
-        navigate(`/live/${sessionId}`);
+            // Force navigation to internal Live Classroom
+            window.location.href = `/live/${sessionId}`;
+        } catch (e) {
+            console.error("Critical error in handleJoinClass:", e);
+            alert("An error occurred while joining the class.");
+        }
     };
 
     if (loading) return (
