@@ -11,12 +11,11 @@ const ToolButton = ({ icon, onClick, title, active }) => (
     <button 
         onClick={onClick}
         title={title}
-        className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${active ? 'bg-emerald-500 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'}`}
+        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all ${active ? 'bg-[#1e293b] text-white shadow-xl scale-110' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
     >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-colors">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             {icon}
         </svg>
-        <span className={`text-[8px] font-black uppercase tracking-widest ${active ? 'text-white' : 'text-slate-400'}`}>{title}</span>
     </button>
 );
 
@@ -291,19 +290,7 @@ const CustomHeader = ({ editor, activeTab, setActiveTab, role, onPush, onDownloa
         </div>
     );
 };
-
-const ToolButton = ({ icon, onClick, title, active }) => (
-    <button 
-        onClick={onClick}
-        title={title}
-        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all ${active ? 'bg-[#1e293b] text-white shadow-xl scale-110' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
-    >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            {icon}
-        </svg>
-    </button>
-);
-
+ 
 const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbnails, setTeacherBoardSnapshot, isSlowMode, setRoomLocked, setSlowMode, setReaction }) => {
     const editor = useEditor();
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
