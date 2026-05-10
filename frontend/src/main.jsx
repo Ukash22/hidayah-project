@@ -10,7 +10,7 @@ const suppress = (method) => {
     console[method] = (...args) => {
         if (args[0] && typeof args[0] === 'string') {
             const msg = args[0].toLowerCase();
-            if (msg.includes('tldraw') || msg.includes('sales@tldraw.com') || msg.includes('license')) return;
+            if (msg.includes('tldraw') || msg.includes('sales@tldraw.com') || msg.includes('license') || msg.includes('----')) return;
         }
         original.apply(console, args);
     };

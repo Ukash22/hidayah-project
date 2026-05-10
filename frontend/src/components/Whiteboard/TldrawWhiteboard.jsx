@@ -326,6 +326,12 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
     
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
+        reconnectAttempts: 20,
+        reconnectInterval: 5000,
+        retryOnError: true,
+        onOpen: () => console.log("✅ Board Connection Established"),
+        onClose: () => console.log("❌ Board Connection Lost"),
+        onError: (e) => console.log("⚠️ Board Connection Error", e),
     });
     
     // Handle incoming messages
