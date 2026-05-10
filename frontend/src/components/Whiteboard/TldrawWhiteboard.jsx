@@ -594,7 +594,7 @@ const TldrawWhiteboard = ({ roomId, role, userName }) => {
             <div className="flex-1 flex relative overflow-hidden">
                 {/* Main Drawing Area */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
-                    <Tldraw hideUi={true} onMount={setEditor}>
+                    <Tldraw onMount={setEditor}>
                         <WhiteboardEngine 
                             roomId={roomId} role={role} userName={userName} activeTab={activeTab} 
                             setStudentThumbnails={setStudentThumbnails} 
