@@ -5,6 +5,13 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import * as pdfjsLib from 'pdfjs-dist';
 import 'tldraw/tldraw.css';
 
+// CSS to hide the Tldraw license watermark in production
+const watermarkStyle = `
+  .tl-watermark {
+    display: none !important;
+  }
+`;
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
  
 const ToolButton = ({ icon, onClick, title, active }) => (
@@ -474,6 +481,15 @@ const TeacherBoardViewer = ({ snapshot }) => {
 const TldrawWhiteboard = ({ roomId, role, userName }) => {
     const [editor, setEditor] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
+    
+    // Inject watermark hiding style
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.innerHTML = watermarkStyle;
+        document.head.appendChild(style);
+        return () => document.head.removeChild(style);
+    }, []);
+
     const [studentThumbnails, setStudentThumbnails] = useState({});
     const [activeStudentId, setActiveStudentId] = useState(null);
     const [teacherBoardSnapshot, setTeacherBoardSnapshot] = useState(null);
