@@ -22,55 +22,48 @@ const ToolButton = ({ icon, onClick, title, active }) => (
 
 const SidebarToolbar = ({ editor, activeTab }) => {
     if (!editor || (activeTab !== 'my_board' && activeTab !== 'student_view')) return null;
-
+ 
     const handlePdfUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
+ 
         const reader = new FileReader();
         reader.onload = async () => {
-            const typedarray = new Uint8Array(reader.result);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-            
-            const shapes = [];
-            let yOffset = 100;
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 1.5 });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                await page.render({ canvasContext: context, viewport: viewport }).promise;
-                const dataUrl = canvas.toDataURL('image/png');
-
-                shapes.push({
-                    type: 'image',
-                    x: 100, y: yOffset,
-                    props: { src: dataUrl, w: viewport.width, h: viewport.height }
-                });
-                
-                yOffset += viewport.height + 50;
-            }
-            editor.createShapes(shapes);
+            try {
+                const typedarray = new Uint8Array(reader.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                const shapes = [];
+                let yOffset = 100;
+ 
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    const dataUrl = canvas.toDataURL('image/png');
+                    shapes.push({
+                        type: 'image',
+                        x: 100, y: yOffset,
+                        props: { src: dataUrl, w: viewport.width, h: viewport.height }
+                    });
+                    yOffset += viewport.height + 50;
+                }
+                editor.createShapes(shapes);
+            } catch (err) { console.error("PDF Load Error:", err); alert("Failed to load PDF."); }
         };
         reader.readAsArrayBuffer(file);
     };
-
+ 
     return (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 bg-white p-2 rounded-2xl shadow-2xl border border-slate-200 z-[1000]">
-            <ToolButton icon={<path d="M12 19l7-7 3 3-7 7-3-3z M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z M2 2l7.586 7.586 M11 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>} onClick={() => editor.setCurrentTool('draw')} title="Pen" active={editor.getCurrentToolId() === 'draw'} />
-            <ToolButton icon={<path d="M21 6a1 1 0 0 0-4-4L3 16a2 2 0 0 0-.5.8l-1.3 4.4a.5.5 0 0 0 .6.6l4.4-1.3a2 2 0 0 0 .8-.5z M15 5l4 4"/>} onClick={() => editor.setCurrentTool('eraser')} title="Eraser" active={editor.getCurrentToolId() === 'eraser'} />
-            <div className="h-px w-8 bg-slate-100 mx-auto"></div>
-            <ToolButton icon={<path d="M4 7V4h16v3 M9 20h6 M12 4v16"/>} onClick={() => editor.setCurrentTool('text')} title="Text" active={editor.getCurrentToolId() === 'text'} />
-            <ToolButton icon={<rect x="3" y="3" width="18" height="18" rx="2"/>} onClick={() => editor.setCurrentTool('geo')} title="Shapes" active={editor.getCurrentToolId() === 'geo'} />
-            <ToolButton icon={<path d="M5 12h14 M12 5l7 7-7 7"/>} onClick={() => editor.setCurrentTool('arrow')} title="Arrow" active={editor.getCurrentToolId() === 'arrow'} />
-            <div className="h-px w-8 bg-slate-100 mx-auto"></div>
-            <ToolButton icon={<path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7 M16 5l5 5-5 5 M21 5l-10 10"/>} onClick={() => editor.setCurrentTool('select')} title="Select" active={editor.getCurrentToolId() === 'select'} />
-            
-            <ToolButton icon={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></>} onClick={() => document.getElementById('image-upload').click()} title="Upload Image" active={false} />
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 bg-white p-3 rounded-[2rem] shadow-2xl border border-slate-200 z-[1000]">
+            <ToolButton 
+                icon={<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>} 
+                onClick={() => document.getElementById('image-upload').click()} 
+                title="Image" 
+            />
             <input type="file" id="image-upload" className="hidden" accept="image/*" onChange={(e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -81,21 +74,21 @@ const SidebarToolbar = ({ editor, activeTab }) => {
                     reader.readAsDataURL(file);
                 }
             }} />
-
-            <ToolButton icon={<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></>} onClick={() => document.getElementById('pdf-upload').click()} title="Upload PDF" active={false} />
+ 
+            <ToolButton 
+                icon={<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"/>} 
+                onClick={() => document.getElementById('pdf-upload').click()} 
+                title="PDF" 
+            />
             <input type="file" id="pdf-upload" className="hidden" accept="application/pdf" onChange={handlePdfUpload} />
-
+            
             <div className="h-px w-8 bg-slate-100 mx-auto"></div>
-            <div className="flex flex-col gap-1 items-center">
-                 {['black', 'red', 'blue', 'green'].map(color => (
-                     <button 
-                        key={color}
-                        onClick={() => editor.setStyleForNextShapes({ color: color === 'black' ? 'black' : color === 'red' ? 'light-red' : color === 'blue' ? 'light-blue' : 'light-green' })}
-                        className={`w-6 h-6 rounded-full border-2 ${editor.getSharedStyles().get('color') === (color === 'black' ? 'black' : color === 'red' ? 'light-red' : color === 'blue' ? 'light-blue' : 'light-green') ? 'border-slate-900' : 'border-transparent'}`}
-                        style={{ backgroundColor: color }}
-                     />
-                 ))}
-            </div>
+            
+            <ToolButton 
+                icon={<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>} 
+                onClick={() => window.openWhiteboardLibrary && window.openWhiteboardLibrary()} 
+                title="Library" 
+            />
         </div>
     );
 };
@@ -345,7 +338,7 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
                 } else if (action === 'slow_mode') {
                     setSlowMode(data.enabled);
                 } else if (action === 'reaction' && role === 'STUDENT') {
-                    if (data.targetId === editor?.user?.getId()) {
+                    if (data.targetId === editor?.getInstanceState().userId) {
                         setReaction(data.emoji);
                         setTimeout(() => setReaction(null), 3000);
                     }
@@ -389,7 +382,7 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
                     sendMessage(JSON.stringify({
                         type: 'draw',
                         is_thumbnail: true,
-                        clientId: editor.user.getId(),
+                        clientId: editor.getInstanceState().userId,
                         name: userName || 'Student',
                         svg: svgString.svg,
                         snapshot: editor.store.allRecords()
@@ -434,7 +427,7 @@ const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbna
                 const shapeIds = Array.from(editor.getCurrentPageShapeIds());
                 const svgString = await editor.getSvgString(shapeIds, { padding: 10 });
                 sendMessage(JSON.stringify({
-                    type: 'draw', is_thumbnail: true, clientId: editor.user.getId(), name: userName || 'Student',
+                    type: 'draw', is_thumbnail: true, clientId: editor.getInstanceState().userId, name: userName || 'Student',
                     svg: svgString?.svg || "", snapshot: editor.store.allRecords()
                 }));
             };
@@ -473,6 +466,7 @@ const TeacherBoardViewer = ({ snapshot }) => {
     const [editor, setEditor] = useState(null);
     useEffect(() => {
         if (editor && snapshot) {
+            editor.updateInstanceState({ isReadonly: true });
             editor.store.mergeRemoteChanges(() => {
                 editor.store.clear();
                 Object.values(snapshot).forEach(record => editor.store.put([record]));
@@ -482,7 +476,7 @@ const TeacherBoardViewer = ({ snapshot }) => {
 
     return (
         <div className="w-full h-full relative">
-            <Tldraw hideUi={true} onMount={setEditor} isReadOnly={true} />
+            <Tldraw hideUi={true} onMount={setEditor} />
             <div className="absolute top-4 left-4 bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg">
                 Teacher's Live Board (Read-Only)
             </div>
