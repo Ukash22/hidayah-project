@@ -308,21 +308,18 @@ const CustomHeader = ({ editor, activeTab, setActiveTab, role, onPush, onDownloa
 const WhiteboardEngine = ({ roomId, role, userName, activeTab, setStudentThumbnails, setTeacherBoardSnapshot, isSlowMode, setRoomLocked, setSlowMode, setReaction }) => {
     const editor = useEditor();
     
-    // Robust WebSocket URL calculation
-    const getWsUrl = () => {
+    // Robust WebSocket URL calculation (Memoized to prevent constant reconnection)
+    const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
-        // Ensure it starts with ws:// or wss://
         let base = apiBase.replace(/^http/, 'ws');
         if (!base.startsWith('ws')) {
             base = `wss://${base}`;
         }
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
         const finalUrl = `${cleanBase}/ws/board/${roomId}/`;
-        console.log("🔌 Attempting WebSocket Connection to:", finalUrl);
+        console.log("🔌 Stable WebSocket URL:", finalUrl);
         return finalUrl;
-    };
-
-    const socketUrl = getWsUrl();
+    }, [roomId]);
     
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
