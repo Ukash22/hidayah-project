@@ -4,6 +4,17 @@ import axios from 'axios'
 import './index.css'
 import App from './App.jsx'
 
+// ── SUPPRESS TLDRAW LICENSE WARNINGS ────────────────────────────────────────
+const suppress = (method) => {
+    const original = console[method];
+    console[method] = (...args) => {
+        if (args[0] && typeof args[0] === 'string' && (args[0].includes('tldraw') || args[0].includes('sales@tldraw.com'))) return;
+        original.apply(console, args);
+    };
+};
+['log', 'warn', 'error', 'debug'].forEach(suppress);
+
+
 // ── GLOBAL API CONFIGURATION ────────────────────────────────────────────────
 // This interceptor fixes cases where the API URL is incorrectly constructed
 // as a relative path, which happens if VITE_API_BASE_URL is missing the protocol.

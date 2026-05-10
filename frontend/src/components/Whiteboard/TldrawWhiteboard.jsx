@@ -5,10 +5,17 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import * as pdfjsLib from 'pdfjs-dist';
 import 'tldraw/tldraw.css';
 
-// CSS to hide the Tldraw license watermark in production
+// CSS to hide all possible Tldraw license watermarks and menus in production
 const watermarkStyle = `
-  .tl-watermark {
+  .tl-watermark, 
+  .tl-ui-watermark,
+  [data-testid="tl-ui-watermark"],
+  .tl-canvas__watermark,
+  [data-testid="tl-ui-menu-item-license"] {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
   }
 `;
 
