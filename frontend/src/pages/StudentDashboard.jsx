@@ -242,26 +242,22 @@ const StudentDashboard = () => {
     };
 
     const handleJoinClass = async (cls) => {
-        if (!profile || profile.wallet_balance <= 0) {
-            alert("Your wallet balance is empty. Please fund your account to continue accessing classes.");
-            navigate('/payment');
-            return;
+        const sessionId = cls.db_id || cls.id;
+
+        // Notify backend that student joined (non-blocking)
+        try {
+            await axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`,
+                {},
+                { headers: getAuthHeader() }
+            );
+        } catch (e) {
+            // Non-blocking — proceed regardless
+            console.warn("Could not notify backend of join:", e);
         }
 
-        try {
-            setLoading(true);
-            const sessionId = cls.db_id || cls.id;
-            // Notify backend that student joined
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/student/classes/${sessionId}/join/`, {}, { headers: getAuthHeader() });
-            
-            // Navigate to internal Live Classroom
-            navigate(`/live/${sessionId}`);
-        } catch (e) {
-            console.error("Join class failed", e);
-            alert("Unable to join class. Please try again later.");
-        } finally {
-            setLoading(false);
-        }
+        // Navigate to internal Live Classroom
+        navigate(`/live/${sessionId}`);
     };
 
     const calculateScheduleStatus = () => {
