@@ -8,7 +8,10 @@ import App from './App.jsx'
 const suppress = (method) => {
     const original = console[method];
     console[method] = (...args) => {
-        if (args[0] && typeof args[0] === 'string' && (args[0].includes('tldraw') || args[0].includes('sales@tldraw.com'))) return;
+        if (args[0] && typeof args[0] === 'string') {
+            const msg = args[0].toLowerCase();
+            if (msg.includes('tldraw') || msg.includes('sales@tldraw.com') || msg.includes('license')) return;
+        }
         original.apply(console, args);
     };
 };

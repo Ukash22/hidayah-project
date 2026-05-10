@@ -70,7 +70,7 @@ const LiveClassRoom = () => {
                         ],
                     }}
                     userInfo={{
-                        displayName: userName || 'User'
+                        displayName: user?.first_name || 'User'
                     }}
                     getIFrameRef={(iframeRef) => { iframeRef.style.height = '100%'; iframeRef.style.width = '100%'; }}
                 />
