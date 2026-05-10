@@ -6,6 +6,19 @@ import * as pdfjsLib from 'pdfjs-dist';
 import 'tldraw/tldraw.css';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+ 
+const ToolButton = ({ icon, onClick, title, active }) => (
+    <button 
+        onClick={onClick}
+        title={title}
+        className={`p-3 rounded-xl transition-all flex flex-col items-center gap-1 group ${active ? 'bg-emerald-500 text-white' : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'}`}
+    >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-colors">
+            {icon}
+        </svg>
+        <span className={`text-[8px] font-black uppercase tracking-widest ${active ? 'text-white' : 'text-slate-400'}`}>{title}</span>
+    </button>
+);
 
 const SidebarToolbar = ({ editor, activeTab }) => {
     if (!editor || (activeTab !== 'my_board' && activeTab !== 'student_view')) return null;
