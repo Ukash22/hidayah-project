@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { JitsiMeeting } from '@jitsi/react-sdk';
+import WebRTCVideoChat from '../components/LiveClass/WebRTCVideoChat';
 import TldrawWhiteboard from '../components/Whiteboard/TldrawWhiteboard';
 
 const LiveClassRoom = () => {
@@ -17,9 +17,9 @@ const LiveClassRoom = () => {
         <TldrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
       </div>
 
-      {/* Collapsible Jitsi Sidebar */}
+      {/* Collapsible Video Sidebar */}
       <div 
-        className={`fixed top-0 right-0 h-full bg-slate-900 border-l border-slate-700 shadow-2xl transition-transform duration-300 z-[2000] flex flex-col ${isVideoOpen ? 'translate-x-0 w-80 md:w-96' : 'translate-x-full w-80 md:w-96'}`}
+        className={`fixed top-0 right-0 h-full bg-slate-900 border-l border-slate-700 shadow-2xl transition-transform duration-300 z-[2000] flex flex-col ${isVideoOpen ? 'translate-x-0 w-[400px] md:w-[500px]' : 'translate-x-full w-[400px] md:w-[500px]'}`}
       >
           {/* Toggle Button attached to sidebar */}
           <button 
@@ -34,47 +34,8 @@ const LiveClassRoom = () => {
               </svg>
           </button>
 
-          <div className="p-4 border-b border-slate-800 flex justify-between items-center">
-              <h3 className="text-white font-bold flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Live Class Video
-              </h3>
-              <button onClick={() => setIsVideoOpen(false)} className="text-slate-400 hover:text-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                  </svg>
-              </button>
-          </div>
-
-          <div className="flex-1 w-full bg-black">
-              {isVideoOpen && (
-                <JitsiMeeting
-                    domain="meet.jit.si"
-                    roomName={`HidayahClass_${roomId}`}
-                    configOverwrite={{
-                        startWithAudioMuted: true,
-                        disableModeratorIndicator: true,
-                        disableWhiteboard: true, // Disable built-in whiteboard
-                        hideConferenceTimer: true,
-                        prejoinPageEnabled: false,
-                    }}
-                    interfaceConfigOverwrite={{
-                        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-                        TOOLBAR_BUTTONS: [
-                            'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-                            'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
-                            'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-                            'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-                            'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-                            'security'
-                        ],
-                    }}
-                    userInfo={{
-                        displayName: user?.first_name || 'User'
-                    }}
-                    getIFrameRef={(iframeRef) => { iframeRef.style.height = '100%'; iframeRef.style.width = '100%'; }}
-                />
-              )}
+          <div className="flex-1 w-full bg-black overflow-hidden relative">
+              <WebRTCVideoChat roomId={roomId} isVideoOpen={isVideoOpen} setIsVideoOpen={setIsVideoOpen} />
           </div>
       </div>
     </div>
