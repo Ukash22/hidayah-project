@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import WebRTCVideoChat from '../components/LiveClass/WebRTCVideoChat';
-import TldrawWhiteboard from '../components/Whiteboard/TldrawWhiteboard';
+import ExcalidrawWhiteboard from '../components/Whiteboard/ExcalidrawWhiteboard';
 
 const LiveClassRoom = () => {
   const { roomId } = useParams();
@@ -14,7 +14,7 @@ const LiveClassRoom = () => {
       
       {/* Whiteboard Section (Takes full width) */}
       <div className="flex-1 relative transition-all duration-300">
-        <TldrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
+        <ExcalidrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
       </div>
 
       {/* Collapsible Video Sidebar */}
