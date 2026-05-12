@@ -33,7 +33,6 @@ urlpatterns = [
     # Admin Financials
     path('booking/initiate/<int:booking_id>/', InitiateBookingPaymentView.as_view(), name='initiate_booking_payment'),
     path('booking/verify/<str:reference>/', VerifyBookingPaymentView.as_view(), name='verify_booking_payment'),
-    path('verify/<str:reference>/', VerifyPaymentView.as_view(), name='verify-payment'),
     path('admin/financials/', AdminFinancialStatsView.as_view(), name='admin-financials'),
     path('tutor/wallet/', TutorWalletView.as_view(), name='tutor_wallet'),
     path('tutor/financials/', TutorFinancialsView.as_view(), name='tutor-financials'),

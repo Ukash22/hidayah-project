@@ -363,10 +363,12 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                                 </div>
                                             </div>
                                             <div className="h-48 bg-white p-2 relative flex items-center justify-center border-b border-slate-100">
-                                                {data.svg ? (
+                                                {data.svg && data.svg.startsWith('<svg') ? (
                                                     <div dangerouslySetInnerHTML={{ __html: data.svg }} className="w-full h-full object-contain pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity [&>svg]:w-full [&>svg]:h-full" />
                                                 ) : (
-                                                    <div className="text-slate-200 font-black text-4xl opacity-20 select-none">EMPTY</div>
+                                                    <div className="text-slate-200 font-black text-4xl opacity-20 select-none">
+                                                        {data.svg ? 'INVALID DATA' : 'EMPTY'}
+                                                    </div>
                                                 )}
                                             </div>
                                             <div className="p-4 bg-slate-50 flex gap-2">

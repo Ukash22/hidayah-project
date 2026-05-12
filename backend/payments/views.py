@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from django.conf import settings
@@ -279,7 +280,7 @@ class AdminWalletActionView(APIView):
              return Response({"error": "Missing required fields"}, status=400)
              
         from decimal import Decimal
-        from students.models import StudentProfile, WalletTransaction
+        from students.models import StudentProfile
         
         try:
             user = User.objects.get(student_profile__id=student_id)
@@ -541,9 +542,9 @@ class AdminPaymentAnalyticsView(APIView):
         from classes.models import ScheduledSession
         class_stats = ScheduledSession.objects.aggregate(
             total=Count('id'),
-            completed=Count('id', filter=models.Q(status='COMPLETED')),
-            total_fees=Sum('fee_amount', filter=models.Q(status='COMPLETED')),
-            total_commissions=Sum('commission_amount', filter=models.Q(status='COMPLETED'))
+            completed=Count('id', filter=Q(status='COMPLETED')),
+            total_fees=Sum('fee_amount', filter=Q(status='COMPLETED')),
+            total_commissions=Sum('commission_amount', filter=Q(status='COMPLETED'))
         )
 
         # --- Daily chart (last 30 days) ---
@@ -639,10 +640,10 @@ class TutorFinancialsView(APIView):
         # Summary Stats
         stats = sessions.aggregate(
             total_classes=Count('id'),
-            completed_classes=Count('id', filter=models.Q(status='COMPLETED')),
-            gross_earnings=Sum('fee_amount', filter=models.Q(status='COMPLETED')),
-            net_earnings=Sum('fee_amount', filter=models.Q(status='COMPLETED')) - Sum('commission_amount', filter=models.Q(status='COMPLETED')),
-            total_commission=Sum('commission_amount', filter=models.Q(status='COMPLETED'))
+            completed_classes=Count('id', filter=Q(status='COMPLETED')),
+            gross_earnings=Sum('fee_amount', filter=Q(status='COMPLETED')),
+            net_earnings=Sum('fee_amount', filter=Q(status='COMPLETED')) - Sum('commission_amount', filter=Q(status='COMPLETED')),
+            total_commission=Sum('commission_amount', filter=Q(status='COMPLETED'))
         )
 
         # Recent completed classes with details
