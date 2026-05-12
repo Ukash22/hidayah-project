@@ -438,7 +438,7 @@ const AdminDashboard = () => {
 
     const fetchAdmins = async () => {
         try {
-            const res = await api.get('/api/accounts/admin/users/?role=ADMIN');
+            const res = await api.get('/api/auth/admin/users/?role=ADMIN');
             setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Admins fetch failed"); }
     };
@@ -452,7 +452,7 @@ const AdminDashboard = () => {
                 payload.is_superuser = true;
                 payload.is_staff = true;
             }
-            await api.post('/api/accounts/admin/users/', payload);
+            await api.post('/api/auth/admin/users/', payload);
             alert(`${userForm.role} created successfully!`);
             setShowUserModal(false);
             setUserForm({
@@ -474,7 +474,7 @@ const AdminDashboard = () => {
         if (!window.confirm(`Are you sure you want to delete this ${role}? This action cannot be undone.`)) return;
         try {
             setActionLoading(true);
-            await api.delete(`/api/accounts/admin/users/${userId}/`);
+            await api.delete(`/api/auth/admin/users/${userId}/`);
             alert(`${role} deleted successfully.`);
             // Refresh current view
             if (activeTab === 'students') fetchStudents();

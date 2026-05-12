@@ -95,7 +95,7 @@ const StudentDashboard = () => {
             // Actually transactionsRes is the 6th element in Promise.all
 
             try {
-                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/`, { headers: getAuthHeader() });
+                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, { headers: getAuthHeader() });
                 setNotifications(notifRes.data.slice(0, 3));
             } catch (e) { console.error("Notif fetch failed", e); }
 

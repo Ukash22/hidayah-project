@@ -16,7 +16,7 @@ const NotificationCenter = () => {
 
     const fetchNotifications = async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, {
                 headers: getAuthHeader()
             });
             if (Array.isArray(res.data)) {
@@ -41,7 +41,7 @@ const NotificationCenter = () => {
 
     const markAsRead = async (id) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/${id}/read/`, {}, {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/${id}/read/`, {}, {
                 headers: getAuthHeader()
             });
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));

@@ -86,7 +86,7 @@ const TutorDashboard = () => {
 
             // Fetch notifications
             try {
-                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/`, { headers: getAuthHeader() });
+                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, { headers: getAuthHeader() });
                 setNotifications(notifRes.data.slice(0, 3));
             } catch (e) { console.error("Notif fetch failed", e); }
 
@@ -383,7 +383,7 @@ const TutorDashboard = () => {
                                             {!n.is_read && (
                                                 <button
                                                     onClick={async () => {
-                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/accounts/notifications/${n.id}/read/`, {}, { headers: getAuthHeader() });
+                                                        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/${n.id}/read/`, {}, { headers: getAuthHeader() });
                                                         setNotifications(prev => prev.filter(item => item.id !== n.id));
                                                     }}
                                                     className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 hover:bg-blue-600 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 ml-4 border border-slate-100 hover:border-blue-600"
