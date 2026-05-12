@@ -14,6 +14,7 @@ class PaystackService:
     
     @staticmethod
     def initialize_payment(email, amount, reference, metadata=None):
+        print(f"DEBUG: [PaystackService] Init for {email}, Amount: {amount}, Ref: {reference}")
         """
         Initialize a Paystack payment transaction
         """

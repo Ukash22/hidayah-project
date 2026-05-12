@@ -64,6 +64,12 @@ class InitiatePaymentView(APIView):
                 )
             else:
                 ref = profile.payment_reference
+                if not ref:
+                    import uuid
+                    ref = f"ADM-{uuid.uuid4().hex[:8].upper()}"
+                    profile.payment_reference = ref
+                    profile.save()
+                    print(f"DEBUG: Generated new ref for student: {ref}")
                 payment, created = Payment.objects.get_or_create(
                     student=user, status='PENDING', transaction_id=ref,
                     defaults={'amount': amount_to_charge, 'payment_method': 'PAYSTACK'}
@@ -99,9 +105,11 @@ class InitiatePaymentView(APIView):
             metadata = {"user_id": user.id, "type": "WALLET_TOPUP"}
 
         # Initialize Paystack payment
+        print(f"DEBUG: [InitiatePaymentView] Calling PaystackService.initialize_payment with amount={amount_to_charge} ref={ref}")
         result = PaystackService.initialize_payment(
             email=user.email, amount=amount_to_charge, reference=ref, metadata=metadata
         )
+        print(f"DEBUG: [InitiatePaymentView] Result: {result}")
         
         if result["success"]:
             if result.get("access_code"):
