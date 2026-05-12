@@ -606,15 +606,71 @@ const StudentDashboard = () => {
                                                                     <span>{enr.preferred_time || 'Time TBA'}</span>
                                                                 </div>
                                                             </div>
+
+                                                            <div className="flex flex-col bg-blue-50/30 rounded-2xl border border-blue-100/50 overflow-hidden">
+                                                                <div className="flex items-center justify-between p-3 bg-blue-50/50 border-b border-blue-100/50">
+                                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                                                        <Calendar size={12} /> Upcoming Classes
+                                                                    </span>
+                                                                    <span className="text-xs font-black text-slate-900 bg-white px-2 py-0.5 rounded-full shadow-sm">{enr.upcoming_sessions_count || 0}</span>
+                                                                </div>
+                                                                
+                                                                <div className="p-2 space-y-1 max-h-[150px] overflow-y-auto custom-scrollbar">
+                                                                    {enr.upcoming_sessions && enr.upcoming_sessions.length > 0 ? (
+                                                                        enr.upcoming_sessions.map((sess, idx) => (
+                                                                            <div key={sess.id} className="flex items-center justify-between p-2 bg-white rounded-xl border border-slate-100 hover:border-blue-200 transition-all group">
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight">
+                                                                                        {new Date(sess.scheduled_at).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                                                                                    </span>
+                                                                                    <span className="text-[9px] font-bold text-blue-600">
+                                                                                        {new Date(sess.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    {sess.is_started && (
+                                                                                        <span className="relative flex h-2 w-2">
+                                                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                                                        </span>
+                                                                                    )}
+                                                                                    <button 
+                                                                                        onClick={() => {
+                                                                                            if (sess.meeting_link?.startsWith('http')) {
+                                                                                                window.open(sess.meeting_link, '_blank');
+                                                                                            } else {
+                                                                                                navigate(`/live/${sess.id}`);
+                                                                                            }
+                                                                                        }}
+                                                                                        className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+                                                                                    >
+                                                                                        Join
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))
+                                                                    ) : (
+                                                                        <div className="py-4 text-center text-[9px] text-slate-400 font-bold italic">
+                                                                            Schedule being finalized...
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                             
                                                             {enr.status === 'APPROVED' && enr.tutor_class_link && (
                                                                     <button 
                                                                         onClick={() => navigate(`/live/${enr.id || enr.db_id}`)}
                                                                         className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                                                     >
-                                                                        📹 Join Classroom ↗
+                                                                        📹 Enter Subject Classroom ↗
                                                                     </button>
                                                             )}
+                                                            <button 
+                                                                onClick={() => setActiveTab('classes')}
+                                                                className="w-full text-blue-600 py-1 font-bold text-[9px] uppercase tracking-widest hover:underline text-center"
+                                                            >
+                                                                View Detailed Schedule →
+                                                            </button>
                                                             {(!enr.tutor_class_link && enr.status === 'APPROVED') && (
                                                                 <p className="text-[8px] text-amber-600 font-bold text-center bg-amber-50 py-2 rounded-lg italic">Class link will be active shortly.</p>
                                                             )}

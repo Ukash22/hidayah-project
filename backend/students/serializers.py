@@ -14,7 +14,17 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         from .models import Enrollment
         model = Enrollment
-        fields = ('id', 'subject', 'subject_name', 'tutor', 'tutor_name', 'tutor_class_link', 'hourly_rate', 'hours_per_week', 'days_per_week', 'preferred_days', 'preferred_time', 'weekly_rate', 'monthly_rate', 'status')
+        fields = ('id', 'subject', 'subject_name', 'tutor', 'tutor_name', 'tutor_class_link', 'hourly_rate', 'hours_per_week', 'days_per_week', 'preferred_days', 'preferred_time', 'weekly_rate', 'monthly_rate', 'status', 'upcoming_sessions_count', 'upcoming_sessions')
+
+    def get_upcoming_sessions_count(self, obj):
+        from classes.models import ScheduledSession
+        from django.utils import timezone
+        return ScheduledSession.objects.filter(
+            student=obj.student.user,
+            subject=obj.subject,
+            status='PENDING',
+            scheduled_at__gte=timezone.now()
+        ).count()
 
     def get_tutor_name(self, obj):
         if obj.tutor:
@@ -26,6 +36,25 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
             return obj.tutor.tutor_profile.live_class_link
         return None
+
+    upcoming_sessions = serializers.SerializerMethodField()
+    def get_upcoming_sessions(self, obj):
+        from classes.models import ScheduledSession
+        from django.utils import timezone
+        sessions = ScheduledSession.objects.filter(
+            student=obj.student.user,
+            subject=obj.subject,
+            status='PENDING',
+            scheduled_at__gte=timezone.now()
+        ).order_by('scheduled_at')[:5] # Show next 5 sessions
+        
+        return [{
+            'id': s.id,
+            'scheduled_at': s.scheduled_at,
+            'meeting_link': s.meeting_link,
+            'whiteboard_link': s.whiteboard_link,
+            'is_started': s.is_started
+        } for s in sessions]
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     admission_letter_url = serializers.SerializerMethodField()

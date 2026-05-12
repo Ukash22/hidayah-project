@@ -84,14 +84,15 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
                 
                 session_at = timezone.make_aware(datetime.datetime.combine(session_date, dt_time))
                 
-                # Auto-generate a secure random Jitsi link if the tutor doesn't have a personal link
-                if not meeting_link:
-                    room_id = f"Hidayah-Session-{uuid.uuid4().hex[:12]}"
+                # Use tutor's personal link if available, otherwise generate a secure Jitsi link as fallback
+                final_meeting_link = meeting_link
+                final_whiteboard_link = whiteboard_link
+                
+                if not final_meeting_link:
+                    # Generate a unique room ID for this specific session
+                    room_id = f"Hidayah-{subject_obj.name.replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
                     final_meeting_link = f"https://meet.jit.si/{room_id}"
                     final_whiteboard_link = final_meeting_link
-                else:
-                    final_meeting_link = meeting_link
-                    final_whiteboard_link = whiteboard_link
 
                 # Create the session
                 session = ScheduledSession.objects.create(
