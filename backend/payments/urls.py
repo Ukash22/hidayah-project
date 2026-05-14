@@ -19,7 +19,8 @@ from .views import (
     AdminPaymentAnalyticsView,
     AdminFinancialStatsView,
     TutorFinancialsView,
-    AdminPlatformSettingsView
+    AdminPlatformSettingsView,
+    ProcessWalletPaymentView
 )
 
 urlpatterns = [
@@ -33,6 +34,7 @@ urlpatterns = [
     # Admin Financials
     path('booking/initiate/<int:booking_id>/', InitiateBookingPaymentView.as_view(), name='initiate_booking_payment'),
     path('booking/verify/<str:reference>/', VerifyBookingPaymentView.as_view(), name='verify_booking_payment'),
+    path('booking/wallet-pay/<int:booking_id>/', ProcessWalletPaymentView.as_view(), name='booking_wallet_pay'),
     path('admin/financials/', AdminFinancialStatsView.as_view(), name='admin-financials'),
     path('tutor/wallet/', TutorWalletView.as_view(), name='tutor_wallet'),
     path('tutor/financials/', TutorFinancialsView.as_view(), name='tutor-financials'),

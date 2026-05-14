@@ -450,6 +450,45 @@ class VerifyBookingPaymentView(APIView):
                 return Response({"error": "Invalid booking reference"}, status=400)
                 
         return Response({"error": "Payment verification failed"}, status=400)
+                
+class ProcessWalletPaymentView(APIView):
+    """Pay for a Booking using Wallet Balance"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, booking_id):
+        from .models import Wallet, Transaction
+        from .services import process_payment
+        from classes.models import Booking
+        
+        booking = get_object_or_404(Booking, id=booking_id, student=request.user, approved=True)
+        if booking.paid:
+            return Response({"error": "Already paid"}, status=400)
+            
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        if wallet.balance < booking.price:
+            return Response({"error": "Insufficient wallet balance"}, status=400)
+            
+        # Deduct from wallet
+        wallet.balance -= booking.price
+        wallet.save()
+        
+        # Record transaction
+        Transaction.objects.create(
+            user=request.user,
+            amount=booking.price,
+            transaction_type='SESSION_DEBIT',
+            description=f"Payment for {booking.subject} (Wallet)",
+            reference=f"WLT-{booking.id}-{int(timezone.now().timestamp())}"
+        )
+        
+        # Process fulfillment (enrollment creation + sessions)
+        process_payment(booking)
+        
+        return Response({
+            "success": True,
+            "message": "Payment successful using wallet balance",
+            "new_balance": float(wallet.balance)
+        })
 
 class TutorWalletView(APIView):
     """Tutor: View wallet balance and transaction history"""

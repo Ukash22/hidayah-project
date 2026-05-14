@@ -78,10 +78,44 @@ const PaymentPage = () => {
             setError('Please select a payment method first');
             return;
         }
+
+        // Special check for Wallet payment
+        if (paymentMethod === 'wallet') {
+            if (parseFloat(profile?.wallet_balance || 0) < parseFloat(loadAmount || 0)) {
+                setError('Insufficient wallet balance to complete this transaction');
+                return;
+            }
+            if (!bookingId && profile?.payment_status !== 'UNPAID') {
+                setError('Wallet balance can only be used for booking payments or initial fees.');
+                return;
+            }
+        }
+
         setProcessing(true);
         setError('');
 
         try {
+            // Handle Wallet payment locally
+            if (paymentMethod === 'wallet') {
+                const walletEndpoint = bookingId 
+                    ? `${import.meta.env.VITE_API_BASE_URL}/api/payments/booking/wallet-pay/${bookingId}/`
+                    : `${import.meta.env.VITE_API_BASE_URL}/api/payments/initiate/`; // Backend should handle wallet logic in initiate if amount is 0? No, let's assume it's only for bookings for now.
+                
+                // If it's a general payment (Initial Fee) and they have wallet balance?
+                // For now, let's just support bookings.
+                if (!bookingId) {
+                    setError('Wallet payments are currently only supported for specific bookings.');
+                    setProcessing(false);
+                    return;
+                }
+
+                const response = await axios.post(walletEndpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
+                if (response.data.success) {
+                    navigate('/student', { state: { message: 'Payment processed successfully using your wallet balance!' } });
+                    return;
+                }
+            }
+
             const endpoint = bookingId 
                 ? `${import.meta.env.VITE_API_BASE_URL}/api/payments/booking/initiate/${bookingId}/`
                 : `${import.meta.env.VITE_API_BASE_URL}/api/payments/initiate/`;
@@ -99,7 +133,7 @@ const PaymentPage = () => {
                 setProcessing(false);
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to initialize payment');
+            setError(err.response?.data?.error || 'Failed to process payment');
             setProcessing(false);
         }
     };
@@ -116,6 +150,7 @@ const PaymentPage = () => {
     }
 
     const methods = [
+        { id: 'wallet', name: 'Wallet Balance', icon: '💰', desc: `Pay using your available balance (₦${parseFloat(profile?.wallet_balance || 0).toLocaleString()})` },
         { id: 'card', name: 'Debit/Credit Card', icon: '💳', desc: 'Secure payment via Visa, Mastercard, or Verve' },
         { id: 'transfer', name: 'Bank Transfer', icon: '🏦', desc: 'Transfer directly to a dedicated bank account' },
         { id: 'ussd', name: 'USSD / QR Code', icon: '📱', desc: 'Dial a code on your phone or scan to pay' }
