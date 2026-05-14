@@ -10,6 +10,7 @@ from tutors.serializers import PublicTutorSerializer
 class EnrollmentSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     tutor_name = serializers.SerializerMethodField()
+    upcoming_sessions_count = serializers.SerializerMethodField()
     
     class Meta:
         from .models import Enrollment
