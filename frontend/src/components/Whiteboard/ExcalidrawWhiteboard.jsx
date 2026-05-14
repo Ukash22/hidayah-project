@@ -3,7 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import api from '../../services/api';
 
-const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards }) => {
+const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onSelectPen }) => {
     const [showControls, setShowControls] = useState(false);
 
     return (
@@ -56,6 +56,16 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                 )}
 
                 <div className="flex gap-2 items-center">
+                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
+                        <button 
+                            onClick={onSelectPen}
+                            className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-slate-600"
+                        >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l5 5"/><path d="M9.5 14.5L16 21"/></svg>
+                            Pen
+                        </button>
+                    )}
+
                     <button onClick={onDownload} className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
@@ -67,7 +77,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                                 className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
                             >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                Push to All
+                                Push Board
                             </button>
                             
                             <div className="relative">
@@ -217,7 +227,26 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }));
             } catch (e) {}
         }
+    const handleSelectPen = () => {
+        if (excalidrawAPI) {
+            excalidrawAPI.updateScene({ appState: { activeTool: { type: 'freedraw' } } });
+        }
     };
+
+    // Auto-select Pen tool for tutors on mount
+    useEffect(() => {
+        if (excalidrawAPI && (role === 'TUTOR' || role === 'ADMIN')) {
+            setTimeout(() => {
+                excalidrawAPI.updateScene({ 
+                    appState: { 
+                        activeTool: { type: 'freedraw' },
+                        currentItemStrokeWidth: 1,
+                        currentItemRoughness: 0
+                    } 
+                });
+            }, 800);
+        }
+    }, [excalidrawAPI, role]);
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -289,6 +318,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 studentCount={Object.keys(studentThumbnails).length}
                 isLocked={isLocked}
                 isSlowMode={isSlowMode}
+                onSelectPen={handleSelectPen}
                 onToggleLock={() => {
                     const next = !isLocked;
                     setIsLocked(next);
