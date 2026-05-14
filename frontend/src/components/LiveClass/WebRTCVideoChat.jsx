@@ -56,23 +56,15 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-                
-                // Now that we have the stream, tell others we joined
-                if (readyState === ReadyState.OPEN) {
-                    console.log("🚀 Sending peer_join for:", user.id);
-                    sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
-                }
             } catch (err) {
-                console.error("Failed to get local media", err);
+                console.error("⚠️ Failed to get local media", err);
                 // Fallback: try audio only if video fails
                 try {
                     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     setLocalStream(audioStream);
-                    if (readyState === ReadyState.OPEN) {
-                        sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
-                    }
                 } catch(e) {
-                    alert("Please allow camera and microphone access to join the class.");
+                    console.error("⚠️ All media devices failed/missing", e);
+                    setLocalStream(new MediaStream()); // Empty fallback stream
                 }
             }
         };
@@ -174,6 +166,13 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 } 
                 else if (type === 'offer' && String(data.targetId) === String(user.id)) {
                     const pc = await getPeerConnection(peerId, name);
+                    
+                    // Handle Collision (Perfect Negotiation light)
+                    if (pc.signalingState !== 'stable') {
+                        console.warn(`⚠️ PC for ${name} in state ${pc.signalingState}, ignoring offer.`);
+                        return;
+                    }
+
                     await pc.setRemoteDescription(new RTCSessionDescription(sdp));
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
@@ -181,7 +180,13 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 } 
                 else if (type === 'answer' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];
-                    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                    if (pc) {
+                        if (pc.signalingState === 'have-local-offer') {
+                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                        } else {
+                            console.warn(`⚠️ Ignoring answer from ${peerId} because state is ${pc.signalingState}`);
+                        }
+                    }
                 } 
                 else if (type === 'ice_candidate' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];

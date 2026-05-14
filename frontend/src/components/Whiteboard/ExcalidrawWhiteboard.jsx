@@ -442,9 +442,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             canvasActions: {
                                 changeViewBackgroundColor: true,
                                 clearCanvas: true,
-                                export: true,
-                                loadScene: true,
-                                saveAsImage: true,
+                                export: false,
+                                loadScene: false,
+                                saveAsImage: false,
                                 theme: true,
                             },
                         }}
@@ -484,9 +484,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 canvasActions: {
                                     changeViewBackgroundColor: true,
                                     clearCanvas: false,
-                                    export: true,
+                                    export: false,
                                     loadScene: false,
-                                    saveAsImage: true,
+                                    saveAsImage: false,
                                     theme: true,
                                 }
                             }}
