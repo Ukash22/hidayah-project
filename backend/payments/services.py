@@ -108,6 +108,20 @@ def process_payment(booking):
             # Assume price is for 1 month (4 weeks)
             est_hourly = booking.price / (Decimal(str(booking.hours_per_week)) * Decimal('4'))
 
+        # Extract schedule info from the JSON string
+        days_list = []
+        if booking.schedule:
+            try:
+                import json
+                sched_data = json.loads(booking.schedule)
+                if isinstance(sched_data, list):
+                    days_list = [d.get('day', '') for d in sched_data]
+            except:
+                pass
+        
+        days_per_week = len(days_list) if days_list else 1
+        preferred_days_str = ", ".join(days_list) if days_list else "Days TBA"
+
         # Check for existing enrollment or create new one
         enrollment, created = Enrollment.objects.get_or_create(
             student=profile,
@@ -116,10 +130,10 @@ def process_payment(booking):
             defaults={
                 'hourly_rate': est_hourly,
                 'hours_per_week': booking.hours_per_week or 1,
-                'days_per_week': booking.days_per_week or 1,
+                'days_per_week': days_per_week,
                 'schedule': booking.schedule,
                 'status': 'APPROVED',
-                'preferred_days': booking.preferred_days,
+                'preferred_days': preferred_days_str,
                 'preferred_start_date': booking.preferred_start_date
             }
         )

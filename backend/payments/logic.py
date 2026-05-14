@@ -5,6 +5,7 @@ from .models import Wallet, Transaction, PlatformSettings, Payment
 from classes.models import ScheduledSession, Booking
 from django.utils import timezone
 import logging
+from .services import process_payment
 from applications.email_service import send_payment_confirmation_email, send_class_access_email
 
 logger = logging.getLogger(__name__)
