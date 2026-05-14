@@ -281,8 +281,8 @@ class RegisterSerializer(serializers.ModelSerializer):
                 assigned_tutor=final_tutor,
                 approval_status='APPROVED', # Instant Admission
                 payment_reference=f"HEMI-{uuid.uuid4().hex[:8].upper()}",
-                total_amount=first_payment,
-                payment_status='UNPAID'
+                total_amount=Decimal('0.00'), # No Admission Fee
+                payment_status='PAID' # Instant Access
             )
 
             # Create formal Enrollment objects for each subject (Instant Enrollment)

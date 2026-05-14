@@ -138,9 +138,9 @@ def generate_admission_letter(student_user, student_profile, fee_breakdown=None,
         line_y -= 0.4*inch
 
         # TOTAL FOOTER
-        c.setFillColor(HexColor('#DC2626'))
+        c.setFillColor(HexColor('#334155'))
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(inch + 0.2*inch, line_y, f"TOTAL ADMISSION PAYMENT (MONTHLY): N{initial_payment:,.0f}")
+        c.drawString(inch + 0.2*inch, line_y, f"CONSOLIDATED MONTHLY TUITION: N{initial_payment:,.0f}")
         line_y -= 0.5*inch
         
         # --- PAYMENT LINK SECTION ---

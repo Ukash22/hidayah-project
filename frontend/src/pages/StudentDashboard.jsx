@@ -379,40 +379,7 @@ const StudentDashboard = () => {
                          </div>
                     )}
 
-                    {profile?.approval_status === 'APPROVED' && profile?.payment_status === 'UNPAID' && (
-                        <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-blue-600 rounded-[3rem] p-10 md:p-12 mb-12 flex flex-col lg:flex-row items-center justify-between gap-10 shadow-2xl relative overflow-hidden group border border-white/10">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full translate-x-1/2 translate-y-[-50%]"></div>
-                            <div className="flex items-center gap-8 relative z-10">
-                                <div className="w-24 h-24 bg-white/20 backdrop-blur-2xl rounded-[2.5rem] flex items-center justify-center text-5xl shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
-                                    🎉
-                                </div>
-                                <div>
-                                    <h4 className="text-3xl font-display font-black text-white mb-2 uppercase tracking-tighter">Welcome to Hidayah!</h4>
-                                    <p className="text-indigo-100 font-bold opacity-90 max-w-lg leading-relaxed">
-                                        Congratulations! Your admission has been <span className="underline decoration-blue-400 decoration-2">automatically approved</span>. 
-                                        To start your journey, please download your admission letter and complete your first monthly payment.
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto relative z-10">
-                                {profile.admission_letter && (
-                                    <a 
-                                        href={profile.admission_letter} 
-                                        target="_blank"
-                                        className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-10 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all text-center flex items-center justify-center gap-3"
-                                    >
-                                        <Download size={16} /> Admission Letter
-                                    </a>
-                                )}
-                                <button 
-                                    onClick={() => setActiveTab('finance')}
-                                    className="bg-white text-indigo-700 hover:bg-indigo-50 px-12 py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all shadow-xl shadow-black/20"
-                                >
-                                    Pay Now & Start →
-                                </button>
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* Header Section */}
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">

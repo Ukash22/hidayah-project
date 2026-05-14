@@ -13,7 +13,6 @@ const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
 const ParentDashboard = lazy(() => import('./pages/ParentDashboard'))
 const PaymentPage = lazy(() => import('./pages/PaymentPage'))
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'))
-const AdmissionPortal = lazy(() => import('./pages/AdmissionPortal'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/ResetPassword'))
@@ -184,15 +183,6 @@ function App() {
             }
           />
 
-          {/* Admission Portal (Pre-Payment) */}
-          <Route
-            path="/admission"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT']}>
-                <AdmissionPortal />
-              </ProtectedRoute>
-            }
-          />
 
           {/* Payment Routes */}
           <Route

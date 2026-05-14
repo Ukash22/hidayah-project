@@ -346,7 +346,7 @@ const Register = () => {
                     subject: s,
                     preferred_tutor_id: subjectEnrollments[s] || null
                 })),
-                total_amount: totalToPay > 0 ? totalToPay : 1000,
+                total_amount: 0, // No Admission Fee
                 ...(isMinor && {
                     parent_first_name: formData.parentFirstName,
                     parent_last_name: formData.parentLastName,
@@ -364,7 +364,7 @@ const Register = () => {
             if (data.user?.role === 'ADMIN' || data.user?.is_superuser || data.user?.is_staff) {
                 window.location.href = '/admin';
             } else {
-                navigate('/payment');
+                navigate('/student');
             }
         } catch (err) {
             console.error("Registration Error details:", err.response?.data);
