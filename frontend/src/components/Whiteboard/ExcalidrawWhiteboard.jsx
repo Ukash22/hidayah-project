@@ -402,6 +402,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                         name="hidayah_live_board"
                         excalidrawAPI={(api) => setExcalidrawAPI(api)} 
                         onChange={handleBoardChange}
+                        viewModeEnabled={false}
                         initialData={{
                             appState: {
                                 currentItemStrokeWidth: 1,
@@ -410,7 +411,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 viewBackgroundColor: "#ffffff",
                                 theme: "light",
                                 zenModeEnabled: false,
-                                gridModeEnabled: false
+                                gridModeEnabled: false,
+                                openSidebar: null
                             }
                         }}
                         UIOptions={{
@@ -433,22 +435,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             <MainMenu.DefaultItems.ZenMode />
                             <MainMenu.DefaultItems.Help />
                         </MainMenu>
-                        <WelcomeScreen>
-                            <WelcomeScreen.Hints.MenuHint />
-                            <WelcomeScreen.Hints.ToolbarHint />
-                            <WelcomeScreen.Hints.HelpHint />
-                            <WelcomeScreen.Center>
-                                <WelcomeScreen.Center.Logo />
-                                <WelcomeScreen.Center.Heading>Hidayah Live Board</WelcomeScreen.Center.Heading>
-                                <WelcomeScreen.Center.Menu />
-                            </WelcomeScreen.Center>
-                        </WelcomeScreen>
-                        <Sidebar name="library">
-                            <Sidebar.Header>Library</Sidebar.Header>
-                            <Sidebar.Tabs>
-                                <Sidebar.Tab tab="library">My Shapes</Sidebar.Tab>
-                            </Sidebar.Tabs>
-                        </Sidebar>
                         <Footer>
                             <div style={{ padding: '0 10px', fontSize: '10px', color: '#666', fontWeight: 'bold' }}>
                                 ROOM: {roomId} | {role} MODE
