@@ -3,7 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import api from '../../services/api';
 
-const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onSelectPen }) => {
+const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onSelectPen, onSelectLaser }) => {
     const [showControls, setShowControls] = useState(false);
 
     return (
@@ -59,10 +59,18 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <button 
                             onClick={onSelectPen}
-                            className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-slate-600"
+                            className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-slate-600"
                         >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l5 5"/><path d="M9.5 14.5L16 21"/></svg>
-                            Pen
+                            ✏️ Pen
+                        </button>
+                    )}
+
+                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
+                        <button 
+                            onClick={onSelectLaser}
+                            className="px-4 py-2.5 bg-red-900/50 hover:bg-red-800/50 text-red-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-red-500/30"
+                        >
+                            🔦 Laser
                         </button>
                     )}
 
@@ -227,9 +235,17 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }));
             } catch (e) {}
         }
+    };
+
     const handleSelectPen = () => {
         if (excalidrawAPI) {
             excalidrawAPI.updateScene({ appState: { activeTool: { type: 'freedraw' } } });
+        }
+    };
+
+    const handleSelectLaser = () => {
+        if (excalidrawAPI) {
+            excalidrawAPI.updateScene({ appState: { activeTool: { type: 'laser' } } });
         }
     };
 
@@ -319,6 +335,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 isLocked={isLocked}
                 isSlowMode={isSlowMode}
                 onSelectPen={handleSelectPen}
+                onSelectLaser={handleSelectLaser}
                 onToggleLock={() => {
                     const next = !isLocked;
                     setIsLocked(next);
