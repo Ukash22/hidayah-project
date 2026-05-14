@@ -262,7 +262,18 @@ const StudentDashboard = () => {
             }
 
             // Force Navigate to internal Live Classroom
-            navigate(`/live/${sessionId}`);
+            let targetUrl = `/live/${sessionId}`;
+            if (cls.meeting_link) {
+                try {
+                    if (cls.meeting_link.startsWith('/live/')) {
+                        targetUrl = cls.meeting_link;
+                    } else {
+                        const urlObj = new URL(cls.meeting_link);
+                        targetUrl = urlObj.pathname; // Extracts /live/...
+                    }
+                } catch(e) {}
+            }
+            navigate(targetUrl);
         } catch (err) {
             console.error("Critical error in handleJoinClass:", err);
             alert("An error occurred while joining the class.");
@@ -621,7 +632,19 @@ const StudentDashboard = () => {
                                                             
                                                             {enr.status === 'APPROVED' && enr.tutor_class_link && (
                                                                     <button 
-                                                                        onClick={() => navigate(`/live/${enr.id || enr.db_id}`)}
+                                                                        onClick={() => {
+                                                                            let targetUrl = `/live/${enr.id || enr.db_id}`;
+                                                                            if (enr.tutor_class_link) {
+                                                                                try {
+                                                                                    if (enr.tutor_class_link.startsWith('/live/')) targetUrl = enr.tutor_class_link;
+                                                                                    else {
+                                                                                        const urlObj = new URL(enr.tutor_class_link);
+                                                                                        targetUrl = urlObj.pathname;
+                                                                                    }
+                                                                                } catch(e) {}
+                                                                            }
+                                                                            navigate(targetUrl);
+                                                                        }}
                                                                         className="w-full bg-blue-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-blue-600/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                                                     >
                                                                         📹 Enter Subject Classroom ↗
