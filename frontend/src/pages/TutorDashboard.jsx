@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '../components/DashboardLayout';
@@ -10,6 +11,7 @@ import { uploadMultipleToCloudinary } from '../services/cloudinaryService';
 
 const TutorDashboard = () => {
     const { user, token } = useAuth();
+    const navigate = useNavigate();
     const [schedule, setSchedule] = useState([]);
     const [assignedStudents, setAssignedStudents] = useState([]);
     const [requests, setRequests] = useState([]);
@@ -247,7 +249,7 @@ const TutorDashboard = () => {
             }
 
             // Force navigation to internal Live Classroom
-            window.location.href = `/live/${sessionId}`;
+            navigate(`/live/${sessionId}`);
         } catch (e) {
             console.error("Critical error in handleJoinClass:", e);
             alert("An error occurred while joining the class.");
@@ -1210,7 +1212,7 @@ const TutorDashboard = () => {
 
                                     <div className="grid md:grid-cols-2 gap-10">
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 ml-1">Live Class Link (Zoom/Jitsi)</label>
+                                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 ml-1">Live Class Link (Zoom/Internal)</label>
                                             <input 
                                                 type="url" 
                                                 value={tutorProfile.live_class_link || ''} 

@@ -1134,29 +1134,16 @@ const AdminDashboard = () => {
         let url = session.zoom_start_url || session.meeting_link; // Handle both Trial and Regular
         
         if (!url) {
-            // Jitsi Fallback
+            // Internal Live Classroom Fallback
             const sessionId = session.db_id || session.id;
-            const studentId = session.student || session.user_id || '99';
-            const room_id = `HidayahClass-${sessionId}-${studentId}`;
-            url = `https://meet.jit.si/${room_id}`;
+            url = `/live/${sessionId}`;
         }
         
-        const dateObj = new Date(session.scheduled_at);
-        const _dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const _dateString = dateObj.toLocaleDateString();
-        
-        const tutorName = session.tutor_name || session.assigned_tutor || 'Tutor';
-        const studentName = session.student_name || session.first_name || 'Student';
-        const subject = session.course_interested || session.subject || 'Class';
-        
-        const displayName = encodeURIComponent(`Admin Observer: ${tutorName} - ${studentName} (${subject})`);
-        
-        if (url.includes('meet.jit.si') || url.includes('8x8.vc')) {
-            const hashDivider = url.includes('#') ? '&' : '#';
-            url = `${url}${hashDivider}userInfo.displayName="${displayName}"`;
+        if (url.startsWith('/')) {
+            navigate(url);
+        } else {
+            window.open(url, '_blank');
         }
-        
-        window.open(url, '_blank');
     };
 
     // Find active/upcoming closest class
@@ -1567,9 +1554,9 @@ const AdminDashboard = () => {
                                                             const time = window.prompt("Enter Interview Time (YYYY-MM-DDTHH:MM):", new Date(Date.now() + 86400000).toISOString().slice(0, 16));
                                                             if (!time) return;
 
-                                                            const useAutoJitsi = window.confirm("Generate Live Class (Jitsi + Whiteboard) automatically?");
+                                                            const useAutoLive = window.confirm("Generate Live Classroom automatically?");
                                                             let link = "";
-                                                            if (!useAutoJitsi) {
+                                                            if (!useAutoLive) {
                                                                 link = window.prompt("Enter Manual Interview Meeting Link (Zoom/Meet):");
                                                                 if (!link) return;
                                                             }
@@ -1580,7 +1567,7 @@ const AdminDashboard = () => {
                                                                     action: 'INTERVIEW',
                                                                     interview_at: time,
                                                                     interview_link: link,
-                                                                    generate_zoom: useAutoJitsi
+                                                                    generate_zoom: useAutoLive
                                                                 });
                                                                 alert("✅ Interview Scheduled Successfully!");
                                                                 fetchTutorApps();
@@ -1792,7 +1779,7 @@ const AdminDashboard = () => {
                                                         {(student.meeting_link || student.assigned_tutor_details?.live_class_link) && (
                                                             <button 
                                                                 onClick={() => navigate(`/live/${student.db_id || student.id}`)}
-                                                                title="Join Jitsi" 
+                                                                title="Join Live Class" 
                                                                 className="text-primary hover:scale-110 transition-transform"
                                                             >
                                                                 📹
@@ -3150,7 +3137,7 @@ const AdminDashboard = () => {
                                         <span className="text-xl">📹</span>
                                         <div>
                                             <p className="text-xs font-black text-slate-700 uppercase tracking-wider">Generate Live Class</p>
-                                            <p className="text-[10px] text-slate-400 font-bold">Jitsi Meeting & Whiteboard Session</p>
+                                            <p className="text-[10px] text-slate-400 font-bold">Live Meeting & Whiteboard Session</p>
                                         </div>
                                     </div>
                                     <label className="relative inline-flex items-center cursor-pointer">

@@ -8,7 +8,7 @@ from django.utils import timezone
 from .models import TutorRequest
 from .serializers import TutorRequestSerializer
 from classes.models import ScheduledSession
-from applications.jitsi_service import JitsiService
+from applications.live_class_service import LiveClassService
 
 class IsStudentOrTutor(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -47,9 +47,9 @@ class TutorRequestViewSet(viewsets.ModelViewSet):
         # For MVP, we creates a session scheduled for "Tomorrow same time" or similar if parsing fails, 
         # but better to just create the session record and let Tutor update the exact time
         
-        # Generate Jitsi and Whiteboard
+        # Generate Live Class and Whiteboard
         topic = f"Regular Class: {tutor_request.student.get_full_name()} with {tutor_request.tutor.get_full_name()}"
-        meeting_data = JitsiService.create_meeting(topic)
+        meeting_data = LiveClassService.create_meeting(topic)
         meeting_link = meeting_data.get('join_url')
         whiteboard_link = meeting_data.get('whiteboard_url')
 

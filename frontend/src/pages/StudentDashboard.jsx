@@ -262,7 +262,7 @@ const StudentDashboard = () => {
             }
 
             // Force Navigate to internal Live Classroom
-            window.location.href = `/live/${sessionId}`;
+            navigate(`/live/${sessionId}`);
         } catch (err) {
             console.error("Critical error in handleJoinClass:", err);
             alert("An error occurred while joining the class.");
@@ -540,8 +540,9 @@ const StudentDashboard = () => {
                                                 Registered Subjects & Class Links
                                             </h3>
                                             <div className="grid sm:grid-cols-2 gap-6">
+                                                {/* Enrollments */}
                                                 {profile?.enrollments?.map((enr, i) => (
-                                                    <div key={i} className="bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-blue-600/30 transition-all group shadow-sm">
+                                                    <div key={`enr-${i}`} className="bg-white rounded-[2rem] p-6 border border-slate-100 hover:border-blue-600/30 transition-all group shadow-sm">
                                                         <div className="flex justify-between items-start mb-6">
                                                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl shadow-inner ring-1 ring-slate-100">
                                                                 {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name?.includes(s)) ? '🌙' : '🧪'}
@@ -602,16 +603,10 @@ const StudentDashboard = () => {
                                                                                         </span>
                                                                                     )}
                                                                                     <button 
-                                                                                        onClick={() => {
-                                                                                            if (sess.meeting_link?.startsWith('http')) {
-                                                                                                window.open(sess.meeting_link, '_blank');
-                                                                                            } else {
-                                                                                                navigate(`/live/${sess.id}`);
-                                                                                            }
-                                                                                        }}
-                                                                                        className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all"
+                                                                                        onClick={() => handleJoinClass(sess)}
+                                                                                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm"
                                                                                     >
-                                                                                        Join
+                                                                                        <PlayCircle size={14} />
                                                                                     </button>
                                                                                 </div>
                                                                             </div>
@@ -644,9 +639,40 @@ const StudentDashboard = () => {
                                                         </div>
                                                     </div>
                                                 ))}
-                                                {(!profile?.enrollments || profile.enrollments.length === 0) && (
+
+                                                {/* Pending Bookings */}
+                                                {bookings.filter(b => !b.paid).map((b, i) => (
+                                                    <div key={`booking-${i}`} className="bg-slate-50/50 rounded-[2rem] p-6 border border-dashed border-slate-300 group transition-all shadow-sm">
+                                                        <div className="flex justify-between items-start mb-6">
+                                                            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-xl shadow-sm ring-1 ring-slate-100">
+                                                                ⏳
+                                                            </div>
+                                                            <span className="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] bg-amber-500/10 text-amber-600">
+                                                                Awaiting Payment
+                                                            </span>
+                                                        </div>
+                                                        <h4 className="text-lg font-bold text-slate-900 mb-1">{b.subject}</h4>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tutor: {b.tutor_name || 'TBA'}</p>
+                                                        
+                                                        <div className="mt-8 flex flex-col gap-3">
+                                                            <div className="p-4 bg-white rounded-2xl border border-slate-100">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Tuition Fee (4 Weeks)</p>
+                                                                <p className="text-xl font-black text-slate-900">₦{parseFloat(b.price || 0).toLocaleString()}</p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => navigate('/student?tab=finance')}
+                                                                className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-widest text-center shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
+                                                            >
+                                                                💳 Pay Now to Start
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+
+                                                {(!profile?.enrollments || profile.enrollments.length === 0) && bookings.filter(b => !b.paid).length === 0 && (
                                                     <div className="col-span-full py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                                                        <p className="text-slate-400 font-bold italic">No registered subjects found. Complete your payment for new bookings to see them here.</p>
+                                                        <p className="text-slate-400 font-bold italic">No registered subjects or bookings found.</p>
+                                                        <button onClick={() => navigate('/booking/request')} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest">Book Your First Subject →</button>
                                                     </div>
                                                 )}
                                             </div>

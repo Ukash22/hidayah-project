@@ -498,11 +498,7 @@ class UserSessionListView(APIView):
             # But we want them to still see Trial sessions (handled in step 2)
             from students.models import StudentProfile
             try:
-                profile = StudentProfile.objects.get(user=user)
-                if profile.payment_status == 'PAID':
-                    regular_sessions = ScheduledSession.objects.filter(student=user)
-                else:
-                    regular_sessions = ScheduledSession.objects.none()
+                regular_sessions = ScheduledSession.objects.filter(student=user)
             except StudentProfile.DoesNotExist:
                 regular_sessions = ScheduledSession.objects.none()
             

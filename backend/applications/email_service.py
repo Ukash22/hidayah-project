@@ -385,7 +385,8 @@ def send_class_reminder_email(user, session, is_tutor=False):
     
     room_url = session.meeting_link
     if not room_url:
-        room_url = f"https://meet.jit.si/HidayahClass-{session.id}-{session.student.id}"
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+        room_url = f"{frontend_url}/live/class-room-{session.id}-{session.student.id}"
 
     message = f"""
     Assalamu Alaikum {user.first_name},

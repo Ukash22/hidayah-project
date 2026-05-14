@@ -90,8 +90,10 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
                 
                 if not final_meeting_link:
                     # Generate a unique room ID for this specific session
-                    room_id = f"Hidayah-{subject_obj.name.replace(' ', '-')}-{uuid.uuid4().hex[:8]}"
-                    final_meeting_link = f"https://meet.jit.si/{room_id}"
+                    room_id = f"class-{subject_obj.name.replace(' ', '-').lower()}-{uuid.uuid4().hex[:8]}"
+                    from django.conf import settings
+                    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                    final_meeting_link = f"{frontend_url}/live/{room_id}"
                     final_whiteboard_link = final_meeting_link
 
                 # Create the session

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import TrialApplication, ZoomClass
 from .serializers import TrialApplicationSerializer
-from .jitsi_service import JitsiService
+from .live_class_service import LiveClassService
 
 class ApplicationCreateView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -66,7 +66,7 @@ class ApproveApplicationView(views.APIView):
                 topic = f"Trial Class: {application.first_name} with {tutor_name}"
                 description = f"Course: {application.course_interested}. Student: {application.first_name} {application.last_name or ''}"
                 
-                meeting_data = JitsiService.create_meeting(topic)
+                meeting_data = LiveClassService.create_meeting(topic)
                 if not meeting_data:
                     return Response({"error": "Failed to create meeting room"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -402,9 +402,10 @@ class JoinClassView(views.APIView):
                 # Jitsi Fallback if meeting link is blank
                 zoom_url = session_obj.meeting_link or profile.meeting_link
                 if not zoom_url:
-                    # Generate a unique room name for Jitsi
-                    room_id = f"HidayahClass-{session_obj.id}-{session_obj.student.id}"
-                    zoom_url = f"https://meet.jit.si/{room_id}"
+                    # Generate a unique room name for internal Live Class
+                    room_id = f"class-room-{session_obj.id}-{session_obj.student.id}"
+                    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                    zoom_url = f"{frontend_url}/live/{room_id}"
                 
                 whiteboard_url = session_obj.whiteboard_link or profile.whiteboard_link
             

@@ -168,7 +168,7 @@ class TutorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], url_path=r'admin/action/(?P<app_id>\d+)')
     def admin_action(self, request, app_id=None):
         """Admin recruitment workflow: INTERVIEW, APPROVE, REJECT"""
-        from applications.jitsi_service import JitsiService
+        from applications.live_class_service import LiveClassService
         
         try:
             profile = TutorProfile.objects.get(id=app_id)
@@ -181,7 +181,7 @@ class TutorViewSet(viewsets.ModelViewSet):
                 
                 if generate_zoom:
                     topic = f"Interview with {profile.user.get_full_name()}"
-                    meeting_data = JitsiService.create_meeting(topic)
+                    meeting_data = LiveClassService.create_meeting(topic)
                     interview_link = meeting_data.get('join_url')
                 
                 profile.status = 'INTERVIEW_SCHEDULED'
@@ -376,7 +376,7 @@ class TutorViewSet(viewsets.ModelViewSet):
         """Admin action to directly assign a tutor to a student and schedule first class"""
         from students.models import StudentProfile
         from classes.models import ScheduledSession
-        from applications.jitsi_service import JitsiService
+        from applications.live_class_service import LiveClassService
         from django.contrib.auth import get_user_model
         from django.utils import timezone
         import datetime
@@ -402,11 +402,11 @@ class TutorViewSet(viewsets.ModelViewSet):
             tutor_profile = TutorProfile.objects.get(id=tutor_id)
             tutor_user = tutor_profile.user
 
-            # 1. Generate Jitsi/Whiteboard if requested
+            # 1. Generate LiveClass/Whiteboard if requested
             whiteboard_link = ''
             if generate_zoom:
                 topic = f"Class: {student_user.get_full_name()} with {tutor_user.get_full_name()}"
-                meeting_data = JitsiService.create_meeting(topic)
+                meeting_data = LiveClassService.create_meeting(topic)
                 meeting_link = meeting_data.get('join_url')
                 whiteboard_link = meeting_data.get('whiteboard_url')
 

@@ -4,7 +4,7 @@ from classes.models import ScheduledSession
 
 class LiveWhiteboardSession(models.Model):
     session = models.ForeignKey(ScheduledSession, on_delete=models.CASCADE, related_name='live_boards')
-    jitsi_room_id = models.CharField(max_length=255)
+    room_id = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
 

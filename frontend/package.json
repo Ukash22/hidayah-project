@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@jitsi/react-sdk": "^1.4.4",
     "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.14.0",
     "framer-motion": "^12.25.0",
