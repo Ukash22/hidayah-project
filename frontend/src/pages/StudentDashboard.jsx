@@ -659,16 +659,22 @@ const StudentDashboard = () => {
                                                 Upcoming Sessions
                                             </h3>
                                             <div className="space-y-4">
-                                                {classes.slice(0, 3).map((cls, i) => (
-                                                    <div key={i} className="bg-white border border-slate-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 group hover:border-blue-600/30 transition-all shadow-sm">
-                                                        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform">🎓</div>
-                                                        <div className="flex-1 text-center md:text-left">
-                                                            <h4 className="text-lg font-bold text-slate-900">{cls.course}</h4>
-                                                            <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Scheduled for {new Date(cls.scheduled_at).toLocaleDateString()}</p>
+                                                {classes.length > 0 ? (
+                                                    classes.slice(0, 3).map((cls, i) => (
+                                                        <div key={i} className="bg-white border border-slate-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center gap-6 group hover:border-blue-600/30 transition-all shadow-sm">
+                                                            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform">🎓</div>
+                                                            <div className="flex-1 text-center md:text-left">
+                                                                <h4 className="text-lg font-bold text-slate-900">{cls.subject}</h4>
+                                                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Scheduled for {new Date(cls.scheduled_at).toLocaleDateString()}</p>
+                                                            </div>
+                                                            <button onClick={() => handleJoinClass(cls)} className="bg-slate-50 hover:bg-slate-100 border border-slate-200 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all">Enter Classroom</button>
                                                         </div>
-                                                        <button onClick={() => handleJoinClass(cls)} className="bg-slate-50 hover:bg-slate-100 border border-slate-200 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all">Enter Classroom</button>
+                                                    ))
+                                                ) : (
+                                                    <div className="py-12 text-center bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
+                                                        <p className="text-slate-400 font-bold italic text-sm">No upcoming sessions found. Classes will appear here once your booking is finalized and paid.</p>
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
                                         </div>
                                     </div>
