@@ -110,4 +110,20 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
             except Exception as e:
                 print(f"Error creating session for {day_name} {time_str}: {e}")
 
+    if sessions_created:
+        try:
+            from notifications.models import Notification
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            admins = User.objects.filter(role='ADMIN')
+            for admin in admins:
+                Notification.objects.create(
+                    user=admin,
+                    title="New Classes Generated",
+                    message=f"{len(sessions_created)} classes generated for {student.get_full_name()} with {tutor.get_full_name()} for {subject_obj.name}.",
+                    link=f"/admin/classes"
+                )
+        except Exception as e:
+            print(f"Error notifying admins about new sessions: {e}")
+
     return sessions_created

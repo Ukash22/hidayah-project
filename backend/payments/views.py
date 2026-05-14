@@ -136,6 +136,17 @@ class VerifyPaymentView(APIView):
         try:
             print(f"DEBUG: Verifying payment ref: {reference} for user {user.username}")
             
+            # [NEW] Check local db first to return early if already processed
+            payment = Payment.objects.filter(transaction_id=reference, student=user).first()
+            if payment and payment.status == 'COMPLETED':
+                return Response({
+                    "success": True,
+                    "verified": True,
+                    "message": "Payment verified and processed successfully",
+                    "amount": float(payment.amount),
+                    "paid_at": payment.completed_at
+                })
+                
             # Verify payment with Paystack
             result = PaystackService.verify_payment(reference)
             print(f"DEBUG: Paystack/Mock Verification Result: {result}")
@@ -383,6 +394,14 @@ class InitiateBookingPaymentView(APIView):
         
         if booking.paid:
             return Response({"error": "Booking is already paid"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Pre-payment availability check
+        import json
+        from classes.utils import check_tutor_conflict
+        schedule_data = json.loads(booking.schedule) if isinstance(booking.schedule, str) else booking.schedule
+        has_conflict, conflict_msg = check_tutor_conflict(booking.tutor, schedule_data)
+        if has_conflict:
+            return Response({"error": f"Tutor is no longer available: {conflict_msg}"}, status=status.HTTP_400_BAD_REQUEST)
 
         ref = f"BOOKING-{booking.id}-{int(timezone.now().timestamp())}"
         

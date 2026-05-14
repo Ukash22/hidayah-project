@@ -230,19 +230,28 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
         import traceback
         logger.error(f"Post-payment automation failed for {user.username}: {e}\n{traceback.format_exc()}")
 
-    # [NEW] Send Payment Confirmation Email
-    try:
-        profile = StudentProfile.objects.get(user=user)
-        send_payment_confirmation_email(user, payment, profile)
-        
-        # If classes were generated, send access email
-        if is_booking or (profile.payment_status == 'PAID' and profile.enrollments.exists()):
-            # Find a meeting link if available
-            session = ScheduledSession.objects.filter(student=user).order_by('-created_at').first()
-            zoom_link = session.meeting_link if session else profile.meeting_link
-            if zoom_link:
-                send_class_access_email(user, profile, zoom_link)
-    except Exception as e:
-        logger.error(f"Post-payment email failed for {user.username}: {e}")
+    # [NEW] Send Payment Confirmation Email in Background
+    def _send_emails_async(user_id, payment_id, is_booking):
+        from django.contrib.auth import get_user_model
+        from students.models import StudentProfile
+        from classes.models import ScheduledSession
+        User = get_user_model()
+        try:
+            usr = User.objects.get(id=user_id)
+            pmt = Payment.objects.get(id=payment_id)
+            prof = StudentProfile.objects.get(user=usr)
+            
+            send_payment_confirmation_email(usr, pmt, prof)
+            
+            if is_booking or (prof.payment_status == 'PAID' and prof.enrollments.exists()):
+                session = ScheduledSession.objects.filter(student=usr).order_by('-created_at').first()
+                zoom_link = session.meeting_link if session else prof.meeting_link
+                if zoom_link:
+                    send_class_access_email(usr, prof, zoom_link)
+        except Exception as e:
+            logger.error(f"Post-payment email async thread failed: {e}")
+
+    import threading
+    threading.Thread(target=_send_emails_async, args=(user.id, payment.id, is_booking)).start()
 
     return {"success": True, "payment": payment}

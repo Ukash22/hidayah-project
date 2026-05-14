@@ -494,23 +494,21 @@ class UserSessionListView(APIView):
         if user.role == 'TUTOR':
             regular_sessions = ScheduledSession.objects.filter(tutor=user)
         else:
-            regular_sessions = ScheduledSession.objects.filter(student=user)
-            
-        regular_sessions = regular_sessions.select_related('student', 'tutor', 'subject').order_by('scheduled_at')
-        
-        combined = []
-        
-        # [ACCESS CONTROL] Students must have paid to see their classes
-        if user.role == 'STUDENT':
+            # [ACCESS CONTROL] Students only see regular classes if they have paid
+            # But we want them to still see Trial sessions (handled in step 2)
             from students.models import StudentProfile
             try:
                 profile = StudentProfile.objects.get(user=user)
-                if profile.payment_status != 'PAID':
-                    return Response(combined)  # Unpaid students see empty list
+                if profile.payment_status == 'PAID':
+                    regular_sessions = ScheduledSession.objects.filter(student=user)
+                else:
+                    regular_sessions = ScheduledSession.objects.none()
             except StudentProfile.DoesNotExist:
-                return Response(combined)
+                regular_sessions = ScheduledSession.objects.none()
+            
+        regular_sessions = regular_sessions.select_related('student', 'tutor', 'subject').order_by('scheduled_at')
                 
-        # 2. Fetch Trial Sessions (if any)
+        # 2. Fetch Trial Sessions (Always visible if approved)
         from applications.models import TrialApplication
         if user.role == 'TUTOR':
             trial_sessions = TrialApplication.objects.filter(tutor=user, status='approved', scheduled_at__isnull=False)

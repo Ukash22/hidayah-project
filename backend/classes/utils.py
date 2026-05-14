@@ -107,7 +107,36 @@ def check_tutor_conflict(tutor_user, proposed_schedule):
                         'original_time': time
                     })
 
-    # Compare each proposed slot against active slots
+    # Normalization complete. First check explicitly set availability.
+    def check_tutor_availability(tutor_usr, norm_proposed):
+        from tutors.models import TutorAvailability
+        
+        availabilities = TutorAvailability.objects.filter(tutor__user=tutor_usr)
+        if not availabilities.exists():
+            return False, None # Lenient if no schedule set
+            
+        for p_slot in norm_proposed:
+            day = p_slot['day']
+            p_start = p_slot['start']
+            p_end = p_slot['end']
+            
+            day_avails = availabilities.filter(day__iexact=day)
+            fits = False
+            for av in day_avails:
+                av_start = av.start_time.hour * 60 + av.start_time.minute
+                av_end = av.end_time.hour * 60 + av.end_time.minute
+                if p_start >= av_start and p_end <= av_end:
+                    fits = True
+                    break
+            if not fits:
+                return True, f"Tutor is not available on {day} between {p_slot.get('original_time')}."
+        return False, None
+
+    has_avail_conflict, avail_msg = check_tutor_availability(tutor_user, normalized_proposed)
+    if has_avail_conflict:
+        return True, avail_msg
+
+    # Compare each proposed slot against active slots (Double-booking check)
     for p_slot in normalized_proposed:
         for schedule_list in active_schedules:
             for active_slot in schedule_list:

@@ -77,18 +77,18 @@ def process_payment(booking):
         
         # Try to find the Subject object to associate correctly
         subject_obj = Subject.objects.filter(name__icontains=booking.subject).first()
-        if subject_obj:
-            if not profile.enrolled_courses.filter(id=subject_obj.id).exists():
-                profile.enrolled_courses.add(subject_obj)
-            profile.enrolled_course = subject_obj.name
-        else:
-            # Fatal for enrollment creation if subject doesn't exist
-            logger.error(f"Cannot fulfill enrollment: Subject '{booking.subject}' not found.")
-            profile.enrolled_course = booking.subject
-            profile.save()
-            booking.paid = True
-            booking.save()
-            return
+        if not subject_obj:
+            # Fallback: Create placeholder subject so enrollment is NOT skipped
+            # This fixes the "Registered Subjects 0" issue when subject names don't match database perfectly.
+            subject_obj, _ = Subject.objects.get_or_create(
+                name=booking.subject,
+                defaults={'admin_percentage': 20} # Default fallback
+            )
+            logger.info(f"Using placeholder/new subject '{booking.subject}' to ensure enrollment fulfillment.")
+
+        if not profile.enrolled_courses.filter(id=subject_obj.id).exists():
+            profile.enrolled_courses.add(subject_obj)
+        profile.enrolled_course = subject_obj.name
             
         profile.save()
 
