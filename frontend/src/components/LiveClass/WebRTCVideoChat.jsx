@@ -70,6 +70,16 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen }) => {
         };
     }, [isVideoOpen]);
 
+    // Heartbeat to keep connection alive
+    useEffect(() => {
+        if (readyState === ReadyState.OPEN) {
+            const interval = setInterval(() => {
+                sendMessage(JSON.stringify({ type: 'ping' }));
+            }, 30000);
+            return () => clearInterval(interval);
+        }
+    }, [readyState, sendMessage]);
+
     // Handle Signaling Messages
     useEffect(() => {
         if (!lastMessage || !isVideoOpen || !localStream) return;
