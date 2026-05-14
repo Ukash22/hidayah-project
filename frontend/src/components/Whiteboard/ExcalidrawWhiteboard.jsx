@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import api from '../../services/api';
 
 const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards }) => {
@@ -311,6 +311,15 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     <Excalidraw 
                         excalidrawAPI={(api) => setExcalidrawAPI(api)} 
                         onChange={handleBoardChange}
+                        initialData={{
+                            appState: {
+                                currentItemStrokeWidth: 1,
+                                currentItemStrokeStyle: "solid",
+                                currentItemRoughness: 0,
+                                viewBackgroundColor: "#ffffff",
+                                theme: "light"
+                            }
+                        }}
                         UIOptions={{
                             canvasActions: {
                                 changeViewBackgroundColor: true,
@@ -326,6 +335,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             <MainMenu.DefaultItems.ClearCanvas />
                             <MainMenu.DefaultItems.SaveAsImage />
                             <MainMenu.DefaultItems.ChangeCanvasBackground />
+                            <MainMenu.DefaultItems.ToggleSidebar />
                             <MainMenu.DefaultItems.Help />
                         </MainMenu>
                         <WelcomeScreen>
@@ -338,6 +348,17 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 <WelcomeScreen.Center.Menu />
                             </WelcomeScreen.Center>
                         </WelcomeScreen>
+                        <Sidebar name="library">
+                            <Sidebar.Header>Library</Sidebar.Header>
+                            <Sidebar.Tabs>
+                                <Sidebar.Tab tab="library">My Shapes</Sidebar.Tab>
+                            </Sidebar.Tabs>
+                        </Sidebar>
+                        <Footer>
+                            <div style={{ padding: '0 10px', fontSize: '10px', color: '#666', fontWeight: 'bold' }}>
+                                ROOM: {roomId} | {role} MODE
+                            </div>
+                        </Footer>
                     </Excalidraw>
                 </div>
 
