@@ -5,7 +5,6 @@ from .models import Wallet, Transaction, PlatformSettings, Payment
 from classes.models import ScheduledSession, Booking
 from django.utils import timezone
 import logging
-from .services import process_payment
 from applications.email_service import send_payment_confirmation_email, send_class_access_email
 
 logger = logging.getLogger(__name__)
@@ -156,6 +155,7 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
     is_booking = reference.startswith('BOOKING-')
     if is_booking:
         try:
+            from .services import process_payment
             # Nested atomic ensures this check doesn't sink the whole payment
             with transaction.atomic():
                 booking_id = reference.split('-')[1]
