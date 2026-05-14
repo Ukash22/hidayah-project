@@ -3,7 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import api from '../../services/api';
 
-const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onSelectPen, onSelectLaser }) => {
+const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser }) => {
     const [showControls, setShowControls] = useState(false);
 
     return (
@@ -71,6 +71,16 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                             className="px-4 py-2.5 bg-red-900/50 hover:bg-red-800/50 text-red-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-red-500/30"
                         >
                             🔦 Laser
+                        </button>
+                    )}
+
+                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
+                        <button 
+                            onClick={onClearOwnBoard}
+                            className="p-3 bg-red-900/20 hover:bg-red-800/30 text-red-500 rounded-xl transition-all border border-red-500/20"
+                            title="Clear My Board"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     )}
 
@@ -350,12 +360,18 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     sendMessage(JSON.stringify({ type: 'command', action: 'clear_boards' }));
                     alert("Cleared all student boards");
                 }}
+                onClearOwnBoard={() => {
+                    if (window.confirm("Clear your entire board?")) {
+                        excalidrawAPI?.updateScene({ elements: [] });
+                    }
+                }}
             />
 
             <div className="flex-1 flex relative overflow-hidden">
                 {/* Main Drawing Area */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
                     <Excalidraw 
+                        name="hidayah_live_board"
                         excalidrawAPI={(api) => setExcalidrawAPI(api)} 
                         onChange={handleBoardChange}
                         initialData={{
@@ -364,7 +380,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 currentItemStrokeStyle: "solid",
                                 currentItemRoughness: 0,
                                 viewBackgroundColor: "#ffffff",
-                                theme: "light"
+                                theme: "light",
+                                zenModeEnabled: false,
+                                gridModeEnabled: false
                             }
                         }}
                         UIOptions={{

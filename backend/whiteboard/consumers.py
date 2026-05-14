@@ -42,7 +42,8 @@ class BoardConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'send_draw',
-                    'data': text_data_json
+                    'data': text_data_json,
+                    'sender_channel_name': self.channel_name
                 }
             )
         elif event_type == 'command':
@@ -50,20 +51,20 @@ class BoardConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'send_command',
-                    'data': text_data_json
+                    'data': text_data_json,
+                    'sender_channel_name': self.channel_name
                 }
             )
 
     # Receive draw event from room group
     async def send_draw(self, event):
-        data = event['data']
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps(data))
+        if self.channel_name != event.get('sender_channel_name'):
+            await self.send(text_data=json.dumps(event['data']))
 
-    # Receive command event from room group (e.g. lock, clear)
+    # Receive command event from room group
     async def send_command(self, event):
-        data = event['data']
-        await self.send(text_data=json.dumps(data))
+        if self.channel_name != event.get('sender_channel_name'):
+            await self.send(text_data=json.dumps(event['data']))
 
 class SignalingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
