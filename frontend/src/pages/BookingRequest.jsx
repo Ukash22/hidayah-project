@@ -106,9 +106,9 @@ const BookingRequest = () => {
     };
 
     const addHoursToTime = (timeStr, hours) => {
-        if (!timeStr || !hours) return '';
+        if (!timeStr || hours === undefined || hours === null) return '';
         const [h, m] = timeStr.split(':').map(Number);
-        const totalMinutes = h * 60 + (m || 0) + hours * 60;
+        const totalMinutes = h * 60 + (m || 0) + Math.round(hours * 60);
         const newH = Math.floor(totalMinutes / 60) % 24;
         const newM = totalMinutes % 60;
         return `${newH.toString().padStart(2, '0')}:${newM.toString().padStart(2, '0')}`;
@@ -602,94 +602,101 @@ const BookingRequest = () => {
                                                         </div>
                                                         
                                                         {getBookingData(tutor.id).schedule.map((slot, index) => (
-                                                            <div key={index} className="flex gap-2 items-center">
-                                                                 <div className="flex-1">
-                                                                    <div className="flex justify-between items-center mb-0.5 px-1">
-                                                                        <label className="text-[7px] font-black uppercase text-slate-500">Day</label>
-                                                                        {slot.day && (() => {
-                                                                            const tutorAv = tutor.availabilities?.find(av => 
-                                                                                av.day.toUpperCase() === slot.day || 
-                                                                                av.day.toUpperCase().startsWith(slot.day.slice(0, 3))
-                                                                            ) || (tutor.availability_hours || '').split(',').find(s => s.toUpperCase().startsWith(slot.day.slice(0, 3)));
-                                                                            
-                                                                            if (tutorAv) {
-                                                                                let display = "";
-                                                                                if (typeof tutorAv === 'object') {
-                                                                                    const f = (t) => {
-                                                                                        let [h, m] = t.split(':');
-                                                                                        h = parseInt(h);
-                                                                                        return `${h % 12 || 12}:${m.slice(0,2)}${h >= 12 ? 'pm' : 'am'}`;
-                                                                                    };
-                                                                                    display = `${f(tutorAv.start_time)}-${f(tutorAv.end_time)}`;
-                                                                                } else {
-                                                                                    display = tutorAv.split(': ')[1] || "";
+                                                            <div key={index} className="bg-white/5 border border-white/5 p-4 rounded-2xl space-y-4">
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Session Slot {index + 1}</span>
+                                                                    {getBookingData(tutor.id).schedule.length > 1 && (
+                                                                        <button 
+                                                                            onClick={() => removeSlot(tutor.id, index)}
+                                                                            className="text-red-500 hover:text-red-400 transition-colors"
+                                                                        >
+                                                                            <X size={14} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="flex justify-between items-center px-1">
+                                                                            <label className="text-[8px] font-black uppercase tracking-widest text-slate-500">Select Day</label>
+                                                                            {slot.day && (() => {
+                                                                                const tutorAv = tutor.availabilities?.find(av => 
+                                                                                    av.day.toUpperCase() === slot.day || 
+                                                                                    av.day.toUpperCase().startsWith(slot.day.slice(0, 3))
+                                                                                ) || (tutor.availability_hours || '').split(',').find(s => s.toUpperCase().startsWith(slot.day.slice(0, 3)));
+                                                                                
+                                                                                if (tutorAv) {
+                                                                                    let display = "";
+                                                                                    if (typeof tutorAv === 'object') {
+                                                                                        const f = (t) => {
+                                                                                            let [h, m] = t.split(':');
+                                                                                            h = parseInt(h);
+                                                                                            return `${h % 12 || 12}:${m.slice(0,2)}${h >= 12 ? 'pm' : 'am'}`;
+                                                                                        };
+                                                                                        display = `${f(tutorAv.start_time)}-${f(tutorAv.end_time)}`;
+                                                                                    } else {
+                                                                                        display = tutorAv.split(': ')[1] || "";
+                                                                                    }
+                                                                                    return <span className="text-[7px] font-black text-amber-500 uppercase bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">Tutor: {display}</span>;
                                                                                 }
-                                                                                return <span className="text-[6px] font-bold text-amber-500 uppercase">Tutor: {display}</span>;
-                                                                            }
-                                                                            return null;
-                                                                        })()}
-                                                                    </div>
-                                                                    <select 
-                                                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
-                                                                        value={slot.day}
-                                                                        onChange={(e) => updateSlot(tutor.id, index, 'day', e.target.value)}
-                                                                    >
-                                                                        <option value="" className="bg-slate-900">Day</option>
-                                                                        {daysOfWeek.map(d => <option key={d} value={d.toUpperCase()} className="bg-slate-900">{d}</option>)}
-                                                                    </select>
-                                                                </div>
-                                                                <div className="flex gap-2">
-                                                                    <div className="w-20">
-                                                                        <div className="flex justify-between items-center mb-0.5 px-1">
-                                                                            <label className="text-[7px] font-black uppercase text-slate-500">From</label>
-                                                                            <span className="text-[6px] font-bold text-emerald-500">{(slot.time || '').split('-')[0] ? (() => {
-                                                                                let [h, m] = (slot.time || '').split('-')[0].split(':');
-                                                                                h = parseInt(h);
-                                                                                const ampm = h >= 12 ? 'PM' : 'AM';
-                                                                                h = h % 12 || 12;
-                                                                                return `${h}:${m || '00'} ${ampm}`;
-                                                                            })() : ''}</span>
+                                                                                return null;
+                                                                            })()}
                                                                         </div>
-                                                                        <input 
-                                                                            type="time" 
-                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
-                                                                            value={(slot.time || '').split('-')[0] || ''}
-                                                                            onChange={(e) => {
-                                                                                const startTime = e.target.value;
-                                                                                const duration = getBookingData(tutor.id).hours_per_session;
-                                                                                const endTime = addHoursToTime(startTime, duration);
-                                                                                updateSlot(tutor.id, index, 'time', `${startTime}-${endTime}`);
-                                                                            }}
-                                                                        />
+                                                                        <select 
+                                                                            className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-3 text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                                                            value={slot.day}
+                                                                            onChange={(e) => updateSlot(tutor.id, index, 'day', e.target.value)}
+                                                                        >
+                                                                            <option value="" className="bg-slate-900">Choose Day</option>
+                                                                            {daysOfWeek.map(d => <option key={d} value={d.toUpperCase()} className="bg-slate-900">{d}</option>)}
+                                                                        </select>
                                                                     </div>
-                                                                    <div className="w-20">
-                                                                        <div className="flex justify-between items-center mb-0.5 px-1">
-                                                                            <label className="text-[7px] font-black uppercase text-slate-500">To (Auto)</label>
-                                                                            <span className="text-[6px] font-bold text-emerald-500">{(slot.time || '').split('-')[1] ? (() => {
-                                                                                let [h, m] = (slot.time || '').split('-')[1].split(':');
-                                                                                h = parseInt(h);
-                                                                                const ampm = h >= 12 ? 'PM' : 'AM';
-                                                                                h = h % 12 || 12;
-                                                                                return `${h}:${m || '00'} ${ampm}`;
-                                                                            })() : ''}</span>
+
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <div className="space-y-1.5">
+                                                                            <div className="flex justify-between items-center px-1">
+                                                                                <label className="text-[8px] font-black uppercase tracking-widest text-slate-500">From</label>
+                                                                                <span className="text-[7px] font-black text-emerald-500">
+                                                                                    {(slot.time || '').split('-')[0] ? (() => {
+                                                                                        let [h, m] = (slot.time || '').split('-')[0].split(':');
+                                                                                        h = parseInt(h);
+                                                                                        return `${h % 12 || 12}:${m || '00'}${h >= 12 ? 'PM' : 'AM'}`;
+                                                                                    })() : '--:--'}
+                                                                                </span>
+                                                                            </div>
+                                                                            <input 
+                                                                                type="time" 
+                                                                                className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-3 py-3 text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
+                                                                                value={(slot.time || '').split('-')[0] || ''}
+                                                                                onChange={(e) => {
+                                                                                    const startTime = e.target.value;
+                                                                                    const duration = getBookingData(tutor.id).hours_per_session;
+                                                                                    const endTime = addHoursToTime(startTime, duration);
+                                                                                    updateSlot(tutor.id, index, 'time', `${startTime}-${endTime}`);
+                                                                                }}
+                                                                            />
                                                                         </div>
-                                                                        <input 
-                                                                            type="time" 
-                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[9px] font-black text-slate-500 uppercase outline-none cursor-not-allowed opacity-60"
-                                                                            value={(slot.time || '').split('-')[1] || ''}
-                                                                            readOnly
-                                                                            title="Automatically calculated based on duration"
-                                                                        />
+                                                                        <div className="space-y-1.5">
+                                                                            <div className="flex justify-between items-center px-1">
+                                                                                <label className="text-[8px] font-black uppercase tracking-widest text-slate-500">To (Auto)</label>
+                                                                                <span className="text-[7px] font-black text-emerald-500">
+                                                                                    {(slot.time || '').split('-')[1] ? (() => {
+                                                                                        let [h, m] = (slot.time || '').split('-')[1].split(':');
+                                                                                        h = parseInt(h);
+                                                                                        return `${h % 12 || 12}:${m || '00'}${h >= 12 ? 'PM' : 'AM'}`;
+                                                                                    })() : '--:--'}
+                                                                                </span>
+                                                                            </div>
+                                                                            <input 
+                                                                                type="time" 
+                                                                                className="w-full bg-[#0a0c10]/50 border border-white/10 rounded-xl px-3 py-3 text-[11px] font-black text-slate-500 uppercase outline-none cursor-not-allowed"
+                                                                                value={(slot.time || '').split('-')[1] || ''}
+                                                                                readOnly
+                                                                                title="Automatically calculated based on duration"
+                                                                            />
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                                {getBookingData(tutor.id).schedule.length > 1 && (
-                                                                    <button 
-                                                                        onClick={() => removeSlot(tutor.id, index)}
-                                                                        className="bg-red-500/10 text-red-500 p-2 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all"
-                                                                    >
-                                                                        <X size={12} />
-                                                                    </button>
-                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
