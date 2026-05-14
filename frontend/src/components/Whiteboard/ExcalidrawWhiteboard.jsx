@@ -383,6 +383,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             <MainMenu.DefaultItems.SaveAsImage />
                             <MainMenu.DefaultItems.ChangeCanvasBackground />
                             <MainMenu.DefaultItems.ToggleSidebar />
+                            <MainMenu.DefaultItems.GridMode />
+                            <MainMenu.DefaultItems.ZenMode />
                             <MainMenu.DefaultItems.Help />
                         </MainMenu>
                         <WelcomeScreen>
