@@ -78,17 +78,24 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen }) => {
             const data = JSON.parse(lastMessage.data);
             const { type, peerId, name, sdp, candidate, message, emoji } = data;
             
-            // Ignore our own messages (though the backend should filter them)
-            if (peerId === user.id) return;
+            // Ignore our own messages
+            if (String(peerId) === String(user.id)) return;
 
             const getPeerConnection = async (id, peerName) => {
                 if (peerConnections.current[id]) return peerConnections.current[id];
                 
+                console.log(`📡 Creating PeerConnection for ${peerName} (${id})`);
                 const pc = new RTCPeerConnection({
-                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
                 });
                 
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+                localStream.getTracks().forEach(track => {
+                    console.log(`📤 Adding local track: ${track.kind}`);
+                    pc.addTrack(track, localStream);
+                });
                 
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
@@ -97,6 +104,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen }) => {
                 };
                 
                 pc.ontrack = (event) => {
+                    console.log(`📥 Received remote track from ${peerName}`);
                     setRemoteStreams(prev => ({
                         ...prev,
                         [id]: { stream: event.streams[0], name: peerName }
@@ -104,6 +112,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen }) => {
                 };
                 
                 pc.oniceconnectionstatechange = () => {
+                    console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
                     if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
                         setRemoteStreams(prev => {
                             const newStreams = { ...prev };
@@ -120,26 +129,29 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen }) => {
             };
 
             const handleSignal = async () => {
+                console.log(`📩 Signaling: ${type} from ${name || peerId}`);
+                
                 if (type === 'peer_join') {
-                    // Create Offer
                     const pc = await getPeerConnection(peerId, name);
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
                     sendMessage(JSON.stringify({ type: 'offer', peerId: user.id, targetId: peerId, name: user.first_name, sdp: pc.localDescription }));
                 } 
-                else if (type === 'offer' && data.targetId === user.id) {
-                    // Create Answer
+                else if (type === 'offer' && String(data.targetId) === String(user.id)) {
                     const pc = await getPeerConnection(peerId, name);
                     await pc.setRemoteDescription(new RTCSessionDescription(sdp));
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
                     sendMessage(JSON.stringify({ type: 'answer', peerId: user.id, targetId: peerId, sdp: pc.localDescription }));
                 } 
-                else if (type === 'answer' && data.targetId === user.id) {
+                else if (type === 'answer' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];
-                    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                    if (pc) {
+                        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                        console.log(`✅ Connection established with ${peerId}`);
+                    }
                 } 
-                else if (type === 'ice_candidate' && data.targetId === user.id) {
+                else if (type === 'ice_candidate' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];
                     if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
                 }
