@@ -111,6 +111,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [isLocked, setIsLocked] = useState(false);
     const [isSlowMode, setIsSlowMode] = useState(false);
     const [studentReaction, setStudentReaction] = useState(null);
+    const lastSyncTime = useRef(0);
 
     // WebSocket URL Calculation
     const socketUrl = React.useMemo(() => {
@@ -152,10 +153,11 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 } else if (action === 'slow_mode') {
                     setIsSlowMode(payload.enabled);
                 } else if (action === 'reaction' && role === 'STUDENT') {
-                    // We don't have user IDs natively inside Excalidraw instance state like Tldraw,
-                    // but we can just broadcast generally for simplicity or keep a custom user state.
-                    setStudentReaction(payload.emoji);
-                    setTimeout(() => setStudentReaction(null), 3000);
+                    // Only show if targeted to me or general
+                    if (!payload.targetId || payload.targetId === userName) {
+                        setStudentReaction(payload.emoji);
+                        setTimeout(() => setStudentReaction(null), 3000);
+                    }
                 }
             }
             
@@ -178,52 +180,44 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }
             }
         } catch (e) { console.error("WS Message Error:", e); }
-    }, [lastMessage, excalidrawAPI, role]);
+    }, [lastMessage, excalidrawAPI, role, userName]);
 
-    // Send Teacher Broadcast
-    useEffect(() => {
-        if (!excalidrawAPI || (role !== 'TUTOR' && role !== 'ADMIN') || readyState !== ReadyState.OPEN) return;
-        const interval = setInterval(() => {
-            const elements = excalidrawAPI.getSceneElements();
-            if (elements.length === 0) return;
+    // Throttled sync handler
+    const handleBoardChange = async (elements) => {
+        if (!excalidrawAPI || readyState !== ReadyState.OPEN) return;
+        
+        const now = Date.now();
+        const throttleTime = (role === 'STUDENT' && isSlowMode) ? 5000 : 800; // Faster sync for tutor/non-slow students
+        
+        if (now - lastSyncTime.current < throttleTime) return;
+        lastSyncTime.current = now;
+
+        if (role === 'TUTOR' || role === 'ADMIN') {
+            // Broadcast full state for teacher board
             sendMessage(JSON.stringify({
                 type: 'draw',
                 is_teacher_snapshot: true,
                 snapshot: elements
             }));
-        }, 4000); 
-        return () => clearInterval(interval);
-    }, [excalidrawAPI, role, readyState, sendMessage]);
-
-    // Send Live Thumbnails for Student
-    useEffect(() => {
-        if (!excalidrawAPI || role !== 'STUDENT' || readyState !== ReadyState.OPEN) return;
-        
-        const interval = setInterval(async () => {
-            if (isSlowMode) return; 
+        } else if (role === 'STUDENT') {
+            // Send thumbnail/snapshot to teacher
             try {
-                const elements = excalidrawAPI.getSceneElements();
-                if (elements.length === 0) return;
-
                 const svgElement = await exportToSvg({
                     elements,
                     appState: excalidrawAPI.getAppState(),
                     files: excalidrawAPI.getFiles()
                 });
-                const svgString = svgElement.outerHTML;
-
                 sendMessage(JSON.stringify({
                     type: 'draw',
                     is_thumbnail: true,
-                    clientId: userName, // Using userName as basic clientId since Excalidraw doesn't have an internal one
+                    clientId: userName,
                     name: userName || 'Student',
-                    svg: svgString,
+                    svg: svgElement.outerHTML,
                     snapshot: elements
                 }));
             } catch (e) {}
-        }, 4000);
-        return () => clearInterval(interval);
-    }, [excalidrawAPI, role, userName, readyState, sendMessage, isSlowMode]);
+        }
+    };
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -268,10 +262,10 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     if (role === 'STUDENT' && isLocked) {
         return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-white">
-                <div className="text-6xl mb-4">🔒</div>
-                <h2 className="text-2xl font-black mb-2">Room Locked</h2>
-                <p className="text-slate-400">The teacher has locked this classroom.</p>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f172a] text-white">
+                <div className="text-8xl mb-6 drop-shadow-2xl">🔒</div>
+                <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">Classroom Locked</h2>
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">The teacher has paused interaction.</p>
             </div>
         );
     }
@@ -314,7 +308,10 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             <div className="flex-1 flex relative overflow-hidden">
                 {/* Main Drawing Area */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
-                    <Excalidraw excalidrawAPI={(api) => setExcalidrawAPI(api)} />
+                    <Excalidraw 
+                        excalidrawAPI={(api) => setExcalidrawAPI(api)} 
+                        onChange={handleBoardChange}
+                    />
                 </div>
 
                 {/* Teacher Board Viewer for Students */}

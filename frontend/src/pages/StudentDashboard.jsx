@@ -262,18 +262,7 @@ const StudentDashboard = () => {
             }
 
             // Force Navigate to internal Live Classroom
-            let targetUrl = `/live/${sessionId}`;
-            if (cls.meeting_link) {
-                try {
-                    if (cls.meeting_link.startsWith('/live/')) {
-                        targetUrl = cls.meeting_link;
-                    } else {
-                        const urlObj = new URL(cls.meeting_link);
-                        targetUrl = urlObj.pathname; // Extracts /live/...
-                    }
-                } catch(e) {}
-            }
-            navigate(targetUrl);
+            navigate(`/live/${sessionId}`);
         } catch (err) {
             console.error("Critical error in handleJoinClass:", err);
             alert("An error occurred while joining the class.");
@@ -636,10 +625,15 @@ const StudentDashboard = () => {
                                                                             let targetUrl = `/live/${enr.id || enr.db_id}`;
                                                                             if (enr.tutor_class_link) {
                                                                                 try {
-                                                                                    if (enr.tutor_class_link.startsWith('/live/')) targetUrl = enr.tutor_class_link;
-                                                                                    else {
+                                                                                    if (enr.tutor_class_link.startsWith('/live/')) {
+                                                                                        targetUrl = enr.tutor_class_link;
+                                                                                    } else if (enr.tutor_class_link.startsWith('http')) {
                                                                                         const urlObj = new URL(enr.tutor_class_link);
-                                                                                        targetUrl = urlObj.pathname;
+                                                                                        const segments = urlObj.pathname.split('/').filter(Boolean);
+                                                                                        const roomId = segments[segments.length - 1];
+                                                                                        if (roomId) targetUrl = `/live/${roomId}`;
+                                                                                    } else {
+                                                                                        targetUrl = `/live/${enr.tutor_class_link.replace(/^\/+/, '')}`;
                                                                                     }
                                                                                 } catch(e) {}
                                                                             }

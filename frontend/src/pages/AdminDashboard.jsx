@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import React, { useState, useEffect, Component } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
     ResponsiveContainer,
     AreaChart,
@@ -52,6 +52,7 @@ class AdminErrorBoundary extends Component {
 
 const AdminDashboard = () => {
     const { token } = useAuth();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview'); // 'admissions', 'students', 'trials', 'financials', 'withdrawals', 'complaints', 'classes', 'exams'
     const [applications, setApplications] = useState([]);
     const [pendingStudents, setPendingStudents] = useState([]);
@@ -152,7 +153,6 @@ const AdminDashboard = () => {
         tutorName: '',
         startTime: '',
         duration: 40,
-        generateZoom: true,
         meetingLink: ''
     });
 
@@ -914,27 +914,26 @@ const AdminDashboard = () => {
                     tutor_name: scheduleData.tutorName,
                     start_time: new Date(scheduleData.startTime).toISOString(),
                     duration: parseInt(scheduleData.duration),
-                    generate_zoom: scheduleData.generateZoom
+                    generate_zoom: false
                 });
 
                 setApplications(apps => apps.map(app =>
                     app.id === selectedApp.id ? {
                         ...app,
                         status: 'approved',
-                        zoom_start_url: response.data.zoom_link,
                         assigned_tutor: scheduleData.tutorName,
                         scheduled_at: new Date(scheduleData.startTime).toISOString(),
                         duration: parseInt(scheduleData.duration)
                     } : app
                 ));
 
-                const { zoom_link, email_sent, email_error } = response.data;
-                let msg = `✅ Approved successfully!\n\n🔗 Zoom Link Created: ${zoom_link}`;
+                const { email_sent, email_error } = response.data;
+                let msg = `✅ Approved successfully!\n\nInternal Live Classroom is now enabled for this session.`;
 
                 if (email_sent) {
-                    msg += `\n\n📧 Email sent to applicant.`;
+                    msg += `\n\n📧 Confirmation email sent to applicant.`;
                 } else {
-                    msg += `\n\n⚠️ WARNING: Email FAILED to send.\nError: ${email_error}\n\nPlease copy the link above and send it manually.`;
+                    msg += `\n\n⚠️ WARNING: Email FAILED to send.\nError: ${email_error}`;
                 }
                 alert(msg);
             }
@@ -996,7 +995,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleAssignTutor = async (studentId, tutorId, meetingLink = '', generateZoom = false, startTime = null, duration = 40) => {
+    const handleAssignTutor = async (studentId, tutorId, startTime = null, duration = 40) => {
         if (!tutorId) {
             alert("Please select a tutor first");
             return;
@@ -1007,8 +1006,8 @@ const AdminDashboard = () => {
             await api.post('/api/tutors/assign/', {
                 student_id: studentId,
                 tutor_id: tutorId,
-                meeting_link: meetingLink,
-                generate_zoom: generateZoom,
+                meeting_link: '',
+                generate_zoom: false,
                 start_time: startTime ? new Date(startTime).toISOString() : null,
                 duration: parseInt(duration)
             });
@@ -1131,19 +1130,12 @@ const AdminDashboard = () => {
     );
 
     const handleJoinClass = async (session) => {
-        let url = session.zoom_start_url || session.meeting_link; // Handle both Trial and Regular
-        
-        if (!url) {
-            // Internal Live Classroom Fallback
-            const sessionId = session.db_id || session.id;
-            url = `/live/${sessionId}`;
+        const sessionId = session.db_id || session.id;
+        if (!sessionId) {
+            alert("Invalid session ID");
+            return;
         }
-        
-        if (url.startsWith('/')) {
-            navigate(url);
-        } else {
-            window.open(url, '_blank');
-        }
+        navigate(`/live/${sessionId}`);
     };
 
     // Find active/upcoming closest class
@@ -1554,12 +1546,9 @@ const AdminDashboard = () => {
                                                             const time = window.prompt("Enter Interview Time (YYYY-MM-DDTHH:MM):", new Date(Date.now() + 86400000).toISOString().slice(0, 16));
                                                             if (!time) return;
 
-                                                            const useAutoLive = window.confirm("Generate Live Classroom automatically?");
+                                                            const useInternal = window.confirm("Use internal Live Classroom for this interview?");
+                                                            if (!useInternal) return; // For now, we only support internal
                                                             let link = "";
-                                                            if (!useAutoLive) {
-                                                                link = window.prompt("Enter Manual Interview Meeting Link (Zoom/Meet):");
-                                                                if (!link) return;
-                                                            }
 
                                                             try {
                                                                 setActionLoading(true);
@@ -1567,7 +1556,7 @@ const AdminDashboard = () => {
                                                                     action: 'INTERVIEW',
                                                                     interview_at: time,
                                                                     interview_link: link,
-                                                                    generate_zoom: useAutoLive
+                                                                    generate_zoom: true
                                                                 });
                                                                 alert("✅ Interview Scheduled Successfully!");
                                                                 fetchTutorApps();
@@ -3131,24 +3120,18 @@ const AdminDashboard = () => {
                                     </div>
                                 </div>
 
-                                {/* Zoom Toggle */}
-                                <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-100 flex items-center justify-between mt-4">
+                                {/* Live Classroom Notification */}
+                                <div className="bg-emerald-50 p-4 rounded-2xl border-2 border-emerald-100 flex items-center justify-between mt-4">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl">📹</span>
+                                        <span className="text-xl">🛡️</span>
                                         <div>
-                                            <p className="text-xs font-black text-slate-700 uppercase tracking-wider">Generate Live Class</p>
-                                            <p className="text-[10px] text-slate-400 font-bold">Live Meeting & Whiteboard Session</p>
+                                            <p className="text-xs font-black text-emerald-700 uppercase tracking-wider">Internal Live Class Enabled</p>
+                                            <p className="text-[10px] text-emerald-500 font-bold">Automated Whiteboard & Video Session</p>
                                         </div>
                                     </div>
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            className="sr-only peer"
-                                            checked={scheduleData.generateZoom}
-                                            onChange={(e) => setScheduleData({ ...scheduleData, generateZoom: e.target.checked })}
-                                        />
-                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                                    </label>
+                                    <div className="w-11 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                                        <span className="text-white text-[10px] font-black">ON</span>
+                                    </div>
                                 </div>
 
                                 {/* CTAs */}
@@ -3292,44 +3275,23 @@ const AdminDashboard = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between bg-white/60 p-2 rounded-lg border border-slate-200">
+                                                <div className="flex items-center justify-between bg-emerald-50 p-3 rounded-xl border border-emerald-100">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm">📹</span>
-                                                        <span className="text-[10px] font-bold text-slate-600 uppercase">Generate Zoom</span>
+                                                        <span className="text-sm">🛡️</span>
+                                                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Internal Live Classroom Secured</span>
                                                     </div>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={scheduleData.generateZoom}
-                                                        onChange={(e) => setScheduleData({ ...scheduleData, generateZoom: e.target.checked })}
-                                                        className="w-4 h-4 rounded text-primary focus:ring-primary"
-                                                    />
                                                 </div>
-
-                                                {!scheduleData.generateZoom && (
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-[10px] font-black text-slate-400 uppercase">Manual Meeting Link</label>
-                                                        <input
-                                                            type="url"
-                                                            placeholder="https://zoom.us/j/..."
-                                                            className="bg-white border border-slate-200 rounded-lg px-2 py-2 text-[11px] font-bold outline-none"
-                                                            value={scheduleData.meetingLink || ''}
-                                                            onChange={(e) => setScheduleData({ ...scheduleData, meetingLink: e.target.value })}
-                                                        />
-                                                    </div>
-                                                )}
 
                                                 <button
                                                     onClick={() => handleAssignTutor(
                                                         selectedStudent.user.id,
                                                         scheduleData.tutorId,
-                                                        scheduleData.meetingLink,
-                                                        scheduleData.generateZoom,
                                                         scheduleData.startTime,
                                                         scheduleData.duration
                                                     )}
-                                                    className="w-full bg-primary text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider hover:shadow-md transition-all mt-2"
+                                                    className="w-full bg-emerald-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 transition-all mt-2"
                                                 >
-                                                    Confirm Assignment
+                                                    Finalize Assignment
                                                 </button>
                                             </div>
                                         )}

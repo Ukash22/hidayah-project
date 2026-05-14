@@ -249,18 +249,7 @@ const TutorDashboard = () => {
             }
 
             // Force navigation to internal Live Classroom
-            let targetUrl = `/live/${sessionId}`;
-            if (session.meeting_link) {
-                try {
-                    if (session.meeting_link.startsWith('/live/')) {
-                        targetUrl = session.meeting_link;
-                    } else {
-                        const urlObj = new URL(session.meeting_link);
-                        targetUrl = urlObj.pathname;
-                    }
-                } catch(e) {}
-            }
-            navigate(targetUrl);
+            navigate(`/live/${sessionId}`);
         } catch (e) {
             console.error("Critical error in handleJoinClass:", e);
             alert("An error occurred while joining the class.");
