@@ -458,7 +458,7 @@ class ProcessWalletPaymentView(APIView):
     
     @transaction.atomic
     def post(self, request, booking_id):
-        from .models import Wallet, Transaction
+        from .models import Wallet, Transaction, Payment
         from .services import process_payment
         from classes.models import Booking
         
@@ -470,11 +470,11 @@ class ProcessWalletPaymentView(APIView):
         if wallet.balance < booking.price:
             return Response({"error": "Insufficient wallet balance"}, status=400)
             
-        # Deduct from wallet
+        # 1. Deduct from wallet
         wallet.balance -= booking.price
         wallet.save()
         
-        # Record transaction
+        # 2. Record Wallet Transaction (Debit)
         Transaction.objects.create(
             user=request.user,
             amount=booking.price,
@@ -483,7 +483,18 @@ class ProcessWalletPaymentView(APIView):
             reference=f"WLT-{booking.id}-{int(timezone.now().timestamp())}"
         )
         
-        # Process fulfillment (enrollment creation + sessions)
+        # 3. Create completed Payment record for history
+        Payment.objects.create(
+            student=request.user,
+            amount=booking.price,
+            status='COMPLETED',
+            payment_method='WALLET',
+            transaction_id=f"WLT-PAY-{booking.id}-{int(timezone.now().timestamp())}",
+            completed_at=timezone.now(),
+            payment_metadata={"booking_id": booking.id, "subject": booking.subject}
+        )
+        
+        # 4. Process fulfillment (enrollment creation + sessions)
         process_payment(booking)
         
         return Response({

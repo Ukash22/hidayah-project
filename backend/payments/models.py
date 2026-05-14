@@ -42,6 +42,7 @@ class Payment(models.Model):
     PAYMENT_METHOD_CHOICES = (
         ('PAYSTACK', 'Paystack'),
         ('BANK_TRANSFER', 'Bank Transfer'),
+        ('WALLET', 'Wallet Balance'),
     )
     
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
