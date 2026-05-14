@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { Excalidraw, exportToSvg } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import api from '../../services/api';
 
 const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards }) => {
@@ -311,7 +311,34 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     <Excalidraw 
                         excalidrawAPI={(api) => setExcalidrawAPI(api)} 
                         onChange={handleBoardChange}
-                    />
+                        UIOptions={{
+                            canvasActions: {
+                                changeViewBackgroundColor: true,
+                                clearCanvas: true,
+                                export: false,
+                                loadScene: false,
+                                saveAsImage: false,
+                                theme: true,
+                            },
+                        }}
+                    >
+                        <MainMenu>
+                            <MainMenu.DefaultItems.ClearCanvas />
+                            <MainMenu.DefaultItems.SaveAsImage />
+                            <MainMenu.DefaultItems.ChangeCanvasBackground />
+                            <MainMenu.DefaultItems.Help />
+                        </MainMenu>
+                        <WelcomeScreen>
+                            <WelcomeScreen.Hints.MenuHint />
+                            <WelcomeScreen.Hints.ToolbarHint />
+                            <WelcomeScreen.Hints.HelpHint />
+                            <WelcomeScreen.Center>
+                                <WelcomeScreen.Center.Logo />
+                                <WelcomeScreen.Center.Heading>Hidayah Live Board</WelcomeScreen.Center.Heading>
+                                <WelcomeScreen.Center.Menu />
+                            </WelcomeScreen.Center>
+                        </WelcomeScreen>
+                    </Excalidraw>
                 </div>
 
                 {/* Teacher Board Viewer for Students */}
@@ -321,6 +348,16 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             <Excalidraw 
                                 initialData={{ elements: teacherBoardSnapshot }} 
                                 viewModeEnabled={true} 
+                                UIOptions={{
+                                    canvasActions: {
+                                        changeViewBackgroundColor: false,
+                                        clearCanvas: false,
+                                        export: false,
+                                        loadScene: false,
+                                        saveAsImage: false,
+                                        theme: false,
+                                    }
+                                }}
                             />
                         ) : (
                             <div className="flex items-center justify-center w-full h-full text-slate-400 font-bold">
