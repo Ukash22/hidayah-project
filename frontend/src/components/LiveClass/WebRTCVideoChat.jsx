@@ -31,17 +31,19 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
-        reconnectAttempts: 10,
+        reconnectAttempts: 20,
         reconnectInterval: 3000,
         heartbeat: {
             message: JSON.stringify({ type: 'ping' }),
-            interval: 20000,
+            interval: 15000,
             timeout: 60000,
         },
         onOpen: () => {
-            console.log("✅ Signaling Connected");
-            sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
-        }
+            console.log("✅ Signaling WebSocket Connected to:", socketUrl);
+            // We'll send the join message once we have the local stream to avoid race conditions
+        },
+        onClose: () => console.log("❌ Signaling WebSocket Disconnected"),
+        onError: (err) => console.error("⚠️ Signaling WebSocket Error:", err),
     });
 
     // Initialize Local Media
@@ -50,12 +52,28 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         
         const initMedia = async () => {
             try {
+                console.log("🎥 Initializing Local Media...");
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+                
+                // Now that we have the stream, tell others we joined
+                if (readyState === ReadyState.OPEN) {
+                    console.log("🚀 Sending peer_join for:", user.id);
+                    sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
+                }
             } catch (err) {
                 console.error("Failed to get local media", err);
-                alert("Please allow camera and microphone access.");
+                // Fallback: try audio only if video fails
+                try {
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    setLocalStream(audioStream);
+                    if (readyState === ReadyState.OPEN) {
+                        sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
+                    }
+                } catch(e) {
+                    alert("Please allow camera and microphone access to join the class.");
+                }
             }
         };
         initMedia();
@@ -68,43 +86,47 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             peerConnections.current = {};
             setRemoteStreams({});
         };
-    }, [isVideoOpen]);
+    }, [isVideoOpen, readyState]); // Re-run if readyState changes to catch late joins
 
-    // Heartbeat to keep connection alive
+    // Heartbeat & Re-join logic
     useEffect(() => {
-        if (readyState === ReadyState.OPEN) {
-            const interval = setInterval(() => {
-                sendMessage(JSON.stringify({ type: 'ping' }));
-            }, 30000);
-            return () => clearInterval(interval);
+        if (readyState === ReadyState.OPEN && localStream) {
+            // Ensure we are joined
+            sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
         }
-    }, [readyState, sendMessage]);
+    }, [readyState, localStream]);
 
     // Handle Signaling Messages
     useEffect(() => {
-        if (!lastMessage || !isVideoOpen || !localStream) return;
+        if (!lastMessage || !isVideoOpen) return;
         
         try {
             const data = JSON.parse(lastMessage.data);
-            const { type, peerId, name, sdp, candidate, message, emoji } = data;
+            const { type, peerId, name, sdp, candidate, message } = data;
             
             // Ignore our own messages
             if (String(peerId) === String(user.id)) return;
+            if (type === 'pong') return;
+
+            console.log(`📡 Received Signal: ${type} from ${name || peerId}`);
 
             const getPeerConnection = async (id, peerName) => {
                 if (peerConnections.current[id]) return peerConnections.current[id];
                 
-                console.log(`📡 Creating PeerConnection for ${peerName} (${id})`);
+                console.log(`🧊 Creating PeerConnection for ${peerName} (${id})`);
                 const pc = new RTCPeerConnection({
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
                     ]
                 });
                 
-                localStream.getTracks().forEach(track => {
-                    pc.addTrack(track, localStream);
-                });
+                if (localStream) {
+                    localStream.getTracks().forEach(track => {
+                        pc.addTrack(track, localStream);
+                    });
+                }
                 
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
@@ -113,6 +135,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 };
                 
                 pc.ontrack = (event) => {
+                    console.log(`🎬 Received Track from ${peerName}`);
                     setRemoteStreams(prev => ({
                         ...prev,
                         [id]: { stream: event.streams[0], name: peerName }
@@ -120,7 +143,8 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 };
                 
                 pc.oniceconnectionstatechange = () => {
-                    if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+                    console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
+                    if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
                         setRemoteStreams(prev => {
                             const newStreams = { ...prev };
                             delete newStreams[id];
@@ -136,6 +160,12 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             };
 
             const handleSignal = async () => {
+                // We MUST have localStream to respond to offers/joins properly
+                if (!localStream) {
+                    console.warn("⏳ Signal received but localStream not ready. Ignoring for now.");
+                    return;
+                }
+
                 if (type === 'peer_join') {
                     const pc = await getPeerConnection(peerId, name);
                     const offer = await pc.createOffer();
@@ -151,9 +181,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 } 
                 else if (type === 'answer' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];
-                    if (pc) {
-                        await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-                    }
+                    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(sdp));
                 } 
                 else if (type === 'ice_candidate' && String(data.targetId) === String(user.id)) {
                     const pc = peerConnections.current[peerId];
@@ -295,13 +323,26 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         </div>
                     ))}
 
-                    {Object.keys(remoteStreams).length === 0 && layoutMode === 'gallery' && (
-                        <div className="aspect-video rounded-2xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50">
-                            <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                                <Video size={32} className="text-slate-700" />
+                    {Object.keys(remoteStreams).length === 0 && (
+                        <div className="h-48 md:h-64 rounded-2xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-6 text-center">
+                            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                                <Video size={24} className="text-slate-600" />
                             </div>
-                            <p className="font-black uppercase tracking-widest text-xs">Waiting for participants...</p>
-                            <p className="text-[10px] mt-2 text-slate-600 font-bold uppercase tracking-tighter">Status: {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting...'}</p>
+                            <p className="font-black uppercase tracking-widest text-xs mb-1">Waiting for participants...</p>
+                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">
+                                Status: {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting to Server...'}
+                            </p>
+                            {readyState !== ReadyState.OPEN && (
+                                <p className="text-[8px] mt-2 text-slate-700 break-all max-w-[200px]">
+                                    {socketUrl.split('/signaling/')[0]}...
+                                </p>
+                            )}
+                            <button 
+                                onClick={() => window.location.reload()}
+                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-black uppercase rounded-lg transition-all"
+                            >
+                                Refresh Connection
+                            </button>
                         </div>
                     )}
                 </div>
