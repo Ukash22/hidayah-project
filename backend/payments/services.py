@@ -99,7 +99,7 @@ def process_payment(booking):
             # Assume price is for 1 month (4 weeks)
             est_hourly = booking.price / (Decimal(str(booking.hours_per_week)) * Decimal('4'))
 
-        # Check for existing enrollment to avoid duplicates
+        # Check for existing enrollment or create new one
         enrollment, created = Enrollment.objects.get_or_create(
             student=profile,
             subject=subject_obj,
@@ -114,6 +114,11 @@ def process_payment(booking):
                 'preferred_start_date': booking.preferred_start_date
             }
         )
+        
+        # If it was already existing as PENDING, force it to APPROVED now that payment is done
+        if not created and enrollment.status != 'APPROVED':
+            enrollment.status = 'APPROVED'
+            enrollment.save()
 
         # 4. Generate Initial Scheduled Sessions (4 Weeks)
         # Calculate per-session fee if applicable
