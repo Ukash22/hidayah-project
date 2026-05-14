@@ -140,6 +140,14 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [isSlowMode, setIsSlowMode] = useState(false);
     const [studentReaction, setStudentReaction] = useState(null);
     const lastSyncTime = useRef(0);
+    const [teacherViewAPI, setTeacherViewAPI] = useState(null);
+
+    // Sync teacher board view for students
+    useEffect(() => {
+        if (teacherViewAPI && teacherBoardSnapshot && role === 'STUDENT') {
+            teacherViewAPI.updateScene({ elements: teacherBoardSnapshot });
+        }
+    }, [teacherViewAPI, teacherBoardSnapshot, role]);
 
     // WebSocket URL Calculation
     const socketUrl = React.useMemo(() => {
@@ -370,29 +378,41 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             <div className="flex-1 flex relative overflow-hidden">
                 {/* Left Floating Toolbar (Jamboard Style) */}
                 {(activeTab === 'my_board' || activeTab === 'student_view') && (
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-[1000] bg-white/90 backdrop-blur-xl p-3 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-white/50 group transition-all hover:scale-105">
-                        {[
-                            { id: 'selection', icon: '🖱️', label: 'Select' },
-                            { id: 'freedraw', icon: '✏️', label: 'Pen' },
-                            { id: 'eraser', icon: '🧹', label: 'Eraser' },
-                            { id: 'text', icon: '🔤', label: 'Text' },
-                            { id: 'rectangle', icon: '🟦', label: 'Square' },
-                            { id: 'ellipse', icon: '⭕', label: 'Circle' },
-                            { id: 'arrow', icon: '➡️', label: 'Arrow' },
-                            { id: 'laser', icon: '🔦', label: 'Laser' },
-                        ].map((tool) => (
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[1000] pointer-events-none">
+                        <div className="flex flex-col gap-2 bg-white/95 backdrop-blur-2xl p-2 rounded-3xl shadow-2xl border border-white/50 pointer-events-auto transition-all hover:scale-105">
+                            {[
+                                { id: 'selection', icon: '🖱️', label: 'Select' },
+                                { id: 'freedraw', icon: '✏️', label: 'Pen' },
+                                { id: 'eraser', icon: '🧹', label: 'Eraser' },
+                                { id: 'text', icon: '🔤', label: 'Text' },
+                                { id: 'rectangle', icon: '🟦', label: 'Square' },
+                                { id: 'ellipse', icon: '⭕', label: 'Circle' },
+                                { id: 'arrow', icon: '➡️', label: 'Arrow' },
+                                { id: 'laser', icon: '🔦', label: 'Laser' },
+                            ].map((tool) => (
+                                <button
+                                    key={tool.id}
+                                    onClick={() => excalidrawAPI?.updateScene({ appState: { activeTool: { type: tool.id } } })}
+                                    className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all text-lg relative group/tool"
+                                    title={tool.label}
+                                >
+                                    {tool.icon}
+                                    <span className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
+                                        {tool.label}
+                                    </span>
+                                </button>
+                            ))}
+                            <div className="border-t border-slate-100 my-1"></div>
                             <button
-                                key={tool.id}
-                                onClick={() => excalidrawAPI?.updateScene({ appState: { activeTool: { type: tool.id } } })}
-                                className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-emerald-50 hover:text-emerald-600 transition-all text-xl grayscale hover:grayscale-0 active:scale-90 relative group/tool"
-                                title={tool.label}
+                                onClick={() => {
+                                    if (window.confirm("Clear board?")) excalidrawAPI?.updateScene({ elements: [] });
+                                }}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-all text-lg"
+                                title="Clear All"
                             >
-                                {tool.icon}
-                                <span className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
-                                    {tool.label}
-                                </span>
+                                🗑️
                             </button>
-                        ))}
+                        </div>
                     </div>
                 )}
 
@@ -408,6 +428,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 currentItemStrokeWidth: 1,
                                 currentItemStrokeStyle: "solid",
                                 currentItemRoughness: 0,
+                                currentItemBackgroundColor: "transparent",
+                                currentItemFillStyle: "hachure",
+                                currentItemOpacity: 100,
                                 viewBackgroundColor: "#ffffff",
                                 theme: "light",
                                 zenModeEnabled: false,
@@ -419,9 +442,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             canvasActions: {
                                 changeViewBackgroundColor: true,
                                 clearCanvas: true,
-                                export: false,
-                                loadScene: false,
-                                saveAsImage: false,
+                                export: true,
+                                loadScene: true,
+                                saveAsImage: true,
                                 theme: true,
                             },
                         }}
@@ -446,26 +469,28 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 {/* Teacher Board Viewer for Students */}
                 {role === 'STUDENT' && activeTab === 'teacher_board' && (
                     <div className="flex-1 relative">
-                        {teacherBoardSnapshot ? (
-                            <Excalidraw 
-                                initialData={{ elements: teacherBoardSnapshot }} 
-                                viewModeEnabled={true} 
-                                UIOptions={{
-                                    canvasActions: {
-                                        changeViewBackgroundColor: false,
-                                        clearCanvas: false,
-                                        export: false,
-                                        loadScene: false,
-                                        saveAsImage: false,
-                                        theme: false,
-                                    }
-                                }}
-                            />
-                        ) : (
-                            <div className="flex items-center justify-center w-full h-full text-slate-400 font-bold">
-                                Waiting for Teacher...
-                            </div>
-                        )}
+                        <Excalidraw 
+                            excalidrawAPI={(api) => setTeacherViewAPI(api)}
+                            initialData={{ 
+                                elements: teacherBoardSnapshot || [],
+                                appState: { 
+                                    theme: 'light', 
+                                    zenModeEnabled: false,
+                                    viewBackgroundColor: '#ffffff'
+                                }
+                            }} 
+                            viewModeEnabled={true} 
+                            UIOptions={{
+                                canvasActions: {
+                                    changeViewBackgroundColor: true,
+                                    clearCanvas: false,
+                                    export: true,
+                                    loadScene: false,
+                                    saveAsImage: true,
+                                    theme: true,
+                                }
+                            }}
+                        />
                         <div className="absolute top-4 left-4 bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg z-50">
                             Teacher's Live Board (Read-Only)
                         </div>
