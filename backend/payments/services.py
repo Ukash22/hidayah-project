@@ -79,10 +79,19 @@ def process_payment(booking):
         subject_obj = Subject.objects.filter(name__icontains=booking.subject).first()
         if not subject_obj:
             # Fallback: Create placeholder subject so enrollment is NOT skipped
-            # This fixes the "Registered Subjects 0" issue when subject names don't match database perfectly.
+            # Need to provide a Program as it's a required field
+            from programs.models import Program
+            default_program, _ = Program.objects.get_or_create(
+                name="General Education",
+                defaults={'program_type': 'WESTERN'}
+            )
+            
             subject_obj, _ = Subject.objects.get_or_create(
                 name=booking.subject,
-                defaults={'admin_percentage': 20} # Default fallback
+                defaults={
+                    'admin_percentage': 20,
+                    'program': default_program
+                }
             )
             logger.info(f"Using placeholder/new subject '{booking.subject}' to ensure enrollment fulfillment.")
 
@@ -134,8 +143,15 @@ def process_payment(booking):
     except StudentProfile.DoesNotExist:
         pass
 
-    # 5. Mark booking as paid
+    # 5. Mark booking as paid and archived
     booking.paid = True
+    booking.approved = True # Ensure it's approved if paid
     booking.save()
     
+    # 6. Final safety check on profile
+    if profile.payment_status != 'PAID':
+        profile.payment_status = 'PAID'
+        profile.save()
+    
+    logger.info(f"Successfully processed payment for booking {booking.id}. Enrollment created and sessions generated.")
     return True

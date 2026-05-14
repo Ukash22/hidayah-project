@@ -51,8 +51,8 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         return [{
             'id': s.id,
             'scheduled_at': s.scheduled_at,
-            'meeting_link': s.meeting_link,
-            'whiteboard_link': s.whiteboard_link,
+            'meeting_link': s.meeting_link or (obj.tutor.tutor_profile.live_class_link if obj.tutor and hasattr(obj.tutor, 'tutor_profile') else None),
+            'whiteboard_link': s.whiteboard_link or (obj.tutor.tutor_profile.live_class_link if obj.tutor and hasattr(obj.tutor, 'tutor_profile') else None),
             'is_started': s.is_started
         } for s in sessions]
 
