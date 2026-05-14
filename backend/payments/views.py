@@ -455,6 +455,7 @@ class ProcessWalletPaymentView(APIView):
     """Pay for a Booking using Wallet Balance"""
     permission_classes = [IsAuthenticated]
     
+    @transaction.atomic
     def post(self, request, booking_id):
         from .models import Wallet, Transaction
         from .services import process_payment
