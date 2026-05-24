@@ -476,43 +476,41 @@ const TutorDashboard = () => {
                                     schedule.filter(s => s.type === 'TRIAL').map((trial, idx) => (
                                         <motion.div 
                                             key={idx} 
-                                            whileHover={{ scale: 1.01 }}
-                                            className="bg-white shadow-sm border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 hover:border-blue-600/20 transition-all group"
+                                            whileHover={{ y: -5 }}
+                                            className="bg-white border border-slate-100 rounded-[2.5rem] p-8 md:p-10 flex flex-col xl:flex-row justify-between items-center gap-8 hover:border-blue-600/30 transition-all shadow-sm"
                                         >
-                                            <div className="flex items-center gap-6">
-                                                <div className="bg-blue-600/10 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl border border-blue-600/10 group-hover:scale-110 transition-transform">📖</div>
+                                            <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left w-full xl:w-auto">
+                                                <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-4xl shadow-inner ring-1 ring-slate-100 group-hover:scale-110 transition-transform flex-shrink-0">📖</div>
                                                 <div>
-                                                    <h4 className="text-xl font-bold text-slate-900">Trial: {trial.student_name || trial.first_name}</h4>
-                                                    <p className="text-slate-400 text-sm font-bold flex items-center gap-2">
-                                                        <span>🗓</span> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleString() : 'Pending'}
-                                                        <span className="text-slate-900/10">|</span>
-                                                        <span>📍 {trial.country || 'Global'}</span>
-                                                    </p>
+                                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">TRIAL CLASS</p>
+                                                    <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{trial.student_name || trial.first_name}</h4>
+                                                    <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl justify-center md:justify-start w-fit mx-auto md:mx-0">
+                                                        <span className="flex items-center gap-2"><Calendar size={12} className="text-blue-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleDateString() : 'Pending'}</span>
+                                                        <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Pending'}</span>
+                                                        <span className="flex items-center gap-2"><span className="text-emerald-500">📍</span> {trial.country || 'Global'}</span>
+                                                        <span className="flex items-center gap-2"><span className="text-sky-500">📚</span> {trial.course_interested}</span>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-4">
-                                                <div className="text-right hidden md:block">
-                                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Course</span>
-                                                    <span className="text-xs font-bold text-emerald-400">{trial.course_interested}</span>
-                                                </div>
+                                            <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto">
                                                 {trial.zoom_start_url ? (
                                                     <>
                                                         <button
-                                                            onClick={() => handleJoinClass(trial)}
-                                                            className="bg-blue-600 text-slate-900 px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 hover:scale-105 transition-all text-center"
-                                                        >
-                                                            Start Class
-                                                        </button>
-                                                        <button
                                                             onClick={() => navigate(`/live/${trial.id}`)}
-                                                            className="bg-amber-500 text-slate-900 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 hover:scale-105 transition-all text-center"
+                                                            className="bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-sm whitespace-nowrap"
                                                         >
                                                             Whiteboard
                                                         </button>
+                                                        <button
+                                                            onClick={() => handleJoinClass(trial)}
+                                                            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-blue-600/20 active:scale-95 transition-all whitespace-nowrap"
+                                                        >
+                                                            Start Class →
+                                                        </button>
                                                     </>
                                                 ) : (
-                                                    <span className="text-xs text-slate-400 italic font-bold">Room Pending</span>
+                                                    <span className="bg-slate-50 text-slate-400 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-slate-200 w-full text-center">Room Pending</span>
                                                 )}
                                             </div>
                                         </motion.div>
@@ -529,74 +527,59 @@ const TutorDashboard = () => {
                                 My Regular Students
                             </h2>
 
-                            <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid gap-6">
                                 {schedule.filter(s => s.type !== 'TRIAL').length > 0 ? (
                                     schedule.filter(s => s.type !== 'TRIAL').map((session, idx) => (
                                         <motion.div 
                                             key={idx} 
                                             whileHover={{ y: -5 }}
-                                            className="bg-white/5 p-6 rounded-3xl border border-white/10 shadow-xl hover:border-blue-600/30 transition-all"
+                                            className="bg-white border border-slate-100 rounded-[2.5rem] p-8 md:p-10 flex flex-col xl:flex-row justify-between items-center gap-8 hover:border-blue-600/30 transition-all shadow-sm"
                                         >
-                                            <div className="flex items-center justify-between mb-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl font-black text-emerald-400 border border-white/5">
-                                                        {session.student_name?.[0] || 'S'}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-900 leading-tight">{session.student_name}</h4>
-                                                        <div className="flex flex-col gap-0.5 mt-0.5">
-                                                            <span className="text-[10px] text-blue-600 font-black uppercase tracking-widest">{session.course_interested || 'Regular Class'}</span>
-                                                            {(session.schedule_days || session.schedule_time) && (
-                                                                <div className="flex items-center gap-2 text-[9px] text-slate-400 font-bold">
-                                                                    {session.schedule_days && <span className="flex items-center gap-1">📅 {session.schedule_days}</span>}
-                                                                    {session.schedule_time && <span className="flex items-center gap-1">⏰ {session.schedule_time}</span>}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <div className="text-[9px] font-black uppercase text-blue-600 bg-blue-600/10 px-2 py-1 rounded-lg border border-blue-600/20">
-                                                        {new Date(session.scheduled_at).toLocaleDateString()}
-                                                    </div>
-                                                    <div className="text-[8px] font-black uppercase text-slate-400">
-                                                        {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left w-full xl:w-auto">
+                                                <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center text-4xl shadow-inner ring-1 ring-slate-100 group-hover:scale-110 transition-transform flex-shrink-0">🎓</div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{session.course_interested || 'REGULAR CLASS'}</p>
+                                                    <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{session.student_name}</h4>
+                                                    <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl justify-center md:justify-start w-fit mx-auto md:mx-0">
+                                                        <span className="flex items-center gap-2"><Calendar size={12} className="text-blue-600" /> {new Date(session.scheduled_at).toLocaleDateString()}</span>
+                                                        <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-600" /> {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                             <div className="flex flex-wrap gap-2">
+                                            
+                                            <div className="flex flex-col sm:flex-row flex-wrap justify-center xl:justify-end gap-3 w-full xl:w-auto mt-4 xl:mt-0">
                                                 <button
-                                                    onClick={() => handleJoinClass(session)}
-                                                    className="flex-1 bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:-translate-y-0.5 transition-all text-center"
+                                                    onClick={() => handleFileComplaint({id: session.student, user_details: {first_name: session.student_name}})}
+                                                    className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap"
                                                 >
-                                                    Enter Class ↗
+                                                    Report
                                                 </button>
-                                                {session.status !== 'COMPLETED' ? (
-                                                     <button
-                                                        onClick={() => handleCompleteSession(session)}
-                                                        className="flex-1 bg-white/10 text-emerald-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-500/30 hover:bg-emerald-500/10 transition-all text-center"
-                                                    >
-                                                        Mark Done ✅
-                                                    </button>
-                                                ) : (
-                                                    <span className="flex-1 bg-white/5 text-slate-500 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-center cursor-not-allowed border border-white/5">
-                                                        Completed
-                                                    </span>
-                                                )}
                                                 <button
                                                     onClick={() => {
                                                         setSelectedStudentForAssign(session.student_data || {id: session.student, full_name: session.student_name});
                                                         setShowAssignmentModal(true);
                                                     }}
-                                                    className="flex-1 bg-secondary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-secondary/20 hover:-translate-y-0.5 transition-all text-center"
+                                                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap"
                                                 >
-                                                    🎓 Assign
+                                                    Assign Exam
                                                 </button>
+                                                {session.status !== 'COMPLETED' ? (
+                                                     <button
+                                                        onClick={() => handleCompleteSession(session)}
+                                                        className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-200 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap"
+                                                    >
+                                                        Mark Done ✅
+                                                    </button>
+                                                ) : (
+                                                    <span className="bg-slate-50 text-slate-400 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest border border-slate-200 whitespace-nowrap flex items-center justify-center">
+                                                        Completed
+                                                    </span>
+                                                )}
                                                 <button
-                                                    onClick={() => handleFileComplaint({id: session.student, user_details: {first_name: session.student_name}})}
-                                                    className="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-500/20 hover:bg-red-500/20 transition-all"
+                                                    onClick={() => handleJoinClass(session)}
+                                                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-[0.2em] shadow-lg shadow-blue-600/20 active:scale-95 transition-all whitespace-nowrap"
                                                 >
-                                                    Report
+                                                    Enter Class ↗
                                                 </button>
                                             </div>
                                         </motion.div>

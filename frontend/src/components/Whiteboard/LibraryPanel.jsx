@@ -4,28 +4,36 @@ import { Files, Palette, Library, Image as ImageIcon, FileText, FileUp, X, Plus,
 const LibraryPanel = ({ excalidrawAPI, onClose }) => {
     const [activeTab, setActiveTab] = useState('pages');
     
-    // Pages State
-    const [pages, setPages] = useState([{ id: 'page-1', name: 'Page 1' }]);
+    // Pages State - Store elements array inside each page
+    const [pages, setPages] = useState([{ id: 'page-1', name: 'Page 1', elements: [] }]);
     const [currentPageId, setCurrentPageId] = useState('page-1');
 
     // Library State
     const [savedBoards, setSavedBoards] = useState(() => JSON.parse(localStorage.getItem('hidayah_saved_boards') || '[]'));
 
+    const saveCurrentPageElements = () => {
+        if (!excalidrawAPI) return;
+        const currentElements = excalidrawAPI.getSceneElements();
+        setPages(prev => prev.map(p => p.id === currentPageId ? { ...p, elements: currentElements } : p));
+    };
+
     const handleAddPage = () => {
         if (!excalidrawAPI) return;
-        // Save current first (handled by switching, but here we just clear the board and add to list)
+        saveCurrentPageElements();
         const newId = `page-${Date.now()}`;
-        setPages([...pages, { id: newId, name: `Page ${pages.length + 1}` }]);
+        setPages(prev => [...prev, { id: newId, name: `Page ${prev.length + 1}`, elements: [] }]);
         setCurrentPageId(newId);
         excalidrawAPI.updateScene({ elements: [] });
     };
 
     const handleSwitchPage = (id) => {
         if (!excalidrawAPI || id === currentPageId) return;
-        // In a real robust implementation, you'd save current elements to state before switching.
-        // For simplicity and to fit memory, we just clear for new page.
+        saveCurrentPageElements();
+        
+        // Find the page we are switching to and load its elements
+        const targetPage = pages.find(p => p.id === id);
         setCurrentPageId(id);
-        excalidrawAPI.updateScene({ elements: [] }); 
+        excalidrawAPI.updateScene({ elements: targetPage?.elements || [] }); 
     };
 
     const changeBgColor = (color) => {
