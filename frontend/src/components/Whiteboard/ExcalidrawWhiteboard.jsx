@@ -3,6 +3,9 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
 import api from '../../services/api';
+import MathToolsPanel from './MathToolsPanel';
+import LibraryPanel from './LibraryPanel';
+import ExamPanel from './ExamPanel';
 
 const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser }) => {
     const [showControls, setShowControls] = useState(false);
@@ -145,6 +148,38 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [studentReaction, setStudentReaction] = useState(null);
     const lastSyncTime = useRef(0);
     const [teacherViewAPI, setTeacherViewAPI] = useState(null);
+    const [showMathTools, setShowMathTools] = useState(false);
+    const [showLibrary, setShowLibrary] = useState(false);
+    const [showExamPanel, setShowExamPanel] = useState(false);
+    const [examTimer, setExamTimer] = useState(0);
+    const [isExamActive, setIsExamActive] = useState(false);
+
+    // Timer logic
+    useEffect(() => {
+        let interval;
+        if (isExamActive && examTimer > 0) {
+            interval = setInterval(() => {
+                setExamTimer(prev => prev - 1);
+            }, 1000);
+        } else if (examTimer === 0 && isExamActive) {
+            setIsExamActive(false);
+            if (role === 'STUDENT') alert("Exam Time is Up! Please stop writing.");
+        }
+        return () => clearInterval(interval);
+    }, [isExamActive, examTimer, role]);
+
+    const handleAssignExam = (elements, duration) => {
+        sendMessage(JSON.stringify({ 
+            type: 'command', 
+            action: 'assign_exam', 
+            snapshot: elements, 
+            duration: duration 
+        }));
+        setExamTimer(duration * 60);
+        setIsExamActive(true);
+        if (role === 'TUTOR' || role === 'ADMIN') setActiveTab('my_class');
+        alert(`Exam assigned for ${duration} minutes!`);
+    };
 
     // Sync teacher board view for students
     useEffect(() => {
@@ -197,6 +232,15 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     if (!payload.targetId || payload.targetId === userName) {
                         setStudentReaction(payload.emoji);
                         setTimeout(() => setStudentReaction(null), 3000);
+                    }
+                } else if (action === 'assign_exam') {
+                    setExamTimer(payload.duration * 60);
+                    setIsExamActive(true);
+                    if (role === 'STUDENT' && excalidrawAPI) {
+                        excalidrawAPI.updateScene({ elements: payload.snapshot });
+                        alert(`EXAM STARTED! You have ${payload.duration} minutes.`);
+                    } else if (role === 'TUTOR' || role === 'ADMIN') {
+                        setActiveTab('my_class');
                     }
                 }
             }
@@ -255,7 +299,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     svg: svgElement.outerHTML,
                     snapshot: elements
                 }));
-            } catch (e) {}
+            } catch (_e) { /* ignore */ }
         }
     };
 
@@ -379,6 +423,13 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }}
             />
 
+            {isExamActive && (
+                <div className="absolute top-16 md:top-4 left-1/2 -translate-x-1/2 z-[2000] bg-rose-600 text-white px-6 py-2 rounded-full font-black text-lg md:text-xl shadow-2xl border-4 border-rose-400 flex items-center gap-3 animate-pulse">
+                    <span>⏱️</span> 
+                    {Math.floor(examTimer / 60).toString().padStart(2, '0')}:{(examTimer % 60).toString().padStart(2, '0')}
+                </div>
+            )}
+
             <div className="flex-1 flex relative overflow-hidden">
                 {/* Floating Toolbar (Jamboard Style) */}
                 {(activeTab === 'my_board' || activeTab === 'student_view') && (
@@ -406,6 +457,30 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                     </span>
                                 </button>
                             ))}
+                            <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
+                            <button
+                                onClick={() => setShowMathTools(!showMathTools)}
+                                className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showMathTools ? 'bg-indigo-100 text-indigo-600 shadow-inner' : 'hover:bg-indigo-50 hover:text-indigo-600'}`}
+                                title="Math Tools"
+                            >
+                                🧮
+                            </button>
+                            <button
+                                onClick={() => setShowLibrary(!showLibrary)}
+                                className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showLibrary ? 'bg-teal-100 text-teal-600 shadow-inner' : 'hover:bg-teal-50 hover:text-teal-600'}`}
+                                title="Library & Pages"
+                            >
+                                📚
+                            </button>
+                            {(role === 'TUTOR' || role === 'ADMIN') && (
+                                <button
+                                    onClick={() => setShowExamPanel(!showExamPanel)}
+                                    className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showExamPanel ? 'bg-rose-100 text-rose-600 shadow-inner' : 'hover:bg-rose-50 hover:text-rose-600'}`}
+                                    title="Assign Exam"
+                                >
+                                    📝
+                                </button>
+                            )}
                             <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
                             <button
                                 onClick={() => {
@@ -553,6 +628,26 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {showMathTools && (
+                    <MathToolsPanel 
+                        excalidrawAPI={activeTab === 'student_view' ? excalidrawAPI : excalidrawAPI} 
+                        onClose={() => setShowMathTools(false)} 
+                    />
+                )}
+                {showLibrary && (
+                    <LibraryPanel 
+                        excalidrawAPI={excalidrawAPI} 
+                        onClose={() => setShowLibrary(false)} 
+                    />
+                )}
+                {showExamPanel && (
+                    <ExamPanel 
+                        role={role}
+                        onAssignExam={handleAssignExam}
+                        onClose={() => setShowExamPanel(false)} 
+                    />
                 )}
             </div>
         </div>
