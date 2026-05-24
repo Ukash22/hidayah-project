@@ -1,35 +1,38 @@
 import React, { useEffect, useState, useRef } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
+import "@excalidraw/excalidraw/index.css";
 import api from '../../services/api';
 
 const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser }) => {
     const [showControls, setShowControls] = useState(false);
 
     return (
-        <div className="w-full bg-[#1e293b] text-white flex items-center justify-between px-6 py-4 shadow-xl z-[1001]">
-            <div className="flex items-center gap-8">
-                <div className="flex flex-col">
-                    <h1 className="text-lg font-black tracking-tighter flex items-center gap-2">
-                        <span className="bg-emerald-500 w-8 h-8 rounded-lg flex items-center justify-center text-xl">
-                            ✍️
-                        </span>
-                        Hidayah Whiteboard
-                    </h1>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 ml-1">Powered by Excalidraw</span>
+        <div className="w-full bg-[#1e293b] text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4 gap-4 shadow-xl z-[1001]">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full md:w-auto">
+                <div className="flex items-center gap-3 self-start sm:self-auto">
+                    <span className="bg-emerald-500 w-8 h-8 rounded-lg flex items-center justify-center text-xl">
+                        ✍️
+                    </span>
+                    <div className="flex flex-col">
+                        <h1 className="text-base md:text-lg font-black tracking-tighter">
+                            Hidayah Whiteboard
+                        </h1>
+                        <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">Powered by Excalidraw</span>
+                    </div>
                 </div>
 
-                <nav className="flex bg-slate-800/50 p-1 rounded-2xl border border-slate-700/50">
+                <nav className="flex bg-slate-800/50 p-1 rounded-2xl border border-slate-700/50 w-full sm:w-auto">
                     <button 
                         onClick={() => setActiveTab('my_board')}
-                        className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
+                        className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
                     >
                         {role === 'STUDENT' ? 'My Board' : 'Tutor Board'}
                     </button>
                     {role === 'STUDENT' && (
                         <button 
                             onClick={() => setActiveTab('teacher_board')}
-                            className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
+                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
                         >
                             Teacher's Screen
                         </button>
@@ -37,7 +40,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                     {(role === 'TUTOR' || role === 'ADMIN') && (
                         <button 
                             onClick={() => setActiveTab('my_class')}
-                            className={`px-6 py-2.5 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all relative ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
+                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-black uppercase tracking-widest rounded-xl transition-all relative ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
                         >
                             Student Boards
                             {studentCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] border-2 border-[#1e293b]">{studentCount}</span>}
@@ -46,61 +49,62 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                 </nav>
             </div>
 
-            <div className="flex items-center gap-4 relative">
+            <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-4 w-full md:w-auto relative">
                 {activeTab === 'student_view' && (
-                    <div className="flex items-center gap-3 px-4 py-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 mr-4">
+                    <div className="flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 mr-2 sm:mr-4">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Coaching: {activeStudentName}</span>
-                        <button onClick={() => setActiveTab('my_class')} className="ml-2 hover:text-white text-sm font-bold">✕</button>
+                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest">Coaching: {activeStudentName}</span>
+                        <button onClick={() => setActiveTab('my_class')} className="ml-1 sm:ml-2 hover:text-white text-sm font-bold">✕</button>
                     </div>
                 )}
 
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center w-full sm:w-auto justify-end">
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <button 
                             onClick={onSelectPen}
-                            className="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-slate-600"
+                            className="px-2.5 py-2 sm:px-4 sm:py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-slate-600"
                         >
-                            ✏️ Pen
+                            ✏️ <span className="hidden sm:inline">Pen</span>
                         </button>
                     )}
 
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <button 
                             onClick={onSelectLaser}
-                            className="px-4 py-2.5 bg-red-900/50 hover:bg-red-800/50 text-red-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-red-500/30"
+                            className="px-2.5 py-2 sm:px-4 sm:py-2.5 bg-red-900/50 hover:bg-red-800/50 text-red-200 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 border border-red-500/30"
                         >
-                            🔦 Laser
+                            🔦 <span className="hidden sm:inline">Laser</span>
                         </button>
                     )}
 
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <button 
                             onClick={onClearOwnBoard}
-                            className="p-3 bg-red-900/20 hover:bg-red-800/30 text-red-500 rounded-xl transition-all border border-red-500/20"
+                            className="p-2 sm:p-3 bg-red-900/20 hover:bg-red-800/30 text-red-500 rounded-xl transition-all border border-red-500/20"
                             title="Clear My Board"
                         >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                         </button>
                     )}
 
-                    <button onClick={onDownload} className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <button onClick={onDownload} className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
 
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <>
                             <button 
                                 onClick={() => onPush('overwrite')} 
-                                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
+                                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
                             >
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                Push Board
+                                <span className="hidden sm:inline">Push Board</span>
+                                <span className="sm:hidden">Push</span>
                             </button>
                             
                             <div className="relative">
-                                <button onClick={() => setShowControls(!showControls)} className="p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 ml-2">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <button onClick={() => setShowControls(!showControls)} className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 ml-1 sm:ml-2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                                 </button>
                                 {showControls && (
                                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800 z-[1002]">
@@ -257,13 +261,13 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     const handleSelectPen = () => {
         if (excalidrawAPI) {
-            excalidrawAPI.updateScene({ appState: { activeTool: { type: 'freedraw' } } });
+            excalidrawAPI.setActiveTool({ type: 'freedraw' });
         }
     };
 
     const handleSelectLaser = () => {
         if (excalidrawAPI) {
-            excalidrawAPI.updateScene({ appState: { activeTool: { type: 'laser' } } });
+            excalidrawAPI.setActiveTool({ type: 'laser' });
         }
     };
 
@@ -273,11 +277,11 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             setTimeout(() => {
                 excalidrawAPI.updateScene({ 
                     appState: { 
-                        activeTool: { type: 'freedraw' },
                         currentItemStrokeWidth: 1,
                         currentItemRoughness: 0
                     } 
                 });
+                excalidrawAPI.setActiveTool({ type: 'freedraw' });
             }, 800);
         }
     }, [excalidrawAPI, role]);
@@ -376,10 +380,10 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             />
 
             <div className="flex-1 flex relative overflow-hidden">
-                {/* Left Floating Toolbar (Jamboard Style) */}
+                {/* Floating Toolbar (Jamboard Style) */}
                 {(activeTab === 'my_board' || activeTab === 'student_view') && (
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-[1000] pointer-events-none">
-                        <div className="flex flex-col gap-2 bg-white/95 backdrop-blur-2xl p-2 rounded-3xl shadow-2xl border border-white/50 pointer-events-auto transition-all hover:scale-105">
+                    <div className="absolute left-1/2 bottom-4 -translate-x-1/2 md:left-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:translate-x-0 z-[1000] pointer-events-none w-auto">
+                        <div className="flex flex-row md:flex-col gap-1 md:gap-2 bg-white/95 backdrop-blur-2xl p-1.5 md:p-2 rounded-2xl md:rounded-3xl shadow-2xl border border-white/50 pointer-events-auto transition-all hover:scale-102 md:hover:scale-105 max-w-[95vw] overflow-x-auto md:overflow-visible">
                             {[
                                 { id: 'selection', icon: '🖱️', label: 'Select' },
                                 { id: 'freedraw', icon: '✏️', label: 'Pen' },
@@ -392,22 +396,22 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             ].map((tool) => (
                                 <button
                                     key={tool.id}
-                                    onClick={() => excalidrawAPI?.updateScene({ appState: { activeTool: { type: tool.id } } })}
-                                    className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all text-lg relative group/tool"
+                                    onClick={() => excalidrawAPI?.setActiveTool({ type: tool.id })}
+                                    className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all text-base md:text-lg relative group/tool"
                                     title={tool.label}
                                 >
                                     {tool.icon}
-                                    <span className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
+                                    <span className="absolute bottom-full mb-2 md:bottom-auto md:left-full md:ml-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-black uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
                                         {tool.label}
                                     </span>
                                 </button>
                             ))}
-                            <div className="border-t border-slate-100 my-1"></div>
+                            <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
                             <button
                                 onClick={() => {
                                     if (window.confirm("Clear board?")) excalidrawAPI?.updateScene({ elements: [] });
                                 }}
-                                className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-red-50 text-red-500 transition-all text-lg"
+                                className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl hover:bg-red-50 text-red-500 transition-all text-base md:text-lg"
                                 title="Clear All"
                             >
                                 🗑️
@@ -499,28 +503,28 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
                 {/* Student Grid View */}
                 {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_class' && (
-                    <div className="flex-1 p-10 overflow-y-auto bg-slate-50">
+                    <div className="flex-1 p-4 sm:p-10 overflow-y-auto bg-slate-50">
                         <div className="max-w-6xl mx-auto">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                                 {Object.keys(studentThumbnails).length === 0 ? (
-                                    <div className="col-span-full py-32 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-200">
+                                    <div className="col-span-full py-32 text-center bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-dashed border-slate-200">
                                         <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner">🏫</div>
                                         <h3 className="text-xl font-black text-slate-900 mb-2">The Classroom is Empty</h3>
                                         <p className="text-slate-400 font-bold max-w-xs mx-auto">Waiting for students to join and start drawing on their individual boards.</p>
                                     </div>
                                 ) : (
                                     Object.entries(studentThumbnails).map(([id, data]) => (
-                                        <div key={id} className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden hover:shadow-2xl transition-all group border-b-4 border-b-emerald-500/50">
-                                            <div className="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 bg-[#1e293b] rounded-2xl flex items-center justify-center text-white font-black shadow-lg">
+                                        <div key={id} className="bg-white rounded-[1.5rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden hover:shadow-2xl transition-all group border-b-4 border-b-emerald-500/50">
+                                            <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                                <div className="flex items-center gap-3 sm:gap-4">
+                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1e293b] rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-black shadow-lg">
                                                         {data.name?.[0]}
                                                     </div>
                                                     <span className="font-black text-slate-800 truncate max-w-[100px]">{data.name}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 bg-emerald-100 px-3 py-1 rounded-full">
+                                                <div className="flex items-center gap-1.5 bg-emerald-100 px-2 sm:px-3 py-1 rounded-full">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span className="text-[9px] font-black uppercase text-emerald-600 tracking-widest">Active</span>
+                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-emerald-600 tracking-widest">Active</span>
                                                 </div>
                                             </div>
                                             <div className="h-48 bg-white p-2 relative flex items-center justify-center border-b border-slate-100">

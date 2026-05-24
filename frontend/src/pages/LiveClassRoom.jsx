@@ -14,26 +14,26 @@ const LiveClassRoom = () => {
     <div className="flex flex-col min-h-screen h-screen w-full bg-[#0f172a] overflow-hidden font-sans">
       
       {/* Top Header Bar */}
-      <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 z-[3000]">
-          <div className="flex items-center gap-4">
-              <div className="bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                  LIVE SESSION
+      <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 md:px-6 z-[3000]">
+          <div className="flex items-center gap-2 md:gap-4">
+              <div className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                  LIVE
               </div>
-              <h2 className="text-white font-bold text-sm truncate max-w-[200px]">Room: {roomId}</h2>
+              <h2 className="text-white font-bold text-xs md:text-sm truncate max-w-[120px] sm:max-w-[200px]">Room: {roomId}</h2>
           </div>
 
           <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
               <button 
                   onClick={() => { setLayoutMode('classroom'); setIsVideoOpen(true); }}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'classroom' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'classroom' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
               >
                   Classroom
               </button>
               <button 
                   onClick={() => { setLayoutMode('gallery'); setIsVideoOpen(true); }}
-                  className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'gallery' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'gallery' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
               >
-                  Gallery (Zoom View)
+                  Gallery
               </button>
           </div>
 
@@ -46,7 +46,7 @@ const LiveClassRoom = () => {
           </div>
       </div>
 
-      <div className="flex-1 flex relative overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
           {/* Main Content Area */}
           <div className={`flex-1 relative transition-all duration-500 bg-[#f8fafc] ${layoutMode === 'gallery' ? 'hidden' : 'block'}`}>
               <ExcalidrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
@@ -54,24 +54,25 @@ const LiveClassRoom = () => {
 
           {/* Video Area */}
           <div 
-            className={`transition-all duration-500 flex flex-col bg-slate-900 z-[2000] ${
+            className={`transition-all duration-500 flex flex-col bg-slate-900 z-[2000] relative ${
                 layoutMode === 'gallery' 
                 ? 'w-full h-full' 
                 : isVideoOpen 
-                  ? 'w-[350px] md:w-[450px] border-l border-slate-800' 
-                  : 'w-0 overflow-hidden'
+                  ? 'w-full h-[220px] md:h-full md:w-[450px] border-t md:border-t-0 md:border-l border-slate-800' 
+                  : 'w-full h-0 md:h-full md:w-0'
             }`}
           >
-              <div className="flex-1 w-full bg-black overflow-hidden relative">
+              <div className="flex-1 w-full h-full bg-black overflow-hidden relative">
                   <WebRTCVideoChat roomId={roomId} isVideoOpen={isVideoOpen || layoutMode === 'gallery'} setIsVideoOpen={setIsVideoOpen} layoutMode={layoutMode} />
               </div>
               
               {layoutMode === 'classroom' && (
                   <button 
                     onClick={() => setIsVideoOpen(!isVideoOpen)}
-                    className="absolute -left-10 top-1/2 -translate-y-1/2 bg-slate-900 border-y border-l border-slate-800 p-2 rounded-l-xl text-slate-400 hover:text-white transition-all shadow-2xl"
+                    className="absolute -top-10 left-1/2 -translate-x-1/2 md:top-1/2 md:-translate-y-1/2 md:left-auto md:-left-10 bg-slate-900 border-x border-t md:border-x-0 md:border-y md:border-l border-slate-800 p-2 rounded-t-xl md:rounded-t-none md:rounded-l-xl text-slate-400 hover:text-white transition-all shadow-2xl z-[3000]"
                   >
-                    {isVideoOpen ? '❯' : '❮'}
+                    <span className="md:hidden">{isVideoOpen ? '▼' : '▲'}</span>
+                    <span className="hidden md:inline">{isVideoOpen ? '❯' : '❮'}</span>
                   </button>
               )}
           </div>
