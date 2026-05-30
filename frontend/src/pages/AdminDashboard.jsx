@@ -51,6 +51,235 @@ class AdminErrorBoundary extends Component {
 }
 
 
+// Helper Components moved to top for clarity and consistency
+const StatCard = ({ icon, label, value, sub, alert, color, isDark }) => (
+    <div className={`p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 flex flex-col justify-between relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-500 bg-white/60 backdrop-blur-md`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <div className="flex justify-between items-start z-10">
+            <div>
+                <p className={`text-[10px] uppercase font-black tracking-[0.2em] mb-3 text-slate-400 group-hover:text-primary transition-colors duration-500`}>{label}</p>
+                <div className={`text-4xl font-black font-display tracking-tight leading-none mb-3 text-slate-900`}>
+                    {typeof value === 'number' ? value.toLocaleString() : value}
+                </div>
+                {sub && (
+                    <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-primary/40" />
+                        <p className={`text-[11px] font-bold text-slate-400`}>{sub}</p>
+                    </div>
+                )}
+            </div>
+            <div className={`w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-primary group-hover:text-white transition-all duration-500 group-hover:shadow-lg group-hover:shadow-primary/20 group-hover:rotate-6`}>
+                {icon}
+            </div>
+        </div>
+        {alert && (
+            <div className="absolute top-4 right-4 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+            </div>
+        )}
+    </div>
+);
+
+const SidebarButton = ({ active, onClick, icon, label, badge }) => (
+    <button
+        onClick={onClick}
+        className={`w-full text-left px-4 py-3.5 rounded-2xl text-xs font-black transition-all duration-500 flex items-center gap-4 relative overflow-hidden group ${active
+            ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] scale-[1.02]'
+            : 'text-slate-400 hover:bg-white/5 hover:text-white'
+            }`}
+    >
+        {active && (
+            <div className="absolute inset-0 bg-white/10 opacity-20 pointer-events-none" />
+        )}
+        <span className={`text-xl transition-all duration-500 ${active ? 'scale-110 rotate-3 drop-shadow-lg' : 'group-hover:scale-110 group-hover:rotate-6 opacity-60 group-hover:opacity-100'}`}>{icon}</span>
+        <span className={`flex-1 tracking-wide ${active ? 'translate-x-1' : 'group-hover:translate-x-1'} transition-transform duration-300`}>{label}</span>
+        {badge > 0 && (
+            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm transition-all duration-500 ${
+                active ? 'bg-white text-primary' : 'bg-red-500 text-white animate-pulse'
+            }`}>
+                {badge > 99 ? '99+' : badge}
+            </span>
+        )}
+    </button>
+);
+
+const StatusBadge = ({ status }) => {
+    const s = status?.toUpperCase();
+    const styles = {
+        APPROVED: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        PENDING: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+        REJECTED: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+        ACTIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        COMPLETED: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+        CANCELLED: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+        UNPAID: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
+        PAID: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
+        QUERY: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+        LIVE_STARTED: 'bg-emerald-600 text-white border-emerald-500 font-black shadow-emerald-200',
+        LIVE_WAITING: 'bg-red-500 text-white border-red-400 animate-pulse font-black shadow-red-200',
+        UPCOMING: 'bg-blue-500/10 text-blue-600 border-blue-500/10 font-bold',
+        ENDED: 'bg-slate-50 text-slate-400 border-slate-100 italic'
+    };
+    const labels = {
+        LIVE_STARTED: '● IN SESSION',
+        LIVE_WAITING: '● WAITING TUTOR',
+        UPCOMING: '🗓 UPCOMING',
+        COMPLETED: '✅ COMPLETED',
+        ENDED: '🏁 ENDED'
+    };
+    return (
+        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm transition-all duration-300 ${styles[s] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
+            {labels[s] || s}
+        </span>
+    );
+};
+
+const DocLink = ({ href, label, icon }) => href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+        className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-all">
+        <span>{icon}</span> {label}
+    </a>
+) : (
+    <span className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-400 italic">
+        {icon} {label} {'— Not uploaded'}
+    </span>
+);
+
+const TutorProfileModal = ({ app, onClose, onApprove, onReject, onReschedule, actionLoading }) => {
+    if (!app) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 pt-10">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+                <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 flex items-center gap-4">
+                    {app.image_url ? (
+                        <img src={app.image_url} alt={app.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/30" />
+                    ) : (
+                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-2xl">👤</div>
+                    )}
+                    <div className="flex-1">
+                        <h2 className="text-xl font-black">{app.name}</h2>
+                        <p className="text-slate-300 text-sm">{app.email} {app.phone ? `· ${app.phone}` : ''}</p>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            app.status === 'APPROVED' ? 'bg-green-500/20 text-green-300' :
+                            app.status === 'INTERVIEW_SCHEDULED' ? 'bg-amber-500/20 text-amber-300' :
+                            app.status === 'REJECTED' ? 'bg-red-500/20 text-red-300' :
+                            'bg-slate-500/20 text-slate-300'
+                        }`}>{app.status?.replace('_', ' ')}</span>
+                    </div>
+                    <button onClick={onClose} className="text-white/60 hover:text-white text-2xl transition-colors">✕</button>
+                </div>
+                <div className="p-6 space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {[
+                            { label: 'Experience', value: `${app.experience} Years` },
+                            { label: 'Hourly Rate', value: `₦${parseFloat(app.hourly_rate || 0).toLocaleString()}/hr` },
+                            { label: 'Age', value: app.age || '—' },
+                            { label: 'Device', value: app.device || '—' },
+                            { label: 'Network', value: app.network || '—' },
+                            { label: 'Languages', value: app.languages || '—' },
+                            { label: 'Online Exp', value: app.has_online_exp ? 'Yes' : 'No' },
+                            { label: 'Qualification', value: app.qualification || '—' },
+                            { label: 'Applied', value: app.created_at ? new Date(app.created_at).toLocaleDateString() : '—' },
+                        ].map(({ label, value }) => (
+                            <div key={label} className="bg-slate-50 rounded-xl p-3">
+                                <div className="text-[9px] text-slate-400 uppercase font-black tracking-wider">{label}</div>
+                                <div className="text-sm font-bold text-slate-800 mt-0.5">{value}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Subjects to Teach</h4>
+                            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{app.subjects || '—'}</p>
+                        </div>
+                        <div>
+                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Availability</h4>
+                            <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">
+                                <strong>Days:</strong> {app.availability_days || '—'}<br />
+                                <strong>Hours:</strong> {(() => {
+                                    const formatTime12h = (t) => {
+                                        if (!t) return '';
+                                        let timeStr = t.trim().toUpperCase();
+                                        const isPM = timeStr.includes('PM');
+                                        const isAM = timeStr.includes('AM');
+                                        timeStr = timeStr.replace(/[A-Z\s]/g, '');
+                                        const parts = timeStr.split(':');
+                                        let h = parseInt(parts[0]);
+                                        let m = (parts[1] || '00').slice(0, 2);
+                                        if (isPM && h < 12) h += 12;
+                                        if (isAM && h === 12) h = 0;
+                                        const displayH = h % 12 || 12;
+                                        const displayAMPM = h >= 12 ? 'pm' : 'am';
+                                        return `${displayH}:${m} ${displayAMPM}`;
+                                    };
+                                    return (app.availability_hours || '').split(',').map((h, i) => {
+                                        const parts = h.trim().split(': ');
+                                        if (parts.length >= 2) {
+                                            const timePart = parts[1].replace(/[\s\u2013\u2014]/g, '-');
+                                            const [start, end] = timePart.split('-').filter(Boolean);
+                                            if (start && end) return <div key={i}>{parts[0]}: {formatTime12h(start)} - {formatTime12h(end)}</div>;
+                                        }
+                                        return <div key={i}>{h.trim()}</div>;
+                                    });
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                    {app.bio && (
+                        <div>
+                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Bio / Teaching Philosophy</h4>
+                            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 leading-relaxed">{app.bio}</p>
+                        </div>
+                    )}
+                    {(app.status === 'INTERVIEW_SCHEDULED' || app.interview_at) && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                            <h4 className="text-[10px] text-amber-700 uppercase font-black tracking-wider mb-3">🗓 Interview Details</h4>
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <div>
+                                    <div className="text-[9px] text-amber-600 uppercase font-bold">Scheduled Time</div>
+                                    <div className="text-sm font-bold text-amber-800">{app.interview_at ? new Date(app.interview_at).toLocaleString() : '—'}</div>
+                                </div>
+                                {app.interview_link && (
+                                    <a href={app.interview_link} target="_blank" rel="noopener noreferrer"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black uppercase hover:bg-blue-700 transition-colors shadow">
+                                        🎥 Join Interview
+                                    </a>
+                                )}
+                                <button onClick={onReschedule}
+                                    className="px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-black uppercase hover:bg-violet-700 transition-colors shadow">
+                                    ✏️ Update Schedule
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {app.status === 'REJECTED' && app.rejection_reason && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                            <h4 className="text-[10px] text-red-600 uppercase font-black tracking-wider mb-1">Rejection Reason</h4>
+                            <p className="text-sm text-red-700">{app.rejection_reason}</p>
+                        </div>
+                    )}
+                    <div>
+                        <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-3">📎 Documents & Media</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <DocLink href={app.cv_url} label="CV / Resume" icon="📄" />
+                            <DocLink href={app.credentials_url} label="Credentials / Certificate" icon="🎓" />
+                            <DocLink href={app.recitation_url} label="Short Recitation (Audio)" icon="🎙" />
+                            <DocLink href={app.intro_video_url} label="Introduction Video" icon="🎬" />
+                        </div>
+                    </div>
+                    {(app.status === 'APPLIED' || app.status === 'INTERVIEW_SCHEDULED') && (
+                        <div className="flex gap-3 pt-2 border-t border-slate-100">
+                            <button disabled={actionLoading} onClick={onApprove} className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-sm uppercase hover:bg-emerald-700 transition-colors shadow disabled:opacity-50">✅ Approve Tutor</button>
+                            <button disabled={actionLoading} onClick={onReject} className="px-6 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-sm uppercase hover:bg-red-100 transition-colors">❌ Reject</button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AdminDashboard = () => {
     const { token } = useAuth();
     const navigate = useNavigate();
@@ -3894,274 +4123,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
             )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
-const StatCard = ({ icon, label, value, sub, alert, color, isDark }) => (
-    <div className={`p-8 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-white/60 flex flex-col justify-between relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:-translate-y-1 transition-all duration-500 bg-white/60 backdrop-blur-md`}>
-        {/* Subtle Gradient Hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        
-        <div className="flex justify-between items-start z-10">
-            <div>
-                <p className={`text-[10px] uppercase font-black tracking-[0.2em] mb-3 text-slate-400 group-hover:text-primary transition-colors duration-500`}>{label}</p>
-                <div className={`text-4xl font-black font-display tracking-tight leading-none mb-3 text-slate-900`}>
-                    {typeof value === 'number' ? value.toLocaleString() : value}
-                </div>
-                {sub && (
-                    <div className="flex items-center gap-2">
-                        <div className="w-1 h-1 rounded-full bg-primary/40" />
-                        <p className={`text-[11px] font-bold text-slate-400`}>{sub}</p>
-                    </div>
-                )}
-            </div>
-            <div className={`w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl group-hover:bg-primary group-hover:text-white transition-all duration-500 group-hover:shadow-lg group-hover:shadow-primary/20 group-hover:rotate-6`}>
-                {icon}
-            </div>
-        </div>
-        {alert && (
-            <div className="absolute top-4 right-4 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-            </div>
-        )}
-    </div>
-);
-
-const SidebarButton = ({ active, onClick, icon, label, badge }) => (
-    <button
-        onClick={onClick}
-        className={`w-full text-left px-4 py-3.5 rounded-2xl text-xs font-black transition-all duration-500 flex items-center gap-4 relative overflow-hidden group ${active
-            ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] scale-[1.02]'
-            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-            }`}
-    >
-        {active && (
-            <div className="absolute inset-0 bg-white/10 opacity-20 pointer-events-none" />
-        )}
-        <span className={`text-xl transition-all duration-500 ${active ? 'scale-110 rotate-3 drop-shadow-lg' : 'group-hover:scale-110 group-hover:rotate-6 opacity-60 group-hover:opacity-100'}`}>{icon}</span>
-        <span className={`flex-1 tracking-wide ${active ? 'translate-x-1' : 'group-hover:translate-x-1'} transition-transform duration-300`}>{label}</span>
-        {badge > 0 && (
-            <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black shadow-sm transition-all duration-500 ${
-                active ? 'bg-white text-primary' : 'bg-red-500 text-white animate-pulse'
-            }`}>
-                {badge > 99 ? '99+' : badge}
-            </span>
-        )}
-    </button>
-);
-
-const StatusBadge = ({ status }) => {
-    const s = status?.toUpperCase();
-    const styles = {
-        APPROVED: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-        PENDING: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-        REJECTED: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-        ACTIVE: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-        COMPLETED: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-        CANCELLED: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
-        UNPAID: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-        PAID: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-        QUERY: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-        LIVE_STARTED: 'bg-emerald-600 text-white border-emerald-500 font-black shadow-emerald-200',
-        LIVE_WAITING: 'bg-red-500 text-white border-red-400 animate-pulse font-black shadow-red-200',
-        UPCOMING: 'bg-blue-500/10 text-blue-600 border-blue-500/10 font-bold',
-        ENDED: 'bg-slate-50 text-slate-400 border-slate-100 italic'
-    };
-
-    const labels = {
-        LIVE_STARTED: '● IN SESSION',
-        LIVE_WAITING: '● WAITING TUTOR',
-        UPCOMING: '🗓 UPCOMING',
-        COMPLETED: '✅ COMPLETED',
-        ENDED: '🏁 ENDED'
-    };
-
-    return (
-        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm transition-all duration-300 ${styles[s] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-            {labels[s] || s}
-        </span>
-    );
-};
-
-const DocLink = ({ href, label, icon }) => href ? (
-        <a href={href} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-primary/5 hover:border-primary/30 hover:text-primary transition-all">
-            <span>{icon}</span> {label}
-        </a>
-    ) : (
-        <span className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs text-slate-400 italic">
-            {icon} {label} {'— Not uploaded'}
-        </span>
-    );
-
-    const TutorProfileModal = ({ app, onClose, onApprove, onReject, onReschedule, actionLoading }) => {
-    if (!app) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 backdrop-blur-sm p-4 pt-10">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 flex items-center gap-4">
-                    {app.image_url ? (
-                        <img src={app.image_url} alt={app.name} className="w-16 h-16 rounded-full object-cover border-2 border-white/30" />
-                    ) : (
-                        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center text-2xl">👤</div>
-                    )}
-                    <div className="flex-1">
-                        <h2 className="text-xl font-black">{app.name}</h2>
-                        <p className="text-slate-300 text-sm">{app.email} {app.phone ? `· ${app.phone}` : ''}</p>
-                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            app.status === 'APPROVED' ? 'bg-green-500/20 text-green-300' :
-                            app.status === 'INTERVIEW_SCHEDULED' ? 'bg-amber-500/20 text-amber-300' :
-                            app.status === 'REJECTED' ? 'bg-red-500/20 text-red-300' :
-                            'bg-slate-500/20 text-slate-300'
-                        }`}>{app.status?.replace('_', ' ')}</span>
-                    </div>
-                    <button onClick={onClose} className="text-white/60 hover:text-white text-2xl transition-colors">✕</button>
-                </div>
-
-                <div className="p-6 space-y-6">
-                    {/* Info Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {[
-                            { label: 'Experience', value: `${app.experience} Years` },
-                            { label: 'Hourly Rate', value: `₦${parseFloat(app.hourly_rate || 0).toLocaleString()}/hr` },
-                            { label: 'Age', value: app.age || '—' },
-                            { label: 'Device', value: app.device || '—' },
-                            { label: 'Network', value: app.network || '—' },
-                            { label: 'Languages', value: app.languages || '—' },
-                            { label: 'Online Exp', value: app.has_online_exp ? 'Yes' : 'No' },
-                            { label: 'Qualification', value: app.qualification || '—' },
-                            { label: 'Applied', value: app.created_at ? new Date(app.created_at).toLocaleDateString() : '—' },
-                        ].map(({ label, value }) => (
-                            <div key={label} className="bg-slate-50 rounded-xl p-3">
-                                <div className="text-[9px] text-slate-400 uppercase font-black tracking-wider">{label}</div>
-                                <div className="text-sm font-bold text-slate-800 mt-0.5">{value}</div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Subjects & Availability */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Subjects to Teach</h4>
-                            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{app.subjects || '—'}</p>
-                        </div>
-                        <div>
-                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Availability</h4>
-                            <div className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">
-                                <strong>Days:</strong> {app.availability_days || '—'}<br />
-                                <strong>Hours:</strong> {(() => {
-                                    const formatTime12h = (t) => {
-                                        if (!t) return '';
-                                        let timeStr = t.trim().toUpperCase();
-                                        const isPM = timeStr.includes('PM');
-                                        const isAM = timeStr.includes('AM');
-                                        timeStr = timeStr.replace(/[A-Z\s]/g, '');
-                                        const parts = timeStr.split(':');
-                                        let h = parseInt(parts[0]);
-                                        let m = (parts[1] || '00').slice(0, 2);
-                                        if (isPM && h < 12) h += 12;
-                                        if (isAM && h === 12) h = 0;
-                                        
-                                        const displayH = h % 12 || 12;
-                                        const displayAMPM = h >= 12 ? 'pm' : 'am';
-                                        return `${displayH}:${m} ${displayAMPM}`;
-                                    };
-
-                                    return (app.availability_hours || '').split(',').map((h, i) => {
-                                        const parts = h.trim().split(': ');
-                                        if (parts.length >= 2) {
-                                            const timePart = parts[1].replace(/[\s\u2013\u2014]/g, '-');
-                                            const [start, end] = timePart.split('-').filter(Boolean);
-                                            if (start && end) {
-                                                return <div key={i}>{parts[0]}: {formatTime12h(start)} - {formatTime12h(end)}</div>;
-                                            }
-                                        }
-                                        return <div key={i}>{h.trim()}</div>;
-                                    });
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Bio */}
-                    {app.bio && (
-                        <div>
-                            <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-2">Bio / Teaching Philosophy</h4>
-                            <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 leading-relaxed">{app.bio}</p>
-                        </div>
-                    )}
-
-                    {/* Interview Info */}
-                    {(app.status === 'INTERVIEW_SCHEDULED' || app.interview_at) && (
-                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                            <h4 className="text-[10px] text-amber-700 uppercase font-black tracking-wider mb-3">🗓 Interview Details</h4>
-                            <div className="flex flex-wrap gap-4 items-center">
-                                <div>
-                                    <div className="text-[9px] text-amber-600 uppercase font-bold">Scheduled Time</div>
-                                    <div className="text-sm font-bold text-amber-800">{app.interview_at ? new Date(app.interview_at).toLocaleString() : '—'}</div>
-                                </div>
-                                {app.interview_link && (
-                                    <a href={app.interview_link} target="_blank" rel="noopener noreferrer"
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black uppercase hover:bg-blue-700 transition-colors shadow">
-                                        🎥 Join Interview
-                                    </a>
-                                )}
-                                <button onClick={onReschedule}
-                                    className="px-4 py-2 bg-violet-600 text-white rounded-lg text-xs font-black uppercase hover:bg-violet-700 transition-colors shadow">
-                                    ✏️ Update Schedule
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Rejection Reason */}
-                    {app.status === 'REJECTED' && app.rejection_reason && (
-                        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                            <h4 className="text-[10px] text-red-600 uppercase font-black tracking-wider mb-1">Rejection Reason</h4>
-                            <p className="text-sm text-red-700">{app.rejection_reason}</p>
-                        </div>
-                    )}
-
-                    {/* Documents */}
-                    <div>
-                        <h4 className="text-[10px] text-slate-400 uppercase font-black tracking-wider mb-3">📎 Documents & Media</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            <DocLink href={app.cv_url} label="CV / Resume" icon="📄" />
-                            <DocLink href={app.credentials_url} label="Credentials / Certificate" icon="🎓" />
-                            <DocLink href={app.recitation_url} label="Short Recitation (Audio)" icon="🎙" />
-                            <DocLink href={app.intro_video_url} label="Introduction Video" icon="🎬" />
-                            <DocLink href={app.appointment_letter_url} label="Appointment Letter" icon="📋" />
-                        </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {(app.status === 'APPLIED' || app.status === 'INTERVIEW_SCHEDULED') && (
-                        <div className="flex gap-3 pt-2 border-t border-slate-100">
-                            <button
-                                disabled={actionLoading}
-                                onClick={onApprove}
-                                className="flex-1 py-2.5 bg-emerald-600 text-white rounded-xl font-black text-sm uppercase hover:bg-emerald-700 transition-colors shadow disabled:opacity-50"
-                            >
-                                ✅ Approve Tutor
-                            </button>
-                            <button
-                                disabled={actionLoading}
-                                onClick={onReject}
-                                className="px-6 py-2.5 bg-red-50 text-red-600 border border-red-200 rounded-xl font-black text-sm uppercase hover:bg-red-100 transition-colors"
-                            >
-                                ❌ Reject
-                            </button>
-                        </div>
-                    )}
-                </div>
-                </div>
             </div>
         </DashboardLayout>
     );
