@@ -2192,31 +2192,42 @@ const AdminDashboard = () => {
                                     </tr>
                                 ))
                             ) : activeTab === 'classes' ? (
-                                /* Unified Global Classes Table - Filtered for Regular Classes */
-                                <div className="space-y-6">
-                                    {/* Active Class Monitor Section - Exclude Trials */}
+                                /* Unified Global Classes Table - Premium List View */
+                                <div className="space-y-8 px-4">
+                                    <div className="flex justify-between items-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/80 dark:border-white/10 shadow-sm">
+                                        <div>
+                                            <h2 className="text-3xl font-display font-black text-slate-900 dark:text-white mb-2">Academic Schedule</h2>
+                                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Platform-wide Regular Class Management</p>
+                                        </div>
+                                        <div className="flex bg-slate-100 dark:bg-slate-700 p-1.5 rounded-2xl">
+                                            <button className="px-5 py-2 bg-white dark:bg-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white shadow-sm">Regular Classes</button>
+                                            <button onClick={() => setActiveTab('trials')} className="px-5 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all">Trial Sessions</button>
+                                        </div>
+                                    </div>
+
+                                    {/* Active Monitor for Regular Classes */}
                                     {allClasses.filter(c => c.is_live && c.type !== 'TRIAL').length > 0 && (
-                                        <div className="bg-red-50/50 border border-red-100 rounded-[2rem] p-6 mb-6 animate-pulse">
-                                            <h3 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                                <span className="relative flex h-2 w-2">
+                                        <div className="bg-red-500/5 border border-red-500/20 rounded-[2.5rem] p-8 animate-in fade-in slide-in-from-top-4">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <div className="relative flex h-3 w-3">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                                                </span>
-                                                Live Regular Class Activity Monitor
-                                            </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                                                </div>
+                                                <h3 className="text-[11px] font-black text-red-600 uppercase tracking-[0.2em]">Live Session Monitor ({allClasses.filter(c => c.is_live && c.type !== 'TRIAL').length})</h3>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                 {allClasses.filter(c => c.is_live && c.type !== 'TRIAL').map(liveCls => (
-                                                    <div key={liveCls.id} className="bg-white p-4 rounded-2xl shadow-sm border border-red-100 flex items-center justify-between group hover:shadow-md transition-all">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center text-lg">📹</div>
+                                                    <div key={liveCls.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-red-500/10 flex items-center justify-between group hover:shadow-xl hover:shadow-red-500/5 transition-all">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center text-2xl">📹</div>
                                                             <div>
-                                                                <p className="text-xs font-black text-slate-800">{liveCls.student_name}</p>
-                                                                <p className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">with {liveCls.tutor_name}</p>
+                                                                <p className="text-sm font-black text-slate-800 dark:text-white">{liveCls.student_name}</p>
+                                                                <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">Tr. {liveCls.tutor_name}</p>
                                                             </div>
                                                         </div>
                                                         <button 
                                                             onClick={() => navigate(`/live/${liveCls.db_id || liveCls.id}`)}
-                                                            className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-sm"
+                                                            className="px-4 py-2 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-600/20"
                                                         >
                                                             Monitor
                                                         </button>
@@ -2226,72 +2237,77 @@ const AdminDashboard = () => {
                                         </div>
                                     )}
 
-                                    <div className="overflow-hidden">
-                                        <table className="w-full text-left border-separate border-spacing-y-2">
-                                            <thead>
-                                                <tr className="text-[#94a3b8] text-[10px] uppercase font-black tracking-[0.15em]">
-                                                    <th className="px-4 py-2">Flag</th>
-                                                    <th className="px-3 py-2">Schedule</th>
-                                                    <th className="px-3 py-2">Student & Region</th>
-                                                    <th className="px-3 py-2">Course & Tutor</th>
-                                                    <th className="px-3 py-2 text-center">Live Status</th>
-                                                    <th className="px-3 py-2 text-center">Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {(Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).length === 0 ? (
-                                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No regular classes found.</td></tr>
-                                                ) : (Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).map(cls => (
-                                                    <tr key={cls.id} className={`bg-white hover:bg-slate-50 transition-all shadow-sm border border-slate-100 rounded-xl group ${cls.is_live ? 'ring-2 ring-red-100 translate-x-1' : ''}`}>
-                                                        <td className="py-2 px-4 first:rounded-l-2xl">
-                                                            <div className="flex items-center justify-center">
-                                                                <span className="text-2xl" title={cls.country || 'Global'}>{getCountryFlag(cls.country)}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-3">
-                                                            <div className="text-[11px] font-black text-slate-700">{new Date(cls.scheduled_at).toLocaleDateString()}</div>
-                                                            <div className="text-[9px] text-primary font-bold uppercase tracking-tight">{new Date(cls.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                                                        </td>
-                                                        <td className="py-3 px-3">
-                                                            <div className="font-black text-slate-800 text-[11px] flex items-center gap-1.5 uppercase tracking-tight">
-                                                                {cls.student_name}
-                                                                {cls.gender === 'Female' ? <span className="text-pink-400 text-[10px]">♀</span> : <span className="text-blue-400 text-[10px]">♂</span>}
-                                                            </div>
-                                                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
-                                                                {cls.timezone || 'UTC'} · <span className="text-primary">{getLocalTime(cls.timezone)}</span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-3">
-                                                            <div className="text-[10px] text-slate-600 font-black uppercase tracking-tight">{cls.subject || 'General Studies'}</div>
-                                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                                                                <div className="text-[9px] text-slate-400 font-bold uppercase">Tr. {cls.tutor_name}</div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="py-3 px-3 text-center">
-                                                            <StatusBadge 
-                                                                status={
-                                                                    cls.status === 'COMPLETED' ? 'COMPLETED' :
-                                                                    cls.is_live ? (cls.is_started ? 'LIVE_STARTED' : 'LIVE_WAITING') :
-                                                                    new Date(cls.scheduled_at) > new Date() ? 'UPCOMING' : 
-                                                                    'ENDED'
-                                                                } 
-                                                            />
-                                                        </td>
-                                                        <td className="py-3 px-3 last:rounded-r-2xl">
-                                                            <div className="flex justify-center items-center gap-2">
+                                    <div className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 dark:border-white/5 overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="bg-slate-50/50 dark:bg-slate-700/30 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-black tracking-[0.2em] border-b border-slate-100 dark:border-white/5">
+                                                        <th className="px-8 py-5">Flag</th>
+                                                        <th className="px-4 py-5">Schedule</th>
+                                                        <th className="px-4 py-5">Student & Region</th>
+                                                        <th className="px-4 py-5">Course & Tutor</th>
+                                                        <th className="px-4 py-5 text-center">Live Status</th>
+                                                        <th className="px-8 py-5 text-center">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                                                    {(Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).length === 0 ? (
+                                                        <tr><td colSpan="6" className="p-32 text-center text-slate-400 italic">No regular classes found in the registry.</td></tr>
+                                                    ) : (Array.isArray(allClasses) ? allClasses.filter(c => c.type !== 'TRIAL') : []).map(cls => (
+                                                        <tr key={cls.id} className={`group hover:bg-slate-50/80 dark:hover:bg-slate-700/20 transition-all ${cls.is_live ? 'bg-red-500/5' : ''}`}>
+                                                            <td className="py-5 px-8">
+                                                                <div className="flex items-center justify-center">
+                                                                    <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform">
+                                                                        {getCountryFlag(cls.country)}
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <div className="text-[13px] font-black text-slate-900 dark:text-white">{new Date(cls.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                                                                <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight mt-1">{new Date(cls.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <div className="font-black text-slate-800 dark:text-slate-200 text-[13px] flex items-center gap-2 uppercase tracking-tight">
+                                                                    {cls.student_name}
+                                                                    <span className={cls.gender === 'Female' ? "text-pink-400" : "text-blue-400"}>{cls.gender === 'Female' ? '♀' : '♂'}</span>
+                                                                </div>
+                                                                <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                                                                    {cls.timezone || 'UTC'} · <span className="text-emerald-500">{getLocalTime(cls.timezone)}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-5 px-4">
+                                                                <div className="text-[12px] text-slate-700 dark:text-slate-300 font-black uppercase tracking-tight">{cls.subject || 'General Study'}</div>
+                                                                <div className="flex items-center gap-2 mt-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-700 w-fit rounded-lg">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                                                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase">Tr. {cls.tutor_name}</div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-5 px-4 text-center">
+                                                                <StatusBadge 
+                                                                    status={
+                                                                        cls.status === 'COMPLETED' ? 'COMPLETED' :
+                                                                        cls.is_live ? (cls.is_started ? 'LIVE_STARTED' : 'LIVE_WAITING') :
+                                                                        new Date(cls.scheduled_at) > new Date() ? 'UPCOMING' : 
+                                                                        'ENDED'
+                                                                    } 
+                                                                />
+                                                            </td>
+                                                            <td className="py-5 px-8">
+                                                                <div className="flex justify-center items-center">
                                                                     <button 
                                                                         onClick={() => navigate(`/live/${cls.db_id || cls.id}`)}
-                                                                        className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2 ${cls.is_live ? 'bg-red-600 text-white hover:bg-red-700 animate-pulse' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                                        className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] transition-all shadow-xl flex items-center gap-3 ${cls.is_live ? 'bg-red-600 text-white hover:bg-red-700 shadow-red-500/30' : 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white hover:bg-emerald-600 dark:hover:bg-emerald-500 dark:hover:text-white shadow-slate-900/20'}`}
                                                                     >
-                                                                        <span className="text-xs">📹</span> {cls.is_live ? 'Join Session' : 'Room Link'}
+                                                                        <span>📹</span>
+                                                                        <span>Room Link</span>
                                                                     </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             ) : activeTab === 'bookings' ? (
