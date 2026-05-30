@@ -413,6 +413,178 @@ const AdminDashboard = () => {
 
     const getAuthHeader = () => token ? { Authorization: `Bearer ${token}` } : {};
 
+    const fetchApplications = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await api.get('/api/admin/applications/');
+            setApplications(Array.isArray(response.data) ? response.data : []);
+
+            // Fetch Pending Students (New Workflow)
+            const pendResponse = await api.get('/api/auth/pending-students/');
+            setPendingStudents(Array.isArray(pendResponse.data) ? pendResponse.data : []);
+
+            setLoading(false);
+        } catch (_err) {
+            if (_err.response?.status === 401) {
+                setError('Authentication Failed: Please login again.');
+                localStorage.removeItem('access');
+            } else {
+                setError('Failed to fetch applications.');
+            }
+            setLoading(false);
+        }
+    }, []);
+
+    const fetchTutors = useCallback(async () => {
+        try {
+            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
+            setTutors(response.data);
+        } catch (_err) {
+            console.error("Failed to fetch tutors", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
+        }
+    }, []);
+
+    const fetchStudents = useCallback(async () => {
+        try {
+            const response = await api.get('/api/students/admin/all/');
+            setAllStudents(response.data);
+        } catch (_err) {
+            console.error("Failed to fetch students", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
+        }
+    }, []);
+
+    const fetchTutorApps = useCallback(async () => {
+        try {
+            const response = await api.get('/api/tutors/admin/list/');
+            setTutorApps(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) {
+            console.error("Failed to fetch tutor applications", _err);
+        }
+    }, []);
+
+    const fetchWithdrawals = useCallback(async () => {
+        try {
+            const response = await api.get('/api/payments/admin/withdrawals/pending/');
+            setWithdrawalRequests(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) {
+            console.error("Failed to fetch withdrawals", _err);
+        }
+    }, []);
+
+    const fetchBookings = useCallback(async () => {
+        try {
+            const response = await api.get('/api/classes/admin/bookings/?status=pending');
+            setPendingBookings(Array.isArray(response.data) ? response.data : (response.data?.results || []));
+        } catch (_err) {
+            console.error("Failed to fetch bookings", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
+        }
+    }, []);
+
+    const fetchPendingPayouts = useCallback(async () => {
+        try {
+            const response = await api.get('/api/admin/classes/pending-payouts/');
+            setPendingPayouts(response.data);
+        } catch (_err) {
+            console.error("Failed to fetch pending payouts", _err);
+            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
+        }
+    }, []);
+
+    const fetchData = useCallback(async () => {
+        try {
+            const res = await api.get('/api/payments/admin/stats/');
+            setStats(res.data);
+        } catch (_err) { console.error("Failed to fetch admin stats", _err); }
+    }, []);
+
+    const fetchAdminBookings = useCallback(async () => {
+        try {
+            const res = await api.get(`/api/classes/admin/bookings/?status=${adminBookingStatus}`);
+            setAdminBookings(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+        } catch (_err) { console.error("Bookings fetch failed"); }
+    }, [adminBookingStatus]);
+
+    const fetchClasses = useCallback(async () => {
+        try {
+            const response = await api.get('/api/classes/admin/unified-list/');
+            setAllClasses(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) { console.error("Failed to fetch classes", _err); }
+    }, []);
+
+    const fetchGlobalSettings = useCallback(async () => {
+        try {
+            const res = await api.get('/api/payments/admin/settings/');
+            setGlobalSettings(res.data);
+        } catch (_err) { console.error("Settings fetch failed"); }
+    }, []);
+
+    const fetchApprovedTutors = useCallback(async () => {
+        try {
+            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
+            setApprovedTutors(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) { console.error("Failed to fetch approved tutors", _err); }
+    }, []);
+
+    const fetchTransactions = useCallback(async () => {
+        try {
+            const response = await api.get('/api/payments/admin/transactions/');
+            setTransactions(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) { console.error("Failed to fetch transactions", _err); }
+    }, []);
+
+    const fetchPaymentAnalytics = useCallback(async () => {
+        try {
+            const response = await api.get('/api/payments/admin/analytics/');
+            setPaymentAnalytics(response.data);
+        } catch (_err) { console.error("Failed to fetch analytics", _err); }
+    }, []);
+
+    const fetchSubjects = useCallback(async () => {
+        try {
+            const response = await api.get('/api/programs/subjects/');
+            setSubjects(Array.isArray(response.data) ? response.data : (response.data?.results || []));
+        } catch (_err) { console.error("Failed to fetch subjects", _err); }
+    }, []);
+
+    const fetchComplaints = useCallback(async () => {
+        try {
+            const response = await api.get('/api/complaints/admin/all/');
+            setAllComplaints(Array.isArray(response.data) ? response.data : []);
+        } catch (_err) { console.error("Failed to fetch complaints", _err); }
+    }, []);
+
+    const fetchMaterials = useCallback(async () => {
+        try {
+            const res = await api.get('/api/curriculum/materials/');
+            setMaterials(Array.isArray(res.data) ? res.data : []);
+        } catch (_err) { console.error("Failed to fetch materials", _err); }
+    }, []);
+
+    const fetchPrograms = useCallback(async () => {
+        try {
+            const res = await api.get('/api/programs/list/');
+            setPrograms(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+        } catch (_err) { console.error("Programs fetch failed"); }
+    }, []);
+
+    const fetchAdmins = useCallback(async () => {
+        try {
+            const res = await api.get('/api/auth/admin/users/?role=ADMIN');
+            setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+        } catch (_err) { console.error("Admins fetch failed"); }
+    }, []);
+
+    const fetchExams = useCallback(async () => {
+        try {
+            const res = await api.get('/api/exams/list/');
+            console.log("Exams fetched:", res.data);
+        } catch (_err) { console.error("Failed to fetch exams", _err); }
+    }, []);
+
     const getLocalTime = (timezone) => {
         if (!timezone) return "N/A";
         try {
@@ -441,17 +613,6 @@ const AdminDashboard = () => {
         return flags[country] || '🌍';
     };
 
-    const _fetchFinancials = useCallback(async () => {
-        setLoadingFinancials(true);
-        try {
-            const res = await api.get('/api/payments/admin/financials/');
-            setFinancials(res.data);
-        } catch (_err) {
-            console.error("Failed to fetch financials", _err);
-        } finally {
-            setLoadingFinancials(false);
-        }
-    }, []);
 
     
     const handleDownloadReceipt = (data, type = 'payment') => {
@@ -514,22 +675,8 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchData = useCallback(async () => {
-        try {
-            const res = await api.get('/api/payments/admin/stats/');
-            setStats(res.data);
-        } catch (_err) {
-            console.error("Failed to fetch admin stats", _err);
-        }
-    }, []);
 
 
-    const fetchAdminBookings = useCallback(async () => {
-        try {
-            const res = await api.get(`/api/classes/admin/bookings/?status=${adminBookingStatus}`);
-            setAdminBookings(Array.isArray(res.data) ? res.data : (res.data?.results || []));
-        } catch (_err) { console.error("Bookings fetch failed"); }
-    }, [adminBookingStatus]);
 
     const countryData = useMemo(() => {
         const counts = {};
@@ -632,40 +779,9 @@ const AdminDashboard = () => {
         }
     }, [selectedStudent]);
 
-    const fetchBookings = useCallback(async () => {
-        try {
-            const response = await api.get('/api/classes/admin/bookings/?status=pending');
-            setPendingBookings(Array.isArray(response.data) ? response.data : (response.data?.results || []));
-        } catch (_err) {
-            console.error("Failed to fetch bookings", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
 
-    const fetchPaymentAnalytics = useCallback(async () => {
-        try {
-            const response = await api.get('/api/payments/admin/analytics/');
-            setPaymentAnalytics(response.data);
-        } catch (_err) {
-            console.error("Failed to fetch analytics", _err);
-        }
-    }, []);
 
-    const fetchSubjects = useCallback(async () => {
-        try {
-            const response = await api.get('/api/programs/subjects/');
-            setSubjects(Array.isArray(response.data) ? response.data : (response.data?.results || []));
-        } catch (_err) {
-            console.error("Failed to fetch subjects", _err);
-        }
-    }, []);
 
-    const fetchAdmins = useCallback(async () => {
-        try {
-            const res = await api.get('/api/auth/admin/users/?role=ADMIN');
-            setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
-        } catch (_err) { console.error("Admins fetch failed"); }
-    }, []);
 
     const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -711,12 +827,6 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchPrograms = useCallback(async () => {
-        try {
-            const res = await api.get('/api/programs/list/');
-            setPrograms(Array.isArray(res.data) ? res.data : (res.data?.results || []));
-        } catch (_err) { console.error("Programs fetch failed"); }
-    }, []);
 
     const handleAddSubject = async (e) => {
         if(e) e.preventDefault();
@@ -775,12 +885,6 @@ const AdminDashboard = () => {
         finally { setActionLoading(false); }
     };
 
-    const fetchGlobalSettings = useCallback(async () => {
-        try {
-            const res = await api.get('/api/payments/admin/settings/');
-            setGlobalSettings(res.data);
-        } catch (_err) { console.error("Settings fetch failed"); }
-    }, []);
 
     const handleUpdateGlobalCommission = async (val) => {
         setUpdatingGlobal(true);
@@ -824,26 +928,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchTutors = useCallback(async () => {
-        try {
-            // Use admin/list endpoint to get TutorProfile objects with proper IDs
-            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
-            setTutors(response.data);
-        } catch (_err) {
-            console.error("Failed to fetch tutors", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
 
-    const fetchStudents = useCallback(async () => {
-        try {
-            const response = await api.get('/api/students/admin/all/');
-            setAllStudents(response.data);
-        } catch (_err) {
-            console.error("Failed to fetch students", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
 
 
 
@@ -867,59 +952,11 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchTransactions = useCallback(async () => {
-        try {
-            const response = await api.get('/api/payments/admin/transactions/');
-            setTransactions(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch transactions", _err);
-        }
-    }, []);
 
-    const fetchTutorApps = useCallback(async () => {
-        try {
-            const response = await api.get('/api/tutors/admin/list/');
-            setTutorApps(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch tutor applications", _err);
-        }
-    }, []);
 
-    const fetchApprovedTutors = useCallback(async () => {
-        try {
-            const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
-            setApprovedTutors(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch approved tutors", _err);
-        }
-    }, []);
 
-    const fetchWithdrawals = useCallback(async () => {
-        try {
-            const response = await api.get('/api/payments/admin/withdrawals/pending/');
-            setWithdrawalRequests(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch withdrawals", _err);
-        }
-    }, []);
 
-    const fetchComplaints = useCallback(async () => {
-        try {
-            const response = await api.get('/api/complaints/admin/all/');
-            setAllComplaints(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch complaints", _err);
-        }
-    }, []);
 
-    const fetchClasses = useCallback(async () => {
-        try {
-            const response = await api.get('/api/classes/admin/unified-list/');
-            setAllClasses(Array.isArray(response.data) ? response.data : []);
-        } catch (_err) {
-            console.error("Failed to fetch classes", _err);
-        }
-    }, []);
 
     const handleWithdrawalAction = async (id, action) => {
         if (action === 'REJECT') {
@@ -962,61 +999,9 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchApplications = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await api.get('/api/admin/applications/');
-            setApplications(Array.isArray(response.data) ? response.data : []);
 
-            // Fetch Pending Students (New Workflow)
-            const pendResponse = await api.get('/api/auth/pending-students/');
-            setPendingStudents(Array.isArray(pendResponse.data) ? pendResponse.data : []);
 
-            setLoading(false);
-        } catch (_err) {
-            if (_err.response?.status === 401) {
-                setError('Authentication Failed: Please login again.');
-                localStorage.removeItem('access');
-                // Optional: window.location.href = '/login';
-            } else {
-                setError('Failed to fetch applications.');
-            }
-            setLoading(false);
-        }
-    }, []);
 
-    const fetchMaterials = useCallback(async () => {
-        try {
-            const res = await api.get('/api/curriculum/materials/');
-            setMaterials(Array.isArray(res.data) ? res.data : []);
-        } catch (_err) { 
-            console.error("Failed to fetch materials", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
-
-    const fetchExams = useCallback(async () => {
-        try {
-            const res = await api.get('/api/exams/list/');
-            // For now, we just log or store if state exists, but the UI shows a Link to Central Exam Engine
-            console.log("Exams fetched:", res.data);
-        } catch (_err) {
-            console.error("Failed to fetch exams", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
-
-    const fetchPendingPayouts = useCallback(async () => {
-        try {
-            // Corrected Path: applications.urls is at api/
-            const response = await api.get('/api/admin/classes/pending-payouts/');
-            setPendingPayouts(response.data);
-        } catch (_err) {
-            console.error("Failed to fetch pending payouts", _err);
-            if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
-        }
-    }, []);
 
     const handleReleasePayout = async (sessionId) => {
         if (!window.confirm("Release this payout to the tutor's wallet?")) return;

@@ -108,6 +108,28 @@ const StudentDashboard = () => {
         }
     }, [token, getAuthHeader]);
 
+    const fetchTutorsForSubject = useCallback(async (subjectName) => {
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
+            setAvailableTutors(res.data);
+            if (res.data.length > 0) {
+                const t = res.data[0];
+                const uid = t.user?.id || t.user_id || t.id;
+                const rate = parseFloat(String(t.hourly_rate || 0).replace(/[^0-9.]/g, '')) || 0;
+                setEnrollData(prev => ({ 
+                    ...prev, 
+                    tutor_id: String(uid), 
+                    active_tutor_rate: rate,
+                    schedule: [{ day: '', time: '' }] 
+                }));
+                setSelectedTutorAvailability({ 
+                    availabilities: t.availabilities || [],
+                    busy_slots: t.busy_slots || [] 
+                });
+            }
+        } catch (e) { console.error("Tutor fetch failed", e); }
+    }, [getAuthHeader]);
+
     useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleDownloadReceipt = (t) => {
@@ -201,27 +223,6 @@ const StudentDashboard = () => {
         }
     }, [showEnrollModal, profile, availableSubjects, fetchTutorsForSubject]);
 
-    const fetchTutorsForSubject = useCallback(async (subjectName) => {
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
-            setAvailableTutors(res.data);
-            if (res.data.length > 0) {
-                const t = res.data[0];
-                const uid = t.user?.id || t.user_id || t.id;
-                const rate = parseFloat(String(t.hourly_rate || 0).replace(/[^0-9.]/g, '')) || 0;
-                setEnrollData(prev => ({ 
-                    ...prev, 
-                    tutor_id: String(uid), 
-                    active_tutor_rate: rate,
-                    schedule: [{ day: '', time: '' }] 
-                }));
-                setSelectedTutorAvailability({ 
-                    availabilities: t.availabilities || [],
-                    busy_slots: t.busy_slots || [] 
-                });
-            }
-        } catch (e) { console.error("Tutor fetch failed", e); }
-    }, [getAuthHeader]);
 
     const handleEnroll = useCallback(async () => {
         if (!enrollData.subject_id || !enrollData.tutor_id) return;
