@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const NotificationCenter = () => {
-    const { getAuthHeader: getContextAuthHeader } = useAuth();
+    const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const getAuthHeader = () => {
         const token = localStorage.getItem('access');
@@ -14,7 +13,7 @@ const NotificationCenter = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, {
                 headers: getAuthHeader()
@@ -29,7 +28,7 @@ const NotificationCenter = () => {
         } catch (err) {
             console.error("Failed to fetch notifications", err);
         }
-    };
+    }, []);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -10,15 +10,7 @@ const AdmissionPortal = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (!user || !token) {
-            navigate('/login');
-            return;
-        }
-        fetchProfile();
-    }, [user, token]);
-
-    const fetchProfile = async () => {
+    const fetchProfile = React.useCallback(async () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -34,7 +26,15 @@ const AdmissionPortal = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, navigate]);
+
+    useEffect(() => {
+        if (!user || !token) {
+            navigate('/login');
+            return;
+        }
+        fetchProfile();
+    }, [user, token, navigate, fetchProfile]);
 
     if (loading) {
         return (

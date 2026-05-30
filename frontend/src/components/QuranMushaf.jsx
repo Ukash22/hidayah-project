@@ -1,8 +1,7 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 
-const QuranMushaf = ({ token }) => {
+const QuranMushaf = () => {
     const [surahs, setSurahs] = useState([]);
     const [selectedSurah, setSelectedSurah] = useState(1);
     
@@ -11,7 +10,7 @@ const QuranMushaf = ({ token }) => {
     const [verses, setVerses] = useState([]);
     
     // Reciters list
-    const [reciters, setReciters] = useState([
+    const [reciters] = useState([
         { id: 7, name: 'Mishary Rashid Alafasy' },
         { id: 1, name: 'AbdulBaset AbdulSamad' },
         { id: 12, name: 'Mahmoud Khalil Al-Husary' },
@@ -100,7 +99,6 @@ const QuranMushaf = ({ token }) => {
             if(activeVerseKey && verses.length > 0) {
                 if (currentVerseLoopRef.current < verseRepeatCount) {
                     currentVerseLoopRef.current += 1;
-                    // eslint-disable-next-line
                     playVerse(activeVerseKey, true); 
                     return;
                 }
@@ -122,9 +120,9 @@ const QuranMushaf = ({ token }) => {
         const audioEl = audioRef.current;
         audioEl.addEventListener('ended', handleAudioEnd);
         return () => audioEl.removeEventListener('ended', handleAudioEnd);
-    }, [activeVerseKey, verses, verseRepeatCount, versesToPlay, selectedReciter]);
+    }, [activeVerseKey, verses, verseRepeatCount, versesToPlay, playVerse]);
 
-    const playVerse = async (verseKey, isInternal = false) => {
+    const playVerse = useCallback(async (verseKey, isInternal = false) => {
         try {
             if (!isInternal) {
                 currentVerseLoopRef.current = 1;
@@ -170,7 +168,7 @@ const QuranMushaf = ({ token }) => {
             console.error("Audio error", err);
             setIsPlaying(false);
         }
-    };
+    }, [activeVerseKey, selectedReciter]);
     
     const pauseAudio = () => {
         audioRef.current.pause();

@@ -10,7 +10,7 @@ const TutorWallet = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
 
-    const fetchData = async () => {
+    const fetchData = React.useCallback(async () => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/wallet/`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -23,13 +23,13 @@ const TutorWallet = ({ token }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token]);
 
     useEffect(() => {
         if (token) {
             fetchData();
         }
-    }, [token]);
+    }, [token, fetchData]);
 
     const handleDownloadReceipt = (t) => {
         try {

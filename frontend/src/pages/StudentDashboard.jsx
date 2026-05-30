@@ -68,9 +68,9 @@ const StudentDashboard = () => {
     const [examAssignments, setExamAssignments] = useState([]);
     const [examResults, setExamResults] = useState([]);
 
-    const getAuthHeader = () => token ? { Authorization: `Bearer ${token}` } : {};
+    const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!token) return;
         try {
             const [profRes, classRes, compRes, matRes, _reqRes, bookingRes, transactionsRes, examAsgnRes, examResRes] = await Promise.all([
@@ -92,7 +92,6 @@ const StudentDashboard = () => {
             setTransactions(Array.isArray(transactionsRes.data) ? transactionsRes.data : []);
             setExamAssignments(Array.isArray(examAsgnRes.data) ? examAsgnRes.data : []);
             setExamResults(Array.isArray(examResRes.data) ? examResRes.data : []);
-            // Actually transactionsRes is the 6th element in Promise.all
 
             try {
                 const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, { headers: getAuthHeader() });
@@ -107,9 +106,9 @@ const StudentDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [token, getAuthHeader]);
 
-    useEffect(() => { fetchData(); }, [token]);
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleDownloadReceipt = (t) => {
         try {
@@ -200,9 +199,9 @@ const StudentDashboard = () => {
                 setEnrollData(prev => ({ ...prev, preferred_time: profile.preferred_time }));
             }
         }
-    }, [showEnrollModal, profile, availableSubjects]);
+    }, [showEnrollModal, profile, availableSubjects, fetchTutorsForSubject]);
 
-    const fetchTutorsForSubject = async (subjectName) => {
+    const fetchTutorsForSubject = useCallback(async (subjectName) => {
         try {
             const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
             setAvailableTutors(res.data);
@@ -222,9 +221,9 @@ const StudentDashboard = () => {
                 });
             }
         } catch (e) { console.error("Tutor fetch failed", e); }
-    };
+    }, [getAuthHeader]);
 
-    const handleEnroll = async () => {
+    const handleEnroll = useCallback(async () => {
         if (!enrollData.subject_id || !enrollData.tutor_id) return;
         setEnrolling(true);
         // Use the fields we selected in the modal
@@ -239,9 +238,9 @@ const StudentDashboard = () => {
             fetchData();
         } catch (err) { alert("❌ Error: " + (err.response?.data?.error || "Failed")); }
         finally { setEnrolling(false); }
-    };
+    }, [enrollData, getAuthHeader, fetchData]);
 
-    const handleJoinClass = async (cls) => {
+    const handleJoinClass = useCallback(async (cls) => {
         try {
             const sessionId = cls.db_id || cls.id;
             if (!sessionId) {
@@ -267,7 +266,7 @@ const StudentDashboard = () => {
             console.error("Critical error in handleJoinClass:", err);
             alert("An error occurred while joining the class.");
         }
-    };
+    }, [getAuthHeader, navigate]);
 
     const calculateScheduleStatus = () => {
         if (!enrollData.preferred_days || !enrollData.preferred_time || !selectedTutorAvailability) return { status: 'pending', message: null };

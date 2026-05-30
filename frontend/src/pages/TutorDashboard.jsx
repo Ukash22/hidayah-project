@@ -45,11 +45,20 @@ const TutorDashboard = () => {
     const [selectedStudentForAssign, setSelectedStudentForAssign] = useState(null);
     const [assigningSpecific, setAssigningSpecific] = useState(false);
 
-    const getAuthHeader = () => {
+    const getAuthHeader = useCallback(() => {
         return token ? { Authorization: `Bearer ${token}` } : {};
-    };
+    }, [token]);
 
-    const fetchData = async () => {
+    const fetchTutorFinancials = useCallback(async () => {
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/financials/`, { headers: getAuthHeader() });
+            setFinancials(res.data);
+        } catch (err) {
+            console.error("Failed to fetch financials", err);
+        }
+    }, [getAuthHeader]);
+
+    const fetchData = useCallback(async () => {
         if (!token) return;
         try {
             const [schRes, studRes, compRes, matRes, reqRes] = await Promise.all([
@@ -99,20 +108,11 @@ const TutorDashboard = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const fetchTutorFinancials = async () => {
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/financials/`, { headers: getAuthHeader() });
-            setFinancials(res.data);
-        } catch (err) {
-            console.error("Failed to fetch financials", err);
-        }
-    };
+    }, [token, getAuthHeader, user?.role, fetchTutorFinancials]);
 
     useEffect(() => {
         fetchData();
-    }, [token]);
+    }, [fetchData]);
 
     const handleFileComplaint = (student) => {
         setSelectedStudent(student);
@@ -128,7 +128,7 @@ const TutorDashboard = () => {
         return colors[status] || 'bg-slate-500/10 text-slate-400 border-slate-500/20';
     };
 
-    const handleApproveRequest = async (id) => {
+    const handleApproveRequest = useCallback(async (id) => {
         if (!window.confirm("Approve this student's request? Student will be prompted to pay.")) return;
         try {
             await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/booking/${id}/approve/`, {}, { headers: getAuthHeader() });
@@ -137,9 +137,9 @@ const TutorDashboard = () => {
         } catch (err) {
             alert("Failed to approve: " + (err.response?.data?.error || "Error"));
         }
-    };
+    }, [getAuthHeader, fetchData]);
 
-    const handleRejectRequest = async (id) => {
+    const handleRejectRequest = useCallback(async (id) => {
         const reason = window.prompt("Enter rejection reason:");
         if (reason === null) return;
         try {
@@ -149,9 +149,9 @@ const TutorDashboard = () => {
         } catch (err) {
             alert("Failed to reject: " + (err.response?.data?.error || "Error"));
         }
-    };
+    }, [getAuthHeader, fetchData]);
 
-    const handleCompleteSession = async (session) => {
+    const handleCompleteSession = useCallback(async (session) => {
         const sessionId = session.db_id || session.id;
         if (!window.confirm("Mark this session as COMPLETED? Commission will be deducted and net amount credited to your wallet.")) return;
 
@@ -163,7 +163,7 @@ const TutorDashboard = () => {
         } catch (err) {
             alert("Failed to complete session: " + (err.response?.data?.error || "Error"));
         }
-    };
+    }, [getAuthHeader, fetchData]);
 
     const handleCreateUpdateExam = async (e) => {
         e.preventDefault();
@@ -228,7 +228,7 @@ const TutorDashboard = () => {
         }
     };
 
-    const handleJoinClass = async (session) => {
+    const handleJoinClass = useCallback(async (session) => {
         try {
             const sessionId = session.db_id || session.id;
             if (!sessionId) {
@@ -254,7 +254,7 @@ const TutorDashboard = () => {
             console.error("Critical error in handleJoinClass:", e);
             alert("An error occurred while joining the class.");
         }
-    };
+    }, [getAuthHeader, navigate]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-[#0a0c10]">

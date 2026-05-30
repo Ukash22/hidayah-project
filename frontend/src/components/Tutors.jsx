@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -176,7 +175,6 @@ const Tutors = () => {
     const [loading, setLoading] = useState(true);
     const [selectedMedia, setSelectedMedia] = useState(null);
     const [trialTutor, setTrialTutor] = useState(null);   // opens trial modal
-    const [liveLink, setLiveLink] = useState(null);        // stores live class link for confirm
 
     useEffect(() => {
         const fetchTutors = async () => {

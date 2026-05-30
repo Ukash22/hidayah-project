@@ -1,9 +1,10 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, Component, useCallback, useMemo } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import DashboardLayout from '../components/DashboardLayout';
 import { 
     ResponsiveContainer,
     AreaChart,
@@ -118,14 +119,8 @@ const AdminDashboard = () => {
         description: ''
     });
 
-    // Theme State
-    const [isDark, setIsDark] = useState(() => {
-        return localStorage.getItem('hidayah_theme') === 'dark';
-    });
-    useEffect(() => {
-        localStorage.setItem('hidayah_theme', isDark ? 'dark' : 'light');
-    }, [isDark]);
-    const toggleTheme = () => setIsDark(prev => !prev);
+    // Theme is managed by DashboardLayout — read it here for conditional styling only
+    const isDark = localStorage.getItem('hidayah_theme') === 'dark';
 
 
     // Wallet Action State
@@ -217,7 +212,7 @@ const AdminDashboard = () => {
         return flags[country] || '🌍';
     };
 
-    const _fetchFinancials = async () => {
+    const _fetchFinancials = useCallback(async () => {
         setLoadingFinancials(true);
         try {
             const res = await api.get('/api/payments/admin/financials/');
@@ -227,7 +222,7 @@ const AdminDashboard = () => {
         } finally {
             setLoadingFinancials(false);
         }
-    };
+    }, []);
 
     
     const handleDownloadReceipt = (data, type = 'payment') => {
@@ -290,24 +285,24 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const res = await api.get('/api/payments/admin/stats/');
             setStats(res.data);
         } catch (_err) {
             console.error("Failed to fetch admin stats", _err);
         }
-    };
+    }, []);
 
 
-    const fetchAdminBookings = async () => {
+    const fetchAdminBookings = useCallback(async () => {
         try {
             const res = await api.get(`/api/classes/admin/bookings/?status=${adminBookingStatus}`);
             setAdminBookings(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Bookings fetch failed"); }
-    };
+    }, [adminBookingStatus]);
 
-    const countryData = React.useMemo(() => {
+    const countryData = useMemo(() => {
         const counts = {};
         allStudents.forEach(s => {
             const country = s.user?.country || 'Unknown';
@@ -338,7 +333,7 @@ const AdminDashboard = () => {
             fetchClasses();
             fetchGlobalSettings();
         }
-    }, []);
+    }, [token, fetchApplications, fetchTutors, fetchStudents, fetchTutorApps, fetchWithdrawals, fetchBookings, fetchPendingPayouts, fetchData, fetchAdminBookings, fetchClasses, fetchGlobalSettings]);
 
     // Fetch data based on active tab
     useEffect(() => {
@@ -362,7 +357,7 @@ const AdminDashboard = () => {
         if (activeTab === 'payouts') fetchPendingPayouts();
         if (activeTab === 'classes') fetchClasses();
         if (activeTab === 'bookings') fetchBookings();
-    }, [activeTab]);
+    }, [activeTab, fetchStudents, fetchTransactions, fetchPaymentAnalytics, fetchSubjects, fetchTutorApps, fetchApprovedTutors, fetchWithdrawals, fetchComplaints, fetchMaterials, fetchPrograms, fetchAdmins, fetchExams, fetchPendingPayouts, fetchClasses, fetchBookings]);
 
     // Polling for Classes
     useEffect(() => {
@@ -375,7 +370,7 @@ const AdminDashboard = () => {
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [activeTab]);
+    }, [activeTab, fetchClasses]);
 
     // Calculate stats whenever applications change
     useEffect(() => {
@@ -408,7 +403,7 @@ const AdminDashboard = () => {
         }
     }, [selectedStudent]);
 
-    const fetchBookings = async () => {
+    const fetchBookings = useCallback(async () => {
         try {
             const response = await api.get('/api/classes/admin/bookings/?status=pending');
             setPendingBookings(Array.isArray(response.data) ? response.data : (response.data?.results || []));
@@ -416,32 +411,32 @@ const AdminDashboard = () => {
             console.error("Failed to fetch bookings", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
-    const fetchPaymentAnalytics = async () => {
+    const fetchPaymentAnalytics = useCallback(async () => {
         try {
             const response = await api.get('/api/payments/admin/analytics/');
             setPaymentAnalytics(response.data);
         } catch (_err) {
             console.error("Failed to fetch analytics", _err);
         }
-    };
+    }, []);
 
-    const fetchSubjects = async () => {
+    const fetchSubjects = useCallback(async () => {
         try {
             const response = await api.get('/api/programs/subjects/');
             setSubjects(Array.isArray(response.data) ? response.data : (response.data?.results || []));
         } catch (_err) {
             console.error("Failed to fetch subjects", _err);
         }
-    };
+    }, []);
 
-    const fetchAdmins = async () => {
+    const fetchAdmins = useCallback(async () => {
         try {
             const res = await api.get('/api/auth/admin/users/?role=ADMIN');
             setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Admins fetch failed"); }
-    };
+    }, []);
 
     const handleCreateUser = async (e) => {
         e.preventDefault();
@@ -487,12 +482,12 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchPrograms = async () => {
+    const fetchPrograms = useCallback(async () => {
         try {
             const res = await api.get('/api/programs/list/');
             setPrograms(Array.isArray(res.data) ? res.data : (res.data?.results || []));
         } catch (_err) { console.error("Programs fetch failed"); }
-    };
+    }, []);
 
     const handleAddSubject = async (e) => {
         if(e) e.preventDefault();
@@ -551,12 +546,12 @@ const AdminDashboard = () => {
         finally { setActionLoading(false); }
     };
 
-    const fetchGlobalSettings = async () => {
+    const fetchGlobalSettings = useCallback(async () => {
         try {
             const res = await api.get('/api/payments/admin/settings/');
             setGlobalSettings(res.data);
         } catch (_err) { console.error("Settings fetch failed"); }
-    };
+    }, []);
 
     const handleUpdateGlobalCommission = async (val) => {
         setUpdatingGlobal(true);
@@ -600,7 +595,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchTutors = async () => {
+    const fetchTutors = useCallback(async () => {
         try {
             // Use admin/list endpoint to get TutorProfile objects with proper IDs
             const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
@@ -609,9 +604,9 @@ const AdminDashboard = () => {
             console.error("Failed to fetch tutors", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async () => {
         try {
             const response = await api.get('/api/students/admin/all/');
             setAllStudents(response.data);
@@ -619,7 +614,7 @@ const AdminDashboard = () => {
             console.error("Failed to fetch students", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
 
 
@@ -643,59 +638,59 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async () => {
         try {
             const response = await api.get('/api/payments/admin/transactions/');
             setTransactions(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch transactions", _err);
         }
-    };
+    }, []);
 
-    const fetchTutorApps = async () => {
+    const fetchTutorApps = useCallback(async () => {
         try {
             const response = await api.get('/api/tutors/admin/list/');
             setTutorApps(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch tutor applications", _err);
         }
-    };
+    }, []);
 
-    const fetchApprovedTutors = async () => {
+    const fetchApprovedTutors = useCallback(async () => {
         try {
             const response = await api.get('/api/tutors/admin/list/?status=APPROVED');
             setApprovedTutors(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch approved tutors", _err);
         }
-    };
+    }, []);
 
-    const fetchWithdrawals = async () => {
+    const fetchWithdrawals = useCallback(async () => {
         try {
             const response = await api.get('/api/payments/admin/withdrawals/pending/');
             setWithdrawalRequests(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch withdrawals", _err);
         }
-    };
+    }, []);
 
-    const fetchComplaints = async () => {
+    const fetchComplaints = useCallback(async () => {
         try {
             const response = await api.get('/api/complaints/admin/all/');
             setAllComplaints(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch complaints", _err);
         }
-    };
+    }, []);
 
-    const fetchClasses = async () => {
+    const fetchClasses = useCallback(async () => {
         try {
             const response = await api.get('/api/classes/admin/unified-list/');
             setAllClasses(Array.isArray(response.data) ? response.data : []);
         } catch (_err) {
             console.error("Failed to fetch classes", _err);
         }
-    };
+    }, []);
 
     const handleWithdrawalAction = async (id, action) => {
         if (action === 'REJECT') {
@@ -738,7 +733,7 @@ const AdminDashboard = () => {
         }
     };
 
-    const fetchApplications = async () => {
+    const fetchApplications = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
@@ -760,9 +755,9 @@ const AdminDashboard = () => {
             }
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchMaterials = async () => {
+    const fetchMaterials = useCallback(async () => {
         try {
             const res = await api.get('/api/curriculum/materials/');
             setMaterials(Array.isArray(res.data) ? res.data : []);
@@ -770,9 +765,9 @@ const AdminDashboard = () => {
             console.error("Failed to fetch materials", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
-    const fetchExams = async () => {
+    const fetchExams = useCallback(async () => {
         try {
             const res = await api.get('/api/exams/list/');
             // For now, we just log or store if state exists, but the UI shows a Link to Central Exam Engine
@@ -781,9 +776,9 @@ const AdminDashboard = () => {
             console.error("Failed to fetch exams", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
-    const fetchPendingPayouts = async () => {
+    const fetchPendingPayouts = useCallback(async () => {
         try {
             // Corrected Path: applications.urls is at api/
             const response = await api.get('/api/admin/classes/pending-payouts/');
@@ -792,7 +787,7 @@ const AdminDashboard = () => {
             console.error("Failed to fetch pending payouts", _err);
             if (_err.response?.status === 401) setError('Unauthorized: Session Expired');
         }
-    };
+    }, []);
 
     const handleReleasePayout = async (sessionId) => {
         if (!window.confirm("Release this payout to the tutor's wallet?")) return;
@@ -1147,108 +1142,62 @@ const AdminDashboard = () => {
         return now >= classTime - 30*60*1000 && now <= classTime + 60*60*1000;
     });
 
+    const adminNavItems = [
+        { id: 'admissions', icon: '📥', label: 'Admissions', badge: stats.pending },
+        { id: 'students', icon: '🎓', label: 'Students' },
+        { id: 'tutors', icon: '👨‍🏫', label: 'Tutors' },
+        { id: 'tutor_recruitment', icon: '👔', label: 'Recruitment', badge: tutorApps.filter(a => a.status === 'PENDING').length },
+        { id: 'bookings', icon: '📅', label: 'Bookings', badge: pendingBookings.length },
+        { id: 'classes', icon: '📚', label: 'Classes' },
+        { id: 'trials', icon: '🧪', label: 'Trials' },
+        { id: 'curriculum', icon: '📖', label: 'Curriculum' },
+        { id: 'exams', icon: '📝', label: 'Exams' },
+        { id: 'financials', icon: '💳', label: 'Transactions' },
+        { id: 'payouts', icon: '💸', label: 'Payouts', badge: pendingPayouts.length },
+        { id: 'withdrawals', icon: '🏦', label: 'Withdrawals', badge: withdrawalRequests.length },
+        { id: 'complaints', icon: '💬', label: 'Complaints', badge: allComplaints.filter(c => !c.resolved_at).length }
+    ];
+
     return (
-        <div className="min-h-screen font-sans flex text-slate-800 bg-slate-50">
-            {/* Left Sidebar Navigation */}
-            <div className="w-64 bg-slate-900 border-r border-white/5 text-slate-300 flex flex-col fixed h-full shadow-[20px_0_40px_rgba(0,0,0,0.2)] z-50 overflow-hidden">
-                {/* Glossy Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none opacity-50" />
-                
-                <div className="p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-xl relative z-10">
-                    <h1 className="text-2xl font-black text-white font-display tracking-tight flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-3 group-hover:rotate-0 transition-transform">
-                             <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
-                        </div>
-                        Hidayah
-                    </h1>
-                    <div className="flex items-center gap-2 mt-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        <p className="text-[10px] uppercase tracking-widest text-slate-500 font-black">Global Control</p>
-                    </div>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto py-8 px-4 space-y-1.5 hide-scrollbar relative z-10">
-                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4">Core Infrastructure</div>
-                    <SidebarButton active={activeTab === 'admissions'} onClick={() => setActiveTab('admissions')} icon="📥" label="Admissions" badge={stats.pending} />
-                    <SidebarButton active={activeTab === 'students'} onClick={() => setActiveTab('students')} icon="🎓" label="Students" />
-                    <SidebarButton active={activeTab === 'tutors'} onClick={() => setActiveTab('tutors')} icon="👨‍🏫" label="Tutors" />
-                    <SidebarButton active={activeTab === 'tutor_recruitment'} onClick={() => setActiveTab('tutor_recruitment')} icon="👔" label="Recruitment" badge={tutorApps.filter(a => a.status === 'PENDING').length} />
-                    
-                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4 mt-8">Operations Hub</div>
-                    <SidebarButton active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon="📅" label="Bookings" badge={pendingBookings.length} />
-                    <SidebarButton active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} icon="📚" label="Classes" />
-                    <SidebarButton active={activeTab === 'trials'} onClick={() => setActiveTab('trials')} icon="🧪" label="Trials" />
-                    <SidebarButton active={activeTab === 'curriculum'} onClick={() => setActiveTab('curriculum')} icon="📖" label="Curriculum" />
-                    <SidebarButton active={activeTab === 'exams'} onClick={() => setActiveTab('exams')} icon="📝" label="Exams" />
-                    
-                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em] pl-4 mb-4 mt-8">Financial & Support</div>
-                    <SidebarButton active={activeTab === 'financials'} onClick={() => setActiveTab('financials')} icon="💳" label="Transactions" />
-                    <SidebarButton active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} icon="💸" label="Payouts" badge={pendingPayouts.length} />
-                    <SidebarButton active={activeTab === 'withdrawals'} onClick={() => setActiveTab('withdrawals')} icon="🏦" label="Withdrawals" badge={withdrawalRequests.length} />
-                    <SidebarButton active={activeTab === 'complaints'} onClick={() => setActiveTab('complaints')} icon="💬" label="Complaints" badge={allComplaints.filter(c => !c.resolved_at).length} />
-                </div>
-
-                <div className="p-4 border-t border-white/5 bg-slate-900/60 backdrop-blur-xl relative z-10 space-y-2">
-                    <button
-                        onClick={toggleTheme}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10"
-                    >
-                        <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-                        <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                        <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-blue-600' : 'bg-slate-600'}`}>
-                            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
-                        </div>
-                    </button>
-                    <button 
-                        onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all font-bold text-xs group"
-                    >
-                        <span className="text-lg">🚪</span>
-                        <span className="group-hover:scale-110 transition-transform">Logout</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Main Content Pane */}
-            <div className={`flex-1 ml-64 p-10 min-h-screen transition-colors duration-300 ${isDark ? 'bg-slate-950 text-slate-200' : 'bg-[#fcfdfe] text-slate-800'}`}>
-                <div className="max-w-7xl mx-auto space-y-10">
-                    {/* Top Global Navigation Bar */}
-                    <div className="flex flex-col md:flex-row justify-between items-center bg-white/40 backdrop-blur-2xl p-6 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        <DashboardLayout navItems={adminNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="emerald" role="ADMIN">
+            <div className="space-y-10">
+                {/* Top Global Navigation Bar */}
+                <div className="flex flex-col md:flex-row justify-between items-center bg-white/60 dark:bg-slate-800/60 backdrop-blur-2xl p-5 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-white/80 dark:border-white/10 relative overflow-hidden group gap-4">
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
                         
-                        <div className="flex items-center gap-5 relative z-10">
-                            <div className="w-14 h-14 bg-white rounded-2xl shadow-xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-500">
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-2xl">
                                 🌍
                             </div>
                             <div>
-                                <h2 className="text-lg font-black text-slate-800 tracking-tight">Command Center Active</h2>
+                                <h2 className="text-base font-black text-slate-900 dark:text-white tracking-tight">Command Center</h2>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest opacity-70">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                                         {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {Intl.DateTimeFormat().resolvedOptions().timeZone}
                                     </p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div className="flex gap-3 w-full md:w-auto mt-6 md:mt-0 relative z-10">
-                            <div className="relative flex-1 md:w-80">
+                        <div className="flex gap-3 w-full md:w-auto relative z-10">
+                            <div className="relative flex-1 md:w-72">
                                 <input
                                     type="text"
-                                    placeholder="Intelligent Global Search..."
+                                    placeholder="Search anything..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-3.5 bg-white/80 border border-slate-100 rounded-2xl text-xs outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-bold placeholder:text-slate-400 shadow-sm"
+                                    className="w-full pl-11 pr-4 py-3 bg-white/80 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 rounded-xl text-xs outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/20 transition-all font-bold placeholder:text-slate-400 text-slate-900 dark:text-white shadow-sm"
                                 />
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg opacity-40">🔍</span>
                             </div>
                             <button
                                 onClick={fetchApplications}
-                                className="p-3.5 px-6 flex items-center gap-3 bg-slate-900 text-white rounded-2xl hover:bg-primary transition-all shadow-xl shadow-slate-900/10 active:scale-95 group/btn"
+                                className="p-3 px-5 flex items-center gap-2 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-xl hover:bg-emerald-600 dark:hover:bg-emerald-500 dark:hover:text-white transition-all shadow-lg active:scale-95"
                                 title="Synchronize Data"
                             >
-                                <span className="group-hover/btn:rotate-180 transition-transform duration-700">🔄</span> 
-                                <span className="text-[11px] font-black uppercase tracking-widest">Sync</span>
+                                <span>🔄</span> 
+                                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Sync</span>
                             </button>
                         </div>
                     </div>
@@ -1359,29 +1308,7 @@ const AdminDashboard = () => {
                         </div>
                     )}
 
-                    {/* Dynamic Tabs Navigation */}
-                    <div className="flex flex-wrap gap-2 mb-10 p-1.5 bg-slate-100/50 rounded-2xl w-fit mx-4">
-                        {[
-                            { id: 'overview', icon: '📊', label: 'Pulse' },
-                            { id: 'students', icon: '👤', label: 'Students' },
-                            { id: 'tutors', icon: '🎓', label: 'Tutors' },
-                            { id: 'bookings', icon: '📩', label: 'Bookings' },
-                            { id: 'finance', icon: '💰', label: 'Financials' },
-                            { id: 'curriculum', icon: '📚', label: 'Content' },
-                            { id: 'withdrawals', icon: '🏧', label: 'Payouts' },
-                            { id: 'admissions', icon: '📄', label: 'Admissions' },
-                            { id: 'system', icon: '⚙️', label: 'System' },
-                            { id: 'complaints', icon: '🚩', label: 'Flags' }
-                        ].map(tab => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeTab === tab.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-500 hover:bg-white hover:text-primary'}`}
-                            >
-                                <span>{tab.icon}</span> {tab.label}
-                            </button>
-                        ))}
-                    </div>
+                    {/* Navigation is handled by the sidebar — no inline tab bar needed */}
 
                     {/* --- MODERN CHARTS SECTION --- */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 px-4">
@@ -4234,8 +4161,9 @@ const DocLink = ({ href, label, icon }) => href ? (
                         </div>
                     )}
                 </div>
+                </div>
             </div>
-        </div>
+        </DashboardLayout>
     );
 };
 
