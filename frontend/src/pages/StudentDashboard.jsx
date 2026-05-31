@@ -269,7 +269,7 @@ const StudentDashboard = () => {
         }
     }, [getAuthHeader, navigate]);
 
-    const calculateScheduleStatus = () => {
+    const scheduleStatus = useMemo(() => {
         if (!enrollData.preferred_days || !enrollData.preferred_time || !selectedTutorAvailability) return { status: 'pending', message: null };
         
         const day = enrollData.preferred_days;
@@ -305,9 +305,7 @@ const StudentDashboard = () => {
         if (conflict) return { status: 'error', message: 'Tutor is already busy at this time!' };
 
         return { status: 'success', message: 'Tutor is available for this slot!' };
-    };
-
-    const scheduleStatus = calculateScheduleStatus();
+    }, [enrollData.preferred_days, enrollData.preferred_time, enrollData.preferred_start_date, selectedTutorAvailability]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-white">
