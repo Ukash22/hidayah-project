@@ -83,6 +83,8 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Incident Subject</label>
                                 <input
+                                    id="complaint_subject"
+                                    name="complaint_subject"
                                     type="text"
                                     value={subject}
                                     onChange={(e) => setSubject(e.target.value)}
@@ -95,6 +97,8 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Detailed Description</label>
                                 <textarea
+                                    id="complaint_description"
+                                    name="complaint_description"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:border-rose-500/50 outline-none transition-all font-bold text-white text-sm placeholder:text-slate-600 h-32 resize-none no-scrollbar"

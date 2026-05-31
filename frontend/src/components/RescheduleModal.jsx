@@ -65,6 +65,8 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">New Date</label>
                         <input
+                            id="requested_date"
+                            name="requested_date"
                             type="date"
                             value={requestedDate}
                             onChange={(e) => setRequestedDate(e.target.value)}
@@ -77,6 +79,8 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">New Time</label>
                         <input
+                            id="requested_time"
+                            name="requested_time"
                             type="time"
                             value={requestedTime}
                             onChange={(e) => setRequestedTime(e.target.value)}
@@ -88,6 +92,8 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">Reason</label>
                         <textarea
+                            id="reschedule_reason"
+                            name="reschedule_reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary h-24"
