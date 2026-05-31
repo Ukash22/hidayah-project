@@ -4,10 +4,10 @@ import api from '../services/api';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    User, Mail, Lock, Calendar, Globe, Phone, MapPin,
-    BookOpen, GraduationCap, Clock, CheckCircle2,
-    ChevronRight, ArrowRight, Sparkles, ShieldCheck,
-    Hash, Home, Users, Search, Info, Star, X
+    User as IconUser, Mail as IconMail, Lock as IconLock, Calendar as IconCalendar, Globe as IconGlobe, Phone as IconPhone, MapPin as IconMapPin,
+    BookOpen as IconBookOpen, GraduationCap as IconGraduationCap, Clock as IconClock, CheckCircle2 as IconCheckCircle2,
+    ChevronRight as IconChevronRight, ArrowRight as IconArrowRight, Sparkles as IconSparkles, ShieldCheck as IconShieldCheck,
+    Hash as IconHash, Home as IconHome, Users as IconUsers, Search as IconSearch, Info as IconInfo, Star as IconStar, X as IconX
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -430,9 +430,9 @@ const Register = () => {
                 >
                     <div className="text-center mb-16">
                         <div className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-blue-100 shadow-xl relative">
-                            <GraduationCap size={48} className="text-blue-600" />
+                            <IconGraduationCap size={48} className="text-blue-600" />
                             <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
-                                <Sparkles size={12} className="text-white" />
+                                <IconSparkles size={12} className="text-white" />
                             </div>
                         </div>
                         <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Student <span className="text-blue-600">Admission</span></h1>
@@ -445,7 +445,7 @@ const Register = () => {
                             animate={{ opacity: 1, x: 0 }}
                             className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-[2rem] text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl"
                         >
-                            <X className="shrink-0" /> {error}
+                            <IconX className="shrink-0" /> {error}
                         </motion.div>
                     )}
 
@@ -464,14 +464,14 @@ const Register = () => {
                                     <div className="space-y-2">
                                         <label htmlFor="username" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Universal Username *</label>
                                         <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <IconUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                             <input id="username" type="text" name="username" value={formData.username} onChange={handleChange} required placeholder="Student ID or Name" autoComplete="username" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Institutional Email *</label>
                                         <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <IconMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                             <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="umar@email.com" autoComplete="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                         </div>
                                     </div>
@@ -479,14 +479,14 @@ const Register = () => {
                                         <div className="space-y-2">
                                             <label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Password *</label>
                                             <div className="relative">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <IconLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <input id="password" type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Confirm *</label>
                                             <div className="relative">
-                                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <IconLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <input id="confirmPassword" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
@@ -517,7 +517,7 @@ const Register = () => {
                                         <div className="space-y-2">
                                             <label htmlFor="dob" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Birth Date *</label>
                                             <div className="relative">
-                                                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <IconCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <input id="dob" type="date" name="dob" value={formData.dob} onChange={handleChange} required autoComplete="bday" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
@@ -533,7 +533,7 @@ const Register = () => {
                                         <div className="space-y-2">
                                             <label htmlFor="country" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Country</label>
                                             <div className="relative">
-                                                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <IconGlobe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <select id="country" name="country" value={formData.country} onChange={handleChange} autoComplete="country-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
                                                     <option value="" className="bg-white">Select Country</option>
                                                     <optgroup label="Africa" className="bg-white">
@@ -570,14 +570,14 @@ const Register = () => {
                                         <div className="space-y-2">
                                             <label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Phone Number</label>
                                             <div className="relative">
-                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                                <IconPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                                 <input id="phone" type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="+234..." autoComplete="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
                                             </div>
                                         </div>
                                         <div className="space-y-2 col-span-full">
                                             <label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Residential Address *</label>
                                             <div className="relative">
-                                                <MapPin className="absolute left-4 top-4 text-slate-400" size={18} />
+                                                <IconMapPin className="absolute left-4 top-4 text-slate-400" size={18} />
                                                 <textarea id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="Street Name, House Number, City, State" autoComplete="street-address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all min-h-[100px] resize-none" />
                                             </div>
                                         </div>
@@ -637,7 +637,7 @@ const Register = () => {
                                     className="bg-indigo-500/10 border border-indigo-500/20 p-8 rounded-[2rem] mb-12 flex flex-col md:flex-row gap-8 items-center"
                                 >
                                     <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 shrink-0">
-                                        <GraduationCap size={32} />
+                                        <IconGraduationCap size={32} />
                                     </div>
                                     <div className="flex-1 space-y-1">
                                         <h4 className="text-lg font-bold text-white uppercase tracking-tight">Exam Focus Configuration</h4>
@@ -729,7 +729,7 @@ const Register = () => {
                                                             onClick={() => removeScheduleSlot(index)}
                                                             className="bg-red-500/10 text-red-500 w-12 h-12 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center justify-center shrink-0"
                                                         >
-                                                            <X size={16} />
+                                                            <IconX size={16} />
                                                         </button>
                                                     )}
                                                 </div>
@@ -756,7 +756,7 @@ const Register = () => {
                                     </div>
                                 </div>
                                 <div className="relative max-w-xs">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/60" size={16} />
+                                    <IconCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/60" size={16} />
                                     <input
                                         type="date"
                                         name="preferredStartDate"
@@ -793,7 +793,7 @@ const Register = () => {
                                     <div key={category} className="space-y-6">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${category === 'Islamic Education' ? 'bg-indigo-600/20 text-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600/20 text-blue-600' : 'bg-blue-500/20 text-blue-500'}`}>
-                                                {category === 'Islamic Education' ? <Users size={16} /> : category === 'Exam Preparation' ? <GraduationCap size={16} /> : <BookOpen size={16} />}
+                                                {category === 'Islamic Education' ? <IconUsers size={16} /> : category === 'Exam Preparation' ? <IconGraduationCap size={16} /> : <IconBookOpen size={16} />}
                                             </div>
                                             <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">{category}</h4>
                                         </div>
@@ -818,7 +818,7 @@ const Register = () => {
                                                     >
                                                         {isSelected && (
                                                             <div className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in ${category === 'Islamic Education' ? 'bg-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600' : 'bg-sky-500'}`}>
-                                                                <CheckCircle2 size={10} className="text-white" />
+                                                                <IconCheckCircle2 size={10} className="text-white" />
                                                             </div>
                                                         )}
                                                         <span className="text-[10px] font-black uppercase tracking-tight">{subject}</span>
@@ -1072,7 +1072,7 @@ const Register = () => {
                                 {loading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 ) : (
-                                    <>Enroll Scholar <ArrowRight size={20} /></>
+                                    <>Enroll Scholar <IconArrowRight size={20} /></>
                                 )}
                             </motion.button>
 

@@ -427,7 +427,7 @@ const BookingRequest = () => {
                                                 <span className="text-slate-500 font-normal">(24)</span>
                                             </div>
                                             <span className="text-emerald-500 text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
-                                                <ShieldCheck size={10} /> Verified
+                                                <IconShieldCheck size={10} /> Verified
                                             </span>
                                         </div>
                                     </div>
