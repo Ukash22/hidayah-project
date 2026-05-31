@@ -19,18 +19,7 @@ import RescheduleModal from '../components/RescheduleModal';
 import QuranMushaf from '../components/QuranMushaf';
 import JambCBT from '../components/JambCBT';
 
-// Move static configurations outside to prevent initialization issues
-const CONTAINER_VARIANTS = { 
-    hidden: { opacity: 0 }, 
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
-};
-
-const ITEM_VARIANTS = { 
-    hidden: { y: 20, opacity: 0 }, 
-    visible: { y: 0, opacity: 1 } 
-};
-
-const StudentDashboard = () => {
+function StudentDashboard() {
     const { user, token } = useAuth();
     const navigate = useNavigate();
     
@@ -1294,6 +1283,17 @@ const StudentDashboard = () => {
             </div>
         </DashboardLayout>
     );
+}
+
+// Static configurations moved to bottom to prevent TDZ
+const CONTAINER_VARIANTS = { 
+    hidden: { opacity: 0 }, 
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
+};
+
+const ITEM_VARIANTS = { 
+    hidden: { y: 20, opacity: 0 }, 
+    visible: { y: 0, opacity: 1 } 
 };
 
 export default StudentDashboard;
