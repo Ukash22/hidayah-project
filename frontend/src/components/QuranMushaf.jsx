@@ -48,6 +48,59 @@ const QuranMushaf = () => {
     
     const audioRef = useRef(new Audio());
 
+    const pauseAudio = useCallback(() => {
+        audioRef.current.pause();
+        setIsPlaying(false);
+    }, []);
+
+    const playVerse = useCallback(async (verseKey, isInternal = false) => {
+        try {
+            if (!isInternal) {
+                currentVerseLoopRef.current = 1;
+                versesPlayedRef.current = 1;
+            }
+
+            setActiveVerseKey(verseKey);
+            setIsPlaying(true);
+            
+            if (activeVerseKey === verseKey && isInternal && audioRef.current.src) {
+                audioRef.current.currentTime = 0;
+                audioRef.current.play();
+                return;
+            }
+            
+            let finalAudioUrl = '';
+            const res = await axios.get(`https://api.quran.com/api/v4/recitations/${selectedReciter}/by_ayah/${verseKey}`);
+            
+            if (res.data.audio_files && res.data.audio_files.length > 0) {
+                let audioUrl = res.data.audio_files[0].url;
+                if (audioUrl.startsWith('//')) {
+                    finalAudioUrl = `https:${audioUrl}`;
+                } else if (!audioUrl.startsWith('http')) {
+                    finalAudioUrl = `https://verses.quran.com/${audioUrl}`;
+                } else {
+                    finalAudioUrl = audioUrl;
+                }
+                
+                const audioEl = audioRef.current;
+                audioEl.pause();
+                audioEl.src = finalAudioUrl;
+                audioEl.volume = 1.0;
+                
+                // .play() returns a promise in modern browsers, catching errors (like autoplay blocks)
+                audioEl.play().catch(err => {
+                    console.warn("Autoplay / Audio Error:", err);
+                    setIsPlaying(false);
+                });
+            } else {
+                setIsPlaying(false);
+            }
+        } catch (err) {
+            console.error("Audio error", err);
+            setIsPlaying(false);
+        }
+    }, [activeVerseKey, selectedReciter]);
+
     // Run once on mount to fetch all surahs
     useEffect(() => {
         const fetchSurahs = async () => {
@@ -122,58 +175,7 @@ const QuranMushaf = () => {
         return () => audioEl.removeEventListener('ended', handleAudioEnd);
     }, [activeVerseKey, verses, verseRepeatCount, versesToPlay, playVerse]);
 
-    const playVerse = useCallback(async (verseKey, isInternal = false) => {
-        try {
-            if (!isInternal) {
-                currentVerseLoopRef.current = 1;
-                versesPlayedRef.current = 1;
-            }
 
-            setActiveVerseKey(verseKey);
-            setIsPlaying(true);
-            
-            if (activeVerseKey === verseKey && isInternal && audioRef.current.src) {
-                audioRef.current.currentTime = 0;
-                audioRef.current.play();
-                return;
-            }
-            
-            let finalAudioUrl = '';
-            const res = await axios.get(`https://api.quran.com/api/v4/recitations/${selectedReciter}/by_ayah/${verseKey}`);
-            
-            if (res.data.audio_files && res.data.audio_files.length > 0) {
-                let audioUrl = res.data.audio_files[0].url;
-                if (audioUrl.startsWith('//')) {
-                    finalAudioUrl = `https:${audioUrl}`;
-                } else if (!audioUrl.startsWith('http')) {
-                    finalAudioUrl = `https://verses.quran.com/${audioUrl}`;
-                } else {
-                    finalAudioUrl = audioUrl;
-                }
-                
-                const audioEl = audioRef.current;
-                audioEl.pause();
-                audioEl.src = finalAudioUrl;
-                audioEl.volume = 1.0;
-                
-                // .play() returns a promise in modern browsers, catching errors (like autoplay blocks)
-                audioEl.play().catch(err => {
-                    console.warn("Autoplay / Audio Error:", err);
-                    setIsPlaying(false);
-                });
-            } else {
-                setIsPlaying(false);
-            }
-        } catch (err) {
-            console.error("Audio error", err);
-            setIsPlaying(false);
-        }
-    }, [activeVerseKey, selectedReciter]);
-    
-    const pauseAudio = () => {
-        audioRef.current.pause();
-        setIsPlaying(false);
-    };
 
     const handleSurahChange = (e) => {
         const surahId = Number(e.target.value);

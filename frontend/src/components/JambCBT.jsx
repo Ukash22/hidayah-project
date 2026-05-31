@@ -31,35 +31,64 @@ const JambCBT = ({ token, studentProfile }) => {
 
     const timerRef = useRef(null);
 
-    // Filter "Exam Preparation" subjects from profile
-    useEffect(() => {
-        if (studentProfile?.enrollments) {
-            const jambSubjs = studentProfile.enrollments
-                .filter(enr => enr.subject_name.includes('JAMB') || enr.subject_name.includes('Mathematics') || enr.subject_name.includes('English'))
-                .map(enr => enr.subject_name);
-            
-            // Default subjects if none found
-            const defaults = jambSubjs.length > 0 ? jambSubjs : ['English Language', 'Mathematics', 'Physics', 'Chemistry'];
-            setSelectedSubjects(defaults.slice(0, 4));
-        }
-    }, [studentProfile]);
-
-    // Timer logic
-    useEffect(() => {
-        if (isStarted && timeLeft > 0 && !isFinished) {
-            timerRef.current = setInterval(() => {
-                setTimeLeft(prev => prev - 1);
-            }, 1000);
-        } else if (timeLeft === 0) {
-            submitExam();
-        }
-        return () => clearInterval(timerRef.current);
-    }, [isStarted, timeLeft, isFinished]);
-
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleAnswer = (option) => {
+        const currentSubject = selectedSubjects[activeSubjectIndex];
+        const currentQuestion = questions[currentSubject][currentQuestionIndex];
+        
+        setUserAnswers(prev => ({
+            ...prev,
+            [currentSubject]: {
+                ...prev[currentSubject],
+                [currentQuestion.id]: option
+            }
+        }));
+    };
+
+    const submitExam = () => {
+        clearInterval(timerRef.current);
+        const finalResults = {};
+        let totalScore = 0;
+
+        selectedSubjects.forEach(subject => {
+            const subjectQuestions = questions[subject] || [];
+            const answers = userAnswers[subject] || {};
+            let correctCount = 0;
+
+            subjectQuestions.forEach(q => {
+                if (answers[q.id] === q.answer) {
+                    correctCount++;
+                }
+            });
+
+            const score = Math.round((correctCount / subjectQuestions.length) * 100);
+            finalResults[subject] = {
+                correct: correctCount,
+                total: subjectQuestions.length,
+                score: score
+            };
+            totalScore += score;
+        });
+
+        setResults({
+            breakdown: finalResults,
+            average: Math.round(totalScore / selectedSubjects.length)
+        });
+        setIsFinished(true);
+    };
+
+    const handleCalc = (val) => {
+        if (val === 'C') setCalcValue('0');
+        else if (val === '=') {
+            try { setCalcValue(new Function('return ' + calcValue)().toString()); } catch { setCalcValue('Error'); }
+        } else {
+            setCalcValue(prev => prev === '0' ? val : prev + val);
+        }
     };
 
     const startPractice = async (isAI = false) => {
@@ -108,60 +137,30 @@ const JambCBT = ({ token, studentProfile }) => {
         }
     };
 
-    const handleAnswer = (option) => {
-        const currentSubject = selectedSubjects[activeSubjectIndex];
-        const currentQuestion = questions[currentSubject][currentQuestionIndex];
-        
-        setUserAnswers(prev => ({
-            ...prev,
-            [currentSubject]: {
-                ...prev[currentSubject],
-                [currentQuestion.id]: option
-            }
-        }));
-    };
-
-    const submitExam = () => {
-        clearInterval(timerRef.current);
-        const finalResults = {};
-        let totalScore = 0;
-
-        selectedSubjects.forEach(subject => {
-            const subjectQuestions = questions[subject] || [];
-            const answers = userAnswers[subject] || {};
-            let correctCount = 0;
-
-            subjectQuestions.forEach(q => {
-                if (answers[q.id] === q.answer) {
-                    correctCount++;
-                }
-            });
-
-            const score = Math.round((correctCount / subjectQuestions.length) * 100);
-            finalResults[subject] = {
-                correct: correctCount,
-                total: subjectQuestions.length,
-                score: score
-            };
-            totalScore += score;
-        });
-
-        setResults({
-            breakdown: finalResults,
-            average: Math.round(totalScore / selectedSubjects.length)
-        });
-        setIsFinished(true);
-    };
-
-    // Calculator Logic
-    const handleCalc = (val) => {
-        if (val === 'C') setCalcValue('0');
-        else if (val === '=') {
-            try { setCalcValue(new Function('return ' + calcValue)().toString()); } catch { setCalcValue('Error'); }
-        } else {
-            setCalcValue(prev => prev === '0' ? val : prev + val);
+    // Filter "Exam Preparation" subjects from profile
+    useEffect(() => {
+        if (studentProfile?.enrollments) {
+            const jambSubjs = studentProfile.enrollments
+                .filter(enr => enr.subject_name.includes('JAMB') || enr.subject_name.includes('Mathematics') || enr.subject_name.includes('English'))
+                .map(enr => enr.subject_name);
+            
+            // Default subjects if none found
+            const defaults = jambSubjs.length > 0 ? jambSubjs : ['English Language', 'Mathematics', 'Physics', 'Chemistry'];
+            setSelectedSubjects(defaults.slice(0, 4));
         }
-    };
+    }, [studentProfile]);
+
+    // Timer logic
+    useEffect(() => {
+        if (isStarted && timeLeft > 0 && !isFinished) {
+            timerRef.current = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+            }, 1000);
+        } else if (timeLeft === 0) {
+            submitExam();
+        }
+        return () => clearInterval(timerRef.current);
+    }, [isStarted, timeLeft, isFinished]);
 
     if (!isStarted && !isFinished) {
         return (
