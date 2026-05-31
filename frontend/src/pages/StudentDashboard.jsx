@@ -375,7 +375,7 @@ function StudentDashboard() {
                     <div className="bg-blue-600 text-white px-6 py-4 mb-6 flex items-center justify-between shadow-2xl rounded-2xl animate-in fade-in slide-in-from-top duration-700">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
-                                <ShieldCheck className="w-6 h-6 text-white" />
+                                <IconShieldCheck className="w-6 h-6 text-white" />
                             </div>
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 leading-none mb-1">Parent Access Mode</p>
@@ -1284,7 +1284,7 @@ function StudentDashboard() {
                                     {/* Conflict / Availability Warning */}
                                     {scheduleStatus.message && (
                                         <div className={`p-4 border rounded-2xl flex items-center gap-3 ${scheduleStatus.status === 'error' ? 'bg-red-50 border-red-100' : 'bg-blue-50 border-blue-100'}`}>
-                                            {scheduleStatus.status === 'error' ? <AlertCircle className="text-red-500" size={16} /> : <CheckCircle2 className="text-blue-600" size={16} />}
+                                            {scheduleStatus.status === 'error' ? <IconAlertCircle className="text-red-500" size={16} /> : <IconCheckCircle2 className="text-blue-600" size={16} />}
                                             <p className={`text-[10px] font-black uppercase tracking-widest leading-relaxed ${scheduleStatus.status === 'error' ? 'text-red-500' : 'text-blue-600'}`}>
                                                 {scheduleStatus.message}
                                             </p>
@@ -1308,7 +1308,7 @@ function StudentDashboard() {
                                         disabled={enrolling || !enrollData.subject_id || !enrollData.tutor_id || scheduleStatus.status === 'error'}
                                         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-[0.3em] shadow-3xl shadow-blue-600/20 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 disabled:cursor-not-allowed group/btn"
                                     >
-                                        {enrolling ? (<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />) : (<><CheckCircle2 size={20} /> Submit Enrollment →</>)}
+                                        {enrolling ? (<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />) : (<><IconCheckCircle2 size={20} /> Submit Enrollment →</>)}
                                     </motion.button>
                                 </div>
                             </div>
