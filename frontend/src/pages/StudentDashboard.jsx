@@ -269,17 +269,17 @@ function StudentDashboard() {
                 return;
             }
 
-            // Notify backend that student joined (non-blocking)
-            try {
-                await axios.post(
-                    `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`,
-                    {},
-                    { headers: getAuthHeader() }
-                );
-            } catch (e) {
-                // Non-blocking — proceed regardless
-                console.warn("Could not notify backend of join:", e);
-            }
+            // Notify backend that student joined (non-blocking, fire and forget)
+            axios.post(
+                `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`,
+                {},
+                { headers: getAuthHeader() }
+            ).catch(e => {
+                // If it fails or gets aborted due to navigation, we don't care much at this point
+                if (!axios.isCancel(e)) {
+                    console.warn("Could not notify backend of join (silent):", e.message);
+                }
+            });
 
             // Force Navigate to internal Live Classroom
             navigate(`/live/${sessionId}`);
@@ -1150,6 +1150,8 @@ function StudentDashboard() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Academic Program</label>
                                             <select
+                                                id="subject_id"
+                                                name="subject_id"
                                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none transition-all"
                                                 onChange={(e) => {
                                                     const val = e.target.value;
@@ -1169,6 +1171,8 @@ function StudentDashboard() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Expert Tutor Replacement</label>
                                             <select
+                                                id="tutor_id"
+                                                name="tutor_id"
                                                 className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none transition-all"
                                                 value={enrollData.tutor_id}
                                                 onChange={(e) => {
@@ -1214,6 +1218,8 @@ function StudentDashboard() {
                                     <div className="space-y-4">
                                         <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Preferred Start Date</label>
                                         <input 
+                                            id="preferred_start_date"
+                                            name="preferred_start_date"
                                             type="date" 
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-600/30 transition-all"
                                             min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
@@ -1237,6 +1243,8 @@ function StudentDashboard() {
                                                 <div key={index} className="flex gap-3 items-end group/slot">
                                                     <div className="flex-1 space-y-1">
                                                         <select 
+                                                            id={`schedule_day_${index}`}
+                                                            name={`schedule_day_${index}`}
                                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none transition-all"
                                                             value={slot.day}
                                                             onChange={(e) => {
@@ -1253,6 +1261,8 @@ function StudentDashboard() {
                                                     </div>
                                                     <div className="w-32 space-y-1">
                                                         <input
+                                                            id={`schedule_time_${index}`}
+                                                            name={`schedule_time_${index}`}
                                                             type="time"
                                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none transition-all"
                                                             value={slot.time}
