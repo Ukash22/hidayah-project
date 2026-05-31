@@ -23,10 +23,16 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     // WebSocket URL for signaling
     const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
-        let base = apiBase.replace(/^http/, 'ws');
-        if (!base.startsWith('ws')) base = `wss://${base}`;
+        // Precise conversion to wss/ws
+        let base = apiBase.startsWith('https') 
+            ? apiBase.replace('https://', 'wss://') 
+            : apiBase.replace('http://', 'ws://');
+            
+        // Ensure format: wss://domain.com/signaling/room/
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        return `${cleanBase}/signaling/${roomId}/`;
+        const finalUrl = `${cleanBase}/signaling/${roomId}/`;
+        console.log("📡 Connecting to Signaling:", finalUrl);
+        return finalUrl;
     }, [roomId]);
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
@@ -53,18 +59,37 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         const initMedia = async () => {
             try {
                 console.log("🎥 Initializing Local Media...");
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // Try to get both video and audio
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 1280, height: 720 }, 
+                    audio: true 
+                });
                 setLocalStream(stream);
                 if (localVideoRef.current) localVideoRef.current.srcObject = stream;
             } catch (err) {
-                console.error("⚠️ Failed to get local media", err);
-                // Fallback: try audio only if video fails
+                console.warn("⚠️ Failed to get both video and audio, trying partial media...", err.name);
+                
+                // Fallback sequence
                 try {
-                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // Try audio only
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                     setLocalStream(audioStream);
-                } catch(e) {
-                    console.error("⚠️ All media devices failed/missing", e);
-                    setLocalStream(new MediaStream()); // Empty fallback stream
+                    setIsVideoOff(true);
+                } catch (audioErr) {
+                    try {
+                        // Try video only
+                        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                        setLocalStream(videoStream);
+                        setIsMuted(true);
+                    } catch (videoErr) {
+                        console.error("❌ No media devices found or permission denied.", videoErr.name);
+                        // Final fallback: Create an empty stream with dummy tracks to keep the WebRTC logic happy
+                        const dummyStream = new MediaStream();
+                        setLocalStream(dummyStream);
+                        setIsVideoOff(true);
+                        setIsMuted(true);
+                        // alert("Media Error: No camera or microphone found. You can still join the class and use the chat.");
+                    }
                 }
             }
         };
