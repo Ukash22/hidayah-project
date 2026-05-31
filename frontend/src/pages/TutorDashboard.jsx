@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import TutorWallet from '../components/TutorWallet';
 import ComplaintModal from '../components/ComplaintModal';
 import { uploadMultipleToCloudinary } from '../services/cloudinaryService';
+import { Calendar, Clock } from 'lucide-react';
+
 
 const TutorDashboard = () => {
     const { user, token } = useAuth();
