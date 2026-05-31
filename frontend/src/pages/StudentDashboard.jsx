@@ -5,28 +5,28 @@ import axios from 'axios';
 // import autoTable from "jspdf-autotable";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard } from 'lucide-react';
-import { MessageSquare } from 'lucide-react';
-import { Download } from 'lucide-react';
-import { Plus } from 'lucide-react';
-import { FileText } from 'lucide-react';
-import { CheckCircle2 } from 'lucide-react';
-import { ShieldCheck } from 'lucide-react';
-import { X } from 'lucide-react';
-import { TrendingUp } from 'lucide-react';
-import { ExternalLink } from 'lucide-react';
-import { AlertCircle } from 'lucide-react';
-import { Wallet } from 'lucide-react';
-import { BookOpen } from 'lucide-react';
-import { GraduationCap } from 'lucide-react';
-import { Bell } from 'lucide-react';
-import { ArrowRight } from 'lucide-react';
-import { Search } from 'lucide-react';
-import { User } from 'lucide-react';
-import { Clock } from 'lucide-react';
-import { Calendar } from 'lucide-react';
-import { PlayCircle } from 'lucide-react';
-import { Music } from 'lucide-react';
+import { LayoutDashboard as IconLayoutDashboard } from 'lucide-react';
+import { MessageSquare as IconMessageSquare } from 'lucide-react';
+import { Download as IconDownload } from 'lucide-react';
+import { Plus as IconPlus } from 'lucide-react';
+import { FileText as IconFileText } from 'lucide-react';
+import { CheckCircle2 as IconCheckCircle2 } from 'lucide-react';
+import { ShieldCheck as IconShieldCheck } from 'lucide-react';
+import { X as IconX } from 'lucide-react';
+import { TrendingUp as IconTrendingUp } from 'lucide-react';
+import { ExternalLink as IconExternalLink } from 'lucide-react';
+import { AlertCircle as IconAlertCircle } from 'lucide-react';
+import { Wallet as IconWallet } from 'lucide-react';
+import { BookOpen as IconBookOpen } from 'lucide-react';
+import { GraduationCap as IconGraduationCap } from 'lucide-react';
+import { Bell as IconBell } from 'lucide-react';
+import { ArrowRight as IconArrowRight } from 'lucide-react';
+import { Search as IconSearch } from 'lucide-react';
+import { User as IconUser } from 'lucide-react';
+import { Clock as IconClock } from 'lucide-react';
+import { Calendar as IconCalendar } from 'lucide-react';
+import { PlayCircle as IconPlayCircle } from 'lucide-react';
+import { Music as IconMusic } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
@@ -447,14 +447,14 @@ function StudentDashboard() {
                     {/* Stats Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
-                            { label: 'Wallet Balance', value: `₦${parseFloat(profile?.wallet_balance || 0).toLocaleString()}`, icon: Wallet, colorClass: 'text-blue-600', bgClass: 'bg-blue-600/10', shadowClass: 'shadow-blue-600/5', link: '/payment', action: 'Top up' },
+                            { label: 'Wallet Balance', value: `₦${parseFloat(profile?.wallet_balance || 0).toLocaleString()}`, icon: IconWallet, colorClass: 'text-blue-600', bgClass: 'bg-blue-600/10', shadowClass: 'shadow-blue-600/5', link: '/payment', action: 'Top up' },
                             { 
                                 label: 'Registered Subjects', 
                                 value: (profile?.enrollments?.length || 0), 
-                                icon: BookOpen, colorClass: 'text-indigo-600', bgClass: 'bg-indigo-600/10', shadowClass: 'shadow-indigo-600/5'
+                                icon: IconBookOpen, colorClass: 'text-indigo-600', bgClass: 'bg-indigo-600/10', shadowClass: 'shadow-indigo-600/5'
                             },
-                            { label: 'New Bookings', value: bookings.filter(b => !b.paid).length, icon: Calendar, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-600/10', shadowClass: 'shadow-emerald-600/5' },
-                            { label: 'Total Classes', value: classes.length, icon: GraduationCap, colorClass: 'text-sky-600', bgClass: 'bg-sky-600/10', shadowClass: 'shadow-sky-600/5' },
+                            { label: 'New Bookings', value: bookings.filter(b => !b.paid).length, icon: IconCalendar, colorClass: 'text-emerald-600', bgClass: 'bg-emerald-600/10', shadowClass: 'shadow-emerald-600/5' },
+                            { label: 'Total Classes', value: classes.length, icon: IconGraduationCap, colorClass: 'text-sky-600', bgClass: 'bg-sky-600/10', shadowClass: 'shadow-sky-600/5' },
                         ].map((stat, i) => (
                             <motion.div 
                                 key={i}
@@ -470,7 +470,7 @@ function StudentDashboard() {
                                     <h3 className="text-3xl font-display font-black text-slate-900 mb-4">{stat.value}</h3>
                                     {stat.link && (
                                         <Link to={stat.link} className="text-[10px] font-black uppercase text-blue-600 flex items-center gap-2 hover:gap-3 transition-all">
-                                            {stat.action} <ArrowRight size={12} />
+                                            {stat.action} <IconArrowRight size={12} />
                                         </Link>
                                     )}
                                 </div>
@@ -531,7 +531,7 @@ function StudentDashboard() {
                                                         examAssignments.filter(ea => !ea.is_completed).map(ea => (
                                                             <div key={ea.id} className="bg-white border border-slate-100 rounded-[2rem] p-8 hover:border-blue-200 transition-all group shadow-sm">
                                                                  <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-                                                                     <ShieldCheck size={28} />
+                                                                     <IconShieldCheck size={28} />
                                                                  </div>
                                                                  <h4 className="text-xl font-bold text-slate-900 mb-2">{ea.exam_title}</h4>
                                                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Subject: {ea.subject_name}</p>
@@ -541,7 +541,7 @@ function StudentDashboard() {
                                                                          onClick={() => window.location.href = `/exam/practice/${ea.exam}`}
                                                                          className="text-blue-600 hover:text-blue-700 font-bold text-xs flex items-center gap-2"
                                                                      >
-                                                                         Start <ArrowRight size={14} />
+                                                                         Start <IconArrowRight size={14} />
                                                                      </button>
                                                                  </div>
                                                             </div>
@@ -586,11 +586,11 @@ function StudentDashboard() {
                                                         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
                                                             <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-400 uppercase">
                                                                 <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg" title="Sessions per week">
-                                                                    <Calendar size={12} className="text-blue-600" /> 
+                                                                    <IconCalendar size={12} className="text-blue-600" /> 
                                                                     <span>{enr.days_per_week || 0} Sessions / WK</span>
                                                                 </div>
                                                                 <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg" title="Hours per session">
-                                                                    <Clock size={12} className="text-blue-600" /> 
+                                                                    <IconClock size={12} className="text-blue-600" /> 
                                                                     <span>{enr.hours_per_week || 0} Hrs / Session</span>
                                                                 </div>
                                                             </div>
@@ -608,7 +608,7 @@ function StudentDashboard() {
                                                             <div className="flex flex-col bg-blue-50/30 rounded-2xl border border-blue-100/50 overflow-hidden">
                                                                 <div className="flex items-center justify-between p-3 bg-blue-50/50 border-b border-blue-100/50">
                                                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                                                                        <Calendar size={12} /> Upcoming Classes
+                                                                        <IconCalendar size={12} /> Upcoming Classes
                                                                     </span>
                                                                     <span className="text-xs font-black text-slate-900 bg-white px-2 py-0.5 rounded-full shadow-sm">{enr.upcoming_sessions_count || 0}</span>
                                                                 </div>
@@ -636,7 +636,7 @@ function StudentDashboard() {
                                                                                         onClick={() => handleJoinClass(sess)}
                                                                                         className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-sm"
                                                                                     >
-                                                                                        <PlayCircle size={14} />
+                                                                                        <IconPlayCircle size={14} />
                                                                                     </button>
                                                                                 </div>
                                                                             </div>
@@ -762,14 +762,14 @@ function StudentDashboard() {
                                                     <h4 className="text-xl font-display font-black text-white mb-2">Admission Letter</h4>
                                                     <p className="text-indigo-100 text-xs font-medium mb-8 leading-relaxed">Your official enrollment confirmation is ready for download.</p>
                                                     <a href={profile.admission_letter_url} download target="_blank" className="w-full py-4 bg-white text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-3">
-                                                        <Download size={16} /> Download PDF
+                                                        <IconDownload size={16} /> Download PDF
                                                     </a>
                                                 </div>
                                             </div>
                                         )}
                                         <div className="bg-blue-50 border border-blue-100 rounded-[2.5rem] p-8 shadow-sm">
                                             <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center gap-2">
-                                                <Bell size={12} className="animate-bounce" /> Dashboard Alerts
+                                                <IconBell size={12} className="animate-bounce" /> Dashboard Alerts
                                             </h4>
                                             <div className="space-y-4">
                                                 {notifications.map(n => (
@@ -790,7 +790,7 @@ function StudentDashboard() {
                                     <div className="flex justify-between items-center">
                                         <h2 className="text-2xl font-display font-black text-slate-900">Live Learning Sessions</h2>
                                         <div className="bg-blue-600/10 px-4 py-2 rounded-full border border-blue-600/20 text-[10px] font-black text-blue-600 uppercase flex items-center gap-2">
-                                            <LayoutDashboard size={12} /> Manage Schedule
+                                            <IconLayoutDashboard size={12} /> Manage Schedule
                                         </div>
                                     </div>
                                     
@@ -803,9 +803,9 @@ function StudentDashboard() {
                                                         <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{cls.type || 'REGULAR COURSE'}</p>
                                                         <h4 className="text-3xl font-display font-black text-slate-900 mb-3">{cls.subject}</h4>
                                                         <div className="flex flex-wrap gap-4 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl w-fit">
-                                                            <span className="flex items-center gap-2"><Calendar size={12} className="text-blue-600" /> {new Date(cls.scheduled_at).toLocaleDateString()}</span>
-                                                            <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-600" /> {new Date(cls.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                                                            <span className="flex items-center gap-2"><User size={12} className="text-sky-600" /> Tutor: {cls.tutor_name}</span>
+                                                            <span className="flex items-center gap-2"><IconCalendar size={12} className="text-blue-600" /> {new Date(cls.scheduled_at).toLocaleDateString()}</span>
+                                                            <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {new Date(cls.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                                            <span className="flex items-center gap-2"><IconUser size={12} className="text-sky-600" /> Tutor: {cls.tutor_name}</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -859,7 +859,7 @@ function StudentDashboard() {
                                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                                         <h2 className="text-2xl font-display font-black text-slate-900">Digital Learning Bank</h2>
                                         <div className="relative w-full md:w-96">
-                                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                                            <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                                             <input type="text" placeholder="Search resources..." className="w-full bg-white border border-slate-200 rounded-2xl p-4 pl-14 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 transition-all shadow-sm" />
                                         </div>
                                     </div>
@@ -873,16 +873,16 @@ function StudentDashboard() {
                                             >
                                                 <div className="flex justify-between items-start mb-8">
                                                     <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-3xl shadow-inner ring-1 ring-slate-100">
-                                                        {mat.material_type === 'VIDEO' ? <PlayCircle className="text-blue-600" /> : mat.material_type === 'PDF' ? <FileText className="text-indigo-600" /> : <Music className="text-sky-600" />}
+                                                        {mat.material_type === 'VIDEO' ? <IconPlayCircle className="text-blue-600" /> : mat.material_type === 'PDF' ? <IconFileText className="text-indigo-600" /> : <IconMusic className="text-sky-600" />}
                                                     </div>
-                                                    <button className="text-slate-400 hover:text-slate-900 transition-colors"><ExternalLink size={20} /></button>
+                                                    <button className="text-slate-400 hover:text-slate-900 transition-colors"><IconExternalLink size={20} /></button>
                                                 </div>
                                                 <h4 className="text-2xl font-display font-black text-slate-900 mb-2 leading-tight line-clamp-2">{mat.title}</h4>
                                                 <p className="text-sm font-medium text-slate-400 leading-relaxed line-clamp-2 mb-8">{mat.description}</p>
                                                 <div className="pt-8 border-t border-slate-50 flex justify-between items-center">
                                                     <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{mat.material_type}</span>
                                                     <a href={mat.file || mat.external_url} target="_blank" className="bg-blue-600/10 text-blue-600 p-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all">
-                                                        <Download size={18} />
+                                                        <IconDownload size={18} />
                                                     </a>
                                                 </div>
                                             </motion.div>
@@ -913,7 +913,7 @@ function StudentDashboard() {
                                                 examAssignments.filter(ea => !ea.is_completed).map(ea => (
                                                     <div key={ea.id} className="bg-white border border-slate-100 rounded-[2rem] p-8 hover:border-blue-600/30 transition-all group shadow-sm">
                                                         <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
-                                                            <FileText size={24} />
+                                                            <IconFileText size={24} />
                                                         </div>
                                                         <h4 className="text-lg font-bold text-slate-900 mb-2 leading-tight">{ea.exam_title}</h4>
                                                         <div className="flex flex-col gap-2 mb-8">
@@ -990,7 +990,7 @@ function StudentDashboard() {
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row gap-4">
                                                     <a href="/payment" className="flex-1 py-5 bg-white text-blue-600 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                                                        <Plus size={18} /> Add Funds to Wallet
+                                                        <IconPlus size={18} /> Add Funds to Wallet
                                                     </a>
                                                     <button className="flex-1 py-5 bg-black/20 hover:bg-black/40 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-widest transition-all">Export Transactions</button>
                                                 </div>
@@ -999,7 +999,7 @@ function StudentDashboard() {
 
                                         <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
                                             <h4 className="text-xl font-display font-black text-slate-900 mb-8 flex items-center gap-4">
-                                                <TrendingUp size={20} className="text-blue-600" /> Ledger Analytics
+                                                <IconTrendingUp size={20} className="text-blue-600" /> Ledger Analytics
                                             </h4>
                                             <div className="grid gap-4">
                                                 {transactions.map(t => (
@@ -1021,7 +1021,7 @@ function StudentDashboard() {
                                                                 onClick={() => handleDownloadReceipt(t)}
                                                                 className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                                                             >
-                                                                <Download size={10} /> Receipt
+                                                                <IconDownload size={10} /> Receipt
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1036,7 +1036,7 @@ function StudentDashboard() {
                                             <div className="p-8 bg-slate-900 rounded-3xl border border-slate-800 group hover:border-blue-600/30 transition-all cursor-pointer relative overflow-hidden shadow-xl">
                                                 <div className="flex justify-between items-start mb-10 relative z-10">
                                                     <div className="w-8 h-8 rounded-full border border-white/20" />
-                                                    <ShieldCheck size={18} className="text-blue-400" />
+                                                    <IconShieldCheck size={18} className="text-blue-400" />
                                                 </div>
                                                 <div className="relative z-10">
                                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
@@ -1046,7 +1046,7 @@ function StudentDashboard() {
                                             </div>
                                         </div>
                                         <div className="p-8 bg-blue-50 border border-blue-100 rounded-[2.5rem] flex items-start gap-4 shadow-sm">
-                                            <AlertCircle className="text-blue-500 shrink-0" size={20} />
+                                            <IconAlertCircle className="text-blue-500 shrink-0" size={20} />
                                             <div>
                                                 <h5 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Billing Policy</h5>
                                                 <p className="text-[10px] text-slate-500 leading-relaxed font-bold">Payments are non-refundable after a session has been successfully completed by the assigned tutor.</p>
@@ -1068,7 +1068,7 @@ function StudentDashboard() {
                                     <div className="grid md:grid-cols-2 gap-10">
                                         <div className="space-y-6">
                                             <h4 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-3">
-                                                <MessageSquare className="text-blue-600" /> My Activity Log
+                                                <IconMessageSquare className="text-blue-600" /> My Activity Log
                                             </h4>
                                             {complaints.filed_by_me.map(c => (
                                                 <div key={c.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
