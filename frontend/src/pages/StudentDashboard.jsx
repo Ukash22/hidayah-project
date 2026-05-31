@@ -318,6 +318,18 @@ const StudentDashboard = () => {
         return { status: 'success', message: 'Tutor is available for this slot!' };
     }, [enrollData.preferred_days, enrollData.preferred_time, enrollData.preferred_start_date, selectedTutorAvailability]);
 
+    const studentNavItems = useMemo(() => [
+        { id: 'overview', icon: '🏠', label: 'Overview' },
+        { id: 'classes', icon: '📺', label: 'Classes' },
+        { id: 'library', icon: '📚', label: 'Library' },
+        { id: 'assessments', icon: '📝', label: 'Assessments' },
+        (['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(profile?.level) ||
+         (profile?.enrolled_course && ['Prep', 'JAMB', 'WAEC', 'NECO', 'BECE'].some(s => profile.enrolled_course.includes(s))))
+            ? { id: 'jamb', icon: '🎯', label: 'JAMB CBT' } : null,
+        { id: 'finance', icon: '💳', label: 'Finance' },
+        { id: 'feedback', icon: '💬', label: 'Feedback' },
+    ].filter(Boolean), [profile]);
+
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-white">
             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full shadow-[0_0_20px_rgba(37,99,235,0.2)]" />
@@ -330,18 +342,6 @@ const StudentDashboard = () => {
         const now = Date.now();
         return now >= classTime - 30*60*1000 && now <= classTime + 60*60*1000;
     });
-
-    const studentNavItems = useMemo(() => [
-        { id: 'overview', icon: '🏠', label: 'Overview' },
-        { id: 'classes', icon: '📺', label: 'Classes' },
-        { id: 'library', icon: '📚', label: 'Library' },
-        { id: 'assessments', icon: '📝', label: 'Assessments' },
-        (['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(profile?.level) ||
-         (profile?.enrolled_course && ['Prep', 'JAMB', 'WAEC', 'NECO', 'BECE'].some(s => profile.enrolled_course.includes(s))))
-            ? { id: 'jamb', icon: '🎯', label: 'JAMB CBT' } : null,
-        { id: 'finance', icon: '💳', label: 'Finance' },
-        { id: 'feedback', icon: '💬', label: 'Feedback' },
-    ].filter(Boolean), [profile]);
 
     return (
         <DashboardLayout navItems={studentNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="blue" role="STUDENT">
