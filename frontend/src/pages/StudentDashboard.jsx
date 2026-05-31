@@ -35,18 +35,20 @@ import RescheduleModal from '../components/RescheduleModal';
 import QuranMushaf from '../components/QuranMushaf';
 import JambCBT from '../components/JambCBT';
 
-// Move static configurations to the top, above the component
-const CONTAINER_VARIANTS = { 
-    hidden: { opacity: 0 }, 
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
-};
-
-const ITEM_VARIANTS = { 
-    hidden: { y: 20, opacity: 0 }, 
-    visible: { y: 0, opacity: 1 } 
-};
+// Removed from here to prevent TDZ
 
 function StudentDashboard() {
+    // Moved inside to prevent TDZ issues in production builds
+    const CONTAINER_VARIANTS = { 
+        hidden: { opacity: 0 }, 
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
+    };
+
+    const ITEM_VARIANTS = { 
+        hidden: { y: 20, opacity: 0 }, 
+        visible: { y: 0, opacity: 1 } 
+    };
+
     const { user, token } = useAuth();
     const navigate = useNavigate();
     
