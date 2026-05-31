@@ -178,7 +178,7 @@ class ApproveStudentView(APIView):
             profile.total_amount = total_first_payment
             profile.save()
             
-            payment_url = f"https://hidayah-frontend.onrender.com/admission-portal"
+            payment_url = f"{settings.FRONTEND_URL}/admission-portal"
             
             # Generate PDF
             try:
@@ -227,8 +227,7 @@ class RequestPasswordResetView(APIView):
             token = PasswordResetTokenGenerator().make_token(user)
             
             # Construct Link (Point to Frontend)
-            # Assuming Frontend runs on localhost:5173 for dev
-            reset_link = f"https://hidayah-frontend.onrender.com/reset-password/{uidb64}/{token}"
+            reset_link = f"{settings.FRONTEND_URL}/reset-password/{uidb64}/{token}"
             
             # Send Email
             from applications.email_service import send_password_reset_email

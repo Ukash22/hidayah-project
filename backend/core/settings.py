@@ -54,6 +54,13 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'https://hidayah-backend-zgix.onrender.com',
+    'https://hidayah-frontend.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:5174',
+]
+
 # Security settings for production
 if not DEBUG:
     CSRF_COOKIE_SECURE = True
@@ -63,6 +70,7 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
     X_FRAME_OPTIONS = 'DENY'
 
 # Application definition
@@ -150,6 +158,11 @@ ASGI_APPLICATION = "core.asgi.application"
 # Channels Configuration
 CHANNEL_LAYERS = {
     "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+        },
+    } if os.getenv('REDIS_URL') else {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
@@ -160,9 +173,12 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', 'postgresql://hidayah_user:hidayah_pass@localhost:5432/hidayah'),
+        default=os.getenv(
+            'DATABASE_URL',
+            f"postgresql://{os.getenv('DB_USER', 'hidayah_user')}:{os.getenv('DB_PASSWORD', 'hidayah_pass')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'hidayah')}"
+        ),
         conn_max_age=600,
-        ssl_require=not DEBUG
+        ssl_require=os.getenv('RENDER', 'False').lower() == 'true' or not DEBUG
     )
 }
 
@@ -220,7 +236,7 @@ WHITENOISE_MANIFEST_STRICT = False
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS configuration (Origins defined at the top of the file)
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -230,6 +246,9 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "your-email@gmail.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "your-app-password")
+DEFAULT_FROM_EMAIL = f"Hidayah e-Madarasah <{EMAIL_HOST_USER}>"
+SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_TIMEOUT = 30 # seconds
 
 # Zoom API Configuration
 ZOOM_ACCOUNT_ID = os.getenv('ZOOM_ACCOUNT_ID')

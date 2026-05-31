@@ -9,7 +9,13 @@ const getBaseUrl = () => {
     }
     
     // Remove trailing slash if present
-    return url.endsWith('/') ? url.slice(0, -1) : url;
+    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+
+    if (import.meta.env.DEV) {
+        console.log(`[API] Base URL: ${cleanUrl}`);
+    }
+    
+    return cleanUrl;
 };
 
 const api = axios.create({

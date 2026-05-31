@@ -117,7 +117,7 @@ Duration: {duration} Minutes
 {whiteboard_link}
 
 You can also join via your Student Dashboard:
-Link: https://hidayah-frontend.onrender.com/student
+Link: {settings.FRONTEND_URL}/student
 
 Note: Joining the class will deduct the session fee from your wallet.
 
