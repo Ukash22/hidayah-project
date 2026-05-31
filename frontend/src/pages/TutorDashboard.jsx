@@ -402,19 +402,6 @@ const TutorDashboard = () => {
                         </div>
                     )}
 
-                    {/* Page Header */}
-                    <div className="flex flex-col md:flex-row items-center gap-6">
-                        <div className="w-16 h-16 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-600 text-3xl font-black border border-blue-600/20 shadow-lg">
-                            {user?.first_name?.[0]?.toUpperCase()}
-                        </div>
-                        <div className="text-center md:text-left">
-                            <h1 className="text-3xl md:text-4xl font-display text-slate-900 font-black tracking-tight">Tutor Control Room</h1>
-                            <p className="text-blue-600 font-black uppercase tracking-[0.2em] text-xs mt-1 flex items-center gap-2 justify-center md:justify-start">
-                                <span className="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
-                                Welcome back, {user?.first_name}
-                            </p>
-                        </div>
-                    </div>
 
                     {/* Tab Content with AnimatePresence */}
                     <AnimatePresence mode="wait">
