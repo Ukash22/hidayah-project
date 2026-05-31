@@ -28,9 +28,9 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             ? apiBase.replace('https://', 'wss://') 
             : apiBase.replace('http://', 'ws://');
             
-        // Ensure format: wss://domain.com/signaling/room/
+        // Ensure format: wss://domain.com/ws/signaling/room/
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        const finalUrl = `${cleanBase}/signaling/${roomId}/`;
+        const finalUrl = `${cleanBase}/ws/signaling/${roomId}/`;
         console.log("📡 Connecting to Signaling:", finalUrl);
         return finalUrl;
     }, [roomId]);

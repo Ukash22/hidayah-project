@@ -25,11 +25,9 @@ from whiteboard import routing as whiteboard_routing
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
-    "websocket": AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(
-                whiteboard_routing.websocket_urlpatterns
-            )
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+            whiteboard_routing.websocket_urlpatterns
         )
     ),
 })
