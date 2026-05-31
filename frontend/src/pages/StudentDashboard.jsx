@@ -19,6 +19,17 @@ import RescheduleModal from '../components/RescheduleModal';
 import QuranMushaf from '../components/QuranMushaf';
 import JambCBT from '../components/JambCBT';
 
+// Move static configurations outside to prevent initialization issues
+const CONTAINER_VARIANTS = { 
+    hidden: { opacity: 0 }, 
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
+};
+
+const ITEM_VARIANTS = { 
+    hidden: { y: 20, opacity: 0 }, 
+    visible: { y: 0, opacity: 1 } 
+};
+
 const StudentDashboard = () => {
     const { user, token } = useAuth();
     const navigate = useNavigate();
@@ -313,18 +324,14 @@ const StudentDashboard = () => {
         </div>
     );
 
-    const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-    const itemVariants = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
-    
-    // Find active/upcoming closest class
+    // Dynamic calculations after loading is done
     const activeClass = classes.find(cls => {
         const classTime = new Date(cls.scheduled_at).getTime();
         const now = Date.now();
-        // Active if within 30 minutes before or 60 minutes after
         return now >= classTime - 30*60*1000 && now <= classTime + 60*60*1000;
     });
 
-    const studentNavItems = [
+    const studentNavItems = useMemo(() => [
         { id: 'overview', icon: '🏠', label: 'Overview' },
         { id: 'classes', icon: '📺', label: 'Classes' },
         { id: 'library', icon: '📚', label: 'Library' },
@@ -334,7 +341,7 @@ const StudentDashboard = () => {
             ? { id: 'jamb', icon: '🎯', label: 'JAMB CBT' } : null,
         { id: 'finance', icon: '💳', label: 'Finance' },
         { id: 'feedback', icon: '💬', label: 'Feedback' },
-    ].filter(Boolean);
+    ].filter(Boolean), [profile]);
 
     return (
         <DashboardLayout navItems={studentNavItems} activeTab={activeTab} onTabChange={setActiveTab} brandColor="blue" role="STUDENT">
@@ -382,15 +389,15 @@ const StudentDashboard = () => {
                     {/* Header Section */}
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
                         <div>
-                            <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tight mb-2">
+                            <motion.h1 variants={ITEM_VARIANTS} className="text-4xl md:text-5xl font-display font-black text-slate-900 tracking-tight mb-2">
                                 Learning <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Portal</span>
                             </motion.h1>
-                            <motion.p variants={itemVariants} className="text-slate-500 font-medium text-sm flex items-center gap-2">
+                            <motion.p variants={ITEM_VARIANTS} className="text-slate-500 font-medium text-sm flex items-center gap-2">
                                 Welcome back, {user?.first_name} <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
                             </motion.p>
                         </div>
                         
-                        <motion.div variants={itemVariants} className="flex flex-wrap gap-4">
+                        <motion.div variants={ITEM_VARIANTS} className="flex flex-wrap gap-4">
                             <div className="bg-white border border-slate-100 shadow-sm rounded-2xl px-6 py-3 flex items-center gap-4">
                                 <div className="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600">
                                     <ShieldCheck size={20} />
@@ -426,7 +433,7 @@ const StudentDashboard = () => {
                         ].map((stat, i) => (
                             <motion.div 
                                 key={i}
-                                variants={itemVariants}
+                                variants={ITEM_VARIANTS}
                                 whileHover={{ y: -5 }}
                                 className="bg-white border border-slate-100 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-[0_10px_40px_rgba(0,0,0,0.03)]"
                             >
@@ -1075,7 +1082,7 @@ const StudentDashboard = () => {
 
                 {/* Quran Section - Pushed to bottom or shown based on enrollment */}
                 {profile?.enrolled_course && ['Quran', 'Arabic', 'Tajweed'].some(s => profile.enrolled_course.includes(s)) && (
-                    <motion.div variants={itemVariants} className="mt-20">
+                    <motion.div variants={ITEM_VARIANTS} className="mt-20">
                         <QuranMushaf token={token} />
                     </motion.div>
                 )}
