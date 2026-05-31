@@ -1,16 +1,32 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+// Deferred imports for PDF generation to prevent initialization issues
+// import { jsPDF } from "jspdf";
+// import autoTable from "jspdf-autotable";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    LayoutDashboard, MessageSquare, Download, Plus, 
-    FileText, CheckCircle2, ShieldCheck, X,
-    TrendingUp, ExternalLink, AlertCircle,
-    Wallet, BookOpen, GraduationCap, Bell, ArrowRight,
-    Search, User, Clock, Calendar, PlayCircle, Music
-} from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { FileText } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
+import { X } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { Wallet } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
+import { Bell } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { User } from 'lucide-react';
+import { Clock } from 'lucide-react';
+import { Calendar } from 'lucide-react';
+import { PlayCircle } from 'lucide-react';
+import { Music } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
@@ -143,8 +159,12 @@ function StudentDashboard() {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleDownloadReceipt = (t) => {
+    const handleDownloadReceipt = async (t) => {
         try {
+            // Dynamically import libraries to prevent initialization issues
+            const { jsPDF } = await import("jspdf");
+            const autoTable = (await import("jspdf-autotable")).default;
+
             const doc = new jsPDF();
             
             // Brand Header
