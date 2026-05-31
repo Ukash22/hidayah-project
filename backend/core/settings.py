@@ -177,8 +177,9 @@ DATABASES = {
             'DATABASE_URL',
             f"postgresql://{os.getenv('DB_USER', 'hidayah_user')}:{os.getenv('DB_PASSWORD', 'hidayah_pass')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'hidayah')}"
         ),
-        conn_max_age=600,
-        ssl_require=os.getenv('RENDER', 'False').lower() == 'true' or not DEBUG
+        conn_max_age=0, # Changed from 600 to 0 to prevent stale connections on Render
+        ssl_require=os.getenv('RENDER', 'False').lower() == 'true' or not DEBUG,
+        disable_server_side_cursors=True # Added for better compatibility with poolers
     )
 }
 
