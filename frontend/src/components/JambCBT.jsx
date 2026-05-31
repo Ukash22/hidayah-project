@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-    Clock, ChevronLeft, ChevronRight, Calculator, 
-    RotateCcw, Sparkles, Send, CheckCircle2, AlertCircle,
-    BookOpen, Home, Settings, Info, X, GraduationCap
+    Clock as IconClock, ChevronLeft as IconChevronLeft, ChevronRight as IconChevronRight, Calculator as IconCalculator, 
+    RotateCcw as IconRotateCcw, Sparkles as IconSparkles, Send as IconSend, CheckCircle2 as IconCheckCircle2, AlertCircle as IconAlertCircle,
+    BookOpen as IconBookOpen, Home as IconHome, Settings as IconSettings, Info as IconInfo, X as IconX, GraduationCap as IconGraduationCap
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -168,7 +168,7 @@ const JambCBT = ({ token, studentProfile }) => {
             <div className="bg-white rounded-[2rem] p-10 shadow-2xl border border-slate-100 max-w-4xl mx-auto text-slate-800">
                 <div className="flex items-center gap-4 mb-8">
                     <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
-                        <GraduationCap size={32} />
+                        <IconGraduationCap size={32} />
                     </div>
                     <div>
                         <h2 className="text-3xl font-black tracking-tight text-blue-900 uppercase">{examType} CBT Simulator</h2>
@@ -192,10 +192,10 @@ const JambCBT = ({ token, studentProfile }) => {
                     <div className="bg-blue-50 rounded-[2rem] p-8 border border-blue-100">
                         <h3 className="text-xs font-black uppercase tracking-widest text-blue-700 mb-4">Exam Guidelines</h3>
                         <ul className="space-y-3 text-xs font-bold text-blue-900/70">
-                            <li className="flex gap-2"><Clock size={14} className="shrink-0" /> Duration: 120 Minutes (Total)</li>
-                            <li className="flex gap-2"><BookOpen size={14} className="shrink-0" /> Questions: Standard {examType} Format</li>
-                            <li className="flex gap-2"><Calculator size={14} className="shrink-0" /> Built-in Calculator allowed</li>
-                            <li className="flex gap-2"><Sparkles size={14} className="shrink-0" /> AI-Powered Question Variability</li>
+                            <li className="flex gap-2"><IconClock size={14} className="shrink-0" /> Duration: 120 Minutes (Total)</li>
+                            <li className="flex gap-2"><IconBookOpen size={14} className="shrink-0" /> Questions: Standard {examType} Format</li>
+                            <li className="flex gap-2"><IconCalculator size={14} className="shrink-0" /> Built-in Calculator allowed</li>
+                            <li className="flex gap-2"><IconSparkles size={14} className="shrink-0" /> AI-Powered Question Variability</li>
                         </ul>
                     </div>
                 </div>
@@ -213,7 +213,7 @@ const JambCBT = ({ token, studentProfile }) => {
                         disabled={loading}
                         className="flex-1 py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:scale-[1.02] text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-3"
                     >
-                        <Sparkles size={16} /> AI Practice Engine
+                        <IconSparkles size={16} /> AI Practice Engine
                     </button>
                 </div>
             </div>
@@ -225,7 +225,7 @@ const JambCBT = ({ token, studentProfile }) => {
             <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-slate-100 max-w-4xl mx-auto text-slate-800">
                 <div className="text-center mb-10">
                     <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle2 size={40} />
+                        <IconCheckCircle2 size={40} />
                     </div>
                     <h2 className="text-4xl font-black text-slate-900 uppercase">Exam Completed!</h2>
                     <p className="text-slate-500 font-bold mt-2">Here is your performance breakdown</p>
@@ -300,7 +300,7 @@ const JambCBT = ({ token, studentProfile }) => {
                     </div>
 
                     <div className="flex items-center gap-4 bg-black/20 px-4 py-2 rounded-xl border border-white/10">
-                        <Clock size={18} className="text-white" />
+                        <IconClock size={18} className="text-white" />
                         <span className="text-xl font-mono font-black tabular-nums">{formatTime(timeLeft)}</span>
                     </div>
 
@@ -308,7 +308,7 @@ const JambCBT = ({ token, studentProfile }) => {
                         onClick={() => setShowCalculator(!showCalculator)}
                         className={`p-2 rounded-lg transition-all ${showCalculator ? 'bg-white text-[#0047AB]' : 'bg-blue-800 text-white'}`}
                     >
-                        <Calculator size={20} />
+                        <IconCalculator size={20} />
                     </button>
                 </div>
             </div>
@@ -352,7 +352,7 @@ const JambCBT = ({ token, studentProfile }) => {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
-                                <RotateCcw size={48} className="animate-spin" />
+                                <IconRotateCcw size={48} className="animate-spin" />
                                 <p className="font-bold">Syncing questions...</p>
                             </div>
                         )}
@@ -362,7 +362,7 @@ const JambCBT = ({ token, studentProfile }) => {
                 {/* Left Side - Question Grid (Fixed Width) */}
                 <div className="hidden lg:flex flex-col w-[350px] bg-slate-50 border-l border-slate-100 p-6">
                     <div className="flex items-center gap-3 mb-6">
-                        <Info size={16} className="text-blue-600" />
+                        <IconInfo size={16} className="text-blue-600" />
                         <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Navigation Grid</h4>
                     </div>
 
@@ -401,7 +401,7 @@ const JambCBT = ({ token, studentProfile }) => {
                             onClick={() => { if(window.confirm('Are you sure you want to end this practice session?')) submitExam(); }}
                             className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-red-500/20 flex items-center justify-center gap-2"
                         >
-                            <Send size={14} /> Submit Final
+                            <IconSend size={14} /> Submit Final
                         </button>
                     </div>
                 </div>
@@ -415,14 +415,14 @@ const JambCBT = ({ token, studentProfile }) => {
                         disabled={currentQuestionIndex === 0}
                         className="px-6 py-3 rounded-xl border-2 border-slate-100 text-slate-600 font-black uppercase text-[10px] tracking-widest disabled:opacity-30 flex items-center gap-2 hover:bg-slate-50 transition-all"
                     >
-                        <ChevronLeft size={16} /> Previous
+                        <IconChevronLeft size={16} /> Previous
                     </button>
                     <button 
                         onClick={() => setCurrentQuestionIndex(prev => Math.min(currentQuestions.length - 1, prev + 1))}
                         disabled={currentQuestionIndex === currentQuestions.length - 1}
                         className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all"
                     >
-                        Next <ChevronRight size={16} />
+                        Next <IconChevronRight size={16} />
                     </button>
                 </div>
 
@@ -448,7 +448,7 @@ const JambCBT = ({ token, studentProfile }) => {
                 >
                     <div className="flex justify-between items-center mb-6">
                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">JAMB Calculator</span>
-                        <button onClick={() => setShowCalculator(false)} className="text-slate-500 hover:text-white"><X size={16} /></button>
+                        <button onClick={() => setShowCalculator(false)} className="text-slate-500 hover:text-white"><IconX size={16} /></button>
                     </div>
                     <div className="bg-black/40 rounded-xl p-4 mb-6 text-right">
                         <span className="text-2xl font-mono text-white tabular-nums">{calcValue}</span>

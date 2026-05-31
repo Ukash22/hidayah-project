@@ -5,28 +5,14 @@ import axios from 'axios';
 // import autoTable from "jspdf-autotable";
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard as IconLayoutDashboard } from 'lucide-react';
-import { MessageSquare as IconMessageSquare } from 'lucide-react';
-import { Download as IconDownload } from 'lucide-react';
-import { Plus as IconPlus } from 'lucide-react';
-import { FileText as IconFileText } from 'lucide-react';
-import { CheckCircle2 as IconCheckCircle2 } from 'lucide-react';
-import { ShieldCheck as IconShieldCheck } from 'lucide-react';
-import { X as IconX } from 'lucide-react';
-import { TrendingUp as IconTrendingUp } from 'lucide-react';
-import { ExternalLink as IconExternalLink } from 'lucide-react';
-import { AlertCircle as IconAlertCircle } from 'lucide-react';
-import { Wallet as IconWallet } from 'lucide-react';
-import { BookOpen as IconBookOpen } from 'lucide-react';
-import { GraduationCap as IconGraduationCap } from 'lucide-react';
-import { Bell as IconBell } from 'lucide-react';
-import { ArrowRight as IconArrowRight } from 'lucide-react';
-import { Search as IconSearch } from 'lucide-react';
-import { User as IconUser } from 'lucide-react';
-import { Clock as IconClock } from 'lucide-react';
-import { Calendar as IconCalendar } from 'lucide-react';
-import { PlayCircle as IconPlayCircle } from 'lucide-react';
-import { Music as IconMusic } from 'lucide-react';
+import { 
+    LayoutDashboard as IconLayoutDashboard, MessageSquare as IconMessageSquare, Download as IconDownload,
+    Plus as IconPlus, FileText as IconFileText, CheckCircle2 as IconCheckCircle2, ShieldCheck as IconShieldCheck,
+    X as IconX, TrendingUp as IconTrendingUp, ExternalLink as IconExternalLink, AlertCircle as IconAlertCircle,
+    Wallet as IconWallet, BookOpen as IconBookOpen, GraduationCap as IconGraduationCap, Bell as IconBell,
+    ArrowRight as IconArrowRight, Search as IconSearch, User as IconUser, Clock as IconClock,
+    Calendar as IconCalendar, PlayCircle as IconPlayCircle, Music as IconMusic
+} from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
@@ -35,19 +21,19 @@ import RescheduleModal from '../components/RescheduleModal';
 import QuranMushaf from '../components/QuranMushaf';
 import JambCBT from '../components/JambCBT';
 
-// Removed from here to prevent TDZ
+// Animation variants defined outside the component for better performance and stability
+const CONTAINER_VARIANTS = { 
+    hidden: { opacity: 0 }, 
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
+};
+
+const ITEM_VARIANTS = { 
+    hidden: { y: 20, opacity: 0 }, 
+    visible: { y: 0, opacity: 1 } 
+};
 
 function StudentDashboard() {
-    // Moved inside to prevent TDZ issues in production builds
-    const CONTAINER_VARIANTS = { 
-        hidden: { opacity: 0 }, 
-        visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
-    };
 
-    const ITEM_VARIANTS = { 
-        hidden: { y: 20, opacity: 0 }, 
-        visible: { y: 0, opacity: 1 } 
-    };
 
     const { user, token } = useAuth();
     const navigate = useNavigate();
