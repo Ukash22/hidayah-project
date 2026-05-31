@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
     CheckCircle2 as IconCheckCircle2, Sparkles as IconSparkles, Briefcase as IconBriefcase, ArrowRight as IconArrowRight, X as IconX,
@@ -21,7 +21,6 @@ import TechnicalFields from '../components/TutorRegister/TechnicalFields';
 import AvailabilityManager from '../components/TutorRegister/AvailabilityManager';
 
 // Custom file upload box component used across sub-sections
-// eslint-disable-next-line no-unused-vars
 const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, label }) => {
     const inputRef = useRef(null);
     const hasFile = !!file;
@@ -70,7 +69,6 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
     );
 };
 
-// eslint-disable-next-line no-unused-vars
 const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
     <div className="flex items-center gap-4 mb-10">
         <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 shadow-xl`}>
@@ -90,6 +88,8 @@ const TutorRegister = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [currentStep, setCurrentStep] = useState(1);
+    const totalSteps = 6;
 
     const [formData, setFormData] = useState({
         firstName: '', lastName: '', age: '', email: '', phone: '', gender: 'Male',
@@ -160,11 +160,15 @@ const TutorRegister = () => {
     const totalMonthlyHours = totalWeeklyHours * 4;
     const monthlyEarnings = totalMonthlyHours * (parseFloat(formData.hourlyRate) || 0);
 
+    const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+    const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
         if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
+        if (formData.subjects.length === 0) return setError('Select at least one subject');
         
         const missing = [];
         if (!files.image) missing.push('Photo');
@@ -174,18 +178,6 @@ const TutorRegister = () => {
 
         if (missing.length > 0) return setError(`Missing required files: ${missing.join(', ')}`);
         
-        // Size validation
-        const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-        const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
-        const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10MB
-
-        if (files.image.size > MAX_IMAGE_SIZE) return setError('Profile image must be under 5MB');
-        if (files.introVideo.size > MAX_VIDEO_SIZE) return setError('Intro video must be under 50MB');
-        if (files.cv.size > MAX_DOC_SIZE) return setError('CV file must be under 10MB');
-        if (files.shortRecitation?.size > MAX_VIDEO_SIZE) return setError('Recitation file must be under 50MB');
-
-        if (formData.subjects.length === 0) return setError('Select at least one subject');
-
         setLoading(true);
 
         try {
@@ -213,8 +205,7 @@ const TutorRegister = () => {
 
             setSuccess(true);
         } catch (err) {
-            const serverError = err.response?.data?.detail || err.response?.data?.error || 'Registration failed';
-            setError(serverError);
+            setError(err.response?.data?.detail || err.response?.data?.error || 'Registration failed');
         } finally {
             setLoading(false);
         }
@@ -243,7 +234,6 @@ const TutorRegister = () => {
         <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white text-slate-700 selection:bg-blue-600/20">
             <Navbar />
             
-            {/* Background Ambience */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-600/10 blur-[150px] rounded-full"></div>
                 <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-indigo-600/5 blur-[150px] rounded-full"></div>
@@ -251,6 +241,30 @@ const TutorRegister = () => {
 
             <div className="container pt-32 pb-20 px-4 relative z-10">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
+                    
+                    {/* Progress Indicator */}
+                    <div className="max-w-xl mx-auto mb-16 px-8">
+                        <div className="flex justify-between items-center mb-4">
+                            {[1, 2, 3, 4, 5, 6].map(s => (
+                                <div key={s} className="flex flex-col items-center gap-2">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all duration-500 border-2 ${currentStep >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-100'}`}>
+                                        {currentStep > s ? <IconCheckCircle2 size={16} /> : s}
+                                    </div>
+                                    <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${currentStep === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                                        Step 0{s}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="h-1 bg-slate-100 rounded-full overflow-hidden relative">
+                            <motion.div 
+                                className="absolute top-0 left-0 h-full bg-blue-600" 
+                                initial={{ width: "0%" }}
+                                animate={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
                     <div className="text-center mb-16">
                         <div className="w-20 h-20 bg-blue-600/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">
                             <IconBriefcase size={40} className="text-blue-600" />
@@ -261,54 +275,93 @@ const TutorRegister = () => {
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-[2rem] text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl">
-                            <X className="shrink-0" /> {error}
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-[2rem] text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl font-display">
+                            <IconX className="shrink-0" /> {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-12">
-                        <div className="grid lg:grid-cols-2 gap-8">
-                            <motion.div initial={{ opacity: 0, scale: 0.98 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl">
-                                <SectionHeader step="01" title="Account Details" colorClass="bg-emerald-500/10 text-emerald-500" />
-                                <AccountFields formData={formData} handleChange={handleChange} />
-                            </motion.div>
+                        <AnimatePresence mode="wait">
+                            {currentStep === 1 && (
+                                <motion.div key="st1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="01" title="Account Details" colorClass="bg-emerald-500/10 text-emerald-500" />
+                                    <AccountFields formData={formData} handleChange={handleChange} />
+                                </motion.div>
+                            )}
+                            {currentStep === 2 && (
+                                <motion.div key="st2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="02" title="Tutor Profile" colorClass="bg-blue-500/10 text-blue-500" />
+                                    <ProfileFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
+                                </motion.div>
+                            )}
+                            {currentStep === 3 && (
+                                <motion.div key="st3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="03" title="Professional Experience" colorClass="bg-violet-500/10 text-violet-500" />
+                                    <ExperienceFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
+                                </motion.div>
+                            )}
+                            {currentStep === 4 && (
+                                <motion.div key="st4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="04" title="Teaching Core Subjects" colorClass="bg-amber-500/10 text-amber-500" />
+                                    <SubjectGrid formData={formData} handleSubjectToggle={handleSubjectToggle} />
+                                </motion.div>
+                            )}
+                            {currentStep === 5 && (
+                                <motion.div key="st5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="05" title="Technical Requirements" colorClass="bg-rose-500/10 text-rose-500" />
+                                    <TechnicalFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
+                                </motion.div>
+                            )}
+                            {currentStep === 6 && (
+                                <motion.div key="st6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                    <SectionHeader step="06" title="Instructor Availability" colorClass="bg-blue-500/10 text-blue-500" />
+                                    <AvailabilityManager 
+                                        formData={formData} 
+                                        addAvailabilitySlot={addAvailabilitySlot} 
+                                        removeAvailabilitySlot={removeAvailabilitySlot} 
+                                        updateAvailabilitySlot={updateAvailabilitySlot}
+                                        totalWeeklyHours={totalWeeklyHours}
+                                        totalMonthlyHours={totalMonthlyHours}
+                                        monthlyEarnings={monthlyEarnings}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                            <motion.div initial={{ opacity: 0, scale: 0.98 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-10 shadow-2xl flex flex-col">
-                                <SectionHeader step="02" title="Tutor Profile" colorClass="bg-blue-500/10 text-blue-500" />
-                                <ProfileFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
-                            </motion.div>
-                        </div>
-
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl">
-                            <SectionHeader step="03" title="Professional Experience" colorClass="bg-violet-500/10 text-violet-500" />
-                            <ExperienceFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
-                        </motion.div>
-
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl">
-                            <SectionHeader step="04" title="Teaching Core Subjects" colorClass="bg-amber-500/10 text-amber-500" />
-                            <SubjectGrid formData={formData} handleSubjectToggle={handleSubjectToggle} />
-                        </motion.div>
-
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl">
-                            <SectionHeader step="05" title="Technical Requirements" colorClass="bg-rose-500/10 text-rose-500" />
-                            <TechnicalFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
-                        </motion.div>
-
-                        <AvailabilityManager 
-                            formData={formData} 
-                            addAvailabilitySlot={addAvailabilitySlot} 
-                            removeAvailabilitySlot={removeAvailabilitySlot} 
-                            updateAvailabilitySlot={updateAvailabilitySlot}
-                            totalWeeklyHours={totalWeeklyHours}
-                            totalMonthlyHours={totalMonthlyHours}
-                            monthlyEarnings={monthlyEarnings}
-                        />
-
-                        <div className="flex flex-col items-center gap-8 pt-12 pb-20">
-                            <motion.button type="submit" disabled={loading} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50">
-                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <IconArrowRight size={20} /></>}
-                            </motion.button>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-6 leading-6">Existing Instructor? <Link to="/login" className="text-emerald-500 underline ml-2 decoration-2 underline-offset-4">Sign In Portal</Link></p>
+                        <div className="flex flex-col items-center gap-8 pt-8 pb-20">
+                            <div className="flex gap-4 w-full max-w-md">
+                                {currentStep > 1 && (
+                                    <button 
+                                        type="button" 
+                                        onClick={prevStep}
+                                        className="flex-1 bg-white/50 backdrop-blur-xl border border-slate-200 text-slate-600 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-3"
+                                    >
+                                        ← Previous
+                                    </button>
+                                )}
+                                
+                                {currentStep < totalSteps ? (
+                                    <button 
+                                        type="button" 
+                                        onClick={nextStep}
+                                        className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4"
+                                    >
+                                        Next Block <IconArrowRight size={20} />
+                                    </button>
+                                ) : (
+                                    <motion.button 
+                                        type="submit" 
+                                        disabled={loading} 
+                                        whileHover={{ scale: 1.02 }} 
+                                        whileTap={{ scale: 0.98 }} 
+                                        className="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                                    >
+                                        {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <IconCheckCircle2 size={20} /></>}
+                                    </motion.button>
+                                )}
+                            </div>
+                            
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-6 leading-6">Existing Instructor? <Link to="/login" className="text-blue-600 underline ml-2 decoration-2 underline-offset-4">Sign In Portal</Link></p>
                         </div>
                     </form>
                 </motion.div>
