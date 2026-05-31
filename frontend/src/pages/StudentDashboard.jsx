@@ -19,6 +19,17 @@ import RescheduleModal from '../components/RescheduleModal';
 import QuranMushaf from '../components/QuranMushaf';
 import JambCBT from '../components/JambCBT';
 
+// Move static configurations to the top, above the component
+const CONTAINER_VARIANTS = { 
+    hidden: { opacity: 0 }, 
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
+};
+
+const ITEM_VARIANTS = { 
+    hidden: { y: 20, opacity: 0 }, 
+    visible: { y: 0, opacity: 1 } 
+};
+
 function StudentDashboard() {
     const { user, token } = useAuth();
     const navigate = useNavigate();
@@ -270,10 +281,13 @@ function StudentDashboard() {
     }, [getAuthHeader, navigate]);
 
     const scheduleStatus = useMemo(() => {
-        if (!enrollData.preferred_days || !enrollData.preferred_time || !selectedTutorAvailability) return { status: 'pending', message: null };
+        if (!enrollData.schedule || enrollData.schedule.length === 0 || !selectedTutorAvailability) return { status: 'pending', message: null };
         
-        const day = enrollData.preferred_days;
-        const time = enrollData.preferred_time;
+        const firstSlot = enrollData.schedule[0];
+        if (!firstSlot.day || !firstSlot.time) return { status: 'pending', message: 'Enter a day and time' };
+
+        const day = firstSlot.day;
+        const time = firstSlot.time;
         
         // 1. Check if tutor works on this day
         const worksThisDay = selectedTutorAvailability.availabilities?.find(av => av.day.toUpperCase() === day.toUpperCase());
@@ -305,7 +319,7 @@ function StudentDashboard() {
         if (conflict) return { status: 'error', message: 'Tutor is already busy at this time!' };
 
         return { status: 'success', message: 'Tutor is available for this slot!' };
-    }, [enrollData.preferred_days, enrollData.preferred_time, enrollData.preferred_start_date, selectedTutorAvailability]);
+    }, [enrollData.schedule, enrollData.preferred_start_date, selectedTutorAvailability]);
 
     const studentNavItems = useMemo(() => [
         { id: 'overview', icon: '🏠', label: 'Overview' },
@@ -1284,16 +1298,5 @@ function StudentDashboard() {
         </DashboardLayout>
     );
 }
-
-// Static configurations moved to bottom to prevent TDZ
-const CONTAINER_VARIANTS = { 
-    hidden: { opacity: 0 }, 
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } } 
-};
-
-const ITEM_VARIANTS = { 
-    hidden: { y: 20, opacity: 0 }, 
-    visible: { y: 0, opacity: 1 } 
-};
 
 export default StudentDashboard;
