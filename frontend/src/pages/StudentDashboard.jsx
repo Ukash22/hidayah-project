@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import axios from 'axios';
 // Deferred imports for PDF generation to prevent initialization issues
 // import { jsPDF } from "jspdf";
@@ -16,10 +16,11 @@ import {
 import { useNavigate, Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { useAuth } from '../context/AuthContext';
-import ComplaintModal from '../components/ComplaintModal';
-import RescheduleModal from '../components/RescheduleModal';
-import QuranMushaf from '../components/QuranMushaf';
-import JambCBT from '../components/JambCBT';
+// Lazy load sub-components to prevent TDZ and split huge chunks
+const ComplaintModal = lazy(() => import('../components/ComplaintModal'));
+const RescheduleModal = lazy(() => import('../components/RescheduleModal'));
+const QuranMushaf = lazy(() => import('../components/QuranMushaf'));
+const JambCBT = lazy(() => import('../components/JambCBT'));
 
 // Animation variants defined outside the component for better performance and stability
 const CONTAINER_VARIANTS = { 
@@ -1085,7 +1086,9 @@ function StudentDashboard() {
                             {/* JAMB CBT Tab */}
                             {activeTab === 'jamb' && (
                                 <div className="space-y-10">
-                                    <JambCBT token={token} studentProfile={profile} />
+                                    <Suspense fallback={<div className="py-20 text-center text-slate-400 font-black animate-pulse uppercase tracking-[0.3em]">Initializing CBT...</div>}>
+                                <JambCBT token={token} studentProfile={profile} />
+                            </Suspense>
                                 </div>
                             )}
                         </motion.div>
@@ -1094,13 +1097,19 @@ function StudentDashboard() {
                 {/* Quran Section - Pushed to bottom or shown based on enrollment */}
                 {profile?.enrolled_course && ['Quran', 'Arabic', 'Tajweed'].some(s => profile.enrolled_course.includes(s)) && (
                     <motion.div variants={ITEM_VARIANTS} className="mt-20">
-                        <QuranMushaf token={token} />
+                        <Suspense fallback={<div className="py-10 text-center text-slate-400 font-bold animate-pulse">Loading Mushaf...</div>}>
+                            <QuranMushaf token={token} />
+                        </Suspense>
                     </motion.div>
                 )}
 
-            {/* Modals */}
-            <ComplaintModal isOpen={showComplaintModal} onClose={() => setShowComplaintModal(false)} filedAgainstId={profile?.assigned_tutor_details?.id} filedAgainstName={profile?.assigned_tutor_details?.full_name} token={token} />
-            <RescheduleModal isOpen={showRescheduleModal} onClose={() => setShowRescheduleModal(false)} sessionId={selectedSessionId} sessionType={selectedSessionType} initiatedBy="STUDENT" token={token} onSuccess={fetchData} />
+            {/* Modals wrapped in Suspense */}
+            <Suspense fallback={null}>
+                <ComplaintModal isOpen={showComplaintModal} onClose={() => setShowComplaintModal(false)} filedAgainstId={profile?.assigned_tutor_details?.id} filedAgainstName={profile?.assigned_tutor_details?.full_name} token={token} />
+            </Suspense>
+            <Suspense fallback={null}>
+                <RescheduleModal isOpen={showRescheduleModal} onClose={() => setShowRescheduleModal(false)} sessionId={selectedSessionId} sessionType={selectedSessionType} initiatedBy="STUDENT" token={token} onSuccess={fetchData} />
+            </Suspense>
 
             {/* Premium Enrollment Modal */}
             <AnimatePresence>
