@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Star, Clock, Calendar, ShieldCheck, ArrowRight, User, X, Play, Music, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search as IconSearch, Star as IconStar, Clock as IconClock, Calendar as IconCalendar, ShieldCheck as IconShieldCheck, ArrowRight as IconArrowRight, User as IconUser, X as IconX, Play as IconPlay, Music as IconMusic, ChevronDown as IconChevronDown, ChevronUp as IconChevronUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +37,7 @@ const MediaModal = ({ media, onClose }) => {
                         onClick={onClose}
                         className="absolute top-4 right-4 z-50 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-all"
                     >
-                        <X size={18} />
+                        <IconX size={18} />
                     </button>
 
                     {media.type === 'video' && (
@@ -328,7 +328,7 @@ const BookingRequest = () => {
                 {/* Search and Filters */}
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 mb-12 flex flex-col md:flex-row gap-6">
                     <div className="flex-1 relative">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                        <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                         <input 
                             type="text" 
                             placeholder="Search by name or bio..." 
@@ -396,7 +396,7 @@ const BookingRequest = () => {
                                                 className="w-10 h-10 bg-black/60 hover:bg-emerald-600 border border-white/20 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-md shadow-lg hover:scale-110"
                                                 title="Watch Intro Video"
                                             >
-                                                <Play size={14} fill="currentColor" />
+                                                <IconPlay size={14} fill="currentColor" />
                                             </button>
                                         )}
                                         {hasAudio && (
@@ -423,7 +423,7 @@ const BookingRequest = () => {
                                         <h3 className="text-xl font-bold text-white leading-tight">{tutor.full_name}</h3>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className="flex items-center gap-1 text-amber-400 text-xs font-black">
-                                                <Star size={10} fill="currentColor" /> 4.9
+                                                <IconStar size={10} fill="currentColor" /> 4.9
                                                 <span className="text-slate-500 font-normal">(24)</span>
                                             </div>
                                             <span className="text-emerald-500 text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
@@ -468,7 +468,7 @@ const BookingRequest = () => {
                                                     if (tutor.availabilities && tutor.availabilities.length > 0) {
                                                         return tutor.availabilities.slice(0, 2).map((av, i) => (
                                                             <div key={i} className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                                                                <Calendar size={10} className="text-emerald-500" />
+                                                                <IconCalendar size={10} className="text-emerald-500" />
                                                                 <span className="text-[9px] font-black text-emerald-400 uppercase">
                                                                     {av.day.slice(0,3)}: {formatTime12h(av.start_time)} - {formatTime12h(av.end_time)}
                                                                 </span>
@@ -503,7 +503,7 @@ const BookingRequest = () => {
                                         onClick={() => setExpandedTutor(isExpanded ? null : tutor.id)}
                                         className="w-full py-3.5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:border-emerald-500/40 hover:text-emerald-400 transition-all flex items-center justify-center gap-2 mb-4"
                                     >
-                                        {isExpanded ? <><ChevronUp size={14} /> Hide Booking Form</> : <><ChevronDown size={14} /> Book This Tutor</>}
+                                        {isExpanded ? <><IconChevronUp size={14} /> Hide Booking Form</> : <><IconChevronDown size={14} /> Book This Tutor</>}
                                     </button>
 
                                     {/* ── Collapsible Booking Form ── */}
@@ -610,7 +610,7 @@ const BookingRequest = () => {
                                                                             onClick={() => removeSlot(tutor.id, index)}
                                                                             className="text-red-500 hover:text-red-400 transition-colors"
                                                                         >
-                                                                            <X size={14} />
+                                                                            <IconX size={14} />
                                                                         </button>
                                                                     )}
                                                                 </div>

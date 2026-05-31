@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import TutorWallet from '../components/TutorWallet';
 import ComplaintModal from '../components/ComplaintModal';
 import { uploadMultipleToCloudinary } from '../services/cloudinaryService';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar as IconCalendar, Clock as IconClock } from 'lucide-react';
 
 
 const TutorDashboard = () => {
@@ -474,8 +474,8 @@ const TutorDashboard = () => {
                                                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">TRIAL CLASS</p>
                                                     <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{trial.student_name || trial.first_name}</h4>
                                                     <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl justify-center md:justify-start w-fit mx-auto md:mx-0">
-                                                        <span className="flex items-center gap-2"><Calendar size={12} className="text-blue-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleDateString() : 'Pending'}</span>
-                                                        <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Pending'}</span>
+                                                        <span className="flex items-center gap-2"><IconCalendar size={12} className="text-blue-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleDateString() : 'Pending'}</span>
+                                                        <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'Pending'}</span>
                                                         <span className="flex items-center gap-2"><span className="text-emerald-500">📍</span> {trial.country || 'Global'}</span>
                                                         <span className="flex items-center gap-2"><span className="text-sky-500">📚</span> {trial.course_interested}</span>
                                                     </div>
@@ -530,8 +530,8 @@ const TutorDashboard = () => {
                                                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{session.course_interested || 'REGULAR CLASS'}</p>
                                                     <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{session.student_name}</h4>
                                                     <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl justify-center md:justify-start w-fit mx-auto md:mx-0">
-                                                        <span className="flex items-center gap-2"><Calendar size={12} className="text-blue-600" /> {new Date(session.scheduled_at).toLocaleDateString()}</span>
-                                                        <span className="flex items-center gap-2"><Clock size={12} className="text-indigo-600" /> {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span className="flex items-center gap-2"><IconCalendar size={12} className="text-blue-600" /> {new Date(session.scheduled_at).toLocaleDateString()}</span>
+                                                        <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                     </div>
                                                 </div>
                                             </div>

@@ -4,8 +4,8 @@ import api from '../services/api';
 import { motion } from 'framer-motion';
 
 import { 
-    CheckCircle2, Sparkles, Briefcase, ArrowRight, X,
-    BookOpen, GraduationCap
+    CheckCircle2 as IconCheckCircle2, Sparkles as IconSparkles, Briefcase as IconBriefcase, ArrowRight as IconArrowRight, X as IconX,
+    BookOpen as IconBookOpen, GraduationCap as IconGraduationCap
 } from 'lucide-react';
 
 // Core Components & Services
@@ -50,7 +50,7 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
                     >
                         {hasFile ? 'Change' : 'Choose'}
                     </button>
-                    {hasFile && <CheckCircle2 size={14} className="text-emerald-500 ml-auto" />}
+                    {hasFile && <IconCheckCircle2 size={14} className="text-emerald-500 ml-auto" />}
                 </div>
                 <div className={`px-4 pb-2 text-[10px] font-bold truncate ${
                     hasFile ? 'text-emerald-400' : 'text-slate-600'
@@ -228,7 +228,7 @@ const TutorRegister = () => {
                     <div className="bg-white border border-blue-100 p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl" />
                         <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-emerald-200">
-                            <CheckCircle2 size={48} className="text-emerald-500" />
+                            <IconCheckCircle2 size={48} className="text-emerald-500" />
                         </div>
                         <h1 className="text-4xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Application Submitted!</h1>
                         <p className="text-slate-500 mb-8 leading-relaxed font-medium">JazakAllahu Khairan. Our team will review your credentials and contact you via email.</p>
@@ -253,8 +253,8 @@ const TutorRegister = () => {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto">
                     <div className="text-center mb-16">
                         <div className="w-20 h-20 bg-blue-600/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">
-                            <Briefcase size={40} className="text-blue-600" />
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-pulse"><Sparkles size={10} className="text-white" /></div>
+                            <IconBriefcase size={40} className="text-blue-600" />
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-pulse"><IconSparkles size={10} className="text-white" /></div>
                         </div>
                         <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Tutor <span className="text-blue-600">Application</span></h1>
                         <p className="text-slate-500 max-w-xl mx-auto font-medium tracking-wide">Join our global faculty and share your knowledge across Western and Islamic sciences.</p>
@@ -306,7 +306,7 @@ const TutorRegister = () => {
 
                         <div className="flex flex-col items-center gap-8 pt-12 pb-20">
                             <motion.button type="submit" disabled={loading} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full max-w-md bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50">
-                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <ArrowRight size={20} /></>}
+                                {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <IconArrowRight size={20} /></>}
                             </motion.button>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest leading-6 leading-6">Existing Instructor? <Link to="/login" className="text-emerald-500 underline ml-2 decoration-2 underline-offset-4">Sign In Portal</Link></p>
                         </div>

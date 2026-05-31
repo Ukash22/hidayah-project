@@ -425,7 +425,7 @@ function StudentDashboard() {
                         <motion.div variants={ITEM_VARIANTS} className="flex flex-wrap gap-4">
                             <div className="bg-white border border-slate-100 shadow-sm rounded-2xl px-6 py-3 flex items-center gap-4">
                                 <div className="w-10 h-10 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600">
-                                    <ShieldCheck size={20} />
+                                    <IconShieldCheck size={20} />
                                 </div>
                                 <div className="text-left">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-blue-600/60">Admission ID</p>
@@ -439,7 +439,7 @@ function StudentDashboard() {
                                 onClick={() => navigate('/booking/request')}
                                 className="bg-gradient-to-r from-blue-700 to-blue-600 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/20 flex items-center gap-3"
                             >
-                                <Search size={16} /> Find Tutors
+                                <IconSearch size={16} /> Find Tutors
                             </motion.button>
                         </motion.div>
                     </div>
@@ -1147,7 +1147,7 @@ function StudentDashboard() {
                             {/* Modal Right: Form Panel */}
                             <div className="flex-1 p-8 md:p-12 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
                                 <button onClick={() => setShowEnrollModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-white transition-colors group">
-                                    <X size={24} className="group-hover:rotate-90 transition-transform" />
+                                    <IconX size={24} className="group-hover:rotate-90 transition-transform" />
                                 </button>
                                 
                                 <div className="space-y-10">
@@ -1273,7 +1273,7 @@ function StudentDashboard() {
                                                             onClick={() => setEnrollData(prev => ({ ...prev, schedule: prev.schedule.filter((_, i) => i !== index) }))}
                                                             className="bg-red-50 text-red-500 p-4 rounded-2xl border border-red-100 hover:bg-red-100 transition-all mb-0"
                                                         >
-                                                            <X size={20} />
+                                                            <IconX size={20} />
                                                         </button>
                                                     )}
                                                 </div>

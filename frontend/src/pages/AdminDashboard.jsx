@@ -20,7 +20,7 @@ import {
     Pie, 
     Cell 
 } from 'recharts';
-import { Search, Settings, Save, Check, Shield } from 'lucide-react';
+import { Search as IconSearch, Settings as IconSettings, Save as IconSave, Check as IconCheck, Shield as IconShield } from 'lucide-react';
 
 // Error Boundary to catch render crashes
 class AdminErrorBoundary extends Component {
@@ -1445,7 +1445,7 @@ const AdminDashboard = () => {
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-4">
                                     <span className="text-[10px] uppercase font-black tracking-widest text-primary">Global Platform Share</span>
-                                    <Shield size={16} className="text-primary/50" />
+                                    <IconShield size={16} className="text-primary/50" />
                                 </div>
                                 <div className="flex items-baseline gap-2">
                                     <input 
@@ -1466,7 +1466,7 @@ const AdminDashboard = () => {
                                         </div>
                                     ) : globalSuccess ? (
                                         <div className="flex items-center gap-2 text-emerald-400">
-                                            <Check size={12} strokeWidth={3} />
+                                            <IconCheck size={12} strokeWidth={3} />
                                             <span className="text-[9px] font-bold uppercase tracking-tighter">Live & Dynamic</span>
                                         </div>
                                     ) : (
@@ -2550,13 +2550,13 @@ const AdminDashboard = () => {
                                                             <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-widest">{subjects.length}</span>
                                                         </h3>
                                                         <span className="p-2 bg-indigo-50 text-primary rounded-xl text-xs">
-                                                            <Settings size={14} className="animate-spin-slow" />
+                                                            <IconSettings size={14} className="animate-spin-slow" />
                                                         </span>
                                                     </div>
 
                                                     {/* Search Bar */}
                                                     <div className="relative mb-4 z-10">
-                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                                        <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                                                         <input 
                                                             type="text" 
                                                             placeholder="Quick search subjects..." 
@@ -3756,7 +3756,7 @@ const AdminDashboard = () => {
                                                     }}
                                                     className="bg-primary text-white px-4 py-1 rounded-lg text-[10px] font-black uppercase shadow-sm flex items-center gap-2"
                                                 >
-                                                    <Save size={12} /> Set Rate
+                                                    <IconSave size={12} /> Set Rate
                                                 </button>
                                             </div>
                                             <p className="text-[8px] text-slate-400 mt-2 italic font-medium leading-tight">
