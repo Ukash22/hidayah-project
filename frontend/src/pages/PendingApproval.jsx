@@ -44,6 +44,11 @@ const PendingApproval = () => {
                     <Link to="/" className="inline-block px-12 py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-2xl shadow-blue-600/30 hover:scale-[1.05] active:scale-95 transition-all">
                         Return to Global Hub →
                     </Link>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-xs text-slate-400">
+                        <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link>
+                        <Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,1177 +1,596 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import api from '../services/api';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    User as IconUser, Mail as IconMail, Lock as IconLock, Calendar as IconCalendar, Globe as IconGlobe, Phone as IconPhone, MapPin as IconMapPin,
-    BookOpen as IconBookOpen, GraduationCap as IconGraduationCap, Clock as IconClock, CheckCircle2 as IconCheckCircle2,
-    ChevronRight as IconChevronRight, ArrowRight as IconArrowRight, Sparkles as IconSparkles, ShieldCheck as IconShieldCheck,
-    Hash as IconHash, Home as IconHome, Users as IconUsers, Search as IconSearch, Info as IconInfo, Star as IconStar, X as IconX
-} from 'lucide-react';
+import { CheckCircle2, ArrowRight, X, Plus, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const LEVELS = [
+    { value: 'PRIMARY', label: 'Primary School' },
+    { value: 'SECONDARY', label: 'Secondary School' },
+    { value: 'JUNIOR_WAEC', label: 'Junior WAEC' },
+    { value: 'JAMB', label: 'JAMB' },
+    { value: 'WAEC', label: 'WAEC' },
+    { value: 'NECO', label: 'NECO' },
+];
+const EXAM_LEVELS = ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'];
 
 const getRateByLevel = (level) => {
     if (['JAMB', 'WAEC', 'NECO'].includes(level)) return 2500;
-    if (level === 'SECONDARY' || level === 'JUNIOR_WAEC') return 2000;
+    if (['SECONDARY', 'JUNIOR_WAEC'].includes(level)) return 2000;
     return 1500;
 };
 
-// ── Subject catalogue (Now Dynamic) ───────────────────────────────────────────────────────
-// SUBJECT_CATALOGUE is now generated dynamically from the backend subjects API
+const calculateAge = (dob) => {
+    if (!dob) return 20;
+    const today = new Date();
+    const birth = new Date(dob);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+};
 
-const Register = () => {
-    const [formData, setFormData] = useState({
-        username: '',
-        firstName: '',
-        lastName: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        dob: '',
-        gender: 'Male',
-        country: '',
-        phone: '',
-        relationship: 'Father',
-        // Learning Preferences
-        daysPerWeek: '3',
-        hoursPerSession: '1',
-        schedule: [{ day: '', time: '' }],
-        preferredStartDate: '',
-        classType: 'ONE_ON_ONE',
-        level: 'PRIMARY',
-        targetExamType: 'JAMB',
-        targetExamYear: new Date().getFullYear().toString(),
-        address: '',
-        parentFirstName: '',
-        parentLastName: '',
-        parentEmail: '',
-        parentPassword: '',
+const StepIndicator = ({ current, total }) => (
+    <div className="max-w-xs mx-auto mb-12">
+        <div className="flex justify-between items-center mb-3">
+            {Array.from({ length: total }, (_, i) => i + 1).map(s => (
+                <div key={s} className="flex flex-col items-center gap-1.5">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all duration-300 border-2 ${current >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-200'}`}>
+                        {current > s ? <CheckCircle2 size={14} /> : s}
+                    </div>
+                    <span className={`text-[8px] font-black uppercase tracking-widest ${current === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                        {['Account', 'Learning', 'Confirm'][s - 1]}
+                    </span>
+                </div>
+            ))}
+        </div>
+        <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+            <motion.div
+                className="h-full bg-blue-600 rounded-full"
+                animate={{ width: `${((current - 1) / (total - 1)) * 100}%` }}
+                transition={{ duration: 0.4 }}
+            />
+        </div>
+    </div>
+);
+
+const Field = ({ label, children }) => (
+    <div className="flex flex-col gap-1.5">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{label}</label>
+        {children}
+    </div>
+);
+
+const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-blue-600/40 focus:bg-white transition-all";
+
+export default function Register() {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { register, login } = useAuth();
+
+    const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    // Step 1 — Account
+    const [account, setAccount] = useState({
+        firstName: '', lastName: '', username: '', email: '',
+        password: '', confirmPassword: '', dob: '', gender: 'Male',
+        phone: '', country: '',
     });
 
+    // Step 2 — Learning
+    const [learning, setLearning] = useState({
+        classType: 'ONE_ON_ONE',
+        level: 'PRIMARY',
+        targetExamYear: new Date().getFullYear().toString(),
+        hoursPerSession: '1',
+        preferredStartDate: '',
+        schedule: [{ day: 'Monday', time: '09:00' }],
+    });
+    const [subjectsByCategory, setSubjectsByCategory] = useState({});
     const [subjectEnrollments, setSubjectEnrollments] = useState({});
     const [tutorsBySubject, setTutorsBySubject] = useState({});
     const [loadingTutors, setLoadingTutors] = useState({});
-    const [selectedTutorForProfile, setSelectedTutorForProfile] = useState(null);
 
+    // Step 3 — Parent (if minor)
+    const [parent, setParent] = useState({
+        parentFirstName: '', parentLastName: '', parentEmail: '',
+        parentPassword: '', relationship: 'Father',
+    });
+
+    const isMinor = calculateAge(account.dob) < 18;
+
+    // Pre-selected tutor from URL
     const [preSelectedTutorId, setPreSelectedTutorId] = useState(null);
     const [preSelectedTutorName, setPreSelectedTutorName] = useState('');
-    const [preSelectedTutorData, setPreSelectedTutorData] = useState(null);
 
-    const [subjectsByCategory, setSubjectsByCategory] = useState({});
-    const [selectedSubjects, setSelectedSubjects] = useState([]);
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isMinor, setIsMinor] = useState(false);
-
-    // Fetch dynamic subjects on mount
-    React.useEffect(() => {
-        const fetchSubjects = async () => {
-            try {
-                const res = await api.get('/api/programs/subjects/');
-                // Ensure res.data exists and is an array or has a results property
-                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-                
-                if (data.length > 0) {
-                    const grouped = data.reduce((acc, sub) => {
-                        const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education' :
-                            sub.program_type === 'WESTERN' ? 'Western Education' :
-                                'Exam Preparation';
-                        if (!acc[label]) acc[label] = [];
-                        acc[label].push(sub.name);
-                        return acc;
-                    }, {});
-                    setSubjectsByCategory(grouped);
-                } else {
-                    // If empty but valid array, still use fallbacks to prevent empty screen
-                    console.warn("Subjects API returned empty list, using fallbacks.");
-                    setSubjectsByCategory({
-                        'Islamic Education': ['Quranic Recitation', 'Arabic Foundation', 'Hifz Program'],
-                        'Western Education': ['Mathematics', 'English Language', 'Science'],
-                        'Exam Preparation': ['JAMB', 'WAEC', 'NECO']
-                    });
-                }
-            } catch (err) {
-                console.error("Failed to fetch subjects:", err);
-                // Fallback to minimal list in case of API failure
-                setSubjectsByCategory({
-                    'Islamic Education': ['Quranic Recitation', 'Arabic Foundation', 'Hifz Program'],
-                    'Western Education': ['Mathematics', 'English Language', 'Science'],
-                    'Exam Preparation': ['JAMB', 'WAEC', 'NECO']
-                });
-            }
-        };
-        fetchSubjects();
-    }, []);
-
-    // Helper for selected subjects — auto-assign pre-selected tutor to all enrolled subjects
-    React.useEffect(() => {
-        const subjects = Object.keys(subjectEnrollments);
-        setSelectedSubjects(subjects);
-        if (preSelectedTutorId && subjects.length > 0) {
-            setSubjectEnrollments(prev => {
-                const updated = { ...prev };
-                subjects.forEach(s => { if (!updated[s]) updated[s] = preSelectedTutorId; else updated[s] = preSelectedTutorId; });
-                return updated;
-            });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(Object.keys(subjectEnrollments)), preSelectedTutorId]);
-
-    const { register, login } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    // Read pre-selected tutor from URL query params
-    React.useEffect(() => {
+    useEffect(() => {
         const params = new URLSearchParams(location.search);
         const tid = params.get('tutor_id');
         const tname = params.get('tutor_name');
         if (tid) {
             setPreSelectedTutorId(Number(tid));
             setPreSelectedTutorName(decodeURIComponent(tname || ''));
-            // Fetch tutor details for the confirmation banner
-            api.get('/api/tutors/public/')
-                .then(res => {
-                    const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
-                    const found = data.find(t => t.id === Number(tid));
-                    if (found) setPreSelectedTutorData(found);
-                })
-                .catch(() => {});
         }
     }, [location.search]);
 
-    const calculateAge = (birthDate) => {
-        if (!birthDate) return 20;
-        const today = new Date();
-        const birth = new Date(birthDate);
-        let age = today.getFullYear() - birth.getFullYear();
-        const m = today.getMonth() - birth.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-        return age;
-    };
-
-    const isTimeOverlap = (time1, time2) => {
-        if (!time1 || !time2) return false;
-
-        // If they are exactly the same string (simple slot match)
-        if (time1.toUpperCase() === time2.toUpperCase()) return true;
-
-        // If they are ranges (e.g. "10:00-11:00")
-        if (time1.includes('-') && time2.includes('-')) {
-            const [s1, e1] = time1.split('-').map(t => {
-                const [h, m] = t.split(':').map(Number);
-                return h * 60 + (m || 0);
-            });
-            const [s2, e2] = time2.split('-').map(t => {
-                const [h, m] = t.split(':').map(Number);
-                return h * 60 + (m || 0);
-            });
-            return s1 < e2 && e1 > s2;
-        }
-        return false;
-    };
-
-    const checkTutorConflicts = (tutor) => {
-        if (!tutor.busy_slots || !Array.isArray(tutor.busy_slots)) return [];
-        const conflicts = [];
-
-        formData.schedule.forEach(slot => {
-            if (!slot.day || !slot.time) return;
-
-            const busyMatch = tutor.busy_slots?.find(busy => {
-                // Check Recurring Conflicts (New Format)
-                if (busy.preferred_days) {
-                    return busy.preferred_days.toUpperCase() === slot.day.toUpperCase() &&
-                        isTimeOverlap(busy.preferred_time, slot.time);
-                }
-
-                // Check One-off Session Conflicts (Old ISO Format)
-                if (busy.start) {
-                    const sessionDate = new Date(busy.start);
-                    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-                    const sessionDay = days[sessionDate.getDay()];
-                    const sessionTime = `${sessionDate.getHours().toString().padStart(2, '0')}:${sessionDate.getMinutes().toString().padStart(2, '0')}`;
-
-                    return sessionDay === slot.day.toUpperCase() && isTimeOverlap(sessionTime, slot.time);
-                }
-                return false;
-            });
-
-            if (busyMatch) conflicts.push(slot.day);
-        });
-        return conflicts;
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-        if (name === 'dob') setIsMinor(calculateAge(value) < 18);
-    };
-
-    const addScheduleSlot = () => {
-        setFormData(prev => ({ ...prev, schedule: [...prev.schedule, { day: '', time: '' }] }));
-    };
-
-    const removeScheduleSlot = (index) => {
-        setFormData(prev => ({ ...prev, schedule: prev.schedule.filter((_, i) => i !== index) }));
-    };
-
-    const updateScheduleSlot = (index, field, value) => {
-        setFormData(prev => {
-            const newSchedule = [...prev.schedule];
-            newSchedule[index] = { ...newSchedule[index], [field]: value };
-
-            // Auto-calculate duration if this is a time change and valid range
-            let autoHours = prev.hoursPerSession;
-            if (field === 'time') {
-                const parts = value.split('-');
-                if (parts.length === 2 && parts[0] && parts[1]) {
-                    const [h1, m1] = parts[0].split(':').map(Number);
-                    const [h2, m2] = parts[1].split(':').map(Number);
-                    let diff = (h2 + m2/60) - (h1 + m1/60);
-                    if (diff > 0) {
-                        // Round to nearest 0.5 for cleaner data if it's very close, or just keep exact
-                        autoHours = parseFloat(diff.toFixed(2)).toString();
-                    }
-                }
-            }
-
-            return { ...prev, schedule: newSchedule, hoursPerSession: autoHours };
-        });
-    };
-
-    const toggleSubject = async (subject) => {
+    // Auto-assign pre-selected tutor to enrolled subjects
+    useEffect(() => {
+        if (!preSelectedTutorId) return;
         setSubjectEnrollments(prev => {
             const updated = { ...prev };
-            if (subject in updated) {
-                delete updated[subject];
-            } else {
-                updated[subject] = '';
-                if (!tutorsBySubject[subject]) {
-                    fetchTutorsForSubject(subject);
-                }
-            }
+            Object.keys(updated).forEach(s => { updated[s] = preSelectedTutorId; });
             return updated;
         });
-    };
+    }, [preSelectedTutorId, JSON.stringify(Object.keys(subjectEnrollments))]);
+
+    // Fetch subjects on mount
+    useEffect(() => {
+        api.get('/api/programs/subjects/')
+            .then(res => {
+                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                if (data.length > 0) {
+                    const grouped = data.reduce((acc, sub) => {
+                        const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education'
+                            : sub.program_type === 'WESTERN' ? 'Western Education'
+                            : 'Exam Preparation';
+                        if (!acc[label]) acc[label] = [];
+                        acc[label].push(sub.name);
+                        return acc;
+                    }, {});
+                    setSubjectsByCategory(grouped);
+                } else {
+                    setSubjectsByCategory({
+                        'Islamic Education': ['Quranic Recitation', 'Arabic Foundation', 'Hifz Program'],
+                        'Western Education': ['Mathematics', 'English Language', 'Science'],
+                        'Exam Preparation': ['JAMB', 'WAEC', 'NECO'],
+                    });
+                }
+            })
+            .catch(() => setSubjectsByCategory({
+                'Islamic Education': ['Quranic Recitation', 'Arabic Foundation', 'Hifz Program'],
+                'Western Education': ['Mathematics', 'English Language', 'Science'],
+                'Exam Preparation': ['JAMB', 'WAEC', 'NECO'],
+            }));
+    }, []);
 
     const fetchTutorsForSubject = async (subject) => {
         setLoadingTutors(prev => ({ ...prev, [subject]: true }));
         try {
             const res = await api.get(`/api/tutors/by_subject/?subject=${encodeURIComponent(subject)}`);
-            setTutorsBySubject(prev => ({ ...prev, [subject]: res.data }));
-        } catch (err) {
-            console.error(`Failed to fetch tutors for ${subject}`, err);
+            setTutorsBySubject(prev => ({ ...prev, [subject]: Array.isArray(res.data) ? res.data : [] }));
+        } catch {
             setTutorsBySubject(prev => ({ ...prev, [subject]: [] }));
         } finally {
             setLoadingTutors(prev => ({ ...prev, [subject]: false }));
         }
     };
 
-    const setPreferredTutor = (subject, tutorId) => {
-        setSubjectEnrollments(prev => ({ ...prev, [subject]: tutorId }));
+    const toggleSubject = (subject) => {
+        setSubjectEnrollments(prev => {
+            const updated = { ...prev };
+            if (subject in updated) {
+                delete updated[subject];
+            } else {
+                updated[subject] = preSelectedTutorId || '';
+                if (!tutorsBySubject[subject]) fetchTutorsForSubject(subject);
+            }
+            return updated;
+        });
     };
 
+    const addScheduleSlot = () => {
+        setLearning(prev => ({ ...prev, schedule: [...prev.schedule, { day: 'Monday', time: '09:00' }] }));
+    };
+
+    const removeScheduleSlot = (i) => {
+        setLearning(prev => ({ ...prev, schedule: prev.schedule.filter((_, idx) => idx !== i) }));
+    };
+
+    const updateScheduleSlot = (i, field, value) => {
+        setLearning(prev => {
+            const s = [...prev.schedule];
+            s[i] = { ...s[i], [field]: value };
+            return { ...prev, schedule: s };
+        });
+    };
+
+    // ── Validation per step ────────────────────────────────────────────────────
+    const validateStep1 = () => {
+        if (!account.firstName.trim()) return 'First name is required.';
+        if (!account.lastName.trim()) return 'Last name is required.';
+        if (!account.username.trim()) return 'Username is required.';
+        if (!account.email.trim()) return 'Email is required.';
+        if (!account.password) return 'Password is required.';
+        if (account.password !== account.confirmPassword) return 'Passwords do not match.';
+        return null;
+    };
+
+    const validateStep2 = () => {
+        if (Object.keys(subjectEnrollments).length === 0) return 'Please select at least one subject.';
+        return null;
+    };
+
+    const validateStep3 = () => {
+        if (isMinor) {
+            if (!parent.parentFirstName.trim()) return 'Parent first name is required.';
+            if (!parent.parentEmail.trim()) return 'Parent email is required.';
+            if (!parent.parentPassword) return 'Parent password is required.';
+        }
+        return null;
+    };
+
+    const next = () => {
+        setError('');
+        const err = step === 1 ? validateStep1() : step === 2 ? validateStep2() : null;
+        if (err) { setError(err); return; }
+        setStep(s => s + 1);
+    };
+
+    const back = () => { setError(''); setStep(s => s - 1); };
+
+    // ── Submit ─────────────────────────────────────────────────────────────────
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const err = validateStep3();
+        if (err) { setError(err); return; }
+
         setError('');
-
-        if (formData.password !== formData.confirmPassword) {
-            return setError('Passwords do not match');
-        }
-        if (Object.keys(subjectEnrollments).length === 0) {
-            return setError('Please select at least one subject to enroll in.');
-        }
-
         setLoading(true);
         try {
-            const enrolledSubjects = Object.keys(subjectEnrollments);
+            const validSchedule = learning.schedule.filter(s => s.day && s.time);
+            const daysPerWeek = validSchedule.length || 1;
+            const hoursPerSession = parseFloat(learning.hoursPerSession) || 1;
+            const totalWeeklyHours = daysPerWeek * hoursPerSession;
 
-            // Calculate dynamic total weekly hours from new unified schedule slots or fallback inputs
-            let totalWeeklyHours = 0;
-            const validSchedule = formData.schedule.filter(s => s.day && s.time);
-            if (validSchedule.length > 0) {
-                // If they have explicit slots, each slot counts for the selected duration
-                totalWeeklyHours = validSchedule.length * parseFloat(formData.hoursPerSession);
-            } else {
-                totalWeeklyHours = (parseInt(formData.daysPerWeek) || 1) * (parseFloat(formData.hoursPerSession) || 1);
-            }
-
-            let totalToPay = 0;
-            const baseRate = getRateByLevel(formData.level);
+            const selectedSubjects = Object.keys(subjectEnrollments);
             const numSubjects = selectedSubjects.length || 1;
             const hoursPerSubject = totalWeeklyHours / numSubjects;
-            
+            const baseRate = getRateByLevel(learning.level);
+            let totalToPay = 0;
             selectedSubjects.forEach(subject => {
                 const tutorId = subjectEnrollments[subject];
                 let rate = baseRate;
                 if (tutorId) {
                     const tutor = (tutorsBySubject[subject] || []).find(t => t.id === tutorId);
-                    if (tutor && tutor.hourly_rate) rate = parseFloat(tutor.hourly_rate);
+                    if (tutor?.hourly_rate) rate = parseFloat(tutor.hourly_rate);
                 }
-                // Each subject gets its fair share of the total weekly hours
-                totalToPay += (rate * hoursPerSubject * 4);
+                totalToPay += rate * hoursPerSubject * 4;
             });
 
-            // Round to 2 decimal places to avoid floating point issues
-            totalToPay = parseFloat(totalToPay.toFixed(2));
-
             const payload = {
-                username: formData.username.trim().toLowerCase(),
-                email: formData.email.trim().toLowerCase(),
-                password: formData.password,
+                username: account.username.trim().toLowerCase(),
+                email: account.email.trim().toLowerCase(),
+                password: account.password,
                 role: 'STUDENT',
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                country: formData.country || null,
-                phone: formData.phone || null,
-                dob: formData.dob || null,
-                gender: formData.gender,
+                first_name: account.firstName,
+                last_name: account.lastName,
+                gender: account.gender,
+                phone: account.phone || null,
+                country: account.country || null,
+                dob: account.dob || null,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 preferred_language: 'English',
-                address: formData.address,
-                class_type: formData.classType,
-                level: formData.level,
-                days_per_week: formData.schedule.filter(s => s.day).length || parseInt(formData.daysPerWeek) || 1,
-                hours_per_week: totalWeeklyHours > 0 ? parseFloat(totalWeeklyHours.toFixed(2)) : 1.0,
-                preferred_days: formData.schedule.map(s => s.day).filter(d => d).join(','),
-                preferred_time_exact: formData.schedule.map(s => s.time).filter(t => t).join(','),
-                preferred_start_date: formData.preferredStartDate || null,
-                target_exam_type: ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(formData.level) ? formData.level : null,
-                target_exam_year: ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(formData.level) ? formData.targetExamYear : null,
+                class_type: learning.classType,
+                level: learning.level,
+                days_per_week: daysPerWeek,
+                hours_per_week: parseFloat(totalWeeklyHours.toFixed(2)),
+                preferred_days: validSchedule.map(s => s.day).join(','),
+                preferred_time_exact: validSchedule.map(s => s.time).join(','),
+                preferred_start_date: learning.preferredStartDate || null,
+                target_exam_type: EXAM_LEVELS.includes(learning.level) ? learning.level : null,
+                target_exam_year: EXAM_LEVELS.includes(learning.level) ? learning.targetExamYear : null,
                 preferred_tutor_id: Object.values(subjectEnrollments).find(v => v) || null,
-                subject_enrollments: enrolledSubjects.map(s => ({
+                subject_enrollments: selectedSubjects.map(s => ({
                     subject: s,
-                    preferred_tutor_id: subjectEnrollments[s] || null
+                    preferred_tutor_id: subjectEnrollments[s] || null,
                 })),
-                total_amount: 0, // No Admission Fee
+                total_amount: 0,
                 ...(isMinor && {
-                    parent_first_name: formData.parentFirstName,
-                    parent_last_name: formData.parentLastName,
-                    parent_email: formData.parentEmail.trim().toLowerCase(),
-                    parent_password: formData.parentPassword,
-                    relationship: formData.relationship
-                })
+                    parent_first_name: parent.parentFirstName,
+                    parent_last_name: parent.parentLastName,
+                    parent_email: parent.parentEmail.trim().toLowerCase(),
+                    parent_password: parent.parentPassword,
+                    relationship: parent.relationship,
+                }),
             };
 
             await register(payload);
-            const data = await login(formData.username.trim().toLowerCase(), formData.password);
+            const data = await login(account.username.trim().toLowerCase(), account.password);
 
-            alert("✨ Congratulations! You have been automatically admitted to Hidayah International. Your admission letter has been sent to your email.");
+            alert('✨ Welcome to Hidayah! Your admission letter has been sent to your email.');
 
-            if (data.user?.role === 'ADMIN' || data.user?.is_superuser || data.user?.is_staff) {
+            if (data.user?.role === 'ADMIN' || data.user?.is_superuser) {
                 window.location.href = '/admin';
             } else {
                 navigate('/student');
             }
         } catch (err) {
-            console.error("Registration Error details:", err.response?.data);
-
-            // FIX: Extract specific field errors from DRF
-            let errorMsg = 'Registration failed. Please check the fields below.';
-            if (err.response?.data) {
-                const data = err.response.data;
-                if (data.detail) {
-                    errorMsg = data.detail;
-                } else if (data.error) {
-                    errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-                } else if (typeof data === 'object' && !Array.isArray(data)) {
-                    // Try to flatten the error dictionary
-                    const errors = Object.keys(data).map(key => {
-                        const val = data[key];
-                        const label = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
-                        return `${label}: ${Array.isArray(val) ? val[0] : val}`;
-                    });
-                    if (errors.length > 0) errorMsg = errors.join(' | ');
-                } else if (typeof data === 'string') {
-                    errorMsg = data.length > 300 ? "Server Error: Could not process the registration request. Please Try Again." : data;
+            const d = err.response?.data;
+            let msg = 'Registration failed. Please check your details.';
+            if (d) {
+                if (typeof d === 'string') msg = d.includes('<html') ? 'Server error — please try again.' : d;
+                else if (d.detail) msg = d.detail;
+                else if (d.error) msg = typeof d.error === 'string' ? d.error : JSON.stringify(d.error);
+                else if (typeof d === 'object') {
+                    const parts = Object.keys(d).map(k => `${k}: ${Array.isArray(d[k]) ? d[k][0] : d[k]}`);
+                    if (parts.length) msg = parts.join(' · ');
                 }
-            } else if (err.message) {
-                 errorMsg = `Connection Error: ${err.message}. Please check your internet connection and try again.`;
             }
-            setError(errorMsg);
+            setError(msg);
         } finally {
             setLoading(false);
         }
     };
 
-    // eslint-disable-next-line no-unused-vars
-    const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
-        <div className="flex items-center gap-4 mb-10">
-            <div className={`w-12 h-12 ${colorClass || 'bg-blue-600/10 text-blue-600'} rounded-2xl flex items-center justify-center font-black text-lg border border-slate-100 shadow-xl`}>
-                {step || <Icon size={24} />}
-            </div>
-            <div>
-                <h3 className="text-xl font-bold text-slate-900 tracking-tight uppercase">{title}</h3>
-                <div className="h-0.5 w-12 bg-slate-100 mt-2 rounded-full overflow-hidden">
-                    <div className={`h-full w-2/3 ${colorClass?.replace('text', 'bg') || 'bg-blue-600'}`}></div>
-                </div>
-            </div>
-        </div>
-    );
+    const cardCls = "bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 md:p-10";
 
     return (
-        <div className="min-h-screen bg-white text-slate-900 selection:bg-blue-500/30">
+        <div className="min-h-screen bg-slate-50">
             <Navbar />
+            <div className="container pt-28 pb-20 px-4">
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
 
-            {/* Ambient Background Elements */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-blue-600/5 blur-[150px] rounded-full"></div>
-                <div className="absolute bottom-[0%] left-[-5%] w-[35%] h-[35%] bg-indigo-600/5 blur-[150px] rounded-full"></div>
-            </div>
-
-            <div className="container pt-32 pb-20 px-4 relative z-10">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="max-w-5xl mx-auto"
-                >
-                    <div className="text-center mb-16">
-                        <div className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-blue-100 shadow-xl relative">
-                            <IconGraduationCap size={48} className="text-blue-600" />
-                            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center animate-pulse">
-                                <IconSparkles size={12} className="text-white" />
-                            </div>
-                        </div>
-                        <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Student <span className="text-blue-600">Admission</span></h1>
-                        <p className="text-slate-500 max-w-xl mx-auto font-medium tracking-wide">Join Hidayah International’s world-class learning platform. Your journey to excellence starts here.</p>
+                    <div className="text-center mb-10">
+                        <h1 className="text-4xl font-display font-black text-primary uppercase tracking-tighter mb-2">
+                            Student <span className="text-blue-600">Enrolment</span>
+                        </h1>
+                        <p className="text-slate-500 font-medium text-sm">Join Hidayah International — Western &amp; Islamic education.</p>
                     </div>
 
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-[2rem] text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl"
-                        >
-                            <IconX className="shrink-0" /> {error}
-                        </motion.div>
+                    <StepIndicator current={step} total={3} />
+
+                    {preSelectedTutorName && (
+                        <div className="mb-6 bg-blue-50 border border-blue-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm font-bold text-blue-700">
+                            <span>⭐</span> Registering with tutor: {preSelectedTutorName}
+                        </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-12">
-
-                        {/* Step 1 & 2 Grid */}
-                        <div className="grid lg:grid-cols-2 gap-8">
-                            {/* Section 1: Credentials */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all"
-                            >
-                                <SectionHeader step="01" title="Account Access" colorClass="bg-blue-600/10 text-blue-600" />
-                                <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label htmlFor="username" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Universal Username *</label>
-                                        <div className="relative">
-                                            <IconUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input id="username" type="text" name="username" value={formData.username} onChange={handleChange} required placeholder="Student ID or Name" autoComplete="username" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Institutional Email *</label>
-                                        <div className="relative">
-                                            <IconMail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                            <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="umar@email.com" autoComplete="email" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                        </div>
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Password *</label>
-                                            <div className="relative">
-                                                <IconLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <input id="password" type="password" name="password" value={formData.password} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label htmlFor="confirmPassword" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Confirm *</label>
-                                            <div className="relative">
-                                                <IconLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <input id="confirmPassword" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required placeholder="••••••••" autoComplete="new-password" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* Section 2: Bio */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: 0.1 }}
-                                className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-all"
-                            >
-                                <SectionHeader step="02" title="Student Profile" colorClass="bg-indigo-600/10 text-indigo-600" />
-                                <div className="space-y-6">
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label htmlFor="firstName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">First Name *</label>
-                                            <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="Umar" autoComplete="given-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label htmlFor="lastName" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Last Name</label>
-                                            <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Muhammad" autoComplete="family-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                        </div>
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label htmlFor="dob" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Birth Date *</label>
-                                            <div className="relative">
-                                                <IconCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <input id="dob" type="date" name="dob" value={formData.dob} onChange={handleChange} required autoComplete="bday" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label htmlFor="gender" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Gender</label>
-                                            <select id="gender" name="gender" value={formData.gender} onChange={handleChange} autoComplete="sex" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
-                                                <option className="bg-white">Male</option>
-                                                <option className="bg-white">Female</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label htmlFor="country" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Country</label>
-                                            <div className="relative">
-                                                <IconGlobe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <select id="country" name="country" value={formData.country} onChange={handleChange} autoComplete="country-name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
-                                                    <option value="" className="bg-white">Select Country</option>
-                                                    <optgroup label="Africa" className="bg-white">
-                                                        <option value="Nigeria">Nigeria</option>
-                                                        <option value="Ghana">Ghana</option>
-                                                        <option value="South Africa">South Africa</option>
-                                                        <option value="Egypt">Egypt</option>
-                                                        <option value="Kenya">Kenya</option>
-                                                        <option value="Morocco">Morocco</option>
-                                                        <option value="Ethiopia">Ethiopia</option>
-                                                    </optgroup>
-                                                    <optgroup label="Asia & Middle East" className="bg-white">
-                                                        <option value="Saudi Arabia">Saudi Arabia</option>
-                                                        <option value="United Arab Emirates">United Arab Emirates</option>
-                                                        <option value="Qatar">Qatar</option>
-                                                        <option value="Malaysia">Malaysia</option>
-                                                        <option value="Indonesia">Indonesia</option>
-                                                        <option value="Pakistan">Pakistan</option>
-                                                        <option value="India">India</option>
-                                                        <option value="Turkey">Turkey</option>
-                                                    </optgroup>
-                                                    <optgroup label="Europe & America" className="bg-white">
-                                                        <option value="United Kingdom">United Kingdom</option>
-                                                        <option value="United States">United States</option>
-                                                        <option value="Canada">Canada</option>
-                                                        <option value="France">France</option>
-                                                        <option value="Germany">Germany</option>
-                                                        <option value="Australia">Australia</option>
-                                                    </optgroup>
-                                                    <option value="Other" className="bg-white">Other</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Phone Number</label>
-                                            <div className="relative">
-                                                <IconPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                                                <input id="phone" type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="+234..." autoComplete="tel" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all" />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2 col-span-full">
-                                            <label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Full Residential Address *</label>
-                                            <div className="relative">
-                                                <IconMapPin className="absolute left-4 top-4 text-slate-400" size={18} />
-                                                <textarea id="address" name="address" value={formData.address} onChange={handleChange} required placeholder="Street Name, House Number, City, State" autoComplete="street-address" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 pl-12 text-slate-900 font-bold outline-none focus:border-blue-600/30 focus:bg-white transition-all min-h-[100px] resize-none" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
+                    {error && (
+                        <div className="mb-6 bg-red-50 border border-red-100 text-red-600 rounded-2xl px-5 py-4 flex items-center gap-3 text-sm font-bold">
+                            <X size={16} className="shrink-0" /> {error}
                         </div>
+                    )}
 
-                        {/* Section 3: Learning Preferences */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)] relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 blur-3xl rounded-full translate-x-1/2 translate-y-[-50%]"></div>
-                            <SectionHeader step="03" title="Educational Roadmap" colorClass="bg-blue-600/10 text-blue-600" />
+                    <form onSubmit={handleSubmit}>
+                        <AnimatePresence mode="wait">
 
-                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Learning Level</label>
-                                    <select name="level" value={formData.level} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
-                                        <option value="PRIMARY" className="bg-white">Primary School</option>
-                                        <option value="SECONDARY" className="bg-white">Secondary School</option>
-                                        <option value="JUNIOR_WAEC" className="bg-white">Junior WAEC (BECE)</option>
-                                        <option value="JAMB" className="bg-white">JAMB Prep</option>
-                                        <option value="WAEC" className="bg-white">WAEC Prep</option>
-                                        <option value="NECO" className="bg-white">NECO Prep</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Class Structure</label>
-                                    <select name="classType" value={formData.classType} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
-                                        <option value="ONE_ON_ONE" className="bg-white">One-on-One</option>
-                                        <option value="GROUP" className="bg-white">Group Batch</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Duration / Session</label>
-                                    <select name="hoursPerSession" value={formData.hoursPerSession} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/30 focus:bg-white transition-all appearance-none cursor-pointer">
-                                        <option value="0.5" className="bg-white">30 Minutes</option>
-                                        <option value="1" className="bg-white">1.0 Hour</option>
-                                        <option value="1.5" className="bg-white">1.5 Hours</option>
-                                        <option value="2" className="bg-white">2.0 Hours</option>
-                                        <option value="3" className="bg-white">3.0 Hours</option>
-                                        {![0.5, 1, 1.5, 2, 3].includes(parseFloat(formData.hoursPerSession)) && (
-                                            <option value={formData.hoursPerSession} className="bg-white">{formData.hoursPerSession} Hours (Calculated)</option>
+                            {/* ── Step 1: Account ──────────────────────────────── */}
+                            {step === 1 && (
+                                <motion.div key="s1" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={cardCls}>
+                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">1</span>
+                                        Your Account
+                                    </h2>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Field label="First Name">
+                                            <input className={inputCls} value={account.firstName} onChange={e => setAccount(a => ({ ...a, firstName: e.target.value }))} placeholder="e.g. Fatima" autoComplete="given-name" />
+                                        </Field>
+                                        <Field label="Last Name">
+                                            <input className={inputCls} value={account.lastName} onChange={e => setAccount(a => ({ ...a, lastName: e.target.value }))} placeholder="e.g. Ibrahim" autoComplete="family-name" />
+                                        </Field>
+                                        <Field label="Username">
+                                            <input className={inputCls} value={account.username} onChange={e => setAccount(a => ({ ...a, username: e.target.value.toLowerCase() }))} placeholder="e.g. fatima_2025" autoComplete="username" />
+                                        </Field>
+                                        <Field label="Email">
+                                            <input type="email" className={inputCls} value={account.email} onChange={e => setAccount(a => ({ ...a, email: e.target.value }))} placeholder="your@email.com" autoComplete="email" />
+                                        </Field>
+                                        <Field label="Password">
+                                            <input type="password" className={inputCls} value={account.password} onChange={e => setAccount(a => ({ ...a, password: e.target.value }))} placeholder="Min. 8 characters" autoComplete="new-password" />
+                                        </Field>
+                                        <Field label="Confirm Password">
+                                            <input type="password" className={inputCls} value={account.confirmPassword} onChange={e => setAccount(a => ({ ...a, confirmPassword: e.target.value }))} placeholder="Repeat password" autoComplete="new-password" />
+                                        </Field>
+                                        <Field label="Date of Birth">
+                                            <input type="date" className={inputCls} value={account.dob} onChange={e => setAccount(a => ({ ...a, dob: e.target.value }))} autoComplete="bday" />
+                                        </Field>
+                                        <Field label="Gender">
+                                            <select className={inputCls} value={account.gender} onChange={e => setAccount(a => ({ ...a, gender: e.target.value }))}>
+                                                <option>Male</option>
+                                                <option>Female</option>
+                                            </select>
+                                        </Field>
+                                        <Field label="Phone (optional)">
+                                            <input className={inputCls} value={account.phone} onChange={e => setAccount(a => ({ ...a, phone: e.target.value }))} placeholder="+234..." autoComplete="tel" />
+                                        </Field>
+                                        <Field label="Country (optional)">
+                                            <input className={inputCls} value={account.country} onChange={e => setAccount(a => ({ ...a, country: e.target.value }))} placeholder="e.g. Nigeria" autoComplete="country-name" />
+                                        </Field>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* ── Step 2: Learning Plan ─────────────────────────── */}
+                            {step === 2 && (
+                                <motion.div key="s2" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={cardCls}>
+                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
+                                        Learning Plan
+                                    </h2>
+
+                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                        <Field label="Class Type">
+                                            <select className={inputCls} value={learning.classType} onChange={e => setLearning(l => ({ ...l, classType: e.target.value }))}>
+                                                <option value="ONE_ON_ONE">One-on-One</option>
+                                                <option value="GROUP">Group</option>
+                                            </select>
+                                        </Field>
+                                        <Field label="Level">
+                                            <select className={inputCls} value={learning.level} onChange={e => setLearning(l => ({ ...l, level: e.target.value }))}>
+                                                {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                                            </select>
+                                        </Field>
+                                        {EXAM_LEVELS.includes(learning.level) && (
+                                            <Field label="Target Exam Year">
+                                                <input type="number" className={inputCls} value={learning.targetExamYear} onChange={e => setLearning(l => ({ ...l, targetExamYear: e.target.value }))} min="2024" max="2035" />
+                                            </Field>
                                         )}
-                                    </select>
-                                </div>
-                            </div>
+                                        <Field label="Hours per Session">
+                                            <select className={inputCls} value={learning.hoursPerSession} onChange={e => setLearning(l => ({ ...l, hoursPerSession: e.target.value }))}>
+                                                {['0.5', '1', '1.5', '2', '2.5', '3'].map(h => <option key={h} value={h}>{h} hr{h !== '1' ? 's' : ''}</option>)}
+                                            </select>
+                                        </Field>
+                                        <Field label="Preferred Start Date (optional)">
+                                            <input type="date" className={inputCls} value={learning.preferredStartDate} onChange={e => setLearning(l => ({ ...l, preferredStartDate: e.target.value }))} />
+                                        </Field>
+                                    </div>
 
-                            {['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'].includes(formData.level) && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    className="bg-indigo-500/10 border border-indigo-500/20 p-8 rounded-[2rem] mb-12 flex flex-col md:flex-row gap-8 items-center"
-                                >
-                                    <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-indigo-500/20 shrink-0">
-                                        <IconGraduationCap size={32} />
+                                    {/* Subjects */}
+                                    <div className="mb-6">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Select Subjects</p>
+                                        {Object.keys(subjectsByCategory).length === 0 ? (
+                                            <div className="text-slate-400 text-sm font-bold">Loading subjects…</div>
+                                        ) : (
+                                            Object.entries(subjectsByCategory).map(([cat, subjects]) => (
+                                                <div key={cat} className="mb-4">
+                                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{cat}</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {subjects.map(sub => {
+                                                            const selected = sub in subjectEnrollments;
+                                                            return (
+                                                                <button key={sub} type="button" onClick={() => toggleSubject(sub)}
+                                                                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-600/30'}`}>
+                                                                    {sub}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {/* Tutor selector per enrolled subject */}
+                                                    {subjects.filter(s => s in subjectEnrollments).map(sub => (
+                                                        <div key={`t-${sub}`} className="mt-2 ml-1">
+                                                            <p className="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1">{sub} — preferred tutor (optional)</p>
+                                                            {loadingTutors[sub] ? (
+                                                                <p className="text-xs text-slate-400 font-bold">Loading tutors…</p>
+                                                            ) : (tutorsBySubject[sub] || []).length === 0 ? (
+                                                                <p className="text-xs text-slate-400 font-bold">No tutors available — admin will assign one.</p>
+                                                            ) : (
+                                                                <select className={`${inputCls} text-sm py-2.5`} value={subjectEnrollments[sub] || ''} onChange={e => setSubjectEnrollments(prev => ({ ...prev, [sub]: e.target.value ? Number(e.target.value) : '' }))}>
+                                                                    <option value="">No preference</option>
+                                                                    {(tutorsBySubject[sub] || []).map(t => (
+                                                                        <option key={t.id} value={t.id}>{t.user?.first_name} {t.user?.last_name}</option>
+                                                                    ))}
+                                                                </select>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
-                                    <div className="flex-1 space-y-1">
-                                        <h4 className="text-lg font-bold text-white uppercase tracking-tight">Exam Focus Configuration</h4>
-                                        <p className="text-indigo-400 text-xs font-bold leading-relaxed">Customize your preparation for national standard examinations. This unlocks specialized CBT tools.</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 md:w-[400px]">
-                                        <div className="space-y-1">
-                                            <label className="text-[8px] font-black uppercase tracking-widest text-indigo-300 ml-1">Target Portal</label>
-                                            <select name="targetExamType" value={formData.targetExamType} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-indigo-500 transition-all appearance-none">
-                                                <option value="JAMB" className="bg-[#0a0c10]">UTME (JAMB)</option>
-                                                <option value="WAEC" className="bg-[#0a0c10]">SSCE (WAEC)</option>
-                                                <option value="NECO" className="bg-[#0a0c10]">SSCE (NECO)</option>
-                                                <option value="BECE" className="bg-[#0a0c10]">BECE (JUNIOR)</option>
-                                            </select>
+
+                                    {/* Schedule slots */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Preferred Schedule</p>
+                                            <button type="button" onClick={addScheduleSlot} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
+                                                <Plus size={12} /> Add slot
+                                            </button>
                                         </div>
-                                        <div className="space-y-1">
-                                            <label className="text-[8px] font-black uppercase tracking-widest text-indigo-300 ml-1">Target Year</label>
-                                            <select name="targetExamYear" value={formData.targetExamYear} onChange={handleChange} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-indigo-500 transition-all appearance-none">
-                                                {[2024, 2025, 2026].map(y => <option key={y} value={y} className="bg-[#0a0c10]">{y}</option>)}
-                                            </select>
+                                        <div className="space-y-2">
+                                            {learning.schedule.map((slot, i) => (
+                                                <div key={i} className="flex gap-2 items-center">
+                                                    <select className={`${inputCls} flex-1 py-2.5 text-sm`} value={slot.day} onChange={e => updateScheduleSlot(i, 'day', e.target.value)}>
+                                                        {DAYS.map(d => <option key={d}>{d}</option>)}
+                                                    </select>
+                                                    <input type="time" className={`${inputCls} flex-1 py-2.5 text-sm`} value={slot.time} onChange={e => updateScheduleSlot(i, 'time', e.target.value)} />
+                                                    {learning.schedule.length > 1 && (
+                                                        <button type="button" onClick={() => removeScheduleSlot(i)} className="text-slate-300 hover:text-red-400 transition-colors">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </motion.div>
                             )}
 
-                            {/* Weekly Schedule - Booking Style */}
-                            <div className="space-y-8 bg-black/40 p-8 rounded-[2.5rem] border border-white/10 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl rounded-full" />
-                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
-                                    <div>
-                                        <h4 className="text-base font-black uppercase tracking-tight text-white flex items-center gap-2">
-                                            <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
-                                            Weekly Teaching Classes
-                                        </h4>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Add your available days and specific time slots</p>
+                            {/* ── Step 3: Confirm ───────────────────────────────── */}
+                            {step === 3 && (
+                                <motion.div key="s3" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={`${cardCls} space-y-6`}>
+                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">3</span>
+                                        Confirm & Submit
+                                    </h2>
+
+                                    {/* Summary */}
+                                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-2 text-sm">
+                                        <Row label="Name" value={`${account.firstName} ${account.lastName}`} />
+                                        <Row label="Username" value={account.username} />
+                                        <Row label="Email" value={account.email} />
+                                        <Row label="Level" value={LEVELS.find(l => l.value === learning.level)?.label} />
+                                        <Row label="Class Type" value={learning.classType === 'ONE_ON_ONE' ? 'One-on-One' : 'Group'} />
+                                        <Row label="Subjects" value={Object.keys(subjectEnrollments).join(', ') || '—'} />
+                                        <Row label="Schedule" value={learning.schedule.map(s => `${s.day} ${s.time}`).join(', ')} />
                                     </div>
-                                    <button
-                                        type="button"
-                                        onClick={addScheduleSlot}
-                                        className="bg-emerald-500 hover:bg-emerald-400 text-white w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 transition-all active:scale-95 group"
-                                        title="Add Day"
-                                    >
-                                        <div className="text-2xl font-light group-hover:rotate-90 transition-transform">+</div>
-                                    </button>
-                                </div>
 
-                                <div className="space-y-4 relative z-10">
-                                    {formData.schedule.map((slot, index) => (
-                                        <motion.div
-                                            key={index}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-white/[0.03] border border-white/5 group hover:border-emerald-500/30 transition-all relative"
-                                        >
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">Day</label>
-                                                <select
-                                                    className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
-                                                    value={slot.day}
-                                                    onChange={(e) => updateScheduleSlot(index, 'day', e.target.value)}
-                                                >
-                                                    <option value="" className="bg-[#0a0c10]">Select Day</option>
-                                                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => (
-                                                        <option key={d} value={d.toUpperCase()} className="bg-[#0a0c10]">{d}</option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">From</label>
-                                                <input
-                                                    type="time"
-                                                    className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all"
-                                                    value={slot.time.split('-')[0] || ''}
-                                                    onChange={(e) => updateScheduleSlot(index, 'time', `${e.target.value}-${slot.time.split('-')[1] || ''}`)}
-                                                />
-                                            </div>
-                                            <div className="space-y-2 relative">
-                                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">To</label>
-                                                <div className="flex gap-3">
-                                                    <input
-                                                        type="time"
-                                                        className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all"
-                                                        value={slot.time.split('-')[1] || ''}
-                                                        onChange={(e) => updateScheduleSlot(index, 'time', `${slot.time.split('-')[0] || ''}-${e.target.value}`)}
-                                                    />
-                                                    {formData.schedule.length > 1 && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeScheduleSlot(index)}
-                                                            className="bg-red-500/10 text-red-500 w-12 h-12 rounded-xl border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center justify-center shrink-0"
-                                                        >
-                                                            <IconX size={16} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </div>
-
-                                {formData.schedule.filter(s => s.day).length > 0 && (
-                                    <div className="pt-6 border-t border-white/5 flex justify-between items-center text-[10px] relative z-10 px-2 font-black uppercase tracking-widest">
-                                        <span className="text-slate-500">{formData.schedule.filter(s => s.day).length} Intensive Session{formData.schedule.filter(s => s.day).length > 1 ? 's' : ''} / WK</span>
-                                        <span className="text-emerald-500">{formData.schedule.filter(s => s.day).length * 4} Total Sessions / Month</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Preferred Start Date */}
-                            <div className="bg-black/40 border border-white/10 rounded-[2.5rem] p-8 mt-6">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
-                                    <div>
-                                        <h4 className="text-base font-black uppercase tracking-tight text-white">Preferred Start Date</h4>
-                                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">When would you like classes to begin?</p>
-                                    </div>
-                                </div>
-                                <div className="relative max-w-xs">
-                                    <IconCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500/60" size={16} />
-                                    <input
-                                        type="date"
-                                        name="preferredStartDate"
-                                        value={formData.preferredStartDate}
-                                        onChange={handleChange}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="w-full bg-black/60 border border-emerald-500/20 rounded-xl px-4 py-3.5 pl-10 text-sm font-black text-white outline-none focus:border-emerald-500 transition-all cursor-pointer"
-                                    />
-                                </div>
-                                {formData.preferredStartDate && (
-                                    <p className="mt-3 text-[10px] font-black text-emerald-500/70 uppercase tracking-widest">
-                                        ✓ Starting {new Date(formData.preferredStartDate + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </p>
-                                )}
-                            </div>
-                        </motion.div>
-
-                        {/* Section 4: Subjects Grid */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
-                        >
-                            <SectionHeader step="04" title="Academic Selection" colorClass="bg-blue-600/10 text-blue-600" />
-
-                            <div className="space-y-10">
-                                {Object.keys(subjectsByCategory).length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200 text-slate-400 font-black uppercase text-[10px] tracking-widest gap-4">
-                                        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                        Organizing Academic Catalogue...
-                                    </div>
-                                ) : Object.entries(subjectsByCategory).map(([category, subjects]) => (
-                                    <div key={category} className="space-y-6">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${category === 'Islamic Education' ? 'bg-indigo-600/20 text-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600/20 text-blue-600' : 'bg-blue-500/20 text-blue-500'}`}>
-                                                {category === 'Islamic Education' ? <IconUsers size={16} /> : category === 'Exam Preparation' ? <IconGraduationCap size={16} /> : <IconBookOpen size={16} />}
-                                            </div>
-                                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">{category}</h4>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                            {subjects.map(subject => {
-                                                const isSelected = subject in subjectEnrollments;
-                                                return (
-                                                    <motion.button
-                                                        key={subject}
-                                                        type="button"
-                                                        whileHover={{ y: -2 }}
-                                                        whileTap={{ scale: 0.98 }}
-                                                        onClick={() => toggleSubject(subject)}
-                                                        className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center relative overflow-hidden group ${isSelected
-                                                            ? category === 'Islamic Education'
-                                                                ? 'bg-indigo-600/10 border-indigo-600 text-indigo-600 shadow-lg shadow-indigo-600/10'
-                                                                : category === 'Exam Preparation'
-                                                                    ? 'bg-blue-600/10 border-blue-600 text-blue-600 shadow-lg shadow-blue-600/10'
-                                                                    : 'bg-sky-500/10 border-sky-500 text-sky-500 shadow-lg shadow-sky-500/10'
-                                                            : 'bg-slate-50 border-slate-50 text-slate-400 hover:border-slate-200'
-                                                            }`}
-                                                    >
-                                                        {isSelected && (
-                                                            <div className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in ${category === 'Islamic Education' ? 'bg-indigo-600' : category === 'Exam Preparation' ? 'bg-blue-600' : 'bg-sky-500'}`}>
-                                                                <IconCheckCircle2 size={10} className="text-white" />
-                                                            </div>
-                                                        )}
-                                                        <span className="text-[10px] font-black uppercase tracking-tight">{subject}</span>
-                                                    </motion.button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </motion.div>
-
-                        {/* Section 5: Tutor Assignments */}
-                        <AnimatePresence mode="wait">
-                            {selectedSubjects.length > 0 && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 20 }}
-                                    className="bg-white border border-slate-100 rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_rgba(0,0,0,0.05)]"
-                                >
-                                    <SectionHeader step="05" title="Tutor Assignments" colorClass="bg-blue-600/10 text-blue-600" />
-
-                                    {/* ── Pre-selected tutor locked banner ── */}
-                                    {preSelectedTutorId ? (
-                                        <div className="space-y-4">
-                                            {/* Locked tutor card */}
-                                            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 flex items-center gap-5">
-                                                <div className="w-16 h-16 rounded-2xl overflow-hidden ring-2 ring-blue-600/30 shrink-0">
-                                                    {preSelectedTutorData?.image
-                                                        ? <img src={preSelectedTutorData.image.startsWith('http') ? preSelectedTutorData.image : `${import.meta.env.VITE_API_BASE_URL}${preSelectedTutorData.image}`} alt={preSelectedTutorName} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(preSelectedTutorName)}&background=1e40af&color=fff&size=128`; }} />
-                                                        : <div className="w-full h-full bg-blue-600/10 flex items-center justify-center text-2xl font-black text-blue-600">{preSelectedTutorName?.[0]}</div>
-                                                    }
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Registering with</p>
-                                                    <h4 className="text-lg font-black text-slate-900 uppercase tracking-tight">{preSelectedTutorName}</h4>
-                                                    {preSelectedTutorData?.qualification && (
-                                                        <p className="text-[10px] font-bold text-slate-400 mt-0.5">{preSelectedTutorData.qualification}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex flex-col items-end gap-2">
-                                                    <span className="text-[8px] font-black bg-blue-600/10 text-blue-600 px-3 py-1 rounded-full border border-blue-600/20 uppercase tracking-widest">✓ Confirmed</span>
-                                                    {preSelectedTutorData?.hourly_rate && (
-                                                        <span className="text-[10px] font-black text-slate-900">₦{parseFloat(preSelectedTutorData.hourly_rate).toLocaleString()}/hr</span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Per-subject assignment summary */}
-                                            <div className="grid md:grid-cols-2 gap-3">
-                                                {selectedSubjects.map(subject => (
-                                                    <div key={subject} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-2xl px-5 py-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                                                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">{subject}</span>
-                                                        </div>
-                                                        <span className="text-[8px] font-black bg-indigo-600/10 text-indigo-600 px-2 py-0.5 rounded-lg border border-indigo-600/20 uppercase tracking-widest">Assigned</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            <p className="text-[9px] font-bold text-slate-500 text-center uppercase tracking-widest pt-2">
-                                                Want a different tutor? <button type="button" onClick={() => { setPreSelectedTutorId(null); setPreSelectedTutorName(''); setPreSelectedTutorData(null); }} className="text-blue-600 underline ml-1">Browse all tutors</button>
+                                    {/* Parent fields (if minor) */}
+                                    {isMinor && (
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-4 flex items-center gap-2">
+                                                ⚠ Student is under 18 — parent account required
                                             </p>
-                                        </div>
-                                    ) : (
-                                        /* ── Normal tutor picker ── */
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            {selectedSubjects.map(subject => {
-                                                const tutors = tutorsBySubject[subject] || [];
-                                                const isLoading = loadingTutors[subject];
-                                                const selectedTutorId = subjectEnrollments[subject];
-
-                                                return (
-                                                    <div key={subject} className="bg-white border border-slate-100 rounded-[2.5rem] p-6 space-y-6 shadow-sm">
-                                                        <div className="flex justify-between items-center px-2">
-                                                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                                                                {subject}
-                                                            </h4>
-                                                            {selectedTutorId ?
-                                                                <span className="text-[8px] font-black bg-indigo-600/10 text-indigo-600 px-2 py-1 rounded-lg uppercase tracking-widest border border-indigo-600/20">Assigned</span> :
-                                                                <span className="text-[8px] font-black bg-blue-600/10 text-blue-600 px-2 py-1 rounded-lg uppercase tracking-widest border border-blue-600/20">Pending Selection</span>
-                                                            }
-                                                        </div>
-
-                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto px-1 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                                                            {isLoading ? (
-                                                                <div className="flex items-center justify-center p-8"><div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>
-                                                            ) : tutors.length === 0 ? (
-                                                                <p className="text-[9px] text-slate-500 italic text-center py-6 bg-slate-50 rounded-2xl">No dedicated tutors available. A specialist will be matched upon admission.</p>
-                                                            ) : tutors.map(tutor => {
-                                                                const hasConflict = checkTutorConflicts(tutor).length > 0;
-                                                                return (
-                                                                    <motion.div
-                                                                        key={tutor.id}
-                                                                        whileHover={hasConflict ? {} : { x: 4 }}
-                                                                        onClick={() => { if (!hasConflict) setPreferredTutor(subject, tutor.id); }}
-                                                                        className={`p-4 rounded-2xl border transition-all flex gap-4 items-center group relative overflow-hidden ${hasConflict
-                                                                            ? 'bg-rose-500/5 border-rose-500/10 cursor-not-allowed opacity-80'
-                                                                            : selectedTutorId === tutor.id
-                                                                                ? 'bg-blue-600/5 border-blue-600/30 cursor-pointer shadow-lg shadow-blue-600/5'
-                                                                                : 'bg-slate-50 border-slate-100 hover:bg-slate-100 cursor-pointer'}`}
-                                                                    >
-                                                                        <div className="w-12 h-12 bg-slate-100 rounded-xl overflow-hidden ring-1 ring-slate-200 shrink-0 relative">
-                                                                            {tutor.image ? <img src={tutor.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-black text-blue-600 bg-blue-600/5">{tutor.user?.first_name?.[0]}</div>}
-                                                                            {checkTutorConflicts(tutor).length > 0 && (
-                                                                                <div className="absolute inset-0 bg-rose-500/40 backdrop-blur-[2px] flex items-center justify-center">
-                                                                                    <span className="text-[7px] font-black text-white uppercase tracking-tighter">Busy</span>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <div className="flex justify-between items-start">
-                                                                                <h5 className="font-bold text-slate-900 text-xs truncate uppercase tracking-tighter">Tutor {tutor.user?.first_name} {tutor.user?.last_name}</h5>
-                                                                                {checkTutorConflicts(tutor).length > 0 && (
-                                                                                    <span className="text-[7px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest animate-pulse">Conflict</span>
-                                                                                )}
-                                                                            </div>
-                                                                            <div className="flex justify-between items-center mt-0.5">
-                                                                                <span className="text-[9px] text-slate-500 font-bold truncate tracking-widest">{tutor.qualification || 'Certified Expert'}</span>
-                                                                                <span className="text-[10px] font-black text-slate-900/80 shrink-0 ml-4">₦{parseFloat(tutor.hourly_rate).toLocaleString()}</span>
-                                                                            </div>
-                                                                            {checkTutorConflicts(tutor).length > 0 ? (
-                                                                                <span className="text-[8px] font-black text-rose-500 uppercase tracking-tighter mt-1 bg-rose-500/10 px-2 py-0.5 rounded-lg border border-rose-500/20">Change Time or Choose Another</span>
-                                                                            ) : (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={(e) => { e.stopPropagation(); setSelectedTutorForProfile(tutor); }}
-                                                                                    className="text-[8px] font-black text-blue-600 underline uppercase tracking-tighter mt-1"
-                                                                                >Intro Video →</button>
-                                                                            )}
-                                                                        </div>
-                                                                        {selectedTutorId === tutor.id && <div className="absolute top-0 right-0 h-full w-1.5 bg-blue-600"></div>}
-                                                                    </motion.div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Field label="Parent First Name">
+                                                    <input className={inputCls} value={parent.parentFirstName} onChange={e => setParent(p => ({ ...p, parentFirstName: e.target.value }))} placeholder="Parent's first name" />
+                                                </Field>
+                                                <Field label="Parent Last Name">
+                                                    <input className={inputCls} value={parent.parentLastName} onChange={e => setParent(p => ({ ...p, parentLastName: e.target.value }))} placeholder="Parent's last name" />
+                                                </Field>
+                                                <Field label="Parent Email">
+                                                    <input type="email" className={inputCls} value={parent.parentEmail} onChange={e => setParent(p => ({ ...p, parentEmail: e.target.value }))} placeholder="parent@email.com" />
+                                                </Field>
+                                                <Field label="Parent Password">
+                                                    <input type="password" className={inputCls} value={parent.parentPassword} onChange={e => setParent(p => ({ ...p, parentPassword: e.target.value }))} placeholder="Parent portal password" />
+                                                </Field>
+                                                <Field label="Relationship">
+                                                    <select className={inputCls} value={parent.relationship} onChange={e => setParent(p => ({ ...p, relationship: e.target.value }))}>
+                                                        {['Father', 'Mother', 'Guardian'].map(r => <option key={r}>{r}</option>)}
+                                                    </select>
+                                                </Field>
+                                            </div>
                                         </div>
                                     )}
                                 </motion.div>
                             )}
+
                         </AnimatePresence>
 
-                        {/* Section 6: Guardian Details (Minor only) */}
-                        <AnimatePresence>
-                            {isMinor && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="bg-blue-600/5 border border-blue-600/10 rounded-[3rem] p-8 md:p-10 shadow-2xl space-y-8"
-                                >
-                                    <div className="flex items-center justify-between px-2">
-                                        <SectionHeader step="06" title="Guardian Oversight" colorClass="bg-blue-600/10 text-blue-600" />
-                                        <span className="bg-blue-600/20 text-blue-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] animate-pulse">Required (Minor)</span>
-                                    </div>
-
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent First Name *</label>
-                                            <input type="text" name="parentFirstName" value={formData.parentFirstName} onChange={handleChange} required placeholder="Guardian Name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Relationship</label>
-                                            <select name="relationship" value={formData.relationship} onChange={handleChange} className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all appearance-none cursor-pointer">
-                                                <option className="bg-white">Father</option>
-                                                <option className="bg-white">Mother</option>
-                                                <option className="bg-white">Guardian</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent Email *</label>
-                                            <input type="email" name="parentEmail" value={formData.parentEmail} onChange={handleChange} required placeholder="parent@email.com" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Parent Password *</label>
-                                            <input type="password" name="parentPassword" value={formData.parentPassword} onChange={handleChange} required placeholder="Access Key" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-slate-900 font-bold outline-none focus:border-blue-600/30 transition-all" />
-                                        </div>
-                                    </div>
-                                </motion.div>
+                        {/* Navigation */}
+                        <div className="flex gap-3 mt-6">
+                            {step > 1 && (
+                                <button type="button" onClick={back} className="flex-1 bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                    ← Back
+                                </button>
                             )}
-                        </AnimatePresence>
-
-                        {/* Final Submission */}
-                        <div className="flex flex-col items-center gap-8 pt-12 pb-20">
-                            {(() => {
-                                let subjectFees = 0;
-                                const numSubjects = selectedSubjects.length || 1;
-                                
-                                // Calculate total weekly hours using the same logic as handleSubmit
-                                let totalWeeklyHours = 0;
-                                const validSchedule = formData.schedule.filter(s => s.day && s.time);
-                                if (validSchedule.length > 0) {
-                                    totalWeeklyHours = validSchedule.length * parseFloat(formData.hoursPerSession);
-                                } else {
-                                    totalWeeklyHours = (parseInt(formData.daysPerWeek) || 1) * (parseFloat(formData.hoursPerSession) || 1);
-                                }
-
-                                const hoursPerSubject = totalWeeklyHours / numSubjects;
-                                const baseRate = getRateByLevel(formData.level);
-
-                                selectedSubjects.forEach(subject => {
-                                    const tutorId = subjectEnrollments[subject];
-                                    let rate = baseRate;
-                                    if (tutorId) {
-                                        const tutor = (tutorsBySubject[subject] || []).find(t => t.id === tutorId);
-                                        if (tutor && tutor.hourly_rate) rate = parseFloat(tutor.hourly_rate);
-                                    }
-                                    subjectFees += (rate * hoursPerSubject * 4);
-                                });
-
-                                return selectedSubjects.length > 0 ? (
-                                    <div className="bg-emerald-600/5 border border-emerald-600/10 px-8 py-6 rounded-[2rem] w-full max-w-md flex flex-col items-center">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-4">Accurate Monthly Calculation</p>
-                                        
-                                        <div className="w-full space-y-3 mb-6">
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                                <span>Total Weekly Effort</span>
-                                                <span>{totalWeeklyHours.toFixed(1)} Hours</span>
-                                            </div>
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
-                                                <span>Avg. Hourly Rate</span>
-                                                <span>₦{baseRate.toLocaleString()}</span>
-                                            </div>
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase tracking-tighter border-t border-slate-100 pt-2">
-                                                <span>Monthly Cycle</span>
-                                                <span>4 Weeks</span>
-                                            </div>
-                                        </div>
-
-                                        <h3 className="text-4xl font-black text-slate-900">₦{subjectFees.toLocaleString()}</h3>
-                                        <p className="text-slate-400 text-[10px] mt-2 font-medium">Exactly calculated based on selected duration</p>
-                                    </div>
-                                ) : null;
-                            })()}
-
-                            <motion.button
-                                type="submit"
-                                disabled={loading}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="w-full max-w-md bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
-                            >
-                                {loading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                ) : (
-                                    <>Enroll Scholar <IconArrowRight size={20} /></>
-                                )}
-                            </motion.button>
-
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                                Registered Scholar? <Link to="/login" className="text-blue-600 underline ml-2">Sign In Portal</Link>
-                            </p>
+                            {step < 3 ? (
+                                <button type="button" onClick={next} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
+                                    Continue <ArrowRight size={16} />
+                                </button>
+                            ) : (
+                                <button type="submit" disabled={loading} className="flex-[2] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                                    {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><CheckCircle2 size={16} /> Complete Enrolment</>}
+                                </button>
+                            )}
                         </div>
+
+                        <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mt-6">
+                            Already enrolled? <Link to="/login" className="text-blue-600 hover:underline ml-1">Sign In</Link>
+                        </p>
                     </form>
                 </motion.div>
             </div>
-
-            {/* Tutor Profile Modal */}
-            <AnimatePresence>
-                {selectedTutorForProfile && (
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white border border-slate-100 rounded-[3rem] w-full max-w-4xl overflow-hidden relative shadow-2xl"
-                        >
-                            <button onClick={() => setSelectedTutorForProfile(null)} className="absolute top-6 right-6 w-12 h-12 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center text-slate-600 z-20 border border-slate-200">✕</button>
-
-                            <div className="grid md:grid-cols-2">
-                                <div className="bg-slate-900 aspect-video md:aspect-auto relative">
-                                    {(() => {
-                                        const videoUrl = selectedTutorForProfile.video_url || selectedTutorForProfile.intro_video;
-                                        if (videoUrl) {
-                                            const isYoutube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
-                                            if (isYoutube) {
-                                                let id = '';
-                                                try { id = videoUrl.includes('youtu.be/') ? videoUrl.split('youtu.be/')[1]?.split('?')[0] : new URL(videoUrl).searchParams.get('v'); } catch (_e) { /* ignore */ }
-                                                return <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1&rel=0`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full border-0" title="Intro" />;
-                                            }
-                                            const finalUrl = videoUrl.startsWith('http') ? videoUrl : `${import.meta.env.VITE_API_BASE_URL}${videoUrl}`;
-                                            return <video src={finalUrl} controls className="w-full h-full object-cover" />;
-                                        }
-                                        return (
-                                            <div className="w-full h-full flex flex-col items-center justify-center gap-6 p-12 bg-gradient-to-br from-slate-800 to-slate-900">
-                                                <div className="w-28 h-28 rounded-[2rem] overflow-hidden border-4 border-white/10 shadow-2xl">
-                                                    {selectedTutorForProfile.image
-                                                        ? <img src={selectedTutorForProfile.image.startsWith('http') ? selectedTutorForProfile.image : `${import.meta.env.VITE_API_BASE_URL}${selectedTutorForProfile.image}`} alt={selectedTutorForProfile.user?.first_name} className="w-full h-full object-cover" onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((selectedTutorForProfile.user?.first_name || '') + '+' + (selectedTutorForProfile.user?.last_name || ''))}&background=1e40af&color=fff&size=128`; }} />
-                                                        : <div className="w-full h-full bg-blue-600/10 flex items-center justify-center text-4xl font-black text-blue-600">{selectedTutorForProfile.user?.first_name?.[0]}</div>
-                                                    }
-                                                </div>
-                                                <div className="text-center">
-                                                    <h4 className="text-white font-black text-lg uppercase tracking-tight">{selectedTutorForProfile.user?.first_name} {selectedTutorForProfile.user?.last_name}</h4>
-                                                    <p className="text-blue-400 text-[10px] font-black uppercase tracking-widest mt-1">{selectedTutorForProfile.qualification || 'Certified Educator'}</p>
-                                                </div>
-                                                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest border border-white/10 px-3 py-1 rounded-full">No intro video uploaded</span>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-                                <div className="p-10 space-y-6 flex flex-col justify-between max-h-[80vh] overflow-y-auto">
-                                    <div className="space-y-5">
-                                        <div>
-                                            <h3 className="text-2xl font-black text-slate-900 leading-tight uppercase tracking-tighter">Tutor {selectedTutorForProfile.user?.first_name} {selectedTutorForProfile.user?.last_name}</h3>
-                                            <p className="text-blue-600 font-bold text-[10px] mt-1 uppercase tracking-widest">{selectedTutorForProfile.qualification || 'Certified Global Educator'}</p>
-                                        </div>
-                                        {selectedTutorForProfile.bio && (
-                                            <p className="text-slate-500 text-xs font-medium leading-relaxed italic border-l-2 border-blue-600/30 pl-4">"{selectedTutorForProfile.bio}"</p>
-                                        )}
-                                        <div className="space-y-2 pt-2">
-                                            {selectedTutorForProfile.hourly_rate && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
-                                                    <span className="text-slate-400">Rate</span>
-                                                    <span className="text-blue-600">₦{parseFloat(selectedTutorForProfile.hourly_rate).toLocaleString()} / hr</span>
-                                                </div>
-                                            )}
-                                            {selectedTutorForProfile.experience_years && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
-                                                    <span className="text-slate-400">Experience</span>
-                                                    <span className="text-slate-900">{selectedTutorForProfile.experience_years} Years</span>
-                                                </div>
-                                            )}
-                                            {selectedTutorForProfile.languages && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2 border-b border-slate-100">
-                                                    <span className="text-slate-400">Languages</span>
-                                                    <span className="text-slate-900 text-right w-1/2">{selectedTutorForProfile.languages}</span>
-                                                </div>
-                                            )}
-                                            {selectedTutorForProfile.subjects_to_teach && (
-                                                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest py-2">
-                                                    <span className="text-slate-400">Teaches</span>
-                                                    <span className="text-blue-600 text-right w-1/2">{selectedTutorForProfile.subjects_to_teach}</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <button onClick={() => setSelectedTutorForProfile(null)} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98]">Close Profile</button>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </div>
     );
-};
+}
 
-export default Register;
+const Row = ({ label, value }) => (
+    <div className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
+        <span className="font-bold text-slate-800 text-right max-w-[60%] truncate">{value}</span>
+    </div>
+);

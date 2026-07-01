@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { EmptyState } from './ui';
 
 const NotificationCenter = () => {
     const { user } = useAuth();
@@ -88,9 +90,12 @@ const NotificationCenter = () => {
 
                             <div className="max-h-96 overflow-y-auto">
                                 {notifications.length === 0 ? (
-                                    <div className="p-8 text-center text-slate-400">
-                                        <p className="text-xs">No updates yet. Check back soon!</p>
-                                    </div>
+                                    <EmptyState
+                                        icon={Bell}
+                                        title="All caught up"
+                                        description="No notifications yet. We'll let you know when something happens."
+                                        className="py-10"
+                                    />
                                 ) : (
                                     notifications.map(n => (
                                         <div

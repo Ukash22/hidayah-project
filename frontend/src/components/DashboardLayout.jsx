@@ -112,7 +112,7 @@ const DashboardLayout = ({
                     <button
                         key={item.id}
                         onClick={() => { onTabChange(item.id); setSidebarOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${activeTab === item.id ? t.navActive : t.navHover}`}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${activeTab === item.id ? t.navActive : t.navHover}`}
                     >
                         <span className="text-lg leading-none">{item.icon}</span>
                         <span className="flex-1 text-left">{item.label}</span>
@@ -130,7 +130,7 @@ const DashboardLayout = ({
                 {/* Theme Toggle */}
                 <button
                     onClick={toggleTheme}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${t.themeBtn}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.themeBtn}`}
                 >
                     <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
                     <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -145,13 +145,13 @@ const DashboardLayout = ({
                 </div>
                 <Link
                     to="/"
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${t.homeHover}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.homeHover}`}
                 >
                     <span>🏠</span><span>Home Page</span>
                 </Link>
                 <button
                     onClick={handleLogout}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all ${t.logoutHover}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.logoutHover}`}
                 >
                     <span>🚪</span><span>Logout</span>
                 </button>
@@ -185,9 +185,10 @@ const DashboardLayout = ({
                 <header className={`md:hidden sticky top-0 z-50 ${t.headerBg} border-b px-4 py-3 flex items-center justify-between shadow-sm`}>
                     <button
                         onClick={() => setSidebarOpen(true)}
+                        aria-label="Open navigation menu"
                         className={`p-2.5 rounded-xl ${t.mobileHamBg} transition-all active:scale-90`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={t.mobileHamIcon}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={t.mobileHamIcon} aria-hidden="true">
                             <line x1="4" y1="12" x2="20" y2="12" />
                             <line x1="4" y1="6" x2="20" y2="6" />
                             <line x1="4" y1="18" x2="20" y2="18" />
@@ -198,7 +199,11 @@ const DashboardLayout = ({
                         <span className={`font-black ${t.text} tracking-tight`}>HIDAYAH</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={toggleTheme} className={`p-2 rounded-xl ${t.mobileHamBg} text-lg transition-all`}>
+                        <button
+                            onClick={toggleTheme}
+                            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                            className={`p-2 rounded-xl ${t.mobileHamBg} text-lg transition-all`}
+                        >
                             {isDark ? '☀️' : '🌙'}
                         </button>
                         <NotificationCenter />

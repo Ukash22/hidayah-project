@@ -19,6 +19,7 @@ const CBTInterface = () => {
     const [showCalculator, setShowCalculator] = useState(false);
     const [scoreData, setScoreData] = useState(null);
     const [loadError, setLoadError] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const getAuthHeader = () => {
@@ -139,7 +140,7 @@ const CBTInterface = () => {
             setIsFinished(true);
         } catch (err) {
             console.error("Submission failed", err);
-            alert("Examination submission failed. Please check your internet connection.");
+            setSubmitError("Submission failed. Please check your connection and try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -299,30 +300,42 @@ const CBTInterface = () => {
                             <h2 className="text-2xl font-bold leading-relaxed text-slate-800">{currentQuestion.text}</h2>
                         </div>
 
-                        <div className="grid gap-4">
+                        <fieldset className="grid gap-4">
+                            <legend className="sr-only">Answer options for question {currentQuestionIdx + 1}</legend>
                             {['a', 'b', 'c', 'd'].map(opt => {
                                 const key = opt.toUpperCase();
                                 const isSelected = answers[currentExam.id]?.[currentQuestion.id] === key;
+                                const inputId = `q${currentQuestion.id}-${opt}`;
                                 return (
-                                    <button
-                                        key={opt}
-                                        onClick={() => setAnswers({
-                                            ...answers,
-                                            [currentExam.id]: {
-                                                ...(answers[currentExam.id] || {}),
-                                                [currentQuestion.id]: key
-                                            }
-                                        })}
-                                        className={`group relative flex items-center gap-6 p-6 rounded-3xl border-2 text-left transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20' : 'bg-white border-slate-100 hover:border-blue-600/20 text-slate-700'}`}
-                                    >
-                                        <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-colors ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-600/10 group-hover:text-blue-600'}`}>
-                                            {key}
-                                        </span>
-                                        <span className="font-bold">{currentQuestion[`option_${opt}`]}</span>
-                                    </button>
+                                    <div key={opt}>
+                                        <input
+                                            type="radio"
+                                            id={inputId}
+                                            name={`question-${currentQuestion.id}`}
+                                            value={key}
+                                            checked={isSelected}
+                                            onChange={() => setAnswers({
+                                                ...answers,
+                                                [currentExam.id]: {
+                                                    ...(answers[currentExam.id] || {}),
+                                                    [currentQuestion.id]: key
+                                                }
+                                            })}
+                                            className="sr-only"
+                                        />
+                                        <label
+                                            htmlFor={inputId}
+                                            className={`group relative flex items-center gap-6 p-6 rounded-3xl border-2 text-left transition-all cursor-pointer ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-600/20' : 'bg-white border-slate-100 hover:border-blue-600/20 text-slate-700'}`}
+                                        >
+                                            <span className={`w-10 h-10 rounded-xl flex items-center justify-center font-black transition-colors ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-600/10 group-hover:text-blue-600'}`}>
+                                                {key}
+                                            </span>
+                                            <span className="font-bold">{currentQuestion[`option_${opt}`]}</span>
+                                        </label>
+                                    </div>
                                 );
                             })}
-                        </div>
+                        </fieldset>
 
                         <div className="mt-16 flex justify-between border-t border-slate-800 pt-8">
                             <button
@@ -332,6 +345,11 @@ const CBTInterface = () => {
                             >
                                 ← Previous
                             </button>
+                            {submitError && (
+                                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2">
+                                    {submitError}
+                                </p>
+                            )}
                             <div className="flex gap-4">
                                 <button
                                     onClick={handleSubmit}

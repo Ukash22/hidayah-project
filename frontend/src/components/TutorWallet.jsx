@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import WithdrawalModal from './WithdrawalModal';
 
 const TutorWallet = ({ token }) => {
@@ -31,8 +29,10 @@ const TutorWallet = ({ token }) => {
         }
     }, [token, fetchData]);
 
-    const handleDownloadReceipt = (t) => {
+    const handleDownloadReceipt = async (t) => {
         try {
+            const { jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
             const doc = new jsPDF();
             
             // Brand Header

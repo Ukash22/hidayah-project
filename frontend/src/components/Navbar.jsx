@@ -118,7 +118,7 @@ const Navbar = () => {
                   <span className="text-[10px] font-black text-slate-300 group-hover:text-indigo-600 transition-colors italic">05.</span>
                   <div className="flex flex-col">
                     <span className="text-xl font-black text-slate-900 hover:text-indigo-600 transition-colors tracking-tight">AI Learning Hub</span>
-                    <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Powered by Gemini</span>
+                    <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Powered by AI</span>
                   </div>
                 </Link>
               </>
