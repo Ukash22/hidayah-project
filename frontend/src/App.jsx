@@ -1,16 +1,53 @@
 import React, { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+
+// Parent portal — new nested route architecture
+const ParentShell = lazy(() => import('./pages/parent/ParentShell'))
+const ParentOverview = lazy(() => import('./pages/parent/ParentOverview'))
+
+// Admin portal — new nested route architecture
+const AdminShell = lazy(() => import('./pages/admin/AdminShell'))
+const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'))
+const AdminAdmissions = lazy(() => import('./pages/admin/AdminAdmissions'))
+const AdminStudents = lazy(() => import('./pages/admin/AdminStudents'))
+const AdminTutors = lazy(() => import('./pages/admin/AdminTutors'))
+const AdminRecruitment = lazy(() => import('./pages/admin/AdminRecruitment'))
+const AdminBookings = lazy(() => import('./pages/admin/AdminBookings'))
+const AdminClasses = lazy(() => import('./pages/admin/AdminClasses'))
+const AdminCurriculum = lazy(() => import('./pages/admin/AdminCurriculum'))
+const AdminFinancials = lazy(() => import('./pages/admin/AdminFinancials'))
+const AdminPayouts = lazy(() => import('./pages/admin/AdminPayouts'))
+const AdminWithdrawals = lazy(() => import('./pages/admin/AdminWithdrawals'))
+const AdminComplaints = lazy(() => import('./pages/admin/AdminComplaints'))
+const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'))
+
+// Tutor portal — new nested route architecture
+const TutorShell = lazy(() => import('./pages/tutor/TutorShell'))
+const TutorSchedule = lazy(() => import('./pages/tutor/TutorSchedule'))
+const TutorRequests = lazy(() => import('./pages/tutor/TutorRequests'))
+const TutorWalletPage = lazy(() => import('./pages/tutor/TutorWalletPage'))
+const TutorExams = lazy(() => import('./pages/tutor/TutorExams'))
+const TutorMaterials = lazy(() => import('./pages/tutor/TutorMaterials'))
+const TutorComplaints = lazy(() => import('./pages/tutor/TutorComplaints'))
+const TutorProfilePage = lazy(() => import('./pages/tutor/TutorProfilePage'))
+const TutorMedia = lazy(() => import('./pages/tutor/TutorMedia'))
+
+// Student portal — new nested route architecture
+const StudentShell = lazy(() => import('./pages/student/StudentShell'))
+const StudentOverview = lazy(() => import('./pages/student/StudentOverview'))
+const StudentClasses = lazy(() => import('./pages/student/StudentClasses'))
+const StudentLibrary = lazy(() => import('./pages/student/StudentLibrary'))
+const StudentExams = lazy(() => import('./pages/student/StudentExams'))
+const StudentFinance = lazy(() => import('./pages/student/StudentFinance'))
+const StudentFeedback = lazy(() => import('./pages/student/StudentFeedback'))
+const StudentJambCBT = lazy(() => import('./pages/student/StudentJambCBT'))
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // Optimized Lazy Loading for all major pages
 const Home = lazy(() => import('./pages/Home'))
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const Register = lazy(() => import('./pages/Register'))
 const Login = lazy(() => import('./pages/Login'))
-const TutorDashboard = lazy(() => import('./pages/TutorDashboard'))
-const StudentDashboard = lazy(() => import('./pages/StudentDashboard'))
-const ParentDashboard = lazy(() => import('./pages/ParentDashboard'))
 const PaymentPage = lazy(() => import('./pages/PaymentPage'))
 const PaymentCallback = lazy(() => import('./pages/PaymentCallback'))
 const PendingApproval = lazy(() => import('./pages/PendingApproval'))
@@ -24,16 +61,20 @@ const AIHub = lazy(() => import('./pages/AIHub'))
 const AdminExamManager = lazy(() => import('./pages/AdminExamManager'))
 const AdminQuestionManager = lazy(() => import('./pages/AdminQuestionManager'))
 const LiveClassRoom = lazy(() => import('./pages/LiveClassRoom'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const TermsOfService = lazy(() => import('./pages/TermsOfService'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const TutorProfile = lazy(() => import('./pages/TutorProfile'))
 
 const LoadingOverlay = () => (
-  <div className="fixed inset-0 bg-[#0a0c10] flex flex-col items-center justify-center z-[9999]">
+  <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[9999]">
     <div className="relative">
-      <div className="w-20 h-20 border-4 border-emerald-500/10 border-t-emerald-500 rounded-full animate-spin"></div>
+      <div className="w-20 h-20 border-4 border-primary/10 border-t-primary rounded-full animate-spin"></div>
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="w-12 h-12 bg-emerald-500/20 blur-xl rounded-full animate-pulse"></div>
+        <div className="w-12 h-12 bg-primary/10 blur-xl rounded-full animate-pulse"></div>
       </div>
     </div>
-    <p className="mt-8 text-emerald-500 font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">Hidayah Loading...</p>
+    <p className="mt-8 text-primary font-semibold uppercase tracking-[0.3em] text-[10px] animate-pulse">Hidayah</p>
   </div>
 );
 
@@ -87,15 +128,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
+          {/* Admin standalone tools (must appear before nested /admin parent) */}
           <Route
             path="/admin/exams"
             element={
@@ -112,30 +145,79 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* Admin portal — nested routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <AdminShell />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<AdminOverview />} />
+            <Route path="admissions" element={<AdminAdmissions />} />
+            <Route path="students" element={<AdminStudents />} />
+            <Route path="tutors" element={<AdminTutors />} />
+            <Route path="recruitment" element={<AdminRecruitment />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="classes" element={<AdminClasses />} />
+            <Route path="curriculum" element={<AdminCurriculum />} />
+            <Route path="financials" element={<AdminFinancials />} />
+            <Route path="payouts" element={<AdminPayouts />} />
+            <Route path="withdrawals" element={<AdminWithdrawals />} />
+            <Route path="complaints" element={<AdminComplaints />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+          {/* Tutor portal — nested routes */}
           <Route
             path="/tutor"
             element={
               <ProtectedRoute allowedRoles={['TUTOR', 'ADMIN']}>
-                <TutorDashboard />
+                <TutorShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="schedule" replace />} />
+            <Route path="schedule" element={<TutorSchedule />} />
+            <Route path="requests" element={<TutorRequests />} />
+            <Route path="wallet" element={<TutorWalletPage />} />
+            <Route path="exams" element={<TutorExams />} />
+            <Route path="materials" element={<TutorMaterials />} />
+            <Route path="complaints" element={<TutorComplaints />} />
+            <Route path="profile" element={<TutorProfilePage />} />
+            <Route path="media" element={<TutorMedia />} />
+          </Route>
+          {/* Student portal — nested routes */}
           <Route
             path="/student"
             element={
               <ProtectedRoute allowedRoles={['STUDENT']}>
-                <StudentDashboard />
+                <StudentShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<StudentOverview />} />
+            <Route path="classes" element={<StudentClasses />} />
+            <Route path="library" element={<StudentLibrary />} />
+            <Route path="exams" element={<StudentExams />} />
+            <Route path="jamb" element={<StudentJambCBT />} />
+            <Route path="finance" element={<StudentFinance />} />
+            <Route path="feedback" element={<StudentFeedback />} />
+          </Route>
+          {/* Parent portal — nested routes */}
           <Route
             path="/parent"
             element={
               <ProtectedRoute allowedRoles={['PARENT']}>
-                <ParentDashboard />
+                <ParentShell />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<ParentOverview />} />
+          </Route>
 
           {/* Exam & AI Routes */}
           <Route
@@ -198,8 +280,15 @@ function App() {
             element={<PaymentCallback />}
           />
 
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Public tutor profile */}
+          <Route path="/tutors/:id" element={<TutorProfile />} />
+
+          {/* Legal */}
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
       </Router>

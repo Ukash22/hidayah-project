@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 
@@ -7,6 +8,7 @@ const Login = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -39,6 +41,7 @@ const Login = () => {
 
     return (
         <div className="min-h-screen bg-surface">
+            <title>Sign In — Hidayah</title>
             <Navbar />
             <div className="container pt-32 pb-20">
                 <div className="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
@@ -70,15 +73,26 @@ const Login = () => {
 
                         <div>
                             <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-primary ml-1">Password</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                required
-                                placeholder="••••••••"
-                                className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    name="password"
+                                    id="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    placeholder="••••••••"
+                                    className="w-full px-5 py-3.5 pr-12 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(v => !v)}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                             <div className="flex justify-end mt-2">
                                 <Link to="/forgot-password" name="forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-widest">
                                     Forgot Password?

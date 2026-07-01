@@ -66,7 +66,7 @@ const ExamHub = () => {
 
     return (
         <div className="min-h-screen bg-[#f8fafc]">
-            <Navbar />
+            <title>Exam Practice — Hidayah</title>
             <Navbar />
             <div className="container pt-32 pb-20">
                 {(profile && profile.wallet_balance < 1000) ? (

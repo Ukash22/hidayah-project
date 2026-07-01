@@ -71,6 +71,7 @@ const AIHub = () => {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            <title>AI Learning Hub — Hidayah</title>
             <Navbar />
             <div className="container pt-32 pb-20">
                 {(profile && profile.wallet_balance < 1000) ? (

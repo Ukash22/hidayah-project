@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -75,9 +73,11 @@ const PaymentCallback = () => {
     }, []);
 
 
-    const handleDownloadReceipt = () => {
+    const handleDownloadReceipt = async () => {
         if (!paymentData) return;
         try {
+            const { jsPDF } = await import('jspdf');
+            const { default: autoTable } = await import('jspdf-autotable');
             const doc = new jsPDF();
             
             // Brand Header
