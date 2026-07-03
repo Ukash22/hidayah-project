@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge, getCountryFlag, getLocalTime } from './adminHelpers';
+import { SkeletonCard } from '../../components/ui';
 
 export default function AdminClasses() {
     const navigate = useNavigate();
@@ -29,8 +30,8 @@ export default function AdminClasses() {
     const displayClasses = view === 'regular' ? regularClasses : trialClasses;
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -42,13 +43,13 @@ export default function AdminClasses() {
             <div className="flex bg-slate-100 p-1.5 rounded-2xl w-fit mb-6 gap-1">
                 <button
                     onClick={() => setView('regular')}
-                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'regular' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'regular' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}
                 >
                     Regular Classes ({regularClasses.length})
                 </button>
                 <button
                     onClick={() => setView('trials')}
-                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'trials' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === 'trials' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}
                 >
                     Trial Sessions ({trialClasses.length})
                 </button>
@@ -89,7 +90,7 @@ export default function AdminClasses() {
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase font-black tracking-[0.2em] border-b border-slate-100">
+                            <tr className="bg-slate-50/50 text-slate-500 text-[10px] uppercase font-black tracking-[0.2em] border-b border-slate-100">
                                 <th className="px-6 py-5">Flag</th>
                                 <th className="px-4 py-5">Schedule</th>
                                 <th className="px-4 py-5">Student & Region</th>
@@ -100,7 +101,7 @@ export default function AdminClasses() {
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {displayClasses.length === 0 ? (
-                                <tr><td colSpan="6" className="p-32 text-center text-slate-400 italic">No {view === 'regular' ? 'regular classes' : 'trial sessions'} found.</td></tr>
+                                <tr><td colSpan="6" className="p-32 text-center text-slate-500 italic">No {view === 'regular' ? 'regular classes' : 'trial sessions'} found.</td></tr>
                             ) : displayClasses.map(cls => (
                                 <tr key={cls.id} className={`group hover:bg-slate-50/80 transition-all ${cls.is_live ? 'bg-red-500/5' : ''}`}>
                                     <td className="py-5 px-6">
@@ -119,7 +120,7 @@ export default function AdminClasses() {
                                             {cls.student_name}
                                             <span className={cls.gender === 'Female' ? 'text-pink-400' : 'text-blue-400'}>{cls.gender === 'Female' ? '♀' : '♂'}</span>
                                         </div>
-                                        <div className="text-[10px] text-slate-400 font-bold uppercase mt-1">
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">
                                             {cls.timezone || 'UTC'} · <span className="text-emerald-500">{getLocalTime(cls.timezone)}</span>
                                         </div>
                                     </td>

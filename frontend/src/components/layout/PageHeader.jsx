@@ -15,7 +15,7 @@ export default function PageHeader({ title, description, breadcrumb, actions }) 
                                         {crumb.label}
                                     </Link>
                                 ) : (
-                                    <span className="text-slate-400">{crumb.label}</span>
+                                    <span className="text-slate-500">{crumb.label}</span>
                                 )}
                             </span>
                         ))}
@@ -23,7 +23,7 @@ export default function PageHeader({ title, description, breadcrumb, actions }) 
                 )}
                 <h1 className="text-2xl font-display font-black text-white leading-tight">{title}</h1>
                 {description && (
-                    <p className="text-slate-400 text-sm mt-1">{description}</p>
+                    <p className="text-slate-500 text-sm mt-1">{description}</p>
                 )}
             </div>
             {actions && (

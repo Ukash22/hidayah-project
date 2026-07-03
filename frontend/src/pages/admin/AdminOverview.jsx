@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     PieChart, Pie, Cell
 } from 'recharts';
+import { SkeletonCard } from '../../components/ui';
 
 function StatCard({ icon, label, value, sub, alert: isAlert }) {
     return (
@@ -15,7 +17,7 @@ function StatCard({ icon, label, value, sub, alert: isAlert }) {
                 {isAlert && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
             </div>
             <div className="text-3xl font-black text-slate-800">{value}</div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</div>
+            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</div>
             <div className="text-[9px] text-slate-300 font-bold uppercase tracking-tighter">{sub}</div>
         </div>
     );
@@ -23,6 +25,7 @@ function StatCard({ icon, label, value, sub, alert: isAlert }) {
 
 export default function AdminOverview() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [allStudents, setAllStudents] = useState([]);
     const [tutors, setTutors] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -79,7 +82,7 @@ export default function AdminOverview() {
             setGlobalSuccess(true);
             setTimeout(() => setGlobalSuccess(false), 3000);
         } catch {
-            alert('Failed to update global share. Please ensure value is valid.');
+            toast.error('Failed to update global share. Please ensure value is valid.');
         } finally {
             setUpdatingGlobal(false);
         }
@@ -97,8 +100,8 @@ export default function AdminOverview() {
     })();
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -163,12 +166,12 @@ export default function AdminOverview() {
                             {updatingGlobal ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Syncing...</span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Syncing...</span>
                                 </div>
                             ) : globalSuccess ? (
                                 <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">✓ Live & Dynamic</span>
                             ) : (
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Base Rate for all Subjects</span>
+                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Base Rate for all Subjects</span>
                             )}
                         </div>
                     </div>
@@ -183,7 +186,7 @@ export default function AdminOverview() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* Demographics Pie */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">Platform Demographics</h3>
+                    <h3 className="text-xs font-black text-slate-500 tracking-widest uppercase mb-4">Platform Demographics</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <PieChart>
@@ -209,7 +212,7 @@ export default function AdminOverview() {
 
                 {/* Global Reach Chart */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
+                    <h3 className="text-xs font-black text-slate-500 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <BarChart data={countryData} layout="vertical">
@@ -224,7 +227,7 @@ export default function AdminOverview() {
 
                 {/* System Activity Pipeline */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
+                    <h3 className="text-xs font-black text-slate-500 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <BarChart data={[

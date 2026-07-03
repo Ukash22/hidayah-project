@@ -22,10 +22,10 @@ const TechnicalFields = ({ formData, handleChange, handleFileChange, files, File
 
             <div className="grid md:grid-cols-2 gap-8 mb-8">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Type of Device</label>
+                    <label htmlFor="tutor-deviceType" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Type of Device</label>
                     <div className="relative">
                         <Monitor className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <select name="deviceType" value={formData.deviceType} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-rose-500/30 transition-all appearance-none cursor-pointer font-display">
+                        <select id="tutor-deviceType" name="deviceType" value={formData.deviceType} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-rose-500/30 transition-all appearance-none cursor-pointer font-display">
                             <option value="COMPUTER" className="bg-[#0a0c10]">Computer / Laptop</option>
                             <option value="PHONE" className="bg-[#0a0c10]">Mobile Phone</option>
                             <option value="BOTH" className="bg-[#0a0c10]">Both</option>
@@ -33,10 +33,10 @@ const TechnicalFields = ({ formData, handleChange, handleFileChange, files, File
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Network Quality (WiFi, 4G, Fiber)</label>
+                    <label htmlFor="tutor-networkType" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Network Quality (WiFi, 4G, Fiber)</label>
                     <div className="relative">
                         <Network className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-                        <input type="text" name="networkType" placeholder="Fiber, 4G, ADSL, etc." value={formData.networkType} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-rose-500/30 transition-all font-display" />
+                        <input id="tutor-networkType" type="text" name="networkType" placeholder="Fiber, 4G, ADSL, etc." value={formData.networkType} onChange={handleChange} className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-rose-500/30 transition-all font-display" />
                     </div>
                 </div>
             </div>

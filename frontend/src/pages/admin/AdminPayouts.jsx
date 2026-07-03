@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminPayouts() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [pendingPayouts, setPendingPayouts] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -20,19 +24,19 @@ export default function AdminPayouts() {
     useEffect(() => { fetchPayouts(); }, [fetchPayouts]);
 
     const handleRelease = async (sessionId) => {
-        if (!window.confirm('Release this payout to the tutor\'s wallet?')) return;
+        if (!await confirm("Release this payout to the tutor's wallet?", { confirmLabel: 'Release Funds' })) return;
         try {
             await api.post(`/api/admin/classes/${sessionId}/release-payout/`, {});
-            alert('✅ Payout released successfully!');
+            toast.success('Payout released successfully!');
             fetchPayouts();
         } catch (err) {
-            alert('Failed to release payout: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to release payout: ' + (err.response?.data?.error || err.message));
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -46,21 +50,21 @@ export default function AdminPayouts() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Scheduled At</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parties</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Fee Breakdown</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Scheduled At</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Parties</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Fee Breakdown</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {pendingPayouts.length === 0 ? (
-                                <tr><td colSpan="5" className="p-12 text-center text-slate-400 italic">No pending payouts at the moment.</td></tr>
+                                <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No pending payouts at the moment.</td></tr>
                             ) : pendingPayouts.map(p => (
                                 <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4 whitespace-nowrap">
                                         <div className="text-xs font-bold text-slate-700">{new Date(p.scheduled_at).toLocaleDateString()}</div>
-                                        <div className="text-[9px] text-slate-400">{new Date(p.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        <div className="text-[9px] text-slate-500">{new Date(p.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 text-xs">Student: {p.student_name}</div>

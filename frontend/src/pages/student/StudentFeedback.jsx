@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { MessageSquare as IconMessageSquare } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonTable } from '../../components/ui';
 
 const ComplaintModal = lazy(() => import('../../components/ComplaintModal'));
 
@@ -19,8 +20,8 @@ export default function StudentFeedback() {
     useEffect(() => {
         if (!token) return;
         Promise.all([
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/my/`, { headers: getAuthHeader() }),
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() }),
+            api.get(`/api/complaints/my/`, { headers: getAuthHeader() }),
+            api.get(`/api/students/me/`, { headers: getAuthHeader() }),
         ]).then(([compRes, profRes]) => {
             setComplaints(compRes.data && Array.isArray(compRes.data.filed_by_me) ? compRes.data : { filed_by_me: [], filed_against_me: [] });
             setProfile(profRes.data);
@@ -29,8 +30,8 @@ export default function StudentFeedback() {
     }, [token, getAuthHeader]);
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -48,15 +49,15 @@ export default function StudentFeedback() {
                         {complaints.filed_by_me.length > 0 ? complaints.filed_by_me.map(c => (
                             <div key={c.id} className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
-                                    <span className="bg-slate-50 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-slate-400">{c.status}</span>
-                                    <span className="text-[10px] font-bold text-slate-400">{new Date(c.created_at).toLocaleDateString()}</span>
+                                    <span className="bg-slate-50 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">{c.status}</span>
+                                    <span className="text-[10px] font-bold text-slate-500">{new Date(c.created_at).toLocaleDateString()}</span>
                                 </div>
                                 <h5 className="text-lg font-bold text-slate-900 mb-2">{c.subject}</h5>
                                 <p className="text-xs text-slate-500 leading-relaxed">{c.description}</p>
                             </div>
                         )) : (
                             <div className="py-10 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                                <p className="text-slate-400 font-bold italic text-sm">No complaints filed yet.</p>
+                                <p className="text-slate-500 font-bold italic text-sm">No complaints filed yet.</p>
                             </div>
                         )}
                     </div>

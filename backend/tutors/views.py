@@ -3,7 +3,11 @@
 # pylint: skip-file
 import django_filters
 from rest_framework import viewsets, filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.pagination import LimitOffsetPagination
+import logging
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+
+logger = logging.getLogger(__name__)
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.conf import settings
@@ -27,6 +31,7 @@ class TutorViewSet(viewsets.ModelViewSet):
     queryset = TutorProfile.objects.all().select_related('user').prefetch_related('subjects', 'availabilities')
     serializer_class = TutorProfileSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = LimitOffsetPagination
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend, filters.SearchFilter]
     filterset_class = TutorFilter
     search_fields = ['user__first_name', 'user__last_name', 'qualification', 'city', 'state']
@@ -60,8 +65,8 @@ class TutorViewSet(viewsets.ModelViewSet):
                 'api_key': settings.CLOUDINARY_STORAGE['API_KEY'],
             })
         except Exception as e:
-            print(f"Cloudinary Signature Error: {str(e)}")
-            return Response({"error": f"Failed to generate signature: {str(e)}"}, status=500)
+            logger.error("Cloudinary signature generation failed: %s", e)
+            return Response({"error": "Failed to generate upload signature."}, status=500)
     
     def get_serializer_class(self):
         # Use lightweight serializer for lists and public views to improve performance
@@ -69,6 +74,15 @@ class TutorViewSet(viewsets.ModelViewSet):
             from .serializers import LiteTutorSerializer
             return LiteTutorSerializer
         return super().get_serializer_class()
+
+    def get_permissions(self):
+        # Admin-only workflow endpoints — the viewset default (IsAuthenticatedOrReadOnly)
+        # would otherwise expose these to any user (admin_list even to anonymous GETs).
+        from rest_framework.permissions import IsAdminUser
+        if self.action in ['admin_list', 'admin_action', 'manage', 'assign',
+                           'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return super().get_permissions()
 
     @action(detail=False, methods=['get'], permission_classes=[])
     def public(self, request):
@@ -80,33 +94,26 @@ class TutorViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[])
     def by_subject(self, request):
-        """Return approved tutors who teach a given subject name.
-        Fixed N+1 issues by using bulk lookups.
-        """
+        """Return approved tutors who teach a given subject name."""
+        from django.db.models import Q
         subject_name = request.query_params.get('subject', '').strip()
         queryset = self.get_queryset().filter(status='APPROVED')
 
         if subject_name:
-            # Keyword matching optimization
-            query_keywords = [w.lower() for w in subject_name.replace(',', ' ').split() if len(w) > 2]
-            # Since we have prefetch_related for subjects, we can filter in Python for complex overlaps efficiently
-            # or use Q objects for initial pruning. Here we use Python overlap check for flexibility.
-            matched = []
-            for tutor in queryset:
-                stored = tutor.subjects_to_teach or ''
-                stored_lower = stored.lower()
-                stored_keywords = [w.strip().lower() for w in stored.replace(',', ' ').split() if len(w) > 2]
-                overlap = any(kw in stored_lower for kw in query_keywords) or \
-                          any(kw in subject_name.lower() for kw in stored_keywords)
-                if overlap:
-                    matched.append(tutor)
-            
-            # Fallback
-            if not matched: matched = list(queryset[:12])
+            keywords = [w for w in subject_name.replace(',', ' ').split() if len(w) > 2]
+            if keywords:
+                q = Q()
+                for kw in keywords:
+                    q |= Q(subjects_to_teach__icontains=kw)
+                matched_qs = queryset.filter(q)
+                if not matched_qs.exists():
+                    matched_qs = queryset[:12]
+            else:
+                matched_qs = queryset[:12]
         else:
-            matched = list(queryset[:12])
+            matched_qs = queryset[:12]
 
-        serializer = self.get_serializer(matched, many=True)
+        serializer = self.get_serializer(matched_qs, many=True, context=self.get_serializer_context())
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[])
@@ -124,19 +131,26 @@ class TutorViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='admin/list')
     def admin_list(self, request):
         """Optimized admin list view for recruiter oversight."""
+        from payments.models import Wallet
         queryset = TutorProfile.objects.all().select_related('user').prefetch_related('subjects')
         status = request.query_params.get('status')
         if status:
             queryset = queryset.filter(status=status)
 
-        data = []
-        for t in queryset:
-            # Use request.build_absolute_uri sparingly in loops
-            def safe_url(f):
-                try:
-                    return request.build_absolute_uri(f.url) if f and hasattr(f, 'url') else str(f) if f else None
-                except Exception: return str(f) if f else None
+        tutor_list = list(queryset)
+        user_ids = [t.user_id for t in tutor_list]
 
+        # Bulk wallet lookup — avoids one Wallet.objects.get_or_create() per tutor in the loop
+        wallets = {w.user_id: w.balance for w in Wallet.objects.filter(user_id__in=user_ids)}
+
+        def safe_url(f):
+            try:
+                return request.build_absolute_uri(f.url) if f and hasattr(f, 'url') else str(f) if f else None
+            except Exception:
+                return str(f) if f else None
+
+        data = []
+        for t in tutor_list:
             data.append({
                 'id': t.id,
                 'user_id': t.user.id,
@@ -150,17 +164,25 @@ class TutorViewSet(viewsets.ModelViewSet):
                 'created_at': t.created_at,
                 'image_url': safe_url(t.image),
                 'cv_url': safe_url(t.cv_resume),
-                'wallet_balance': str(t.wallet_balance),
+                'wallet_balance': str(wallets.get(t.user_id, 0)),
                 'commission_percentage': t.commission_percentage,
             })
         return Response(data)
 
+    def list(self, request, *args, **kwargs):
+        from django.core.cache import cache
+        cache_key = f"tutor_list:{request.query_params.urlencode()}"
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached)
+        response = super().list(request, *args, **kwargs)
+        cache.set(cache_key, response.data, timeout=300)
+        return response
+
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Ensure relationships are always fetched to avoid N+1 across all actions
         if self.action in ['list', 'public', 'by_subject', 'retrieve']:
             queryset = queryset.select_related('user').prefetch_related('subjects', 'availabilities')
-        
         if self.action == 'list':
             return queryset.filter(status='APPROVED')
         return queryset
@@ -169,6 +191,8 @@ class TutorViewSet(viewsets.ModelViewSet):
     def admin_action(self, request, app_id=None):
         """Admin recruitment workflow: INTERVIEW, APPROVE, REJECT"""
         from applications.live_class_service import LiveClassService
+        from core.dispatch import run_async
+        from core.tasks import send_tutor_email_task
         
         try:
             profile = TutorProfile.objects.get(id=app_id)
@@ -188,50 +212,31 @@ class TutorViewSet(viewsets.ModelViewSet):
                 profile.interview_at = interview_at
                 profile.interview_link = interview_link
                 profile.save()
-                
-                # Send email
-                try:
-                    from applications.email_service import send_tutor_interview_email
-                    send_tutor_interview_email(profile.user, profile, interview_link)
-                except Exception as e:
-                    print(f"Error sending tutor interview email: {e}")
-                    
+
+                run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'INTERVIEW', '', interview_link)
                 return Response({"message": "Interview scheduled", "link": interview_link})
                 
             elif action_type == 'APPROVE':
                 profile.status = 'APPROVED'
                 profile.save()
-                
-                # Send email
-                try:
-                    from applications.email_service import send_tutor_approval_email
-                    send_tutor_approval_email(profile.user, profile)
-                except Exception as e:
-                    print(f"Error sending tutor approval email: {e}")
-                    
+                run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'APPROVE')
                 return Response({"message": "Tutor approved"})
-                
+
             elif action_type == 'REJECT':
                 reason = request.data.get('reason', '')
                 profile.status = 'REJECTED'
                 profile.rejection_reason = reason
                 profile.save()
-                
-                # Send email
-                try:
-                    from applications.email_service import send_tutor_rejection_email
-                    send_tutor_rejection_email(profile.user, reason)
-                except Exception as e:
-                    print(f"Error sending tutor rejection email: {e}")
-                    
+                run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'REJECT', reason)
                 return Response({"message": "Tutor rejected"})
                 
             return Response({"error": "Invalid action"}, status=400)
             
         except TutorProfile.DoesNotExist:
             return Response({"error": "Tutor profile not found"}, status=404)
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
+        except Exception:
+            logger.exception("Tutor admin action failed")
+            return Response({"error": "Action failed. Please check server logs."}, status=400)
 
 
     @action(detail=False, methods=['post'], permission_classes=[])
@@ -244,7 +249,8 @@ class TutorViewSet(viewsets.ModelViewSet):
         import logging
         logger = logging.getLogger(__name__)
         
-        print(f"DEBUG: Tutor Registration Attempt - Data: {request.data}")
+        # Never log request.data here — it contains the plaintext password.
+        logger.info("Tutor registration attempt: username=%s", request.data.get('username'))
         
         try:
             with transaction.atomic():
@@ -310,19 +316,20 @@ class TutorViewSet(viewsets.ModelViewSet):
                             end_time=end
                         )
                 
-                print(f"DEBUG: Tutor Profile & {len(availability_slots)} slots created successfully for {username}")
+                logger.info("Tutor profile and %d availability slots created for %s", len(availability_slots), username)
                 return Response({"message": "Tutor application submitted successfully!"}, status=201)
                 
         except Exception as e:
-            error_msg = str(e)
-            print(f"CRITICAL: Tutor Registration Error: {error_msg}")
+            logger.exception("Tutor registration failed")
             # If we already returned a Response above, this catch won't trigger if it was inside the block, 
             # but for safety we catch everything here.
-            return Response({"detail": f"Server Error: {error_msg}"}, status=400)
+            return Response({"detail": "Registration failed. Please check your details and try again."}, status=400)
 
     @action(detail=True, methods=['patch'])
     def update_profile(self, request, pk=None):
         instance = self.get_object()
+        if instance.user_id != request.user.id and not request.user.is_staff:
+            return Response({"error": "You can only update your own profile."}, status=403)
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -453,8 +460,9 @@ class TutorViewSet(viewsets.ModelViewSet):
             return Response({"error": "Student profile not found"}, status=404)
         except TutorProfile.DoesNotExist:
             return Response({"error": "Tutor not found"}, status=404)
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
+        except Exception:
+            logger.exception("Tutor admin action failed")
+            return Response({"error": "Action failed. Please check server logs."}, status=400)
 
     @action(detail=False, methods=['get'], permission_classes=[])
     def by_subject(self, request):

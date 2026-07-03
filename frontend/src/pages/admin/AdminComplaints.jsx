@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
+import { SkeletonCard } from '../../components/ui';
 
 export default function AdminComplaints() {
+    const toast = useToast();
     const [allComplaints, setAllComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -25,16 +28,16 @@ export default function AdminComplaints() {
         if (!responseText) return;
         try {
             await api.post(`/api/complaints/admin/${id}/resolve/`, { response: responseText });
-            alert('Complaint resolved and response sent!');
+            toast.success('Complaint resolved and response sent!');
             fetchComplaints();
         } catch (err) {
-            alert('Failed to resolve complaint: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to resolve complaint: ' + (err.response?.data?.error || err.message));
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -48,16 +51,16 @@ export default function AdminComplaints() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parties</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Subject</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Parties</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {allComplaints.length === 0 ? (
-                                <tr><td colSpan="5" className="p-12 text-center text-slate-400 italic">No complaints found.</td></tr>
+                                <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No complaints found.</td></tr>
                             ) : allComplaints.map(c => (
                                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4">

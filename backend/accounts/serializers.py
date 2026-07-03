@@ -55,11 +55,11 @@ class PendingStudentSerializer(serializers.ModelSerializer):
 
     def get_profile_data(self, obj):
         try:
-            from students.models import StudentProfile
             from students.serializers import StudentProfileSerializer
-            profile = StudentProfile.objects.get(user=obj)
-            return StudentProfileSerializer(profile).data
-        except:
+            # student_profile is a OneToOneField reverse accessor;
+            # select_related in the view pre-loads it — no extra query here
+            return StudentProfileSerializer(obj.student_profile).data
+        except Exception:
             return None
 
 from .models import Notification
@@ -260,8 +260,8 @@ class RegisterSerializer(serializers.ModelSerializer):
                 try: 
                     t_id = int(preferred_tutor_id)
                     final_tutor = User.objects.filter(id=t_id, role='TUTOR').first()
-                except: 
-                    pass
+                except (ValueError, TypeError):
+                    pass  # non-numeric tutor id — fall through to admin assignment
 
             profile = StudentProfile.objects.create(
                 user=user,

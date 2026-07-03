@@ -1,9 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) => {
+    const toast = useToast();
     const [amount, setAmount] = useState('');
     const [frequency, setFrequency] = useState('WEEKLY');
     const [loading, setLoading] = useState(false);
@@ -21,13 +23,13 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
         }
 
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/withdrawal/`,
+            await api.post(
+                `/api/payments/tutor/withdrawal/`,
                 { amount: parseFloat(amount) },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            alert('✅ Withdrawal request submitted successfully!');
+            toast.success('Withdrawal request submitted successfully!');
             setAmount('');
             onClose();
             if (onSuccess) onSuccess();
@@ -53,7 +55,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
 
                         <button 
                             onClick={onClose} 
-                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-500 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
                         >
                             ✕
                         </button>
@@ -81,8 +83,10 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Request Amount (₦)</label>
+                                <label htmlFor="withdrawal_amount" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Request Amount (₦)</label>
                                 <input
+                                    id="withdrawal_amount"
+                                    name="withdrawal_amount"
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
@@ -95,8 +99,10 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Payout Frequency</label>
+                                <label htmlFor="withdrawal_frequency" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Payout Frequency</label>
                                 <select
+                                    id="withdrawal_frequency"
+                                    name="withdrawal_frequency"
                                     value={frequency}
                                     onChange={(e) => setFrequency(e.target.value)}
                                     className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-[#0f172a] focus:border-emerald-500/50 outline-none transition-all font-bold text-slate-300 text-sm"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +12,7 @@ const AdmissionPortal = () => {
 
     const fetchProfile = React.useCallback(async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, {
+            const response = await api.get(`/api/students/me/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProfile(response.data);
@@ -80,7 +80,7 @@ const AdmissionPortal = () => {
                                     ⬇ Download PDF
                                 </a>
                             ) : (
-                                <div className="text-center text-slate-400 italic text-sm">
+                                <div className="text-center text-slate-500 italic text-sm">
                                     Generating your admission letter...
                                 </div>
                             )}

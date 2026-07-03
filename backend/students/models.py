@@ -18,7 +18,7 @@ class StudentProfile(models.Model):
     
     # Status & Admission
     approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='PENDING')
-    payment_status = models.CharField(max_length=20, default='UNPAID', choices=(('UNPAID', 'Unpaid'), ('PAID', 'Paid'), ('PARTIAL', 'Partial')))
+    payment_status = models.CharField(max_length=20, default='UNPAID', db_index=True, choices=(('UNPAID', 'Unpaid'), ('PAID', 'Paid'), ('PARTIAL', 'Partial')))
     admission_letter = models.FileField(upload_to='admission_letters/', null=True, blank=True)
     admission_date = models.DateField(null=True, blank=True)
     # Location & Level

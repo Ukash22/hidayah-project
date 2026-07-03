@@ -1,9 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect, memo } from 'react';
+import api from '../services/api';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { useToast } from '../context/ToastContext';
+
+const examTypeColors = {
+    JAMB: 'bg-blue-100 text-blue-700',
+    WAEC: 'bg-emerald-100 text-emerald-700',
+    NECO: 'bg-violet-100 text-violet-700',
+    JSSCE: 'bg-amber-100 text-amber-700',
+    PRIMARY: 'bg-rose-100 text-rose-700',
+};
+
+const ExamRow = memo(function ExamRow({ exam, onEdit, onAssign }) {
+    return (
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex justify-between items-center transition-all hover:shadow-md">
+            <div className="flex items-center gap-8">
+                <div className="p-4 bg-slate-50 rounded-2xl text-2xl">📝</div>
+                <div>
+                    <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-xl font-bold text-slate-800">{exam.title}</h3>
+                        <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-tighter ${examTypeColors[exam.exam_type] || 'bg-slate-100 text-slate-600'}`}>
+                            {exam.exam_type}
+                        </span>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium">
+                        {exam.subject_name} • {exam.year || 'No Year'} • {exam.duration_minutes} Mins •{' '}
+                        <span className={exam.question_count > 0 ? 'text-emerald-600 font-bold' : 'text-red-400 font-bold'}>
+                            {exam.question_count} Questions
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div className="flex gap-3 flex-wrap justify-end">
+                <button onClick={() => onEdit(exam)} className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-primary hover:text-white transition-all text-sm font-bold">
+                    ✏️ Edit
+                </button>
+                <Link to={`/admin/exams/${exam.id}/questions`} className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-secondary hover:text-white transition-all text-sm font-bold">
+                    📂 Questions
+                </Link>
+                <button onClick={() => onAssign(exam)} className="p-3 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all text-sm font-bold">
+                    🎓 Assign
+                </button>
+            </div>
+        </div>
+    );
+});
 
 const AdminExamManager = () => {
+    const toast = useToast();
     const [exams, setExams] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [students, setStudents] = useState([]);
@@ -34,9 +79,9 @@ const AdminExamManager = () => {
         const fetchData = async () => {
             try {
                 const [examsRes, subjectsRes, studentsRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() }),
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() }),
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/admin/all/`, { headers: getAuthHeader() })
+                    api.get(`/api/exams/list/`, { headers: getAuthHeader() }),
+                    api.get(`/api/programs/subjects/`, { headers: getAuthHeader() }),
+                    api.get(`/api/students/admin/all/`, { headers: getAuthHeader() })
                 ]);
                 setExams(examsRes.data);
                 setSubjects(subjectsRes.data);
@@ -54,25 +99,25 @@ const AdminExamManager = () => {
         e.preventDefault();
         try {
             if (editingExam) {
-                await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/${editingExam.id}/`, formData, { headers: getAuthHeader() });
+                await api.patch(`/api/exams/list/${editingExam.id}/`, formData, { headers: getAuthHeader() });
             } else {
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, formData, { headers: getAuthHeader() });
+                await api.post(`/api/exams/list/`, formData, { headers: getAuthHeader() });
             }
             window.location.reload();
         } catch (err) {
-            alert('Error saving exam: ' + (err.response?.data?.detail || err.message));
+            toast.error('Error saving exam: ' + (err.response?.data?.detail || err.message));
         }
     };
 
     const handleAssignExam = async () => {
         if (selectedStudents.length === 0) {
-            alert('Please select at least one student.');
+            toast.warning('Please select at least one student.');
             return;
         }
         setAssigning(true);
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/bulk-assign/`,
+            await api.post(
+                `/api/exams/assignments/bulk-assign/`,
                 {
                     exam: assigningExam.id,
                     students: selectedStudents,
@@ -80,12 +125,12 @@ const AdminExamManager = () => {
                 },
                 { headers: getAuthHeader() }
             );
-            alert(`✅ Exam "${assigningExam.title}" assigned to ${selectedStudents.length} student(s) successfully!`);
+            toast.success(`Exam "${assigningExam.title}" assigned to ${selectedStudents.length} student(s)!`);
             setShowAssignModal(false);
             setSelectedStudents([]);
             setAssigningExam(null);
         } catch (err) {
-            alert('Failed to assign exam: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to assign exam: ' + (err.response?.data?.error || err.message));
         } finally {
             setAssigning(false);
         }
@@ -110,17 +155,8 @@ const AdminExamManager = () => {
         return name.includes(studentSearch.toLowerCase());
     });
 
-    // Group subjects by program type
     const islamicSubjects = subjects.filter(s => s.program_type === 'ISLAMIC');
     const westernSubjects = subjects.filter(s => s.program_type !== 'ISLAMIC');
-
-    const examTypeColors = {
-        JAMB: 'bg-blue-100 text-blue-700',
-        WAEC: 'bg-emerald-100 text-emerald-700',
-        NECO: 'bg-violet-100 text-violet-700',
-        JSSCE: 'bg-amber-100 text-amber-700',
-        PRIMARY: 'bg-rose-100 text-rose-700',
-    };
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -146,47 +182,17 @@ const AdminExamManager = () => {
                 ) : exams.length === 0 ? (
                     <div className="bg-white rounded-[2rem] p-20 text-center border border-dashed border-slate-200">
                         <p className="text-5xl mb-4">📝</p>
-                        <p className="text-slate-400 font-medium">No exams created yet. Create your first exam above.</p>
+                        <p className="text-slate-500 font-medium">No exams created yet. Create your first exam above.</p>
                     </div>
                 ) : (
                     <div className="grid gap-6">
                         {exams.map(exam => (
-                            <div key={exam.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex justify-between items-center transition-all hover:shadow-md">
-                                <div className="flex items-center gap-8">
-                                    <div className="p-4 bg-slate-50 rounded-2xl text-2xl">📝</div>
-                                    <div>
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <h3 className="text-xl font-bold text-slate-800">{exam.title}</h3>
-                                            <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-tighter ${examTypeColors[exam.exam_type] || 'bg-slate-100 text-slate-600'}`}>
-                                                {exam.exam_type}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-slate-400 font-medium">
-                                            {exam.subject_name} • {exam.year || 'No Year'} • {exam.duration_minutes} Mins •{' '}
-                                            <span className={exam.question_count > 0 ? 'text-emerald-600 font-bold' : 'text-red-400 font-bold'}>
-                                                {exam.question_count} Questions
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-3 flex-wrap justify-end">
-                                    <button
-                                        onClick={() => { setEditingExam(exam); setFormData({ title: exam.title, exam_type: exam.exam_type, subject: exam.subject, year: exam.year, duration_minutes: exam.duration_minutes }); setShowModal(true); }}
-                                        className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-primary hover:text-white transition-all text-sm font-bold"
-                                    >
-                                        ✏️ Edit
-                                    </button>
-                                    <Link to={`/admin/exams/${exam.id}/questions`} className="p-3 bg-slate-50 text-slate-600 rounded-xl hover:bg-secondary hover:text-white transition-all text-sm font-bold">
-                                        📂 Questions
-                                    </Link>
-                                    <button
-                                        onClick={() => openAssignModal(exam)}
-                                        className="p-3 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-white transition-all text-sm font-bold"
-                                    >
-                                        🎓 Assign
-                                    </button>
-                                </div>
-                            </div>
+                            <ExamRow
+                                key={exam.id}
+                                exam={exam}
+                                onEdit={(e) => { setEditingExam(e); setFormData({ title: e.title, exam_type: e.exam_type, subject: e.subject, year: e.year, duration_minutes: e.duration_minutes }); setShowModal(true); }}
+                                onAssign={openAssignModal}
+                            />
                         ))}
                     </div>
                 )}
@@ -196,12 +202,12 @@ const AdminExamManager = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
                     <div className="bg-white rounded-[2.5rem] w-full max-w-xl p-12 relative shadow-2xl">
-                        <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                        <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-slate-600 text-xl">✕</button>
                         <h2 className="text-3xl font-display text-primary mb-8">{editingExam ? 'Edit' : 'Create'} Examination</h2>
 
                         <form onSubmit={handleCreateOrUpdate} className="space-y-6">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Title</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Title</label>
                                 <input
                                     type="text" required
                                     className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:border-primary/30 focus:outline-none transition-colors"
@@ -212,7 +218,7 @@ const AdminExamManager = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Category</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Category</label>
                                     <select
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
                                         value={formData.exam_type}
@@ -226,7 +232,7 @@ const AdminExamManager = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Subject</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Subject</label>
                                     <select
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
                                         value={formData.subject}
@@ -252,7 +258,7 @@ const AdminExamManager = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Year</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Year</label>
                                     <input
                                         type="number" required
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
@@ -261,7 +267,7 @@ const AdminExamManager = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Duration (Mins)</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Duration (Mins)</label>
                                     <input
                                         type="number" required
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
@@ -295,7 +301,7 @@ const AdminExamManager = () => {
                         <div className="p-8 space-y-5">
                             {/* Search */}
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Search Students</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Search Students</label>
                                 <input
                                     type="text"
                                     placeholder="Type name or username..."
@@ -308,7 +314,7 @@ const AdminExamManager = () => {
                             {/* Student List */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
                                         Select Students ({selectedStudents.length} selected)
                                     </label>
                                     {filteredStudents.length > 0 && (
@@ -326,7 +332,7 @@ const AdminExamManager = () => {
                                 </div>
                                 <div className="max-h-56 overflow-y-auto border border-slate-100 rounded-2xl divide-y divide-slate-50">
                                     {filteredStudents.length === 0 ? (
-                                        <p className="p-6 text-center text-slate-400 text-sm italic">No students found.</p>
+                                        <p className="p-6 text-center text-slate-500 text-sm italic">No students found.</p>
                                     ) : filteredStudents.map(s => {
                                         const uid = s.user?.id || s.id;
                                         const isSelected = selectedStudents.includes(uid);
@@ -346,7 +352,7 @@ const AdminExamManager = () => {
                                                     <p className="font-bold text-slate-800 text-sm">
                                                         {s.user?.first_name} {s.user?.last_name}
                                                     </p>
-                                                    <p className="text-[11px] text-slate-400">@{s.user?.username}</p>
+                                                    <p className="text-[11px] text-slate-500">@{s.user?.username}</p>
                                                 </div>
                                             </button>
                                         );
@@ -356,7 +362,7 @@ const AdminExamManager = () => {
 
                             {/* Due Date */}
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Due Date (Optional)</label>
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Due Date (Optional)</label>
                                 <input
                                     type="datetime-local"
                                     className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none text-sm"

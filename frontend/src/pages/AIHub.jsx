@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 
 const AIHub = () => {
@@ -22,8 +22,8 @@ const AIHub = () => {
         const fetchState = async () => {
             try {
                 const [subjRes, profRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() }),
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() })
+                    api.get(`/api/programs/subjects/`, { headers: getAuthHeader() }),
+                    api.get(`/api/students/me/`, { headers: getAuthHeader() })
                 ]);
                 setSubjects(subjRes.data);
                 setProfile(profRes.data);
@@ -41,7 +41,7 @@ const AIHub = () => {
         setIsSubmitted(false);
         setShowAnswers(false);
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/ai/questions/generate/`, selection);
+            const res = await api.post(`/api/ai/questions/generate/`, selection);
             setGenerated(res.data.questions);
         } catch (err) {
             console.error(err);
@@ -105,7 +105,7 @@ const AIHub = () => {
                             <h2 className="text-2xl font-display text-primary mb-8">AI Question Generator</h2>
                             <div className="space-y-6">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Subject</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Subject</label>
                                     <select
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100"
                                         value={selection.subject_id}
@@ -116,13 +116,13 @@ const AIHub = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Exam Category</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Exam Category</label>
                                     <div className="flex gap-2">
                                         {['JAMB', 'WAEC', 'NECO'].map(type => (
                                             <button
                                                 key={type}
                                                 onClick={() => setSelection({ ...selection, exam_type: type })}
-                                                className={`flex-1 py-3 rounded-xl border-2 transition-all font-bold text-xs ${selection.exam_type === type ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
+                                                className={`flex-1 py-3 rounded-xl border-2 transition-all font-bold text-xs ${selection.exam_type === type ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-50 bg-slate-50 text-slate-500'}`}
                                             >
                                                 {type}
                                             </button>
@@ -140,7 +140,7 @@ const AIHub = () => {
 
                             {isSubmitted && (
                                 <div className="mt-12 pt-8 border-t border-slate-100 text-center">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Final Result</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Final Result</span>
                                     <div className={`text-5xl font-black mb-4 ${score >= 70 ? 'text-green-600' : score >= 40 ? 'text-amber-500' : 'text-red-500'}`}>
                                         {Math.round(score)}%
                                     </div>

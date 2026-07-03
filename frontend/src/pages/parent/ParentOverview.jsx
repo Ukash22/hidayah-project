@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 export default function ParentOverview() {
     const { user } = useAuth();
+    const toast = useToast();
     const [children, setChildren] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -39,13 +42,13 @@ export default function ParentOverview() {
             window.location.href = '/student';
         } catch (err) {
             console.error('Impersonation failed:', err);
-            alert('Failed to securely connect to child dashboard.');
+            toast.error('Failed to securely connect to child dashboard.');
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -67,7 +70,7 @@ export default function ParentOverview() {
                                     <h4 className="text-xl font-bold text-primary">
                                         {child.full_name || `${child.user_details?.first_name || ''} ${child.user_details?.last_name || ''}`.trim()}
                                     </h4>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
                                         Admission ID: {child.user_details?.admission_number || 'N/A'}
                                     </p>
                                 </div>
@@ -78,11 +81,11 @@ export default function ParentOverview() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bg-white/50 p-4 rounded-xl border border-slate-100">
-                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Course</span>
+                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Course</span>
                                     <span className="text-sm font-bold text-primary">{child.enrolled_course || 'Not Assigned'}</span>
                                 </div>
                                 <div className="bg-white/50 p-4 rounded-xl border border-slate-100">
-                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Class Type</span>
+                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Class Type</span>
                                     <span className="text-sm font-bold text-primary">{child.class_type?.replace('_', ' ')}</span>
                                 </div>
                             </div>
@@ -112,7 +115,7 @@ export default function ParentOverview() {
 
                             <div className="mt-6 pt-6 border-t border-slate-200/60 flex items-center justify-between">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Weekly Schedule</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Weekly Schedule</span>
                                     <span className="text-xs font-bold text-primary">{child.days_per_week} Days ({child.preferred_days || 'Not set'})</span>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -133,7 +136,7 @@ export default function ParentOverview() {
                     ))
                 ) : (
                     <div className="col-span-full bg-slate-50/50 p-12 rounded-[2rem] border border-dashed border-slate-200 text-center">
-                        <p className="text-slate-400 font-bold">No children registered under this account.</p>
+                        <p className="text-slate-500 font-bold">No children registered under this account.</p>
                         <Link to="/register" className="text-blue-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">
                             Register a Student →
                         </Link>

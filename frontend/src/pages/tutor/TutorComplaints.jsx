@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 function getStatusBadge(status) {
     const colors = {
@@ -21,15 +22,15 @@ export default function TutorComplaints() {
 
     useEffect(() => {
         if (!token) return;
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/complaints/my/`, { headers: getAuthHeader() })
+        api.get(`/api/complaints/my/`, { headers: getAuthHeader() })
             .then(res => setComplaints(res.data && Array.isArray(res.data.filed_by_me) ? res.data : { filed_by_me: [], filed_against_me: [] }))
             .catch(err => console.error('Complaints fetch failed', err))
             .finally(() => setLoading(false));
     }, [token, getAuthHeader]);
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -55,7 +56,7 @@ export default function TutorComplaints() {
                                         </span>
                                     </div>
                                     <p className="text-sm text-slate-500 mb-4 font-medium leading-relaxed">{complaint.description}</p>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg inline-block">Against: {complaint.filed_against_name}</p>
+                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg inline-block">Against: {complaint.filed_against_name}</p>
 
                                     {complaint.admin_response && (
                                         <div className="mt-6 bg-blue-50 p-5 rounded-2xl border border-blue-100">
@@ -68,7 +69,7 @@ export default function TutorComplaints() {
                         </div>
                     ) : (
                         <div className="py-20 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold">No active reports filed.</p>
+                            <p className="text-slate-500 font-bold">No active reports filed.</p>
                         </div>
                     )}
                 </div>
@@ -89,11 +90,11 @@ export default function TutorComplaints() {
                                         </span>
                                     </div>
                                     <p className="text-sm text-slate-500 mb-4 font-medium leading-relaxed">{complaint.description}</p>
-                                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg inline-block">From: {complaint.filed_by_name}</p>
+                                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest bg-white px-3 py-1.5 rounded-lg inline-block">From: {complaint.filed_by_name}</p>
 
                                     {complaint.admin_response && (
                                         <div className="mt-6 bg-white p-5 rounded-2xl border border-slate-100">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Resolution Notes:</p>
+                                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Resolution Notes:</p>
                                             <p className="text-sm text-slate-600 font-medium leading-relaxed">{complaint.admin_response}</p>
                                         </div>
                                     )}
@@ -102,7 +103,7 @@ export default function TutorComplaints() {
                         </div>
                     ) : (
                         <div className="py-20 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                            <p className="text-slate-400 font-bold">Your record is perfectly clean! ✨</p>
+                            <p className="text-slate-500 font-bold">Your record is perfectly clean! ✨</p>
                         </div>
                     )}
                 </div>

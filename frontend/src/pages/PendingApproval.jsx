@@ -25,7 +25,7 @@ const PendingApproval = () => {
                             <span className="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
                             Onboarding Sequence:
                         </h3>
-                        <ul className="space-y-4 text-sm text-slate-400 font-medium">
+                        <ul className="space-y-4 text-sm text-slate-500 font-medium">
                             <li className="flex items-start gap-4">
                                 <span className="w-6 h-6 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center text-xs font-black">1</span>
                                 <span>We will verify your submitted credentials and academic background.</span>
@@ -45,7 +45,7 @@ const PendingApproval = () => {
                         Return to Global Hub →
                     </Link>
 
-                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-xs text-slate-400">
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-6 text-xs text-slate-500">
                         <Link to="/terms" className="hover:text-blue-600 transition-colors">Terms of Service</Link>
                         <Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link>
                     </div>

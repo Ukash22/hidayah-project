@@ -23,7 +23,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
                     </div>
                     <div>
                         <p className="font-black text-white tracking-tight leading-none">HIDAYAH</p>
-                        <p className="text-[8px] font-black uppercase tracking-[0.15em] text-blue-400 opacity-80">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-blue-400 opacity-80">
                             {PORTAL_LABEL[role] || 'Portal'}
                         </p>
                     </div>
@@ -37,7 +37,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
                         {user?.first_name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="overflow-hidden">
-                        <p className="text-white font-black text-sm truncate leading-none">
+                        <p className="text-white font-semibold text-sm truncate leading-none">
                             {user?.first_name} {user?.last_name}
                         </p>
                         <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-0.5 truncate">
@@ -59,7 +59,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
                 <button
                     onClick={onToggleTheme}
                     aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all bg-white/5 hover:bg-white/10 text-slate-500 border border-white/10"
                 >
                     <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
                     <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
@@ -70,7 +70,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
 
                 <div className="flex items-center justify-between px-2 py-1">
                     <NotificationCenter />
-                    <span className="text-slate-600 text-[9px] font-black uppercase tracking-widest">Alerts</span>
+                    <span className="text-slate-600 text-[9px] font-semibold uppercase tracking-widest">Alerts</span>
                 </div>
 
                 <Link

@@ -29,26 +29,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-mz8str1t$b3(46n3@)^99ije#lciwj!=roqey#2%nxir*s^4^s")
+SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "*").split(",") if host.strip()]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+if DEBUG and "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
-# In case the env variable is set but doesn't include the backend domain, explicitly add it
-if "*" not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.extend(["*", "hidayah-backend-zgix.onrender.com", "localhost", "127.0.0.1"])
-
-# Needed on Render because it sits behind a proxy router that handles SSL/TLS
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# Add CSRF_TRUSTED_ORIGINS to allow logging into the admin panel on Render
 CSRF_TRUSTED_ORIGINS = [
     'https://hidayah-backend-zgix.onrender.com',
     'https://hidayah-frontend.onrender.com',
     'http://localhost:5173',
     'http://localhost:5174',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
     'https://localhost',
     'capacitor://localhost',
     'http://localhost',
@@ -61,8 +57,15 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5174',
 ]
 
-# Security settings for production
-if not DEBUG:
+if DEBUG:
+    # Local dev: plain HTTP, no proxy — explicit safe defaults so admin cookies work
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+else:
+    # Production: Render sits behind an HTTPS proxy
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
@@ -84,6 +87,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     'corsheaders',
     'channels',
     'core',
@@ -166,6 +170,23 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
+
+# Cache Configuration — uses the same Redis instance as Channels
+_redis_url = os.getenv('REDIS_URL')
+if _redis_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _redis_url,
+            "KEY_PREFIX": "hidayah",
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 
 
 # Database
@@ -268,12 +289,65 @@ BACKEND_URL = os.getenv('BACKEND_URL', 'https://hidayah-backend-zgix.onrender.co
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/minute',
+        'user': '300/minute',
+    },
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# OpenAPI schema & docs (/api/schema/, /api/docs/) — staff-only in production
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Hidayah International API',
+    'DESCRIPTION': 'Tutoring platform API — students, tutors, classes, payments, exams.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAdminUser'] if not DEBUG else ['rest_framework.permissions.AllowAny'],
+    'SWAGGER_UI_SETTINGS': {'persistAuthorization': True},
+}
+
+# Celery — uses the same Redis instance as Channels and the cache layer
+CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Logging — everything to stdout (Render captures and retains it).
+# The payments logger runs at DEBUG so the payment init/verify trail
+# (references + success flags only, no gateway payloads) is visible in production.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'standard',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'payments': {'level': 'DEBUG'},
+        'django.request': {'level': 'WARNING'},
+    },
 }
 
 from datetime import timedelta

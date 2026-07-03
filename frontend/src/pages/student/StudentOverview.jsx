@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import api from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard as IconLayoutDashboard, Download as IconDownload, Plus as IconPlus,
@@ -10,14 +11,16 @@ import {
     Search as IconSearch, Clock as IconClock, Calendar as IconCalendar, PlayCircle as IconPlayCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, SkeletonCard, FetchError } from '../../components/ui';
 
 const ITEM_VARIANTS = { hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1 } };
 
 export default function StudentOverview() {
     const { user, token } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const [profile, setProfile] = useState(null);
     const [classes, setClasses] = useState([]);
@@ -25,6 +28,7 @@ export default function StudentOverview() {
     const [examAssignments, setExamAssignments] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
 
     const [showEnrollModal, setShowEnrollModal] = useState(false);
     const [availableSubjects, setAvailableSubjects] = useState([]);
@@ -42,27 +46,29 @@ export default function StudentOverview() {
 
     const fetchData = useCallback(async () => {
         if (!token) return;
+        setLoadError(false);
         try {
             const [profRes, classRes, bookingRes, examAsgnRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() }),
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/sessions/`, { headers: getAuthHeader() }),
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/booking/request/`, { headers: getAuthHeader() }),
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/`, { headers: getAuthHeader() }),
+                api.get(`/api/students/me/`, { headers: getAuthHeader() }),
+                api.get(`/api/classes/sessions/`, { headers: getAuthHeader() }),
+                api.get(`/api/classes/booking/request/`, { headers: getAuthHeader() }),
+                api.get(`/api/exams/assignments/`, { headers: getAuthHeader() }),
             ]);
             setProfile(profRes.data);
-            setClasses(Array.isArray(classRes.data) ? classRes.data : classRes.data.classes || []);
+            setClasses(Array.isArray(classRes.data) ? classRes.data : (classRes.data.results || classRes.data.classes || []));
             setBookings(Array.isArray(bookingRes.data) ? bookingRes.data : []);
             setExamAssignments(Array.isArray(examAsgnRes.data) ? examAsgnRes.data : []);
 
             try {
-                const notifRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, { headers: getAuthHeader() });
+                const notifRes = await api.get(`/api/auth/notifications/`, { headers: getAuthHeader() });
                 setNotifications(notifRes.data.slice(0, 3));
             } catch { /* non-critical */ }
 
-            const subRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/programs/subjects/`, { headers: getAuthHeader() });
+            const subRes = await api.get(`/api/programs/subjects/`, { headers: getAuthHeader() });
             setAvailableSubjects(subRes.data);
         } catch (err) {
             console.error('Overview fetch failed', err);
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -72,7 +78,7 @@ export default function StudentOverview() {
 
     const fetchTutorsForSubject = useCallback(async (subjectName) => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
+            const res = await api.get(`/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
             setAvailableTutors(res.data);
             if (res.data.length > 0) {
                 const t = res.data[0];
@@ -131,27 +137,27 @@ export default function StudentOverview() {
         if (!enrollData.subject_id || !enrollData.tutor_id) return;
         setEnrolling(true);
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/students/enroll-subject/`,
+            await api.post(`/api/students/enroll-subject/`,
                 { ...enrollData, days_per_week: enrollData.schedule.length },
                 { headers: getAuthHeader() }
             );
-            alert('✅ Enrollment requested! Tutor has been notified.');
+            toast.success('Enrollment requested! Tutor has been notified.');
             setShowEnrollModal(false);
             fetchData();
         } catch (err) {
-            alert('❌ Error: ' + (err.response?.data?.error || 'Failed'));
+            toast.error(err.response?.data?.error || 'Enrollment request failed. Please try again.');
         } finally {
             setEnrolling(false);
         }
-    }, [enrollData, getAuthHeader, fetchData]);
+    }, [enrollData, getAuthHeader, fetchData, toast]);
 
     const handleJoinClass = useCallback(async (cls) => {
         const sessionId = cls.db_id || cls.id;
-        if (!sessionId) { alert('Invalid session ID'); return; }
-        axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`, {}, { headers: getAuthHeader() })
+        if (!sessionId) { toast.error('Invalid session ID'); return; }
+        api.post(`/api/classes/session/${sessionId}/start/`, {}, { headers: getAuthHeader() })
             .catch(e => { if (!axios.isCancel(e)) console.warn('Join notify failed:', e.message); });
         navigate(`/live/${sessionId}`);
-    }, [getAuthHeader, navigate]);
+    }, [getAuthHeader, navigate, toast]);
 
     const handleReturnToParent = () => {
         const pa = localStorage.getItem('parent_access');
@@ -172,9 +178,13 @@ export default function StudentOverview() {
     });
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
+    );
+
+    if (loadError) return (
+        <FetchError message="Couldn't load your dashboard. Please check your connection." onRetry={() => { setLoading(true); fetchData(); }} />
     );
 
     return (
@@ -259,7 +269,7 @@ export default function StudentOverview() {
                             <div className={`w-12 h-12 rounded-2xl ${stat.bgClass} flex items-center justify-center ${stat.colorClass} mb-6`}>
                                 <stat.icon size={24} />
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">{stat.label}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">{stat.label}</p>
                             <h3 className="text-3xl font-display font-black text-slate-900 mb-4">{stat.value}</h3>
                             {stat.link && (
                                 <Link to={stat.link} className="text-[10px] font-black uppercase text-blue-600 flex items-center gap-2 hover:gap-3 transition-all">
@@ -304,14 +314,14 @@ export default function StudentOverview() {
                                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl shadow-inner ring-1 ring-slate-100">
                                                 {['Quran', 'Arabic', 'Islamic'].some(s => enr.subject_name?.includes(s)) ? '🌙' : '🧪'}
                                             </div>
-                                            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-blue-600/10 text-blue-600' : 'bg-indigo-500/10 text-indigo-500'}`}>
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.1em] ${enr.status === 'APPROVED' ? 'bg-blue-600/10 text-blue-600' : 'bg-indigo-500/10 text-indigo-500'}`}>
                                                 {enr.status}
                                             </span>
                                         </div>
                                         <h4 className="text-lg font-bold text-slate-900 mb-1">{enr.subject_name}</h4>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tutor: {enr.tutor_name || 'TBA'}</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor: {enr.tutor_name || 'TBA'}</p>
                                         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
-                                            <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-400 uppercase">
+                                            <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-slate-500 uppercase">
                                                 <div className="flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
                                                     <IconCalendar size={12} className="text-blue-600" /> {enr.days_per_week || 0} Sessions / WK
                                                 </div>
@@ -336,7 +346,7 @@ export default function StudentOverview() {
 
                                 {(!profile?.enrollments?.length && !bookings.filter(b => !b.paid).length) && (
                                     <div className="col-span-full py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                                        <p className="text-slate-400 font-bold italic">No registered subjects or bookings found.</p>
+                                        <p className="text-slate-500 font-bold italic">No registered subjects or bookings found.</p>
                                         <button onClick={() => navigate('/booking/request')} className="mt-4 text-blue-600 font-black text-[10px] uppercase tracking-widest">Book Your First Subject →</button>
                                     </div>
                                 )}
@@ -360,7 +370,7 @@ export default function StudentOverview() {
                                     </div>
                                 )) : (
                                     <div className="py-12 text-center bg-slate-50/50 rounded-[2.5rem] border border-dashed border-slate-200">
-                                        <p className="text-slate-400 font-bold italic text-sm">No upcoming sessions. Classes appear here once your booking is finalized and paid.</p>
+                                        <p className="text-slate-500 font-bold italic text-sm">No upcoming sessions. Classes appear here once your booking is finalized and paid.</p>
                                     </div>
                                 )}
                             </div>
@@ -392,7 +402,7 @@ export default function StudentOverview() {
                                     {notifications.map(n => (
                                         <div key={n.id} className="bg-white p-4 rounded-2xl border border-slate-100 hover:border-blue-600/30 transition-all shadow-sm">
                                             <p className="text-xs font-bold text-slate-900 mb-1 leading-tight">{n.title}</p>
-                                            <p className="text-[10px] text-slate-400 leading-relaxed">{n.message}</p>
+                                            <p className="text-[10px] text-slate-500 leading-relaxed">{n.message}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -433,7 +443,7 @@ export default function StudentOverview() {
                                 </button>
                                 <div className="space-y-8">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Academic Program</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Academic Program</label>
                                         <select id="subject_id" name="subject_id" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none"
                                             onChange={e => {
                                                 const subj = availableSubjects.find(s => s.id == e.target.value);
@@ -446,7 +456,7 @@ export default function StudentOverview() {
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Expert Tutor</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Expert Tutor</label>
                                         <select id="tutor_id" name="tutor_id" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none"
                                             value={enrollData.tutor_id}
                                             onChange={e => {
@@ -468,7 +478,7 @@ export default function StudentOverview() {
                                     </div>
                                     {selectedTutorAvailability && (
                                         <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6">
-                                            <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Tutor Working Hours</h5>
+                                            <h5 className="text-[10px] font-black uppercase text-slate-500 tracking-widest mb-4">Tutor Working Hours</h5>
                                             <div className="space-y-2">
                                                 {selectedTutorAvailability.availabilities?.map((av, i) => (
                                                     <div key={i} className="flex justify-between text-[10px] bg-white p-3 rounded-xl border border-slate-100">
@@ -480,7 +490,7 @@ export default function StudentOverview() {
                                         </div>
                                     )}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Preferred Start Date</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Preferred Start Date</label>
                                         <input id="preferred_start_date" name="preferred_start_date" type="date"
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-600/30"
                                             min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
@@ -488,7 +498,7 @@ export default function StudentOverview() {
                                     </div>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center px-1">
-                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Weekly Schedule</label>
+                                            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Weekly Schedule</label>
                                             <button onClick={() => setEnrollData(prev => ({ ...prev, schedule: [...prev.schedule, { day: '', time: '' }] }))}
                                                 className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors">+ Add Day</button>
                                         </div>
@@ -540,7 +550,7 @@ export default function StudentOverview() {
                                                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600">Estimated Monthly Tuition</span>
                                                 <span className="text-3xl font-black text-slate-900">₦{(enrollData.active_tutor_rate * enrollData.hours_per_week * enrollData.schedule.length * 4).toLocaleString()}</span>
                                             </div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic">Based on {enrollData.schedule.length} sessions/week at tutor's current hourly rate.</p>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">Based on {enrollData.schedule.length} sessions/week at tutor's current hourly rate.</p>
                                         </div>
                                     )}
                                     <button

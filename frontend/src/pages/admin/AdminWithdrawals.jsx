@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminWithdrawals() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [withdrawals, setWithdrawals] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -21,13 +25,13 @@ export default function AdminWithdrawals() {
     useEffect(() => { fetchWithdrawals(); }, [fetchWithdrawals]);
 
     const handleApprove = async (id) => {
-        if (!window.confirm('Approve this withdrawal? Funds will be deducted from the tutor\'s wallet.')) return;
+        if (!await confirm("Approve this withdrawal? Funds will be deducted from the tutor's wallet.", { confirmLabel: 'Approve', danger: false })) return;
         try {
             await api.post(`/api/payments/admin/withdrawal/approve/${id}/`, {});
-            alert('Withdrawal approved successfully!');
+            toast.success('Withdrawal approved successfully!');
             fetchWithdrawals();
         } catch (err) {
-            alert('Failed to approve withdrawal: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to approve withdrawal: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -45,8 +49,8 @@ export default function AdminWithdrawals() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -60,17 +64,17 @@ export default function AdminWithdrawals() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tutor</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Frequency</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Tutor</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Frequency</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {withdrawals.length === 0 ? (
-                                <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No withdrawal requests found.</td></tr>
+                                <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No withdrawal requests found.</td></tr>
                             ) : withdrawals.map(w => (
                                 <tr key={w.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4">
@@ -83,7 +87,7 @@ export default function AdminWithdrawals() {
                                         <div className="text-[11px] font-black text-primary">₦{parseFloat(w.amount).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="text-[9px] text-slate-400 uppercase font-black">{w.withdrawal_frequency}</div>
+                                        <div className="text-[9px] text-slate-500 uppercase font-black">{w.withdrawal_frequency}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
                                         <StatusBadge status={w.status} />

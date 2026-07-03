@@ -25,7 +25,7 @@ class ScheduledSession(models.Model):
     scheduled_at = models.DateTimeField()
     duration = models.IntegerField(default=40, help_text="Duration in minutes")
     is_trial = models.BooleanField(default=False)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', db_index=True)
     
     # Financial Snapshots
     fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -117,8 +117,8 @@ class Booking(models.Model):
                     data = json.loads(self.schedule)
                     if isinstance(data, list):
                         days_count = len(data) if data else 1
-                except:
-                    pass
+                except (ValueError, TypeError):
+                    pass  # malformed schedule JSON — keep default of 1 day
             
             # 3. Calculate price: rate * hours_per_session * days * 4 weeks
             hours = self.hours_per_session or Decimal('1.0')

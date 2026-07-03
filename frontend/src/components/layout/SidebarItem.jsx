@@ -7,7 +7,7 @@ export default function SidebarItem({ to, icon, label, badge, end = false }) {
                 <span className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25'
-                        : 'hover:bg-blue-600/10 hover:text-blue-400 text-slate-400'
+                        : 'hover:bg-blue-600/10 hover:text-blue-400 text-slate-500'
                 }`}>
                     <span className="text-lg leading-none">{icon}</span>
                     <span className="flex-1 text-left">{label}</span>

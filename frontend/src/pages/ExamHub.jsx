@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Link } from 'react-router-dom';
 
@@ -21,8 +21,8 @@ const ExamHub = () => {
         const fetchData = async () => {
             try {
                 const [examRes, profRes] = await Promise.all([
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() }),
-                    axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() })
+                    api.get(`/api/exams/list/`, { headers: getAuthHeader() }),
+                    api.get(`/api/students/me/`, { headers: getAuthHeader() })
                 ]);
                 
                 setExams(examRes.data);
@@ -106,13 +106,13 @@ const ExamHub = () => {
 
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-3">Examination Type</label>
+                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">Examination Type</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {['JAMB', 'WAEC', 'NECO', 'JSSCE', 'PRIMARY'].map(type => (
                                                 <button
                                                     key={type}
                                                     onClick={() => setSelectedType(type)}
-                                                    className={`py-3 rounded-xl border-2 transition-all font-bold text-xs ${selectedType === type ? 'border-primary bg-primary/5 text-primary' : 'border-slate-50 bg-slate-50 text-slate-400'}`}
+                                                    className={`py-3 rounded-xl border-2 transition-all font-bold text-xs ${selectedType === type ? 'border-primary bg-primary/5 text-primary' : 'border-slate-50 bg-slate-50 text-slate-500'}`}
                                                 >
                                                     {type}
                                                 </button>
@@ -123,7 +123,7 @@ const ExamHub = () => {
                                     {selectedType === 'JAMB' && (
                                         <>
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-3">Exam Year</label>
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">Exam Year</label>
                                                 <select
                                                     value={jambYear}
                                                     onChange={(e) => setJambYear(e.target.value)}
@@ -134,7 +134,7 @@ const ExamHub = () => {
                                             </div>
 
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 block mb-3">
+                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">
                                                     Subject Combination ({jambSelection.length}/4)
                                                 </label>
                                                 <div className="flex flex-wrap gap-2 mb-4">
@@ -195,7 +195,7 @@ const ExamHub = () => {
                                                     </span>
                                                 </div>
                                                 <h3 className="text-xl font-display text-primary mb-2 font-black">{exam.title}</h3>
-                                                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 mb-8">
+                                                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-8">
                                                     <span className="flex items-center gap-1">⏱️ {exam.duration_minutes} Mins</span>
                                                     <span className="flex items-center gap-1">❓ Questions</span>
                                                 </div>
@@ -211,7 +211,7 @@ const ExamHub = () => {
                                 ) : (
                                     <div className="md:col-span-2 bg-white rounded-[2rem] p-20 border border-dashed border-slate-200 text-center">
                                         <p className="text-4xl mb-6">🏜️</p>
-                                        <p className="text-slate-400 font-medium">No exams found for this selection yet.</p>
+                                        <p className="text-slate-500 font-medium">No exams found for this selection yet.</p>
                                     </div>
                                 )}
                             </div>

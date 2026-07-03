@@ -70,7 +70,7 @@ class InitiatePaymentView(APIView):
                     ref = f"ADM-{uuid.uuid4().hex[:8].upper()}"
                     profile.payment_reference = ref
                     profile.save()
-                    print(f"DEBUG: Generated new ref for student: {ref}")
+                    logger.debug("Generated new payment ref for student %s: %s", user.id, ref)
                 payment, created = Payment.objects.get_or_create(
                     student=user, status='PENDING', transaction_id=ref,
                     defaults={'amount': amount_to_charge, 'payment_method': 'PAYSTACK'}
@@ -106,11 +106,11 @@ class InitiatePaymentView(APIView):
             metadata = {"user_id": user.id, "type": "WALLET_TOPUP"}
 
         # Initialize Paystack payment
-        print(f"DEBUG: [InitiatePaymentView] Calling PaystackService.initialize_payment with amount={amount_to_charge} ref={ref}")
+        logger.debug("Initializing Paystack payment: amount=%s ref=%s", amount_to_charge, ref)
         result = PaystackService.initialize_payment(
             email=user.email, amount=amount_to_charge, reference=ref, metadata=metadata
         )
-        print(f"DEBUG: [InitiatePaymentView] Result: {result}")
+        logger.debug("Paystack init result for ref=%s: success=%s", ref, result.get("success"))
         
         if result["success"]:
             if result.get("access_code"):
@@ -135,7 +135,7 @@ class VerifyPaymentView(APIView):
         user = request.user
         
         try:
-            print(f"DEBUG: Verifying payment ref: {reference} for user {user.username}")
+            logger.debug("Verifying payment ref=%s for user=%s", reference, user.username)
             
             # [NEW] Check local db first to return early if already processed
             payment = Payment.objects.filter(transaction_id=reference, student=user).first()
@@ -150,7 +150,7 @@ class VerifyPaymentView(APIView):
                 
             # Verify payment with Paystack
             result = PaystackService.verify_payment(reference)
-            print(f"DEBUG: Paystack/Mock Verification Result: {result}")
+            logger.debug("Paystack verification for ref=%s: success=%s verified=%s", reference, result.get("success"), result.get("verified"))
             
             if not result["success"]:
                 return Response({
@@ -193,11 +193,8 @@ class VerifyPaymentView(APIView):
                 })
                 
         except Exception as e:
-            import traceback
-            print(traceback.format_exc())
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("VerifyPaymentView error for reference=%s", reference)
+            return Response({"error": "An unexpected error occurred. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -285,12 +282,9 @@ class PricingTiersView(APIView):
 
 class AdminWalletActionView(APIView):
     """Admin view to manually Credit/Debit a student wallet"""
-    permission_classes = [IsAuthenticated] # Should be IsAdminUser, adding check in method
-    
+    permission_classes = [IsAdminUser]
+
     def post(self, request):
-        if not request.user.is_staff:
-             return Response({"error": "Unauthorized"}, status=403)
-             
         student_id = request.data.get('student_id')
         amount = request.data.get('amount')
         action_type = request.data.get('action_type') # 'DEPOSIT' or 'DEDUCTION'
@@ -335,16 +329,14 @@ class AdminWalletActionView(APIView):
         except User.DoesNotExist:
              return Response({"error": "Student user not found"}, status=404)
         except Exception as e:
-             return Response({"error": str(e)}, status=500)
+            logger.exception("AdminWalletActionView error for student_id=%s", student_id)
+            return Response({"error": "An unexpected error occurred."}, status=500)
 
 class AdminTransactionListView(APIView):
     """Admin view to list GLOBAL transactions"""
-    permission_classes = [IsAuthenticated]
-    
+    permission_classes = [IsAdminUser]
+
     def get(self, request):
-        if not request.user.is_staff:
-             return Response({"error": "Unauthorized"}, status=403)
-             
         # Get last 50 transactions
         transactions = Transaction.objects.select_related('user').all().order_by('-created_at')[:50]
         
@@ -596,6 +588,11 @@ class AdminPaymentAnalyticsView(APIView):
         if not request.user.is_staff:
             return Response({"error": "Unauthorized"}, status=403)
 
+        from django.core.cache import cache
+        cached = cache.get('admin_payment_analytics')
+        if cached is not None:
+            return Response(cached)
+
         from django.db.models import Sum, Count
         from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
         from datetime import timedelta
@@ -656,8 +653,8 @@ class AdminPaymentAnalyticsView(APIView):
         )
         monthly_data = [{"date": m['month'].strftime('%b %Y'), "revenue": float(m['total']), "count": m['count']} for m in monthly]
 
-        # --- Recent payment history (last 100) ---
-        recent = all_payments.select_related('student').order_by('-created_at')[:100]
+        # --- Recent payment history (last 20) ---
+        recent = all_payments.select_related('student').order_by('-created_at')[:20]
         history = []
         for p in recent:
             history.append({
@@ -682,7 +679,7 @@ class AdminPaymentAnalyticsView(APIView):
         # --- Withdrawal Stats ---
         pending_withdrawals = Withdrawal.objects.filter(status='PENDING').aggregate(total=Sum('amount'), count=Count('id'))
 
-        return Response({
+        payload = {
             "total_revenue": float(totals['total_revenue'] or 0),
             "platform_revenue": float(class_stats['total_commissions'] or 0),
             "net_to_tutors": float((class_stats['total_fees'] or 0) - (class_stats['total_commissions'] or 0)),
@@ -702,7 +699,9 @@ class AdminPaymentAnalyticsView(APIView):
             "weekly": weekly_data,
             "monthly": monthly_data,
             "history": history,
-        })
+        }
+        cache.set('admin_payment_analytics', payload, timeout=300)
+        return Response(payload)
 
 
 class TutorFinancialsView(APIView):

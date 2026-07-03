@@ -23,6 +23,34 @@ services:
       - key: DEBUG
         value: "False"
 
+  # Celery Background Worker (uncomment to enable async task processing)
+  # Requires a paid Render plan (~$7/month for Starter).
+  # Without this, tasks (emails, PDF generation) fall back to a thread pool automatically.
+  # To enable: uncomment the block below and ensure all envVars in hidayah-backend are also set here.
+  #
+  # - type: worker
+  #   name: hidayah-celery
+  #   env: python
+  #   rootDir: backend
+  #   buildCommand: "./build.sh"
+  #   startCommand: "celery -A core worker --loglevel=info --concurrency=2"
+  #   envVars:
+  #     - key: DJANGO_SETTINGS_MODULE
+  #       value: core.settings
+  #     - key: DATABASE_URL
+  #       fromDatabase:
+  #         name: hidayah-db
+  #         property: connectionString
+  #     - key: REDIS_URL
+  #       fromService:
+  #         type: redis
+  #         name: hidayah-redis
+  #         property: connectionString
+  #     - key: RENDER
+  #       value: "True"
+  #     - key: DEBUG
+  #       value: "False"
+
   # Frontend Service
   - type: web
     name: hidayah-frontend

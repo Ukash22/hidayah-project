@@ -40,3 +40,5 @@ dj-database-url
 daphne
 channels
 channels-redis
+celery[redis]
+drf-spectacular

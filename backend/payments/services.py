@@ -116,8 +116,8 @@ def process_payment(booking):
                 sched_data = json.loads(booking.schedule)
                 if isinstance(sched_data, list):
                     days_list = [d.get('day', '') for d in sched_data]
-            except:
-                pass
+            except (ValueError, TypeError):
+                logger.warning("Malformed schedule JSON on booking %s", booking.pk)
         
         days_per_week = len(days_list) if days_list else 1
         preferred_days_str = ", ".join(days_list) if days_list else "Days TBA"

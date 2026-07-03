@@ -8,6 +8,29 @@ const getBaseUrl = () => {
 
 const API_BASE_URL = getBaseUrl();
 
+const ALLOWED_MIME_TYPES = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'video/mp4', 'video/webm', 'video/quicktime',
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+];
+
+const MAX_SIZE_BY_TYPE = { image: 5, video: 200, document: 20 };
+
+function validateFile(file) {
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        throw new Error(`File type "${file.type}" is not allowed.`);
+    }
+    const category = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document';
+    const maxMb = MAX_SIZE_BY_TYPE[category];
+    if (file.size > maxMb * 1024 * 1024) {
+        throw new Error(`File exceeds the ${maxMb}MB limit for ${category} uploads.`);
+    }
+}
+
 /**
  * Uploads a file directly to Cloudinary using a signed signature from the backend.
  * Returns null gracefully if Cloudinary is not configured on the server.
@@ -17,6 +40,7 @@ const API_BASE_URL = getBaseUrl();
  */
 export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
     if (!file) return null;
+    validateFile(file);
 
     try {
         // 1. Get the signature from our Django backend

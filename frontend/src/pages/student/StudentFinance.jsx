@@ -1,29 +1,36 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { TrendingUp as IconTrendingUp, Plus as IconPlus, ShieldCheck as IconShieldCheck, AlertCircle as IconAlertCircle, Download as IconDownload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard, FetchError } from '../../components/ui';
 
 export default function StudentFinance() {
     const { token } = useAuth();
+    const toast = useToast();
 
     const [profile, setProfile] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
 
     const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
-    useEffect(() => {
+    const fetchData = useCallback(() => {
         if (!token) return;
+        setLoadError(false);
         Promise.all([
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() }),
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/wallet/transactions/`, { headers: getAuthHeader() }),
+            api.get(`/api/students/me/`, { headers: getAuthHeader() }),
+            api.get(`/api/payments/wallet/transactions/`, { headers: getAuthHeader() }),
         ]).then(([profRes, txRes]) => {
             setProfile(profRes.data);
             setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
-        }).catch(err => console.error('Finance fetch failed', err))
+        }).catch(err => { console.error('Finance fetch failed', err); setLoadError(true); })
             .finally(() => setLoading(false));
     }, [token, getAuthHeader]);
+
+    useEffect(() => { fetchData(); }, [fetchData]);
 
     const handleDownloadReceipt = async (t) => {
         try {
@@ -73,14 +80,18 @@ export default function StudentFinance() {
             doc.save(`Hidayah_Receipt_${t.id}.pdf`);
         } catch (err) {
             console.error('Receipt generation failed:', err);
-            alert('Failed to generate receipt. Please try again.');
+            toast.error('Failed to generate receipt. Please try again.');
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
+    );
+
+    if (loadError) return (
+        <FetchError message="Couldn't load your wallet and transactions. Please check your connection." onRetry={() => { setLoading(true); fetchData(); }} />
     );
 
     return (
@@ -125,7 +136,7 @@ export default function StudentFinance() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-slate-900">{t.description}</p>
-                                            <p className="text-[10px] font-medium text-slate-400 uppercase tracking-widest">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
+                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end gap-2">
@@ -136,7 +147,7 @@ export default function StudentFinance() {
                                     </div>
                                 </div>
                             )) : (
-                                <div className="py-10 text-center text-slate-400 font-bold italic">No transactions recorded yet.</div>
+                                <div className="py-10 text-center text-slate-500 font-bold italic">No transactions recorded yet.</div>
                             )}
                         </div>
                     </div>
@@ -145,7 +156,7 @@ export default function StudentFinance() {
                 {/* Right sidebar */}
                 <div className="space-y-6">
                     <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-8">Card Management</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-8">Card Management</h4>
                         <div className="p-8 bg-slate-900 rounded-3xl border border-slate-800 relative overflow-hidden shadow-xl">
                             <div className="flex justify-between items-start mb-10 relative z-10">
                                 <div className="w-8 h-8 rounded-full border border-white/20" />

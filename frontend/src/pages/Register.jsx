@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, ArrowRight, X, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle2, ArrowRight, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
+import RegisterStep1 from './register/RegisterStep1';
+import RegisterStep2 from './register/RegisterStep2';
+import RegisterStep3 from './register/RegisterStep3';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const LEVELS = [
-    { value: 'PRIMARY', label: 'Primary School' },
-    { value: 'SECONDARY', label: 'Secondary School' },
-    { value: 'JUNIOR_WAEC', label: 'Junior WAEC' },
-    { value: 'JAMB', label: 'JAMB' },
-    { value: 'WAEC', label: 'WAEC' },
-    { value: 'NECO', label: 'NECO' },
-];
 const EXAM_LEVELS = ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'];
 
 const getRateByLevel = (level) => {
@@ -41,7 +36,7 @@ const StepIndicator = ({ current, total }) => (
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all duration-300 border-2 ${current >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-200'}`}>
                         {current > s ? <CheckCircle2 size={14} /> : s}
                     </div>
-                    <span className={`text-[8px] font-black uppercase tracking-widest ${current === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${current === s ? 'text-blue-600' : 'text-slate-500'}`}>
                         {['Account', 'Learning', 'Confirm'][s - 1]}
                     </span>
                 </div>
@@ -57,32 +52,27 @@ const StepIndicator = ({ current, total }) => (
     </div>
 );
 
-const Field = ({ label, children }) => (
-    <div className="flex flex-col gap-1.5">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">{label}</label>
-        {children}
-    </div>
-);
-
-const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-blue-600/40 focus:bg-white transition-all";
+const cardCls = "bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 md:p-10";
 
 export default function Register() {
     const navigate = useNavigate();
     const location = useLocation();
     const { register, login } = useAuth();
+    const toast = useToast();
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPass, setShowPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
+    const [showParentPass, setShowParentPass] = useState(false);
 
-    // Step 1 — Account
     const [account, setAccount] = useState({
         firstName: '', lastName: '', username: '', email: '',
         password: '', confirmPassword: '', dob: '', gender: 'Male',
         phone: '', country: '',
     });
 
-    // Step 2 — Learning
     const [learning, setLearning] = useState({
         classType: 'ONE_ON_ONE',
         level: 'PRIMARY',
@@ -96,7 +86,6 @@ export default function Register() {
     const [tutorsBySubject, setTutorsBySubject] = useState({});
     const [loadingTutors, setLoadingTutors] = useState({});
 
-    // Step 3 — Parent (if minor)
     const [parent, setParent] = useState({
         parentFirstName: '', parentLastName: '', parentEmail: '',
         parentPassword: '', relationship: 'Father',
@@ -104,7 +93,6 @@ export default function Register() {
 
     const isMinor = calculateAge(account.dob) < 18;
 
-    // Pre-selected tutor from URL
     const [preSelectedTutorId, setPreSelectedTutorId] = useState(null);
     const [preSelectedTutorName, setPreSelectedTutorName] = useState('');
 
@@ -118,7 +106,6 @@ export default function Register() {
         }
     }, [location.search]);
 
-    // Auto-assign pre-selected tutor to enrolled subjects
     useEffect(() => {
         if (!preSelectedTutorId) return;
         setSubjectEnrollments(prev => {
@@ -126,9 +113,9 @@ export default function Register() {
             Object.keys(updated).forEach(s => { updated[s] = preSelectedTutorId; });
             return updated;
         });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preSelectedTutorId, JSON.stringify(Object.keys(subjectEnrollments))]);
 
-    // Fetch subjects on mount
     useEffect(() => {
         api.get('/api/programs/subjects/')
             .then(res => {
@@ -183,23 +170,14 @@ export default function Register() {
         });
     };
 
-    const addScheduleSlot = () => {
-        setLearning(prev => ({ ...prev, schedule: [...prev.schedule, { day: 'Monday', time: '09:00' }] }));
-    };
+    const addScheduleSlot = () => setLearning(prev => ({ ...prev, schedule: [...prev.schedule, { day: 'Monday', time: '09:00' }] }));
+    const removeScheduleSlot = (i) => setLearning(prev => ({ ...prev, schedule: prev.schedule.filter((_, idx) => idx !== i) }));
+    const updateScheduleSlot = (i, field, value) => setLearning(prev => {
+        const s = [...prev.schedule];
+        s[i] = { ...s[i], [field]: value };
+        return { ...prev, schedule: s };
+    });
 
-    const removeScheduleSlot = (i) => {
-        setLearning(prev => ({ ...prev, schedule: prev.schedule.filter((_, idx) => idx !== i) }));
-    };
-
-    const updateScheduleSlot = (i, field, value) => {
-        setLearning(prev => {
-            const s = [...prev.schedule];
-            s[i] = { ...s[i], [field]: value };
-            return { ...prev, schedule: s };
-        });
-    };
-
-    // ── Validation per step ────────────────────────────────────────────────────
     const validateStep1 = () => {
         if (!account.firstName.trim()) return 'First name is required.';
         if (!account.lastName.trim()) return 'Last name is required.';
@@ -233,7 +211,6 @@ export default function Register() {
 
     const back = () => { setError(''); setStep(s => s - 1); };
 
-    // ── Submit ─────────────────────────────────────────────────────────────────
     const handleSubmit = async (e) => {
         e.preventDefault();
         const err = validateStep3();
@@ -302,7 +279,7 @@ export default function Register() {
             await register(payload);
             const data = await login(account.username.trim().toLowerCase(), account.password);
 
-            alert('✨ Welcome to Hidayah! Your admission letter has been sent to your email.');
+            toast.success('Welcome to Hidayah! Your admission letter has been sent to your email.');
 
             if (data.user?.role === 'ADMIN' || data.user?.is_superuser) {
                 window.location.href = '/admin';
@@ -326,8 +303,6 @@ export default function Register() {
             setLoading(false);
         }
     };
-
-    const cardCls = "bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 md:p-10";
 
     return (
         <div className="min-h-screen bg-slate-50">
@@ -358,206 +333,43 @@ export default function Register() {
 
                     <form onSubmit={handleSubmit}>
                         <AnimatePresence mode="wait">
-
-                            {/* ── Step 1: Account ──────────────────────────────── */}
                             {step === 1 && (
                                 <motion.div key="s1" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={cardCls}>
-                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
-                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">1</span>
-                                        Your Account
-                                    </h2>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <Field label="First Name">
-                                            <input className={inputCls} value={account.firstName} onChange={e => setAccount(a => ({ ...a, firstName: e.target.value }))} placeholder="e.g. Fatima" autoComplete="given-name" />
-                                        </Field>
-                                        <Field label="Last Name">
-                                            <input className={inputCls} value={account.lastName} onChange={e => setAccount(a => ({ ...a, lastName: e.target.value }))} placeholder="e.g. Ibrahim" autoComplete="family-name" />
-                                        </Field>
-                                        <Field label="Username">
-                                            <input className={inputCls} value={account.username} onChange={e => setAccount(a => ({ ...a, username: e.target.value.toLowerCase() }))} placeholder="e.g. fatima_2025" autoComplete="username" />
-                                        </Field>
-                                        <Field label="Email">
-                                            <input type="email" className={inputCls} value={account.email} onChange={e => setAccount(a => ({ ...a, email: e.target.value }))} placeholder="your@email.com" autoComplete="email" />
-                                        </Field>
-                                        <Field label="Password">
-                                            <input type="password" className={inputCls} value={account.password} onChange={e => setAccount(a => ({ ...a, password: e.target.value }))} placeholder="Min. 8 characters" autoComplete="new-password" />
-                                        </Field>
-                                        <Field label="Confirm Password">
-                                            <input type="password" className={inputCls} value={account.confirmPassword} onChange={e => setAccount(a => ({ ...a, confirmPassword: e.target.value }))} placeholder="Repeat password" autoComplete="new-password" />
-                                        </Field>
-                                        <Field label="Date of Birth">
-                                            <input type="date" className={inputCls} value={account.dob} onChange={e => setAccount(a => ({ ...a, dob: e.target.value }))} autoComplete="bday" />
-                                        </Field>
-                                        <Field label="Gender">
-                                            <select className={inputCls} value={account.gender} onChange={e => setAccount(a => ({ ...a, gender: e.target.value }))}>
-                                                <option>Male</option>
-                                                <option>Female</option>
-                                            </select>
-                                        </Field>
-                                        <Field label="Phone (optional)">
-                                            <input className={inputCls} value={account.phone} onChange={e => setAccount(a => ({ ...a, phone: e.target.value }))} placeholder="+234..." autoComplete="tel" />
-                                        </Field>
-                                        <Field label="Country (optional)">
-                                            <input className={inputCls} value={account.country} onChange={e => setAccount(a => ({ ...a, country: e.target.value }))} placeholder="e.g. Nigeria" autoComplete="country-name" />
-                                        </Field>
-                                    </div>
+                                    <RegisterStep1
+                                        account={account} setAccount={setAccount}
+                                        showPass={showPass} setShowPass={setShowPass}
+                                        showConfirmPass={showConfirmPass} setShowConfirmPass={setShowConfirmPass}
+                                    />
                                 </motion.div>
                             )}
-
-                            {/* ── Step 2: Learning Plan ─────────────────────────── */}
                             {step === 2 && (
                                 <motion.div key="s2" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={cardCls}>
-                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
-                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
-                                        Learning Plan
-                                    </h2>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <Field label="Class Type">
-                                            <select className={inputCls} value={learning.classType} onChange={e => setLearning(l => ({ ...l, classType: e.target.value }))}>
-                                                <option value="ONE_ON_ONE">One-on-One</option>
-                                                <option value="GROUP">Group</option>
-                                            </select>
-                                        </Field>
-                                        <Field label="Level">
-                                            <select className={inputCls} value={learning.level} onChange={e => setLearning(l => ({ ...l, level: e.target.value }))}>
-                                                {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                                            </select>
-                                        </Field>
-                                        {EXAM_LEVELS.includes(learning.level) && (
-                                            <Field label="Target Exam Year">
-                                                <input type="number" className={inputCls} value={learning.targetExamYear} onChange={e => setLearning(l => ({ ...l, targetExamYear: e.target.value }))} min="2024" max="2035" />
-                                            </Field>
-                                        )}
-                                        <Field label="Hours per Session">
-                                            <select className={inputCls} value={learning.hoursPerSession} onChange={e => setLearning(l => ({ ...l, hoursPerSession: e.target.value }))}>
-                                                {['0.5', '1', '1.5', '2', '2.5', '3'].map(h => <option key={h} value={h}>{h} hr{h !== '1' ? 's' : ''}</option>)}
-                                            </select>
-                                        </Field>
-                                        <Field label="Preferred Start Date (optional)">
-                                            <input type="date" className={inputCls} value={learning.preferredStartDate} onChange={e => setLearning(l => ({ ...l, preferredStartDate: e.target.value }))} />
-                                        </Field>
-                                    </div>
-
-                                    {/* Subjects */}
-                                    <div className="mb-6">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Select Subjects</p>
-                                        {Object.keys(subjectsByCategory).length === 0 ? (
-                                            <div className="text-slate-400 text-sm font-bold">Loading subjects…</div>
-                                        ) : (
-                                            Object.entries(subjectsByCategory).map(([cat, subjects]) => (
-                                                <div key={cat} className="mb-4">
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{cat}</p>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {subjects.map(sub => {
-                                                            const selected = sub in subjectEnrollments;
-                                                            return (
-                                                                <button key={sub} type="button" onClick={() => toggleSubject(sub)}
-                                                                    className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-600/30'}`}>
-                                                                    {sub}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    {/* Tutor selector per enrolled subject */}
-                                                    {subjects.filter(s => s in subjectEnrollments).map(sub => (
-                                                        <div key={`t-${sub}`} className="mt-2 ml-1">
-                                                            <p className="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1">{sub} — preferred tutor (optional)</p>
-                                                            {loadingTutors[sub] ? (
-                                                                <p className="text-xs text-slate-400 font-bold">Loading tutors…</p>
-                                                            ) : (tutorsBySubject[sub] || []).length === 0 ? (
-                                                                <p className="text-xs text-slate-400 font-bold">No tutors available — admin will assign one.</p>
-                                                            ) : (
-                                                                <select className={`${inputCls} text-sm py-2.5`} value={subjectEnrollments[sub] || ''} onChange={e => setSubjectEnrollments(prev => ({ ...prev, [sub]: e.target.value ? Number(e.target.value) : '' }))}>
-                                                                    <option value="">No preference</option>
-                                                                    {(tutorsBySubject[sub] || []).map(t => (
-                                                                        <option key={t.id} value={t.id}>{t.user?.first_name} {t.user?.last_name}</option>
-                                                                    ))}
-                                                                </select>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-
-                                    {/* Schedule slots */}
-                                    <div>
-                                        <div className="flex items-center justify-between mb-3">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Preferred Schedule</p>
-                                            <button type="button" onClick={addScheduleSlot} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
-                                                <Plus size={12} /> Add slot
-                                            </button>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {learning.schedule.map((slot, i) => (
-                                                <div key={i} className="flex gap-2 items-center">
-                                                    <select className={`${inputCls} flex-1 py-2.5 text-sm`} value={slot.day} onChange={e => updateScheduleSlot(i, 'day', e.target.value)}>
-                                                        {DAYS.map(d => <option key={d}>{d}</option>)}
-                                                    </select>
-                                                    <input type="time" className={`${inputCls} flex-1 py-2.5 text-sm`} value={slot.time} onChange={e => updateScheduleSlot(i, 'time', e.target.value)} />
-                                                    {learning.schedule.length > 1 && (
-                                                        <button type="button" onClick={() => removeScheduleSlot(i)} className="text-slate-300 hover:text-red-400 transition-colors">
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <RegisterStep2
+                                        learning={learning} setLearning={setLearning}
+                                        subjectsByCategory={subjectsByCategory}
+                                        subjectEnrollments={subjectEnrollments}
+                                        setSubjectEnrollments={setSubjectEnrollments}
+                                        toggleSubject={toggleSubject}
+                                        tutorsBySubject={tutorsBySubject}
+                                        loadingTutors={loadingTutors}
+                                        addScheduleSlot={addScheduleSlot}
+                                        removeScheduleSlot={removeScheduleSlot}
+                                        updateScheduleSlot={updateScheduleSlot}
+                                    />
                                 </motion.div>
                             )}
-
-                            {/* ── Step 3: Confirm ───────────────────────────────── */}
                             {step === 3 && (
                                 <motion.div key="s3" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} className={`${cardCls} space-y-6`}>
-                                    <h2 className="text-lg font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                                        <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">3</span>
-                                        Confirm & Submit
-                                    </h2>
-
-                                    {/* Summary */}
-                                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-2 text-sm">
-                                        <Row label="Name" value={`${account.firstName} ${account.lastName}`} />
-                                        <Row label="Username" value={account.username} />
-                                        <Row label="Email" value={account.email} />
-                                        <Row label="Level" value={LEVELS.find(l => l.value === learning.level)?.label} />
-                                        <Row label="Class Type" value={learning.classType === 'ONE_ON_ONE' ? 'One-on-One' : 'Group'} />
-                                        <Row label="Subjects" value={Object.keys(subjectEnrollments).join(', ') || '—'} />
-                                        <Row label="Schedule" value={learning.schedule.map(s => `${s.day} ${s.time}`).join(', ')} />
-                                    </div>
-
-                                    {/* Parent fields (if minor) */}
-                                    {isMinor && (
-                                        <div>
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-4 flex items-center gap-2">
-                                                ⚠ Student is under 18 — parent account required
-                                            </p>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <Field label="Parent First Name">
-                                                    <input className={inputCls} value={parent.parentFirstName} onChange={e => setParent(p => ({ ...p, parentFirstName: e.target.value }))} placeholder="Parent's first name" />
-                                                </Field>
-                                                <Field label="Parent Last Name">
-                                                    <input className={inputCls} value={parent.parentLastName} onChange={e => setParent(p => ({ ...p, parentLastName: e.target.value }))} placeholder="Parent's last name" />
-                                                </Field>
-                                                <Field label="Parent Email">
-                                                    <input type="email" className={inputCls} value={parent.parentEmail} onChange={e => setParent(p => ({ ...p, parentEmail: e.target.value }))} placeholder="parent@email.com" />
-                                                </Field>
-                                                <Field label="Parent Password">
-                                                    <input type="password" className={inputCls} value={parent.parentPassword} onChange={e => setParent(p => ({ ...p, parentPassword: e.target.value }))} placeholder="Parent portal password" />
-                                                </Field>
-                                                <Field label="Relationship">
-                                                    <select className={inputCls} value={parent.relationship} onChange={e => setParent(p => ({ ...p, relationship: e.target.value }))}>
-                                                        {['Father', 'Mother', 'Guardian'].map(r => <option key={r}>{r}</option>)}
-                                                    </select>
-                                                </Field>
-                                            </div>
-                                        </div>
-                                    )}
+                                    <RegisterStep3
+                                        account={account}
+                                        learning={learning}
+                                        subjectEnrollments={subjectEnrollments}
+                                        parent={parent} setParent={setParent}
+                                        isMinor={isMinor}
+                                        showParentPass={showParentPass} setShowParentPass={setShowParentPass}
+                                    />
                                 </motion.div>
                             )}
-
                         </AnimatePresence>
 
                         {/* Navigation */}
@@ -578,7 +390,7 @@ export default function Register() {
                             )}
                         </div>
 
-                        <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mt-6">
+                        <p className="text-center text-xs font-bold text-slate-500 uppercase tracking-widest mt-6">
                             Already enrolled? <Link to="/login" className="text-blue-600 hover:underline ml-1">Sign In</Link>
                         </p>
                     </form>
@@ -587,10 +399,3 @@ export default function Register() {
         </div>
     );
 }
-
-const Row = ({ label, value }) => (
-    <div className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</span>
-        <span className="font-bold text-slate-800 text-right max-w-[60%] truncate">{value}</span>
-    </div>
-);

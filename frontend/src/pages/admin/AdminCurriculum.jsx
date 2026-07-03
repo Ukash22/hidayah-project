@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 export default function AdminCurriculum() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [programs, setPrograms] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [materials, setMaterials] = useState([]);
@@ -39,51 +43,51 @@ export default function AdminCurriculum() {
         setSaving(true);
         try {
             await api.post('/api/programs/list/', programForm);
-            alert('✅ Program Created Successfully!');
+            toast.success('Program Created Successfully!');
             setShowProgramModal(false);
             setProgramForm({ name: '', program_type: 'WESTERN', description: '' });
             fetchAll();
         } catch (err) {
-            alert('❌ Failed to create program: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to create program: ' + (err.response?.data?.error || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeleteProgram = async (id) => {
-        if (!window.confirm('Permanently delete this program and all its subjects?')) return;
+        if (!await confirm('Permanently delete this program and all its subjects?', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/programs/list/${id}/`);
             fetchAll();
-        } catch { alert('Failed to delete program'); }
+        } catch { toast.error('Failed to delete program'); }
     };
 
     const handleAddSubject = async (e) => {
         e.preventDefault();
         if (!subjectForm.name || !subjectForm.program) {
-            alert('Subject Name and Program are required');
+            toast.error('Subject Name and Program are required');
             return;
         }
         setSaving(true);
         try {
             await api.post('/api/programs/subjects/', subjectForm);
-            alert('✅ Subject Added Successfully!');
+            toast.success('Subject Added Successfully!');
             setShowSubjectModal(false);
             setSubjectForm({ name: '', program: '', admin_percentage: 5.00 });
             fetchAll();
         } catch (err) {
-            alert('❌ Failed to add subject: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to add subject: ' + (err.response?.data?.error || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeleteSubject = async (id) => {
-        if (!window.confirm('Permanently delete this subject?')) return;
+        if (!await confirm('Permanently delete this subject?', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/programs/subjects/${id}/`);
             fetchAll();
-        } catch { alert('Failed to delete subject'); }
+        } catch { toast.error('Failed to delete subject'); }
     };
 
     const handleUpdateSubjectCommission = async (id, val) => {
@@ -95,7 +99,7 @@ export default function AdminCurriculum() {
             setTimeout(() => setSavingStatus(prev => ({ ...prev, [id]: 'idle' })), 2000);
         } catch {
             setSavingStatus(prev => ({ ...prev, [id]: 'idle' }));
-            alert('Failed to update commission.');
+            toast.error('Failed to update commission.');
         }
     };
 
@@ -103,22 +107,22 @@ export default function AdminCurriculum() {
         try {
             await api.patch(`/api/curriculum/materials/${mat.id}/`, { is_public: !mat.is_public });
             fetchAll();
-        } catch { alert('Failed to update status'); }
+        } catch { toast.error('Failed to update status'); }
     };
 
     const handleDeleteMaterial = async (id) => {
-        if (!window.confirm('Delete this material?')) return;
+        if (!await confirm('Delete this material?', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/curriculum/materials/${id}/`);
             fetchAll();
-        } catch { alert('Failed to delete'); }
+        } catch { toast.error('Failed to delete'); }
     };
 
     const filteredSubjects = subjects.filter(s => s.name.toLowerCase().includes(subjectSearch.toLowerCase()));
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -141,12 +145,12 @@ export default function AdminCurriculum() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {programs.length === 0 ? (
-                            <div className="col-span-full p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400 italic">No programs defined.</div>
+                            <div className="col-span-full p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-500 italic">No programs defined.</div>
                         ) : programs.map(p => (
                             <div key={p.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex justify-between items-center">
                                 <div>
                                     <h4 className="text-xs font-black text-slate-800">{p.name}</h4>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{p.program_type}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{p.program_type}</span>
                                 </div>
                                 <button onClick={() => handleDeleteProgram(p.id)} className="text-slate-300 hover:text-red-500 transition-colors">🗑️</button>
                             </div>
@@ -168,12 +172,12 @@ export default function AdminCurriculum() {
                         </button>
                     </div>
                     <div className="relative mb-4 max-w-xs">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">🔍</span>
                         <input type="text" placeholder="Search subjects..." value={subjectSearch} onChange={e => setSubjectSearch(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-4 text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primary/10" />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredSubjects.length === 0 ? (
-                            <div className="col-span-full p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-400 italic">
+                            <div className="col-span-full p-12 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-center text-slate-500 italic">
                                 {subjects.length === 0 ? 'No subjects found. Click "Add New Subject" to start.' : 'No subjects match your search.'}
                             </div>
                         ) : filteredSubjects.map(subj => {
@@ -218,20 +222,20 @@ export default function AdminCurriculum() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50/50 border-b border-slate-100">
                                 <tr>
-                                    <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Material</th>
-                                    <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
-                                    <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Owner</th>
-                                    <th className="py-2 px-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                    <th className="py-2 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Material</th>
+                                    <th className="py-2 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</th>
+                                    <th className="py-2 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">Owner</th>
+                                    <th className="py-2 px-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {materials.length === 0 ? (
-                                    <tr><td colSpan="4" className="p-12 text-center text-slate-400 italic">No materials found.</td></tr>
+                                    <tr><td colSpan="4" className="p-12 text-center text-slate-500 italic">No materials found.</td></tr>
                                 ) : materials.map(mat => (
                                     <tr key={mat.id} className="hover:bg-slate-50/80 transition-colors">
                                         <td className="py-3 px-6">
                                             <div className="font-bold text-slate-800 text-xs">{mat.title}</div>
-                                            <div className="text-[9px] text-slate-400">{new Date(mat.created_at).toLocaleDateString()}</div>
+                                            <div className="text-[9px] text-slate-500">{new Date(mat.created_at).toLocaleDateString()}</div>
                                         </td>
                                         <td className="py-3 px-6">
                                             <span className="text-[9px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase">{mat.material_type}</span>
@@ -242,7 +246,7 @@ export default function AdminCurriculum() {
                                         </td>
                                         <td className="py-3 px-6">
                                             <div className="flex justify-center items-center gap-3">
-                                                <a href={mat.file} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-secondary transition-colors" title="View File">👁</a>
+                                                <a href={mat.file} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-secondary transition-colors" title="View File">👁</a>
                                                 <button onClick={() => handleToggleMaterialPublic(mat)} className={`text-[9px] font-black uppercase px-2 py-1 rounded ${mat.is_public ? 'bg-slate-100 text-slate-500' : 'bg-emerald-500 text-white'}`}>
                                                     {mat.is_public ? 'Make Private' : 'Make Public'}
                                                 </button>
@@ -264,11 +268,11 @@ export default function AdminCurriculum() {
                         <h3 className="text-lg font-black text-slate-800 mb-6 uppercase tracking-widest">New Program</h3>
                         <form onSubmit={handleCreateProgram} className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Program Name</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Program Name</label>
                                 <input required value={programForm.name} onChange={e => setProgramForm({...programForm, name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</label>
                                 <select value={programForm.program_type} onChange={e => setProgramForm({...programForm, program_type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white">
                                     <option value="WESTERN">Western</option>
                                     <option value="ISLAMIC">Islamic</option>
@@ -293,18 +297,18 @@ export default function AdminCurriculum() {
                         <h3 className="text-lg font-black text-slate-800 mb-6 uppercase tracking-widest">Add Subject</h3>
                         <form onSubmit={handleAddSubject} className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject Name</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Subject Name</label>
                                 <input required value={subjectForm.name} onChange={e => setSubjectForm({...subjectForm, name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Program</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Program</label>
                                 <select required value={subjectForm.program} onChange={e => setSubjectForm({...subjectForm, program: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white">
                                     <option value="">Select Program</option>
                                     {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin Commission (%)</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Admin Commission (%)</label>
                                 <input type="number" step="0.01" value={subjectForm.admin_percentage} onChange={e => setSubjectForm({...subjectForm, admin_percentage: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-2">

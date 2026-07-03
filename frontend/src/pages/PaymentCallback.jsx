@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -8,7 +8,7 @@ const PaymentCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { token } = useAuth();
-    const [status, setStatus] = useState('verifying'); // verifying, success, failed
+    const [status, setStatus] = useState('verifying'); // verifying, success, failed, error (couldn't confirm)
     const [message, setMessage] = useState('');
     const [paymentData, setPaymentData] = useState(null);
     const { user } = useAuth();
@@ -29,8 +29,8 @@ const PaymentCallback = () => {
         }
 
         try {
-            const response = await axios.get(
-                `${import.meta.env.VITE_API_BASE_URL}/api/payments/verify/${reference}/`,
+            const response = await api.get(
+                `/api/payments/verify/${reference}/`,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
@@ -48,23 +48,30 @@ const PaymentCallback = () => {
                 setMessage('Payment verification failed. Please contact support.');
             }
         } catch (err) {
-            setStatus('failed');
-            let detailedError = 'Payment verification failed';
-            
-            if (err.response) {
-                // Server responded with an error status
-                const data = err.response.data;
-                detailedError = data.error || data.detail || data.message || `Server Error (${err.response.status})`;
-            } else if (err.request) {
-                // No response received (Network error, CORS, server down)
-                detailedError = 'Network Error: Cannot connect to server. Please check your internet connection.';
-            } else {
-                detailedError = err.message;
-            }
-            
-            setMessage(detailedError);
             console.error("Payment Verification Error:", err);
+            // Verification did not complete — this is NOT the same as a failed payment.
+            // A 4xx from our API means the gateway rejected the reference; anything else
+            // (network error, 5xx) means we simply couldn't confirm yet.
+            const isRejected = err.response && err.response.status < 500;
+            if (isRejected) {
+                const data = err.response.data;
+                setStatus('failed');
+                setMessage(data.error || data.detail || data.message || 'Payment verification failed.');
+            } else {
+                setStatus('error');
+                setMessage(
+                    err.request && !err.response
+                        ? 'Network error — we could not reach the server to confirm your payment.'
+                        : 'The server could not confirm your payment right now.'
+                );
+            }
         }
+    };
+
+    const retryVerification = () => {
+        setStatus('verifying');
+        setMessage('');
+        verifyPayment();
     };
 
     useEffect(() => {
@@ -165,7 +172,34 @@ const PaymentCallback = () => {
                                         Go to Dashboard
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-slate-400 mt-6 animate-pulse">Auto-redirecting in a few seconds...</p>
+                                <p className="text-[10px] text-slate-500 mt-6 animate-pulse">Auto-redirecting in a few seconds...</p>
+                            </>
+                        )}
+
+                        {status === 'error' && (
+                            <>
+                                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
+                                    ⚠️
+                                </div>
+                                <h2 className="text-2xl font-display font-bold text-amber-600 mb-2">Couldn't Confirm Payment</h2>
+                                <p className="text-slate-600 mb-2">{message}</p>
+                                <p className="text-sm font-bold text-slate-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-6">
+                                    If you have already paid, <span className="text-red-600">do not pay again</span> — your payment is safe and will be confirmed automatically. You can retry now or check your dashboard later.
+                                </p>
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={retryVerification}
+                                        className="w-full bg-primary hover:bg-primary-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+                                    >
+                                        🔄 Retry Verification
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/student')}
+                                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
+                                    >
+                                        Go to Dashboard
+                                    </button>
+                                </div>
                             </>
                         )}
 

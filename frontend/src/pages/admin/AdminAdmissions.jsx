@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { getCountryFlag } from './adminHelpers';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminAdmissions() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [pendingStudents, setPendingStudents] = useState([]);
     const [applications, setApplications] = useState([]);
     const [selectedApp, setSelectedApp] = useState(null);
@@ -31,28 +35,28 @@ export default function AdminAdmissions() {
     useEffect(() => { fetchData(); }, [fetchData]);
 
     const approveStudent = async (id) => {
-        if (!window.confirm('Approve this student and send an Admission Letter?')) return;
+        if (!await confirm('Approve this student and send an Admission Letter?', { confirmLabel: 'Approve' })) return;
         setActionLoading(true);
         try {
             await api.post(`/api/auth/approve-student/${id}/`, {});
-            alert('✅ Student approved! Admission letter generated and sent via email.');
+            toast.success('Student approved! Admission letter generated and sent via email.');
             fetchData();
         } catch (err) {
-            alert('Failed to approve student: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to approve student: ' + (err.response?.data?.error || err.message));
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleBulkApprove = async () => {
-        if (!window.confirm(`Approve ${selectedIds.length} selected applications?`)) return;
+        if (!await confirm(`Approve ${selectedIds.length} selected applications?`, { confirmLabel: 'Approve All' })) return;
         try {
             await Promise.all(selectedIds.map(id => api.post(`/api/auth/approve-student/${id}/`, {})));
-            alert('✅ Selected students approved!');
+            toast.success('Selected students approved!');
             setSelectedIds([]);
             fetchData();
         } catch (err) {
-            alert('Bulk approval failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Bulk approval failed: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -66,8 +70,8 @@ export default function AdminAdmissions() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -77,10 +81,10 @@ export default function AdminAdmissions() {
             <PageHeader title="Admissions" description="Review and approve student enrollment requests." />
 
             <div className="flex bg-slate-100 p-1 rounded-2xl w-fit mb-6 gap-1">
-                <button onClick={() => setTab('pending')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'pending' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+                <button onClick={() => setTab('pending')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'pending' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}>
                     Pending Students {pendingStudents.length > 0 && `(${pendingStudents.length})`}
                 </button>
-                <button onClick={() => setTab('applications')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'applications' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>
+                <button onClick={() => setTab('applications')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'applications' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}>
                     Applications {applications.length > 0 && `(${applications.length})`}
                 </button>
             </div>
@@ -104,17 +108,17 @@ export default function AdminAdmissions() {
                                         <input type="checkbox" checked={selectedIds.length === pendingStudents.length && pendingStudents.length > 0} onChange={toggleSelectAll} className="rounded border-slate-300 text-primary" />
                                     </th>
                                 )}
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Student</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Contact</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {tab === 'pending' ? (
                                 pendingStudents.length === 0 ? (
-                                    <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No pending admission requests.</td></tr>
+                                    <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No pending admission requests.</td></tr>
                                 ) : pendingStudents.map(student => (
                                     <tr key={student.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(student.id) ? 'bg-primary/5' : ''}`}>
                                         <td className="py-3 px-4">
@@ -122,20 +126,20 @@ export default function AdminAdmissions() {
                                         </td>
                                         <td className="py-3 px-4 whitespace-nowrap">
                                             <div className="text-xs font-bold text-slate-700">New Registration</div>
-                                            <div className="text-[9px] text-slate-400 uppercase font-medium">{student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Recent'}</div>
+                                            <div className="text-[9px] text-slate-500 uppercase font-medium">{student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Recent'}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-base">{getCountryFlag(student.country)}</span>
                                                 <div>
                                                     <div className="font-bold text-slate-800 text-xs">{student.first_name} {student.last_name}</div>
-                                                    <div className="text-[9px] text-slate-400 uppercase font-black">@{student.username}</div>
+                                                    <div className="text-[9px] text-slate-500 uppercase font-black">@{student.username}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] text-slate-600 font-medium lowercase italic">{student.email}</div>
-                                            <div className="text-[9px] text-slate-400 font-bold uppercase">{student.phone} / {student.country || 'Global'}</div>
+                                            <div className="text-[9px] text-slate-500 font-bold uppercase">{student.phone} / {student.country || 'Global'}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Pending Verification</span>
@@ -163,7 +167,7 @@ export default function AdminAdmissions() {
                                 ))
                             ) : (
                                 applications.length === 0 ? (
-                                    <tr><td colSpan="5" className="p-12 text-center text-slate-400 italic">No applications found.</td></tr>
+                                    <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No applications found.</td></tr>
                                 ) : applications.map(app => (
                                     <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="py-3 px-4 whitespace-nowrap">
@@ -180,7 +184,7 @@ export default function AdminAdmissions() {
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] text-slate-600">{app.email}</div>
-                                            <div className="text-[9px] text-slate-400 font-bold uppercase">{app.phone}</div>
+                                            <div className="text-[9px] text-slate-500 font-bold uppercase">{app.phone}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${app.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : app.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
@@ -203,11 +207,11 @@ export default function AdminAdmissions() {
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-start mb-6">
                             <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">Application Details</h3>
-                            <button onClick={() => setSelectedApp(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                            <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-600 text-2xl">&times;</button>
                         </div>
                         <div className="space-y-3 text-sm">
                             {Object.entries(selectedApp).filter(([k]) => !['id', 'isViewOnly'].includes(k)).map(([key, val]) => (
-                                val ? <div key={key}><span className="font-black text-slate-400 uppercase text-[10px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 mt-0.5">{String(val)}</p></div> : null
+                                val ? <div key={key}><span className="font-black text-slate-500 uppercase text-[10px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 mt-0.5">{String(val)}</p></div> : null
                             ))}
                         </div>
                         <button onClick={() => setSelectedApp(null)} className="mt-6 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-black uppercase text-sm hover:bg-slate-200">Close</button>

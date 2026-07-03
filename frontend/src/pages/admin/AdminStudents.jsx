@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge, getLocalTime } from './adminHelpers';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminStudents() {
     const navigate = useNavigate();
+    const toast = useToast();
+    const confirm = useConfirm();
     const [allStudents, setAllStudents] = useState([]);
     const [approvedTutors, setApprovedTutors] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -63,11 +67,11 @@ export default function AdminStudents() {
         setSaving(true);
         try {
             await api.patch(`/api/students/admin/${selectedStudent.id}/update/`, studentForm);
-            alert('✅ Student updated successfully!');
+            toast.success('Student updated successfully!');
             fetchData();
             setShowModal(false);
         } catch (err) {
-            alert('Failed to update student: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to update student: ' + (err.response?.data?.error || err.message));
         } finally {
             setSaving(false);
         }
@@ -78,23 +82,23 @@ export default function AdminStudents() {
         setSaving(true);
         try {
             await api.post(`/api/payments/admin/wallet-action/${selectedStudent.user?.id || selectedStudent.id}/`, walletAction);
-            alert('✅ Wallet updated!');
+            toast.success('Wallet updated!');
             fetchData();
         } catch (err) {
-            alert('Failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed: ' + (err.response?.data?.error || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this Student? This action cannot be undone.')) return;
+        if (!await confirm('Are you sure you want to delete this Student? This action cannot be undone.', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/auth/admin/users/${userId}/`);
-            alert('Student deleted successfully.');
+            toast.success('Student deleted successfully.');
             fetchData();
         } catch (err) {
-            alert('Failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -103,20 +107,20 @@ export default function AdminStudents() {
         setSaving(true);
         try {
             await api.post('/api/auth/admin/users/', { ...userForm, role: 'STUDENT' });
-            alert('Student created successfully!');
+            toast.success('Student created successfully!');
             setShowUserModal(false);
             setUserForm({ username: '', email: '', password: '', role: 'STUDENT', first_name: '', last_name: '', phone: '' });
             fetchData();
         } catch (err) {
-            alert('Failed: ' + JSON.stringify(err.response?.data || err.message));
+            toast.error('Failed: ' + JSON.stringify(err.response?.data || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -141,22 +145,22 @@ export default function AdminStudents() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Course & Region</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Class Details</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment / Tutor</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Student</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Course & Region</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Class Details</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Payment / Tutor</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {allStudents.length === 0 ? (
-                                <tr><td colSpan="6" className="p-12 text-center text-slate-400 italic">No active students found.</td></tr>
+                                <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No active students found.</td></tr>
                             ) : allStudents.map(student => (
                                 <tr key={student.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 text-xs">{student.user?.first_name} {student.user?.last_name}</div>
-                                        <div className="text-[9px] text-slate-400 uppercase font-black">@{student.user?.username}</div>
+                                        <div className="text-[9px] text-slate-500 uppercase font-black">@{student.user?.username}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 text-xs">{student.enrolled_course}</div>
@@ -169,7 +173,7 @@ export default function AdminStudents() {
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="text-[10px] font-bold text-slate-600">{student.class_type}</div>
-                                        <div className="text-[9px] text-slate-400">{student.days_per_week} Days/Week • {student.hours_per_week}h</div>
+                                        <div className="text-[9px] text-slate-500">{student.days_per_week} Days/Week • {student.hours_per_week}h</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="flex items-center gap-2 mb-1">
@@ -178,7 +182,7 @@ export default function AdminStudents() {
                                             </div>
                                             <span className="text-[10px] font-black text-slate-700">₦{parseFloat(student.wallet_balance || 0).toLocaleString()}</span>
                                         </div>
-                                        <div className="text-[9px] text-slate-400 font-bold uppercase flex items-center gap-1">
+                                        <div className="text-[9px] text-slate-500 font-bold uppercase flex items-center gap-1">
                                             {student.assigned_tutor_details ? `✅ ${student.assigned_tutor_details.full_name}` : '❌ No Tutor'}
                                             {(student.meeting_link || student.assigned_tutor_details?.live_class_link) && (
                                                 <button onClick={() => navigate(`/live/${student.db_id || student.id}`)} title="Join Live Class" className="text-primary hover:scale-110 transition-transform">📹</button>
@@ -207,48 +211,48 @@ export default function AdminStudents() {
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-start mb-6">
                             <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">Manage: {selectedStudent.user?.first_name} {selectedStudent.user?.last_name}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-slate-600 text-2xl">&times;</button>
                         </div>
 
                         <form onSubmit={handleUpdate} className="space-y-4 mb-8">
-                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Profile Settings</h4>
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Profile Settings</h4>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Enrolled Course</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Enrolled Course</label>
                                     <input value={studentForm.enrolled_course} onChange={e => setStudentForm({...studentForm, enrolled_course: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Level</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Level</label>
                                     <input value={studentForm.level} onChange={e => setStudentForm({...studentForm, level: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Class Type</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Class Type</label>
                                     <select value={studentForm.class_type} onChange={e => setStudentForm({...studentForm, class_type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white">
                                         <option value="ONE_ON_ONE">One on One</option>
                                         <option value="GROUP">Group</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assign Tutor</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assign Tutor</label>
                                     <select value={studentForm.assigned_tutor} onChange={e => setStudentForm({...studentForm, assigned_tutor: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white">
                                         <option value="">No Tutor</option>
                                         {approvedTutors.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Days/Week</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Days/Week</label>
                                     <input type="number" min="1" max="7" value={studentForm.days_per_week} onChange={e => setStudentForm({...studentForm, days_per_week: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hours/Week</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Hours/Week</label>
                                     <input type="number" min="1" value={studentForm.hours_per_week} onChange={e => setStudentForm({...studentForm, hours_per_week: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meeting Link</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Meeting Link</label>
                                     <input value={studentForm.meeting_link} onChange={e => setStudentForm({...studentForm, meeting_link: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Whiteboard Link</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Whiteboard Link</label>
                                     <input value={studentForm.whiteboard_link} onChange={e => setStudentForm({...studentForm, whiteboard_link: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
@@ -258,14 +262,14 @@ export default function AdminStudents() {
                         </form>
 
                         <hr className="border-slate-100 my-6" />
-                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Wallet Action</h4>
+                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Wallet Action</h4>
                         <div className="grid grid-cols-3 gap-3">
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount (₦)</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount (₦)</label>
                                 <input type="number" value={walletAction.amount} onChange={e => setWalletAction({...walletAction, amount: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</label>
                                 <select value={walletAction.type} onChange={e => setWalletAction({...walletAction, type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white">
                                     <option value="DEPOSIT">Deposit</option>
                                     <option value="DEBIT">Debit</option>
@@ -287,24 +291,24 @@ export default function AdminStudents() {
                         <form onSubmit={handleCreateStudent} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">First Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name</label>
                                     <input required value={userForm.first_name} onChange={e => setUserForm({...userForm, first_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
                                     <input required value={userForm.last_name} onChange={e => setUserForm({...userForm, last_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username</label>
                                 <input required value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</label>
                                 <input required type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
                                 <input required type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-4">

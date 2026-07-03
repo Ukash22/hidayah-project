@@ -1,10 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 export default function TutorProfilePage() {
     const { token } = useAuth();
+    const toast = useToast();
     const [tutorProfile, setTutorProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -13,7 +16,7 @@ export default function TutorProfilePage() {
 
     useEffect(() => {
         if (!token) return;
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/me/`, { headers: getAuthHeader() })
+        api.get(`/api/tutors/me/`, { headers: getAuthHeader() })
             .then(res => setTutorProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));
@@ -29,20 +32,20 @@ export default function TutorProfilePage() {
                 live_class_link: tutorProfile.live_class_link,
                 trial_class_link: tutorProfile.trial_class_link,
             };
-            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/${tutorProfile.id}/update_profile/`, payload, {
+            await api.patch(`/api/tutors/${tutorProfile.id}/update_profile/`, payload, {
                 headers: getAuthHeader()
             });
-            alert("✅ Profile updated successfully!");
+            toast.success('Profile updated successfully!');
         } catch (err) {
-            alert("❌ Failed to update profile: " + (err.response?.data?.error || err.message));
+            toast.error('Failed to update profile: ' + (err.response?.data?.error || err.message));
         } finally {
             setUpdating(false);
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -58,8 +61,8 @@ export default function TutorProfilePage() {
                     <form className="space-y-10" onSubmit={handleSubmit}>
                         <div className="grid md:grid-cols-2 gap-10">
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Full Legal Name (Verified)</label>
-                                <input type="text" readOnly value={tutorProfile.full_name} className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 text-slate-400 font-bold outline-none cursor-not-allowed" />
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Full Legal Name (Verified)</label>
+                                <input type="text" readOnly value={tutorProfile.full_name} className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 text-slate-500 font-bold outline-none cursor-not-allowed" />
                             </div>
                             <div className="space-y-3">
                                 <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 ml-1">Hourly Tuition Rate (₦)</label>
@@ -70,7 +73,7 @@ export default function TutorProfilePage() {
                                         onChange={e => setTutorProfile({ ...tutorProfile, hourly_rate: e.target.value })}
                                         className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-white focus:border-blue-600/50 outline-none transition-all font-black text-slate-900 text-lg shadow-sm"
                                     />
-                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-[10px] uppercase">Per Hour</span>
+                                    <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px] uppercase">Per Hour</span>
                                 </div>
                             </div>
                         </div>
@@ -99,7 +102,7 @@ export default function TutorProfilePage() {
                         </div>
 
                         <div className="space-y-3">
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">Professional Bio / Intro</label>
+                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Professional Bio / Intro</label>
                             <textarea
                                 rows="5"
                                 value={tutorProfile.bio || ''}
@@ -111,7 +114,7 @@ export default function TutorProfilePage() {
 
                         <div className="grid lg:grid-cols-2 gap-10">
                             <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
                                     <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
                                     Verified Subjects
                                 </h4>
@@ -136,10 +139,10 @@ export default function TutorProfilePage() {
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Default availability active.</p>
+                                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Default availability active.</p>
                                     )}
                                 </div>
-                                <p className="mt-6 text-[8px] font-black text-slate-400 uppercase tracking-widest text-center italic">Contact Admins to update slots</p>
+                                <p className="mt-6 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center italic">Contact Admins to update slots</p>
                             </div>
                         </div>
 

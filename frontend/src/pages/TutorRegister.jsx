@@ -44,7 +44,7 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
                         className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-xl border transition-all pointer-events-none ${
                             hasFile
                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                                : 'bg-white/5 text-slate-400 border-white/10'
+                                : 'bg-white/5 text-slate-500 border-white/10'
                         }`}
                     >
                         {hasFile ? 'Change' : 'Choose'}
@@ -250,7 +250,7 @@ const TutorRegister = () => {
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all duration-500 border-2 ${currentStep >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-100'}`}>
                                         {currentStep > s ? <IconCheckCircle2 size={16} /> : s}
                                     </div>
-                                    <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${currentStep === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${currentStep === s ? 'text-blue-600' : 'text-slate-500'}`}>
                                         Step 0{s}
                                     </span>
                                 </div>

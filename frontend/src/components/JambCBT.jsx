@@ -6,12 +6,15 @@ import {
     RotateCcw as IconRotateCcw, Sparkles as IconSparkles, Send as IconSend, CheckCircle2 as IconCheckCircle2, AlertCircle as IconAlertCircle,
     BookOpen as IconBookOpen, Home as IconHome, Settings as IconSettings, Info as IconInfo, X as IconX, GraduationCap as IconGraduationCap
 } from 'lucide-react';
-import axios from 'axios';
+import api from '../services/api';
+import { useToast, useConfirm } from '../context/ToastContext';
 
 const JAMB_BLUE = "#0047AB";
 const JAMB_LIGHT_BLUE = "#E0EEFF";
 
 const JambCBT = ({ token, studentProfile }) => {
+    const toast = useToast();
+    const confirm = useConfirm();
     const examType = studentProfile?.target_exam_type || (studentProfile?.level === 'JUNIOR_WAEC' ? 'BECE' : 'JAMB');
     const examYear = studentProfile?.target_exam_year || '2024';
 
@@ -99,7 +102,7 @@ const JambCBT = ({ token, studentProfile }) => {
 
             for (const subject of selectedSubjects) {
                 if (isAI) {
-                    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/ai/questions/generate/`, {
+                    const res = await api.post(`/api/ai/questions/generate/`, {
                         subject_id: 1, 
                         subject_name: subject,
                         exam_type: examType,
@@ -109,7 +112,7 @@ const JambCBT = ({ token, studentProfile }) => {
                     });
                     newQuestions[subject] = res.data.questions;
                 } else {
-                    const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/ai/questions/generate/`, {
+                    const res = await api.post(`/api/ai/questions/generate/`, {
                         subject_id: 1,
                         subject_name: subject,
                         exam_type: examType,
@@ -131,7 +134,7 @@ const JambCBT = ({ token, studentProfile }) => {
             setActiveSubjectIndex(0);
         } catch (err) {
             console.error("Failed to load questions", err);
-            alert("Unable to load questions. Please check your internet or wallet balance.");
+            toast.error("Unable to load questions. Please check your internet or wallet balance.");
         } finally {
             setLoading(false);
         }
@@ -241,7 +244,7 @@ const JambCBT = ({ token, studentProfile }) => {
                             </div>
                             <div className="flex items-end gap-2">
                                 <span className="text-3xl font-black text-slate-900">{results.breakdown[subject].correct}</span>
-                                <span className="text-slate-400 font-bold mb-1">/ {results.breakdown[subject].total} Correct</span>
+                                <span className="text-slate-500 font-bold mb-1">/ {results.breakdown[subject].total} Correct</span>
                             </div>
                             <div className="w-full h-2 bg-slate-200 rounded-full mt-4 overflow-hidden">
                                 <div 
@@ -321,7 +324,7 @@ const JambCBT = ({ token, studentProfile }) => {
                             <span className="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
                                 {currentSubject} - Question {currentQuestionIndex + 1}
                             </span>
-                            <span className="text-slate-400 font-bold text-xs">Total: {currentQuestions.length}</span>
+                            <span className="text-slate-500 font-bold text-xs">Total: {currentQuestions.length}</span>
                         </div>
 
                         {currentQuestion ? (
@@ -350,7 +353,7 @@ const JambCBT = ({ token, studentProfile }) => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
+                            <div className="flex flex-col items-center justify-center h-full text-slate-500 space-y-4">
                                 <IconRotateCcw size={48} className="animate-spin" />
                                 <p className="font-bold">Syncing questions...</p>
                             </div>
@@ -362,7 +365,7 @@ const JambCBT = ({ token, studentProfile }) => {
                 <div className="hidden lg:flex flex-col w-[350px] bg-slate-50 border-l border-slate-100 p-6">
                     <div className="flex items-center gap-3 mb-6">
                         <IconInfo size={16} className="text-blue-600" />
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Navigation Grid</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Navigation Grid</h4>
                     </div>
 
                     <div className="flex-1 overflow-y-auto grid grid-cols-5 gap-2 content-start pr-2">
@@ -397,7 +400,7 @@ const JambCBT = ({ token, studentProfile }) => {
                             </div>
                         </div>
                         <button 
-                            onClick={() => { if(window.confirm('Are you sure you want to end this practice session?')) submitExam(); }}
+                            onClick={async () => { if (await confirm('Are you sure you want to end this practice session?', { confirmLabel: 'Submit', danger: true })) submitExam(); }}
                             className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-red-500/20 flex items-center justify-center gap-2"
                         >
                             <IconSend size={14} /> Submit Final

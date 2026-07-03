@@ -9,6 +9,20 @@ html {
   scroll-margin-top: 100px;
 }
 
+/* Keyboard focus fallback — many components use outline-none with only a
+   border-color change; this guarantees a visible indicator for keyboard users
+   (WCAG 2.4.7) without affecting mouse/touch interaction. */
+:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 @theme {
   /* ── Brand ── */
   --color-primary:        #1e40af;

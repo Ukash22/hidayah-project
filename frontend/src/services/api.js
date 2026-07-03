@@ -31,6 +31,45 @@ export const getAuthHeader = () => {
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
+// Normalise list responses: some endpoints return bare arrays, paginated
+// ones return { count, next, previous, results }. Always get an array back.
+export const asList = (data) => {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.results)) return data.results;
+    return [];
+};
+
+// Extract a human-readable message from any API error shape:
+// {error}, {detail}, DRF field-error dicts, or a fallback for network errors.
+export const getApiError = (err, fallback = 'Something went wrong. Please try again.') => {
+    const data = err?.response?.data;
+    if (!data) return err?.request ? 'Network error — please check your connection.' : fallback;
+    if (typeof data === 'string') return data.includes('<html') ? fallback : data;
+    if (data.error) return typeof data.error === 'string' ? data.error : fallback;
+    if (data.detail) return data.detail;
+    if (data.message) return data.message;
+    // DRF validation dict: { field: ["msg"], ... }
+    if (typeof data === 'object') {
+        const firstKey = Object.keys(data)[0];
+        if (firstKey) {
+            const val = data[firstKey];
+            const msg = Array.isArray(val) ? val[0] : val;
+            if (typeof msg === 'string') return `${firstKey}: ${msg}`;
+        }
+    }
+    return fallback;
+};
+
+// Attach the current access token on every request. This makes the instance
+// safe to use from any component regardless of AuthContext effect ordering.
+api.interceptors.request.use((config) => {
+    if (!config.headers.Authorization) {
+        const token = localStorage.getItem('access');
+        if (token) config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
 // Response interceptor for token refresh (moved from AuthContext for consistency)
 api.interceptors.response.use(
     (response) => response,

@@ -48,7 +48,7 @@ const Login = () => {
                     <div className="text-center mb-10">
                         <img src="/logo.png" alt="Hidayah International" className="w-32 h-32 object-contain mx-auto mb-6 drop-shadow-xl" />
                         <h2 className="text-3xl font-display text-primary mb-2 font-black tracking-tighter">Welcome Back</h2>
-                        <p className="text-text-light text-[10px] uppercase tracking-[0.2em] font-black opacity-50">Hidayah International Portal Access</p>
+                        <p className="text-text-light text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Hidayah International Portal Access</p>
                     </div>
 
                     {error && (
@@ -59,10 +59,11 @@ const Login = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-primary ml-1">Username</label>
+                            <label htmlFor="login_username" className="block text-[10px] font-semibold uppercase tracking-widest mb-2 text-primary ml-1">Username</label>
                             <input
                                 type="text"
                                 name="username"
+                                id="login_username"
                                 value={formData.username}
                                 onChange={handleChange}
                                 required
@@ -72,7 +73,7 @@ const Login = () => {
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black uppercase tracking-widest mb-2 text-primary ml-1">Password</label>
+                            <label htmlFor="password" className="block text-[10px] font-semibold uppercase tracking-widest mb-2 text-primary ml-1">Password</label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? 'text' : 'password'}
@@ -88,13 +89,13 @@ const Login = () => {
                                     type="button"
                                     onClick={() => setShowPassword(v => !v)}
                                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-primary transition-colors"
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
                             <div className="flex justify-end mt-2">
-                                <Link to="/forgot-password" name="forgot-password" className="text-[10px] font-bold text-slate-400 hover:text-primary uppercase tracking-widest">
+                                <Link to="/forgot-password" name="forgot-password" className="text-[10px] font-bold text-slate-500 hover:text-primary uppercase tracking-widest">
                                     Forgot Password?
                                 </Link>
                             </div>
@@ -110,21 +111,21 @@ const Login = () => {
                     </form>
 
                     <div className="mt-10 pt-6 border-t border-slate-50">
-                        <p className="text-center text-[10px] text-slate-400 font-black uppercase tracking-widest mb-4">Need an account? Register Now</p>
+                        <p className="text-center text-[10px] text-slate-500 font-semibold uppercase tracking-widest mb-4">Need an account? Register Now</p>
                         <div className="grid grid-cols-2 gap-4">
                             <Link 
                                 to="/tutor/register" 
                                 className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition-all group"
                             >
                                 <span className="text-lg group-hover:scale-110 transition-transform">👨‍🏫</span>
-                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter">Become a Tutor</span>
+                                <span className="text-[10px] font-semibold text-indigo-600 uppercase tracking-tighter">Become a Tutor</span>
                             </Link>
                             <Link 
                                 to="/register" 
                                 className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 transition-all group"
                             >
                                 <span className="text-lg group-hover:scale-110 transition-transform">🎓</span>
-                                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Enroll Student</span>
+                                <span className="text-[10px] font-semibold text-emerald-600 uppercase tracking-tighter">Enroll Student</span>
                             </Link>
                         </div>
                     </div>

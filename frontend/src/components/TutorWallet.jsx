@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 import WithdrawalModal from './WithdrawalModal';
+import { useToast } from '../context/ToastContext';
 
 const TutorWallet = ({ token }) => {
+    const toast = useToast();
     const [profile, setProfile] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,7 +12,7 @@ const TutorWallet = ({ token }) => {
 
     const fetchData = React.useCallback(async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/wallet/`, {
+            const res = await api.get(`/api/payments/tutor/wallet/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -82,7 +84,7 @@ const TutorWallet = ({ token }) => {
             doc.save(`Hidayah_Tutor_Record_${t.id}.pdf`);
         } catch (err) {
             console.error("Receipt generation failed:", err);
-            alert("Failed to generate record PDF.");
+            toast.error("Failed to generate record PDF.");
         }
     };
 
@@ -92,7 +94,7 @@ const TutorWallet = ({ token }) => {
             COMPLETED: 'bg-indigo-600/10 text-indigo-600 border-indigo-600/20',
             REJECTED: 'bg-rose-500/10 text-rose-500 border-rose-500/20'
         };
-        return styles[status] || 'bg-slate-100 text-slate-400 border-slate-200';
+        return styles[status] || 'bg-slate-100 text-slate-500 border-slate-200';
     };
 
     const getTypeIcon = (type) => {
@@ -118,7 +120,7 @@ const TutorWallet = ({ token }) => {
             <div className="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-100 gap-6 shadow-sm">
                 <div>
                     <h2 className="text-3xl font-display font-black text-slate-900 mb-1">Financial Center</h2>
-                    <p className="text-slate-400 text-xs uppercase tracking-[0.2em] font-black">Manage your earnings, rates, and withdrawals.</p>
+                    <p className="text-slate-500 text-xs uppercase tracking-[0.2em] font-black">Manage your earnings, rates, and withdrawals.</p>
                 </div>
             </div>
 
@@ -146,8 +148,8 @@ const TutorWallet = ({ token }) => {
                 <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm flex flex-col justify-between group hover:border-blue-600/20 transition-all">
                     <div>
                         <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-blue-600/20 text-blue-600">⏱️</div>
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Base Hourly Rate</h3>
-                        <p className="text-3xl font-black text-slate-900">₦{profile?.hourly_rate?.toLocaleString() || '0'}<span className="text-sm text-slate-400 ml-2">/ hr</span></p>
+                        <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Base Hourly Rate</h3>
+                        <p className="text-3xl font-black text-slate-900">₦{profile?.hourly_rate?.toLocaleString() || '0'}<span className="text-sm text-slate-500 ml-2">/ hr</span></p>
                     </div>
                     <p className="text-[9px] font-black uppercase text-blue-600 tracking-widest bg-blue-600/10 inline-block px-3 py-1.5 rounded-lg border border-blue-600/10 mt-6 self-start">Active Rate</p>
                 </div>
@@ -162,19 +164,19 @@ const TutorWallet = ({ token }) => {
 
                 {transactions.length === 0 ? (
                     <div className="py-20 text-center bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
-                        <p className="text-slate-400 font-bold">No financial activities recorded yet.</p>
+                        <p className="text-slate-500 font-bold">No financial activities recorded yet.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto no-scrollbar rounded-2xl border border-slate-100">
                         <table className="w-full text-left bg-transparent">
                             <thead>
                                 <tr className="bg-slate-50 border-b border-slate-100">
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest hidden md:table-cell">Description</th>
-                                    <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Receipt</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest hidden md:table-cell">Description</th>
+                                    <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Receipt</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -198,7 +200,7 @@ const TutorWallet = ({ token }) => {
                                                 {transaction.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-5 whitespace-nowrap text-[10px] font-bold text-slate-400">
+                                        <td className="px-6 py-5 whitespace-nowrap text-[10px] font-bold text-slate-500">
                                             {new Date(transaction.created_at).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-5 text-[11px] text-slate-600 hidden md:table-cell max-w-xs truncate">
@@ -207,7 +209,7 @@ const TutorWallet = ({ token }) => {
                                         <td className="px-6 py-5 text-right">
                                             <button 
                                                 onClick={() => handleDownloadReceipt(transaction)}
-                                                className="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-600/10 border border-transparent hover:border-blue-600/20 transition-all opacity-0 group-hover:opacity-100"
+                                                className="w-8 h-8 inline-flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:text-blue-600 hover:bg-blue-600/10 border border-transparent hover:border-blue-600/20 transition-all opacity-0 group-hover:opacity-100"
                                                 title="Download Receipt PDF"
                                             >
                                                 ↓

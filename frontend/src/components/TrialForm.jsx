@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 const TrialForm = () => {
     const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ const TrialForm = () => {
         const fetchTutors = async () => {
             setLoadingTutors(true);
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/by_subject/?subject=${encodeURIComponent(formData.courseInterested)}`);
+                const res = await api.get(`/api/tutors/by_subject/?subject=${encodeURIComponent(formData.courseInterested)}`);
                 if (Array.isArray(res.data)) {
                     setAvailableTutors(res.data);
                 } else {
@@ -49,7 +49,7 @@ const TrialForm = () => {
 
         try {
             // API call to Django backend
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/applications/`, {
+            await api.post(`/api/applications/`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 email: formData.email,
@@ -101,7 +101,7 @@ const TrialForm = () => {
                                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold text-lg">0{i + 1}</div>
                                     <div>
                                         <h4 className="font-bold text-primary text-sm">{item.title}</h4>
-                                        <p className="text-xs text-slate-400">{item.desc}</p>
+                                        <p className="text-xs text-slate-500">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -113,38 +113,38 @@ const TrialForm = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
 
                             <h3 className="text-2xl font-bold text-primary mb-1 text-center">Trial Session Request</h3>
-                            <p className="text-slate-400 text-sm mb-10 text-center">takes less than 2 minutes to complete</p>
+                            <p className="text-slate-500 text-sm mb-10 text-center">takes less than 2 minutes to complete</p>
 
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">First Name *</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name *</label>
                                         <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Last Name</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
                                         <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email *</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email *</label>
                                         <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 font-mono text-xs" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone</label>
                                         <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+1..." className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Country</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Country</label>
                                         <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Global" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Focus Course</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Focus Course</label>
                                         <select name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer">
                                             <optgroup label="── Islamic Education ──">
                                                 <option>Quranic Recitation</option>
@@ -178,7 +178,7 @@ const TrialForm = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1 flex justify-between">
                                         <span>Preferred Tutor</span>
                                         {loadingTutors && <span className="text-primary italic normal-case text-[9px] animate-pulse">Loading tutors...</span>}
                                     </label>
@@ -198,7 +198,7 @@ const TrialForm = () => {
                                             <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Premium Session Estimate</p>
                                             <h4 className="text-lg font-bold text-primary">
                                                 ₦{parseFloat(availableTutors.find(t => t.full_name === formData.preferredTutor)?.hourly_rate || 0).toLocaleString()}
-                                                <span className="text-xs font-normal text-slate-400"> / per hour session</span>
+                                                <span className="text-xs font-normal text-slate-500"> / per hour session</span>
                                             </h4>
                                         </div>
                                         <div className="text-right">
@@ -209,13 +209,13 @@ const TrialForm = () => {
 
                                 <div className="grid grid-cols-3 gap-6 pt-2">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Pref. Day</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Pref. Day</label>
                                         <select name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
                                             {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <option key={d}>{d}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Slot</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Slot</label>
                                         <select name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
                                             <option>Morning</option>
                                             <option>Afternoon</option>
@@ -223,7 +223,7 @@ const TrialForm = () => {
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1 italic text-primary">Exact Time</label>
+                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1 italic text-primary">Exact Time</label>
                                         <input
                                             type="text"
                                             name="preferredTimeExact"

@@ -31,7 +31,7 @@ const Hero = () => {
                         </Link>
                         <Link to="/exam-practice" className="btn bg-white border border-slate-200 text-primary px-8 py-4 hover:bg-slate-50 flex items-center justify-center gap-2">
                             <span>HITIS CBT Center</span>
-                            <span className="px-2 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-full uppercase animate-pulse">New</span>
+                            <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-black rounded-full uppercase animate-pulse">New</span>
                         </Link>
                     </div>
 

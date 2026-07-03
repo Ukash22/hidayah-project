@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Files, Palette, Library, Image as ImageIcon, FileText, FileUp, X, Plus, Trash2 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const LibraryPanel = ({ excalidrawAPI, onClose }) => {
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState('pages');
     
     // Pages State - Store elements array inside each page
@@ -47,8 +49,8 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
     const saveToLibrary = () => {
         if (!excalidrawAPI) return;
         const elements = excalidrawAPI.getSceneElements();
-        if (elements.length === 0) return alert("Board is empty!");
-        
+        if (elements.length === 0) { toast.warning('Board is empty!'); return; }
+
         const newBoard = {
             id: Date.now(),
             name: `Board ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
@@ -57,7 +59,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
         const updated = [newBoard, ...savedBoards];
         setSavedBoards(updated);
         localStorage.setItem('hidayah_saved_boards', JSON.stringify(updated));
-        alert("Saved to library!");
+        toast.success('Saved to library!');
     };
 
     const loadFromLibrary = (board) => {
@@ -127,7 +129,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                     <div className="p-1.5 bg-white/20 rounded-xl"><Library size={20} /></div>
                     <h3 className="font-black tracking-tight">Board Settings</h3>
                 </div>
-                <button onClick={onClose} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
+                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
                     <X size={18} />
                 </button>
             </div>
@@ -178,7 +180,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'color' && (
                     <div className="flex flex-col gap-4">
                          <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400">Board Color</label>
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Board Color</label>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
                                     { color: '#ffffff', name: 'Whiteboard', border: '#e2e8f0' },
@@ -212,7 +214,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                         </button>
                         
                         <div className="space-y-2 mt-4">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400">Saved Boards</label>
+                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Saved Boards</label>
                             {savedBoards.length === 0 ? (
                                 <p className="text-sm text-slate-500 italic text-center py-4 bg-slate-50 rounded-xl">No saved boards yet.</p>
                             ) : (

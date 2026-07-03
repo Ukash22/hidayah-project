@@ -36,11 +36,11 @@ const DashboardLayout = ({
         headerBg: 'bg-slate-900 border-slate-800',
         cardBg: 'bg-slate-800',
         text: 'text-slate-100',
-        textMuted: 'text-slate-400',
+        textMuted: 'text-slate-500',
         accent: brandColor === 'blue' ? 'bg-blue-600' : 'bg-emerald-500',
         accentText: brandColor === 'blue' ? 'text-blue-400' : 'text-emerald-400',
         navActive: brandColor === 'blue' ? 'bg-blue-600 text-white shadow-lg' : 'bg-emerald-500 text-white shadow-lg',
-        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/15 hover:text-blue-400 text-slate-400' : 'hover:bg-emerald-500/15 hover:text-emerald-400 text-slate-400',
+        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/15 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/15 hover:text-emerald-400 text-slate-500',
         divider: 'border-white/5',
         avatar: brandColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-slate-900',
         userBg: 'bg-white/5',
@@ -48,7 +48,7 @@ const DashboardLayout = ({
         homeHover: 'hover:bg-white/5 hover:text-slate-300 text-slate-500',
         mobileHamBg: 'bg-slate-800 hover:bg-slate-700',
         mobileHamIcon: brandColor === 'blue' ? 'text-blue-400' : 'text-emerald-400',
-        themeBtn: 'bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10',
+        themeBtn: 'bg-white/5 hover:bg-white/10 text-slate-500 border border-white/10',
     } : {
         bg: 'bg-slate-50',
         sidebar: 'bg-slate-900 border-white/5',       // sidebar stays dark for contrast
@@ -60,7 +60,7 @@ const DashboardLayout = ({
         accent: brandColor === 'blue' ? 'bg-blue-600' : 'bg-emerald-500',
         accentText: brandColor === 'blue' ? 'text-blue-600' : 'text-emerald-500',
         navActive: brandColor === 'blue' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25',
-        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/10 hover:text-blue-400 text-slate-400' : 'hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-400',
+        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/10 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-500',
         divider: 'border-white/5',
         avatar: brandColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-slate-900',
         userBg: 'bg-white/5',
@@ -68,7 +68,7 @@ const DashboardLayout = ({
         homeHover: 'hover:bg-white/5 hover:text-slate-300 text-slate-500',
         mobileHamBg: 'bg-slate-50 hover:bg-slate-100',
         mobileHamIcon: brandColor === 'blue' ? 'text-blue-600' : 'text-emerald-600',
-        themeBtn: 'bg-white/5 hover:bg-white/10 text-slate-400 border border-white/10',
+        themeBtn: 'bg-white/5 hover:bg-white/10 text-slate-500 border border-white/10',
     };
 
     const handleLogout = () => {
@@ -86,7 +86,7 @@ const DashboardLayout = ({
                     </div>
                     <div>
                         <p className="font-black text-white tracking-tight leading-none">HIDAYAH</p>
-                        <p className={`text-[8px] font-black uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
+                        <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
                             {role === 'TUTOR' ? 'Tutor Portal' : role === 'ADMIN' ? 'Admin Portal' : 'Student Portal'}
                         </p>
                     </div>

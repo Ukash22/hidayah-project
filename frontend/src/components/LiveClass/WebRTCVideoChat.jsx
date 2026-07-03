@@ -335,7 +335,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                             {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={12} className="text-red-400" />}
                         </div>
                         {raisedHands[user.id] && <div className="absolute top-3 right-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={16} className="text-white" /></div>}
-                        {isScreenSharing && <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded text-[8px] font-black uppercase">Sharing Screen</div>}
+                        {isScreenSharing && <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded text-[10px] font-black uppercase">Sharing Screen</div>}
                     </div>
 
                     {/* Remote Users */}
@@ -363,7 +363,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                                 Status: {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting to Server...'}
                             </p>
                             {readyState !== ReadyState.OPEN && (
-                                <p className="text-[8px] mt-2 text-slate-700 break-all max-w-[200px]">
+                                <p className="text-[10px] mt-2 text-slate-700 break-all max-w-[200px]">
                                     {socketUrl.split('/signaling/')[0]}...
                                 </p>
                             )}
@@ -386,7 +386,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                             <MessageSquare size={18} className="text-emerald-500" />
                             <h4 className="font-black text-xs uppercase tracking-widest">Class Chat</h4>
                         </div>
-                        <button onClick={() => setShowChat(false)} className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-full text-slate-400 hover:text-white transition-all"><X size={16} /></button>
+                        <button onClick={() => setShowChat(false)} aria-label="Close chat" className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-full text-slate-400 hover:text-white transition-all"><X size={16} /></button>
                     </div>
                     <div className="flex-1 p-5 overflow-y-auto space-y-4 custom-scrollbar">
                         {messages.map((msg, i) => (
@@ -401,7 +401,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     </div>
                     <form onSubmit={handleChatSubmit} className="p-4 border-t border-slate-800 flex gap-2 bg-slate-900/50 rounded-b-[2rem]">
                         <input name="chatInput" type="text" placeholder="Type a message..." className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all" />
-                        <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white w-12 h-12 flex items-center justify-center rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
+                        <button type="submit" aria-label="Send message" className="bg-emerald-600 hover:bg-emerald-500 text-white w-12 h-12 flex items-center justify-center rounded-xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                         </button>
                     </form>

@@ -40,20 +40,41 @@ const Navbar = () => {
             <img src="/logo.png" alt="Hidayah International" className="w-12 h-12 md:w-16 md:h-16 object-contain group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
               <span className={`font-black text-lg md:text-xl leading-tight tracking-tighter text-primary`}>HIDAYAH</span>
-              <span className="text-[8px] font-black tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
+              <span className="text-[10px] font-black tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-4">
-            {user && (
-              <div className="hidden md:flex items-center mr-2">
-                <NotificationCenter />
-              </div>
+          {/* Desktop inline nav */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Home</Link>
+            <Link to="/#about" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">About</Link>
+            <Link to="/#tutors" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Tutors</Link>
+            {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
+              <>
+                <Link to="/exam-practice" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 transition-colors">Exam Practice</Link>
+                <Link to="/ai-hub" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-600 transition-colors">AI Hub</Link>
+              </>
             )}
-            
-            {/* Hamburger Button - Visible on all screens */}
-            <button 
-              onClick={() => setIsOpen(true)} 
+            <Link to="/tutor/register" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-emerald-600 transition-colors">Teach with Us</Link>
+            <div className="w-px h-4 bg-slate-200" />
+            {user ? (
+              <>
+                <NotificationCenter />
+                <Link to={dashboardPath} className="bg-primary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all">My Portal</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Login</Link>
+                <Link to="/register" className="bg-secondary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-secondary/20 transition-all">Free Trial</Link>
+              </>
+            )}
+          </div>
+
+          {/* Hamburger Button - Mobile only */}
+          <div className="flex md:hidden items-center gap-3">
+            {user && <NotificationCenter />}
+            <button
+              onClick={() => setIsOpen(true)}
               className="p-2.5 rounded-2xl bg-slate-900/5 hover:bg-slate-900/10 transition-all active:scale-90"
               aria-label="Toggle Menu"
             >
@@ -84,7 +105,7 @@ const Navbar = () => {
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="p-2 rounded-xl hover:bg-slate-50 transition-colors text-slate-400 hover:text-primary"
+              className="p-2 rounded-xl hover:bg-slate-50 transition-colors text-slate-500 hover:text-primary"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -111,14 +132,14 @@ const Navbar = () => {
                   <span className="text-[10px] font-black text-slate-300 group-hover:text-blue-600 transition-colors italic">04.</span>
                   <div className="flex flex-col">
                     <span className="text-xl font-black text-slate-900 hover:text-blue-600 transition-colors tracking-tight">Exam Practice</span>
-                    <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest">CBT Interface</span>
+                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">CBT Interface</span>
                   </div>
                 </Link>
                 <Link to="/ai-hub" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
                   <span className="text-[10px] font-black text-slate-300 group-hover:text-indigo-600 transition-colors italic">05.</span>
                   <div className="flex flex-col">
                     <span className="text-xl font-black text-slate-900 hover:text-indigo-600 transition-colors tracking-tight">AI Learning Hub</span>
-                    <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest">Powered by AI</span>
+                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Powered by AI</span>
                   </div>
                 </Link>
               </>
@@ -139,7 +160,7 @@ const Navbar = () => {
                     {user.username?.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Logged in as</p>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Logged in as</p>
                     <p className="font-black text-slate-900 truncate">{user.username}</p>
                   </div>
                 </div>
@@ -154,7 +175,7 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center mb-6">Join Hidayah International</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center mb-6">Join Hidayah International</p>
                 <div className="grid grid-cols-2 gap-4">
                   <Link to="/login" onClick={() => setIsOpen(false)} className="py-5 bg-slate-50 text-slate-900 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
                     Login

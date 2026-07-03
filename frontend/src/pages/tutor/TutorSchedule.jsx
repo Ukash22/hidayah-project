@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { Calendar as IconCalendar, Clock as IconClock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
-import { EmptyState } from '../../components/ui';
+import { EmptyState, SkeletonCard, FetchError } from '../../components/ui';
 
 const ComplaintModal = lazy(() => import('../../components/ComplaintModal'));
 
 export default function TutorSchedule() {
     const { token, user } = useAuth();
     const navigate = useNavigate();
+    const toast = useToast();
+    const confirm = useConfirm();
 
     const [schedule, setSchedule] = useState([]);
     const [assignedStudents, setAssignedStudents] = useState([]);
@@ -18,6 +21,7 @@ export default function TutorSchedule() {
     const [exams, setExams] = useState([]);
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
 
     const [showComplaintModal, setShowComplaintModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -30,24 +34,26 @@ export default function TutorSchedule() {
 
     const fetchData = useCallback(async () => {
         if (!token) return;
+        setLoadError(false);
         try {
             const [schRes, studRes, profileRes] = await Promise.all([
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/sessions/`, { headers: getAuthHeader() }),
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/tutor/my-students/`, { headers: getAuthHeader() }),
-                axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/me/`, { headers: getAuthHeader() }),
+                api.get(`/api/classes/sessions/`, { headers: getAuthHeader() }),
+                api.get(`/api/students/tutor/my-students/`, { headers: getAuthHeader() }),
+                api.get(`/api/tutors/me/`, { headers: getAuthHeader() }),
             ]);
-            setSchedule(Array.isArray(schRes.data) ? schRes.data : []);
+            setSchedule(Array.isArray(schRes.data) ? schRes.data : (schRes.data?.results || []));
             setAssignedStudents(Array.isArray(studRes.data) ? studRes.data : []);
             setTutorProfile(profileRes.data);
 
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/list/`, { headers: getAuthHeader() })
+            api.get(`/api/exams/list/`, { headers: getAuthHeader() })
                 .then(r => setExams(Array.isArray(r.data?.results) ? r.data.results : (Array.isArray(r.data) ? r.data : []))).catch(() => {});
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/`, { headers: getAuthHeader() })
+            api.get(`/api/curriculum/materials/`, { headers: getAuthHeader() })
                 .then(r => setMaterials(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-            axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/`, { headers: getAuthHeader() })
+            api.get(`/api/exams/assignments/`, { headers: getAuthHeader() })
                 .then(r => setAssignments(Array.isArray(r.data?.results) ? r.data.results : (Array.isArray(r.data) ? r.data : []))).catch(() => {});
         } catch (err) {
             console.error('Schedule fetch failed', err);
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -57,28 +63,28 @@ export default function TutorSchedule() {
 
     const handleJoinClass = useCallback(async (session) => {
         const sessionId = session.db_id || session.id;
-        if (!sessionId) { alert("Invalid session ID"); return; }
+        if (!sessionId) { toast.error('Invalid session ID'); return; }
         try {
             const isTrial = session.type === 'TRIAL' || !!session.zoom_start_url;
             const endpoint = isTrial
-                ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/trial/${sessionId}/start/`
-                : `${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/start/`;
-            await axios.post(endpoint, {}, { headers: getAuthHeader() });
+                ? `/api/classes/trial/${sessionId}/start/`
+                : `/api/classes/session/${sessionId}/start/`;
+            await api.post(endpoint, {}, { headers: getAuthHeader() });
         } catch (_e) { /* non-fatal */ }
         navigate(`/live/${sessionId}`);
     }, [getAuthHeader, navigate]);
 
     const handleComplete = useCallback(async (session) => {
         const sessionId = session.db_id || session.id;
-        if (!window.confirm("Mark this session as COMPLETED? Commission will be deducted and net amount credited to your wallet.")) return;
+        if (!await confirm('Mark this session as COMPLETED? Commission will be deducted and net amount credited to your wallet.', { confirmLabel: 'Mark Complete' })) return;
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/classes/session/${sessionId}/complete/`, {}, { headers: getAuthHeader() });
-            alert(`✅ Session completed!\nGross Fee: ₦${res.data.fee}\nCommission: ₦${res.data.commission}\nYour Net Payout: ₦${res.data.net_payout}`);
+            const res = await api.post(`/api/classes/session/${sessionId}/complete/`, {}, { headers: getAuthHeader() });
+            toast.success(`Session completed! Net payout: ₦${res.data.net_payout}`);
             fetchData();
         } catch (err) {
-            alert("Failed to complete session: " + (err.response?.data?.error || "Error"));
+            toast.error('Failed to complete session: ' + (err.response?.data?.error || 'Error'));
         }
-    }, [getAuthHeader, fetchData]);
+    }, [getAuthHeader, fetchData, confirm, toast]);
 
     const handleAssignItem = async (type, id, studentId) => {
         if (assigning) return;
@@ -86,20 +92,24 @@ export default function TutorSchedule() {
         try {
             if (type === 'exam') {
                 const isAssigned = assignments.some(a => a.student === studentId && a.exam === id);
-                if (isAssigned) { alert("Already assigned."); return; }
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/exams/assignments/bulk-assign/`, { exam: id, students: [studentId] }, { headers: getAuthHeader() });
+                if (isAssigned) { toast.info('Already assigned.'); return; }
+                await api.post(`/api/exams/assignments/bulk-assign/`, { exam: id, students: [studentId] }, { headers: getAuthHeader() });
             } else {
-                await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/curriculum/materials/${id}/bulk-assign/`, { students: [studentId] }, { headers: getAuthHeader() });
+                await api.post(`/api/curriculum/materials/${id}/bulk-assign/`, { students: [studentId] }, { headers: getAuthHeader() });
             }
             fetchData();
-        } catch (_err) { alert("Assignment failed"); }
+        } catch (_err) { toast.error('Assignment failed'); }
         finally { setAssigning(false); }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
+    );
+
+    if (loadError) return (
+        <FetchError message="Couldn't load your schedule. Please check your connection." onRetry={() => { setLoading(true); fetchData(); }} />
     );
 
     const activeClass = schedule.find(cls => {
@@ -139,12 +149,12 @@ export default function TutorSchedule() {
                 <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:border-blue-600/30 transition-all">
                     <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-xl mb-6 border border-blue-100">📅</div>
                     <h3 className="text-lg font-bold text-slate-900 mb-2">My Schedule</h3>
-                    <p className="text-slate-400 text-sm">You have {schedule.length} upcoming classes.</p>
+                    <p className="text-slate-500 text-sm">You have {schedule.length} upcoming classes.</p>
                 </div>
                 <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:border-indigo-600/30 transition-all">
                     <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-xl mb-6 border border-indigo-100">🎓</div>
                     <h3 className="text-lg font-bold text-slate-900 mb-2">My Students</h3>
-                    <p className="text-slate-400 text-sm">You are teaching {assignedStudents.length} students.</p>
+                    <p className="text-slate-500 text-sm">You are teaching {assignedStudents.length} students.</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-900 p-8 rounded-3xl border border-blue-500/30 md:col-span-2 relative overflow-hidden shadow-2xl">
                     <div className="flex justify-between items-start relative z-10">
@@ -174,7 +184,7 @@ export default function TutorSchedule() {
                             <div>
                                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">TRIAL CLASS</p>
                                 <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{trial.student_name || trial.first_name}</h4>
-                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl w-fit">
+                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-500 uppercase bg-slate-50 p-3 rounded-2xl w-fit">
                                     <span className="flex items-center gap-2"><IconCalendar size={12} className="text-blue-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleDateString() : 'Pending'}</span>
                                     <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}</span>
                                     <span className="flex items-center gap-2">📍 {trial.country || 'Global'}</span>
@@ -189,7 +199,7 @@ export default function TutorSchedule() {
                                     <button onClick={() => handleJoinClass(trial)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-blue-600/20 active:scale-95 transition-all whitespace-nowrap">Start Class →</button>
                                 </>
                             ) : (
-                                <span className="bg-slate-50 text-slate-400 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-slate-200 w-full text-center">Room Pending</span>
+                                <span className="bg-slate-50 text-slate-500 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest border border-slate-200 w-full text-center">Room Pending</span>
                             )}
                         </div>
                     </div>
@@ -213,7 +223,7 @@ export default function TutorSchedule() {
                             <div>
                                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">{session.course_interested || 'REGULAR CLASS'}</p>
                                 <h4 className="text-2xl md:text-3xl font-display font-black text-slate-900 mb-3">{session.student_name}</h4>
-                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-400 uppercase bg-slate-50 p-3 rounded-2xl w-fit">
+                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-500 uppercase bg-slate-50 p-3 rounded-2xl w-fit">
                                     <span className="flex items-center gap-2"><IconCalendar size={12} className="text-blue-600" /> {new Date(session.scheduled_at).toLocaleDateString()}</span>
                                     <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
@@ -231,7 +241,7 @@ export default function TutorSchedule() {
                             {session.status !== 'COMPLETED' ? (
                                 <button onClick={() => handleComplete(session)} className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap">Mark Done ✅</button>
                             ) : (
-                                <span className="bg-slate-50 text-slate-400 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest border border-slate-100 whitespace-nowrap flex items-center justify-center">Completed</span>
+                                <span className="bg-slate-50 text-slate-500 px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest border border-slate-100 whitespace-nowrap flex items-center justify-center">Completed</span>
                             )}
                             <button onClick={() => handleJoinClass(session)} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-[0.2em] shadow-lg shadow-blue-600/20 active:scale-95 transition-all whitespace-nowrap">
                                 Enter Class ↗
@@ -239,7 +249,7 @@ export default function TutorSchedule() {
                         </div>
                     </div>
                 )) : (
-                    <div className="py-10 text-center text-slate-400 font-medium italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <div className="py-10 text-center text-slate-500 font-medium italic bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                         No regular classes found in your schedule.
                     </div>
                 )}
@@ -267,7 +277,7 @@ export default function TutorSchedule() {
                                 <span className="w-1.5 h-8 bg-blue-600 rounded-full"></span>
                                 Assignment Hub
                             </h2>
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Provisioning resources for {selectedStudentForAssign.full_name}</p>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Provisioning resources for {selectedStudentForAssign.full_name}</p>
                         </div>
 
                         <div className="flex-1 overflow-y-auto space-y-10 pr-2">
@@ -285,15 +295,15 @@ export default function TutorSchedule() {
                                                         onClick={() => handleAssignItem('exam', exam.id, selectedStudentForAssign.id)}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100'}`}>
                                                                 {isAssigned ? '✓' : '📝'}
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">{exam.title}</p>
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{exam.subject_name || 'General'}</p>
+                                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{exam.subject_name || 'General'}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Active</span>}
+                                                        {isAssigned && <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Active</span>}
                                                     </div>
                                                 );
                                             })}
@@ -312,15 +322,15 @@ export default function TutorSchedule() {
                                                         onClick={() => handleAssignItem('material', mat.id, selectedStudentForAssign.id)}
                                                     >
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-400 border border-slate-100'}`}>
+                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isAssigned ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-white text-slate-500 border border-slate-100'}`}>
                                                                 {isAssigned ? '✓' : '📚'}
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors">{mat.title}</p>
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{mat.material_type}</p>
+                                                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{mat.material_type}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Assigned</span>}
+                                                        {isAssigned && <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full border border-blue-100">Assigned</span>}
                                                     </div>
                                                 );
                                             })}
@@ -329,7 +339,7 @@ export default function TutorSchedule() {
                                 </>
                             ) : (
                                 <div className="py-24 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] italic">Student registration required for assignments.</p>
+                                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] italic">Student registration required for assignments.</p>
                                 </div>
                             )}
                         </div>

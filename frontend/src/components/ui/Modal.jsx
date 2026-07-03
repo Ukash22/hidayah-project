@@ -1,6 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 const sizes = {
   sm:  'max-w-md',
@@ -11,15 +13,31 @@ const sizes = {
 };
 
 export default function Modal({ open, onClose, title, size = 'md', children, className = '' }) {
+  const panelRef = useRef(null);
+
   useEffect(() => {
     if (!open) return;
+    const prevActive = document.activeElement;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const onKey = (e) => e.key === 'Escape' && onClose?.();
+    panelRef.current?.focus();
+    const onKey = (e) => {
+      if (e.key === 'Escape') { onClose?.(); return; }
+      // Trap Tab inside the dialog (WCAG 2.4.3 focus order)
+      if (e.key === 'Tab' && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll(FOCUSABLE);
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
     document.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = prev;
       document.removeEventListener('keydown', onKey);
+      prevActive?.focus?.();
     };
   }, [open, onClose]);
 
@@ -40,6 +58,8 @@ export default function Modal({ open, onClose, title, size = 'md', children, cla
 
           {/* Panel */}
           <motion.div
+            ref={panelRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? 'modal-title' : undefined}

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, token }) => {
+    const toast = useToast();
     const [subject, setSubject] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
@@ -15,8 +17,8 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
         setError('');
 
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/api/complaints/file/`,
+            await api.post(
+                `/api/complaints/file/`,
                 {
                     filed_against_id: filedAgainstId,
                     subject,
@@ -27,7 +29,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                 }
             );
 
-            alert('✅ Issue report filed successfully');
+            toast.success('Issue report filed successfully');
             setSubject('');
             setDescription('');
             onClose();
@@ -53,7 +55,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
 
                         <button 
                             onClick={onClose} 
-                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-500 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
                         >
                             ✕
                         </button>
@@ -81,7 +83,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Incident Subject</label>
+                                <label htmlFor="complaint_subject" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Incident Subject</label>
                                 <input
                                     id="complaint_subject"
                                     name="complaint_subject"
@@ -95,7 +97,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Detailed Description</label>
+                                <label htmlFor="complaint_description" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Detailed Description</label>
                                 <textarea
                                     id="complaint_description"
                                     name="complaint_description"

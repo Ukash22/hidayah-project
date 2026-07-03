@@ -41,8 +41,12 @@ const StudentExams = lazy(() => import('./pages/student/StudentExams'))
 const StudentFinance = lazy(() => import('./pages/student/StudentFinance'))
 const StudentFeedback = lazy(() => import('./pages/student/StudentFeedback'))
 const StudentJambCBT = lazy(() => import('./pages/student/StudentJambCBT'))
+const StudentSessionDetail = lazy(() => import('./pages/student/StudentSessionDetail'))
+import { MotionConfig } from 'framer-motion'
 import { AuthProvider } from './context/AuthContext'
+import { ToastProvider } from './context/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // Optimized Lazy Loading for all major pages
 const Home = lazy(() => import('./pages/Home'))
@@ -114,9 +118,12 @@ const ScrollToHash = () => {
 
 function App() {
   return (
+    <MotionConfig reducedMotion="user">
     <AuthProvider>
+      <ToastProvider>
       <Router>
         <ScrollToHash />
+        <ErrorBoundary>
         <Suspense fallback={<LoadingOverlay />}>
           <Routes>
           {/* Public Routes */}
@@ -200,6 +207,7 @@ function App() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<StudentOverview />} />
             <Route path="classes" element={<StudentClasses />} />
+            <Route path="classes/:id" element={<StudentSessionDetail />} />
             <Route path="library" element={<StudentLibrary />} />
             <Route path="exams" element={<StudentExams />} />
             <Route path="jamb" element={<StudentJambCBT />} />
@@ -291,8 +299,11 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
       </Router>
+      </ToastProvider>
     </AuthProvider>
+    </MotionConfig>
   )
 }
 

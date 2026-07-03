@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 
 /* ─── Embedded Mini Trial Form ─────────────────────────────────────── */
 const TutorTrialModal = ({ tutor, onClose }) => {
@@ -22,7 +22,7 @@ const TutorTrialModal = ({ tutor, onClose }) => {
         setSubmitting(true);
         setStatus({ type: 'info', message: 'Submitting your trial request...' });
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/applications/`, {
+            await api.post(`/api/applications/`, {
                 first_name: formData.firstName,
                 last_name: formData.lastName,
                 email: formData.email,
@@ -91,27 +91,27 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">First Name *</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name *</label>
                                     <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Ahmad" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
                                     <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="e.g. Ali" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email *</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email *</label>
                                     <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Country</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Country</label>
                                     <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. Nigeria" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Focus Course</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus Course</label>
                                 <select name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm appearance-none">
                                     {(tutor.subjects_to_teach || 'Quranic Recitation').split(',').map(s => (
                                         <option key={s.trim()} value={s.trim()}>{s.trim()}</option>
@@ -122,13 +122,13 @@ const TutorTrialModal = ({ tutor, onClose }) => {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Day</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Day</label>
                                     <select name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Slot</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot</label>
                                     <select name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         <option>Morning</option>
                                         <option>Afternoon</option>
@@ -179,7 +179,7 @@ const Tutors = () => {
     useEffect(() => {
         const fetchTutors = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/public/`);
+                const res = await api.get(`/api/tutors/public/`);
                 if (Array.isArray(res.data)) {
                     setTutors(res.data);
                 } else {
@@ -298,20 +298,20 @@ const Tutors = () => {
                                 {/* Stats */}
                                 <div className="space-y-2.5 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl mb-5 flex-1">
                                     <div className="flex justify-between border-b border-slate-200 pb-2">
-                                        <span className="font-semibold text-slate-400">Experience</span>
+                                        <span className="font-semibold text-slate-500">Experience</span>
                                         <span className="font-bold text-primary">{tutor.experience_years} Years</span>
                                     </div>
                                     <div className="flex justify-between border-b border-slate-200 pb-2">
-                                        <span className="font-semibold text-slate-400">Languages</span>
+                                        <span className="font-semibold text-slate-500">Languages</span>
                                         <span className="font-bold text-primary text-right w-1/2">{tutor.languages}</span>
                                     </div>
                                     <div className="flex justify-between border-b border-slate-200 pb-2">
-                                        <span className="font-semibold text-slate-400">Rate</span>
+                                        <span className="font-semibold text-slate-500">Rate</span>
                                         <span className="font-bold text-secondary">₦{parseFloat(tutor.hourly_rate || 1500).toLocaleString()}/hr</span>
                                     </div>
                                     {(tutor.availabilities && tutor.availabilities.length > 0) || tutor.availability_hours ? (
                                         <div className="flex justify-between pt-1 mt-1">
-                                            <span className="font-semibold text-slate-400 mt-0.5">Availability</span>
+                                            <span className="font-semibold text-slate-500 mt-0.5">Availability</span>
                                             <div className="flex flex-col items-end gap-1">
                                                 {Array.isArray(tutor.availabilities) && tutor.availabilities.length > 0 ? (
                                                     tutor.availabilities.map((slot, i) => (
@@ -427,7 +427,7 @@ const Tutors = () => {
                                     <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center text-4xl mb-8 border border-primary/5 animate-pulse">🎙️</div>
                                     <span className="text-[10px] font-black text-secondary uppercase tracking-[0.3em] mb-3 block">Voice Sample</span>
                                     <h3 className="text-2xl font-display font-black text-primary mb-2 uppercase">{selectedMedia.name}</h3>
-                                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-10 italic">Quranic Recitation Performance</p>
+                                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-10 italic">Quranic Recitation Performance</p>
                                     <div className="w-full bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
                                         <audio src={selectedMedia.url?.startsWith('http') ? selectedMedia.url : `${import.meta.env.VITE_API_BASE_URL}${selectedMedia.url}`} controls className="w-full" />
                                     </div>

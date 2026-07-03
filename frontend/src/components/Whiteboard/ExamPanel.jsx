@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { FileText, Send, Clock, Edit3, X, CheckCircle2 } from 'lucide-react';
+import { useToast, useConfirm } from '../../context/ToastContext';
 
 const ExamPanel = ({ role, onAssignExam, onClose }) => {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [activeTab, setActiveTab] = useState('templates');
     const [customQuestion, setCustomQuestion] = useState('');
     const [duration, setDuration] = useState(5); // in minutes
@@ -94,17 +97,17 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
         }
     ];
 
-    const handleAssignTemplate = (template) => {
-        if (window.confirm(`Assign "${template.title}" to all students for ${duration} minutes? This will clear their current boards.`)) {
+    const handleAssignTemplate = async (template) => {
+        if (await confirm(`Assign "${template.title}" to all students for ${duration} minutes? This will clear their current boards.`, { confirmLabel: 'Assign' })) {
             const elements = template.generate();
             onAssignExam(elements, duration);
             onClose();
         }
     };
 
-    const handleAssignCustom = () => {
-        if (!customQuestion.trim()) return alert("Please enter a question.");
-        if (window.confirm(`Assign custom question to all students for ${duration} minutes?`)) {
+    const handleAssignCustom = async () => {
+        if (!customQuestion.trim()) return toast.error("Please enter a question.");
+        if (await confirm(`Assign custom question to all students for ${duration} minutes?`, { confirmLabel: 'Assign' })) {
             const elements = [
                 generateTextElement("CUSTOM EXAM QUESTION", 100, 50, 28, "#1e293b"),
                 generateTextElement(customQuestion, 100, 120, 24, "#0f172a"),
@@ -125,14 +128,14 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
                     <div className="p-1.5 bg-white/20 rounded-xl"><FileText size={20} /></div>
                     <h3 className="font-black tracking-tight">Assign Exam</h3>
                 </div>
-                <button onClick={onClose} className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
+                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
                     <X size={18} />
                 </button>
             </div>
 
             <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <Clock size={16} className="text-slate-400" />
+                    <Clock size={16} className="text-slate-500" />
                     Duration:
                 </div>
                 <div className="flex items-center gap-2">
@@ -169,7 +172,7 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
             <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
                 {activeTab === 'templates' && (
                     <div className="flex flex-col gap-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Select an exam to assign</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Select an exam to assign</p>
                         {templates.map(template => (
                             <div key={template.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-rose-300 hover:shadow-md transition-all group">
                                 <h4 className="font-bold text-slate-800 text-sm">{template.title}</h4>
@@ -188,7 +191,7 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
                 {activeTab === 'custom' && (
                     <div className="flex flex-col gap-4 h-full">
                          <div className="space-y-2 flex-1 flex flex-col">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Type your question</label>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type your question</label>
                             <textarea 
                                 value={customQuestion}
                                 onChange={(e) => setCustomQuestion(e.target.value)}

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardShell } from '../../components/layout';
 
@@ -25,7 +25,7 @@ export default function TutorShell() {
 
     useEffect(() => {
         if (!token) return;
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/me/`, {
+        api.get(`/api/tutors/me/`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             if (res.data.status !== 'APPROVED') navigate('/pending-approval', { replace: true });

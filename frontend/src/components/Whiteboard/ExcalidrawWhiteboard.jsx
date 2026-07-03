@@ -3,6 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
@@ -83,6 +84,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                     {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
                         <button 
                             onClick={onClearOwnBoard}
+                            aria-label="Clear my board"
                             className="p-2 sm:p-3 bg-red-900/20 hover:bg-red-800/30 text-red-500 rounded-xl transition-all border border-red-500/20"
                             title="Clear My Board"
                         >
@@ -90,7 +92,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                         </button>
                     )}
 
-                    <button onClick={onDownload} className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
+                    <button onClick={onDownload} aria-label="Download board as image" className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
 
@@ -136,6 +138,8 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
 };
 
 const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
     
@@ -163,7 +167,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             }, 1000);
         } else if (examTimer === 0 && isExamActive) {
             setIsExamActive(false);
-            if (role === 'STUDENT') alert("Exam Time is Up! Please stop writing.");
+            if (role === 'STUDENT') toast.warning('Exam time is up! Please stop writing.');
         }
         return () => clearInterval(interval);
     }, [isExamActive, examTimer, role]);
@@ -178,7 +182,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         setExamTimer(duration * 60);
         setIsExamActive(true);
         if (role === 'TUTOR' || role === 'ADMIN') setActiveTab('my_class');
-        alert(`Exam assigned for ${duration} minutes!`);
+        toast.success(`Exam assigned for ${duration} minutes!`);
     };
 
     // Sync teacher board view for students
@@ -238,7 +242,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     setIsExamActive(true);
                     if (role === 'STUDENT' && excalidrawAPI) {
                         excalidrawAPI.updateScene({ elements: payload.snapshot });
-                        alert(`EXAM STARTED! You have ${payload.duration} minutes.`);
+                        toast.warning(`Exam started! You have ${payload.duration} minutes.`);
                     } else if (role === 'TUTOR' || role === 'ADMIN') {
                         setActiveTab('my_class');
                     }
@@ -334,14 +338,14 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         if (excalidrawAPI) {
             const elements = excalidrawAPI.getSceneElements();
             sendMessage(JSON.stringify({ type: 'command', action: 'push_board', snapshot: elements, mode: mode }));
-            alert(`Pushed to all students!`);
+            toast.success('Pushed to all students!');
         }
     };
 
     const handleDownload = async () => {
         if (!excalidrawAPI) return;
         const elements = excalidrawAPI.getSceneElements();
-        if (elements.length === 0) return alert("Board is empty!");
+        if (elements.length === 0) { toast.warning('Board is empty!'); return; }
         
         const svgElement = await exportToSvg({
             elements,
@@ -376,7 +380,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f172a] text-white">
                 <div className="text-8xl mb-6 drop-shadow-2xl">🔒</div>
                 <h2 className="text-3xl font-black mb-2 uppercase tracking-tighter">Classroom Locked</h2>
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">The teacher has paused interaction.</p>
+                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">The teacher has paused interaction.</p>
             </div>
         );
     }
@@ -414,10 +418,10 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }}
                 onClearBoards={() => {
                     sendMessage(JSON.stringify({ type: 'command', action: 'clear_boards' }));
-                    alert("Cleared all student boards");
+                    toast.success('Cleared all student boards');
                 }}
-                onClearOwnBoard={() => {
-                    if (window.confirm("Clear your entire board?")) {
+                onClearOwnBoard={async () => {
+                    if (await confirm('Clear your entire board?', { confirmLabel: 'Clear', danger: true })) {
                         excalidrawAPI?.updateScene({ elements: [] });
                     }
                 }}
@@ -483,8 +487,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                             )}
                             <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
                             <button
-                                onClick={() => {
-                                    if (window.confirm("Clear board?")) excalidrawAPI?.updateScene({ elements: [] });
+                                onClick={async () => {
+                                    if (await confirm('Clear board?', { confirmLabel: 'Clear', danger: true })) excalidrawAPI?.updateScene({ elements: [] });
                                 }}
                                 className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl hover:bg-red-50 text-red-500 transition-all text-base md:text-lg"
                                 title="Clear All"
@@ -585,7 +589,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                     <div className="col-span-full py-32 text-center bg-white rounded-[2rem] sm:rounded-[3rem] border-2 border-dashed border-slate-200">
                                         <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-inner">🏫</div>
                                         <h3 className="text-xl font-black text-slate-900 mb-2">The Classroom is Empty</h3>
-                                        <p className="text-slate-400 font-bold max-w-xs mx-auto">Waiting for students to join and start drawing on their individual boards.</p>
+                                        <p className="text-slate-500 font-bold max-w-xs mx-auto">Waiting for students to join and start drawing on their individual boards.</p>
                                     </div>
                                 ) : (
                                     Object.entries(studentThumbnails).map(([id, data]) => (
@@ -599,7 +603,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 bg-emerald-100 px-2 sm:px-3 py-1 rounded-full">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span className="text-[8px] sm:text-[9px] font-black uppercase text-emerald-600 tracking-widest">Active</span>
+                                                    <span className="text-[10px] sm:text-[9px] font-black uppercase text-emerald-600 tracking-widest">Active</span>
                                                 </div>
                                             </div>
                                             <div className="h-48 bg-white p-2 relative flex items-center justify-center border-b border-slate-100">

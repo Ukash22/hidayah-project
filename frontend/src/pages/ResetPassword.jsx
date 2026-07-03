@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
-import axios from 'axios';
+import api from '../services/api';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const ResetPassword = () => {
@@ -26,7 +26,7 @@ const ResetPassword = () => {
         setError('');
 
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset/confirm/`, {
+            await api.post(`/api/auth/password-reset/confirm/`, {
                 uidb64,
                 token,
                 password

@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 export default function AdminSettings() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -30,31 +34,31 @@ export default function AdminSettings() {
         setSaving(true);
         try {
             await api.post('/api/auth/admin/users/', { ...userForm, is_superuser: true, is_staff: true });
-            alert('Admin created successfully!');
+            toast.success('Admin created successfully!');
             setShowModal(false);
             setUserForm({ username: '', email: '', password: '', role: 'ADMIN', first_name: '', last_name: '', phone: '', is_superuser: true, is_staff: true });
             fetchAdmins();
         } catch (err) {
-            alert('Failed: ' + JSON.stringify(err.response?.data || err.message));
+            toast.error('Failed: ' + JSON.stringify(err.response?.data || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     const handleDelete = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this admin? This action cannot be undone.')) return;
+        if (!await confirm('Are you sure you want to delete this admin? This action cannot be undone.', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/auth/admin/users/${userId}/`);
-            alert('Admin deleted successfully.');
+            toast.success('Admin deleted successfully.');
             fetchAdmins();
         } catch (err) {
-            alert('Failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed: ' + (err.response?.data?.error || err.message));
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -92,11 +96,11 @@ export default function AdminSettings() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-slate-100">
                                 <tr>
-                                    <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                    <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</th>
-                                    <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Role</th>
-                                    <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone</th>
-                                    <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Action</th>
+                                    <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Name</th>
+                                    <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</th>
+                                    <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Role</th>
+                                    <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone</th>
+                                    <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -104,7 +108,7 @@ export default function AdminSettings() {
                                     <tr key={admin.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="py-3 px-4">
                                             <div className="text-xs font-bold text-slate-700">{admin.first_name} {admin.last_name}</div>
-                                            <div className="text-[9px] text-slate-400 uppercase font-medium">@{admin.username}</div>
+                                            <div className="text-[9px] text-slate-500 uppercase font-medium">@{admin.username}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] font-bold text-slate-600">{admin.email}</div>
@@ -138,28 +142,28 @@ export default function AdminSettings() {
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">First Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name</label>
                                     <input required value={userForm.first_name} onChange={e => setUserForm({...userForm, first_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
                                     <input required value={userForm.last_name} onChange={e => setUserForm({...userForm, last_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username</label>
                                 <input required value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</label>
                                 <input required type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
                                 <input required type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Phone (Optional)</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Phone (Optional)</label>
                                 <input value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-4">

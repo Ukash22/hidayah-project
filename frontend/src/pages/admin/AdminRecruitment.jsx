@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminRecruitment() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [tutorApps, setTutorApps] = useState([]);
     const [selectedApp, setSelectedApp] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -25,15 +29,14 @@ export default function AdminRecruitment() {
     const handleScheduleInterview = async (app) => {
         const time = window.prompt('Enter Interview Time (YYYY-MM-DDTHH:MM):', new Date(Date.now() + 86400000).toISOString().slice(0, 16));
         if (!time) return;
-        const useInternal = window.confirm('Use internal Live Classroom for this interview?');
-        if (!useInternal) return;
+        if (!await confirm('Use internal Live Classroom for this interview?', { confirmLabel: 'Use Internal' })) return;
         try {
             setActionLoading(true);
             await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'INTERVIEW', interview_at: time, interview_link: '', generate_zoom: true });
-            alert('✅ Interview Scheduled Successfully!');
+            toast.success('Interview Scheduled Successfully!');
             fetchTutorApps();
         } catch (err) {
-            alert('❌ Failed to schedule interview: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed to schedule interview: ' + (err.response?.data?.error || err.message));
         } finally {
             setActionLoading(false);
         }
@@ -46,22 +49,22 @@ export default function AdminRecruitment() {
         try {
             setActionLoading(true);
             await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'INTERVIEW', interview_at: time, interview_link: link, generate_zoom: false });
-            alert('✅ Schedule Updated!');
+            toast.success('Schedule Updated!');
             fetchTutorApps();
         } catch (err) {
-            alert('❌ Failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed: ' + (err.response?.data?.error || err.message));
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleApprove = async (app) => {
-        if (!window.confirm('Approve this tutor? Appointment Letter will be sent.')) return;
+        if (!await confirm('Approve this tutor? Appointment Letter will be sent.', { confirmLabel: 'Approve' })) return;
         try {
             await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'APPROVE' });
-            alert('Tutor Approved!');
+            toast.success('Tutor Approved!');
             fetchTutorApps();
-        } catch { alert('Failed to approve'); }
+        } catch { toast.error('Failed to approve'); }
     };
 
     const handleReject = async (app) => {
@@ -69,14 +72,14 @@ export default function AdminRecruitment() {
         if (!reason) return;
         try {
             await api.post(`/api/tutors/admin/action/${app.id}/`, { action: 'REJECT', reason });
-            alert('Tutor Rejected');
+            toast.info('Tutor Rejected');
             fetchTutorApps();
-        } catch { alert('Failed to reject'); }
+        } catch { toast.error('Failed to reject'); }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -90,21 +93,21 @@ export default function AdminRecruitment() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Applicant</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Details</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Applicant</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Details</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {tutorApps.length === 0 ? (
-                                <tr><td colSpan="5" className="p-12 text-center text-slate-400 italic">No tutor applications yet.</td></tr>
+                                <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No tutor applications yet.</td></tr>
                             ) : tutorApps.map(app => (
                                 <tr key={app.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4 whitespace-nowrap">
                                         <div className="text-xs font-bold text-slate-700">{new Date(app.created_at).toLocaleDateString()}</div>
-                                        <div className="text-[9px] text-slate-400 uppercase font-medium">{app.device} • {app.network}</div>
+                                        <div className="text-[9px] text-slate-500 uppercase font-medium">{app.device} • {app.network}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 text-xs">{app.name}</div>
@@ -113,7 +116,7 @@ export default function AdminRecruitment() {
                                     <td className="py-3 px-4">
                                         <div className="text-[11px] text-slate-600 font-medium italic">{app.email}</div>
                                         <div className="flex flex-wrap gap-2 mt-0.5">
-                                            <span className="text-[9px] text-slate-400 font-bold uppercase">{app.experience} Years Exp</span>
+                                            <span className="text-[9px] text-slate-500 font-bold uppercase">{app.experience} Years Exp</span>
                                             <span className="text-[9px] text-emerald-600 font-black uppercase">₦{parseFloat(app.hourly_rate).toLocaleString()}/hr</span>
                                         </div>
                                         {app.status === 'INTERVIEW_SCHEDULED' && app.interview_at && (
@@ -176,7 +179,7 @@ export default function AdminRecruitment() {
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-start mb-6">
                             <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">Tutor Profile</h3>
-                            <button onClick={() => setSelectedApp(null)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                            <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-600 text-2xl">&times;</button>
                         </div>
                         <div className="space-y-3 text-sm">
                             <div><span className="font-black text-slate-500 uppercase text-[10px]">Name:</span><p className="font-bold text-slate-800 mt-0.5">{selectedApp.name}</p></div>

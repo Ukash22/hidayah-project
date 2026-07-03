@@ -1,6 +1,9 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
+logger = logging.getLogger(__name__)
+
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -83,9 +86,11 @@ class PendingStudentListView(generics.ListAPIView):
     serializer_class = PendingStudentSerializer
 
     def get_queryset(self):
-        # Return students with PENDING approval status
-        from students.models import StudentProfile
-        return User.objects.filter(student_profile__approval_status='PENDING')
+        return (
+            User.objects
+            .filter(student_profile__approval_status='PENDING')
+            .select_related('student_profile')
+        )
 
 class ApproveStudentView(APIView):
     permission_classes = (permissions.IsAdminUser,)
@@ -94,9 +99,9 @@ class ApproveStudentView(APIView):
         try:
             from students.models import StudentProfile
             from payments.models import PricingTier
-            from core.utils.pdf_generator import generate_admission_letter
-            from applications.email_service import send_admission_letter_email
             from decimal import Decimal
+            from core.dispatch import run_async
+            from core.tasks import send_admission_letter_task
             
             profile = StudentProfile.objects.get(user__id=pk)
             user = profile.user
@@ -129,8 +134,8 @@ class ApproveStudentView(APIView):
                             status='APPROVED',
                             tutor=profile.assigned_tutor
                         )
-                except:
-                    pass
+                except Exception:
+                    logger.warning("Auto-enrollment failed during student approval", exc_info=True)
 
             # 2. Build Fee Breakdown for PDF
             enrollment_data = []
@@ -177,31 +182,24 @@ class ApproveStudentView(APIView):
 
             profile.total_amount = total_first_payment
             profile.save()
-            
+
             payment_url = f"{settings.FRONTEND_URL}/admission-portal"
-            
-            # Generate PDF
-            try:
-                letter_path = generate_admission_letter(user, profile, {
-                    'enrollments': enrollment_data,
-                    'total_payment': float(total_first_payment),
-                }, payment_url=payment_url)
-                profile.admission_letter = letter_path
-                profile.save()
-                
-                # Send Email
-                send_admission_letter_email(user, profile)
-                
-            except Exception as e:
-                print(f"Error in approval PDF/Email: {e}")
-                return Response({"message": "Approved but failed to generate/send letter", "error": str(e)}, status=status.HTTP_200_OK)
+
+            # Dispatch PDF generation + email asynchronously (Celery or thread pool)
+            run_async(
+                send_admission_letter_task,
+                profile.pk,
+                payment_url,
+                enrollment_data,
+            )
 
             return Response({"message": f"Student {user.username} approved successfully and notified."})
             
         except StudentProfile.DoesNotExist:
             return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            logger.exception("Student approval failed")
+            return Response({"error": "Approval failed. Please check server logs."}, status=status.HTTP_400_BAD_REQUEST)
 
 class RequestPasswordResetView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -238,8 +236,9 @@ class RequestPasswordResetView(APIView):
         except User.DoesNotExist:
             # Don't reveal user existence
             return Response({"message": "Password reset link sent to your email."})
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SetNewPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)

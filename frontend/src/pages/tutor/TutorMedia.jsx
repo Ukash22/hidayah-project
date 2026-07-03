@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
 import { uploadMultipleToCloudinary } from '../../services/cloudinaryService';
+import { SkeletonCard } from '../../components/ui';
 
 export default function TutorMedia() {
     const { token, user } = useAuth();
@@ -16,7 +17,7 @@ export default function TutorMedia() {
 
     useEffect(() => {
         if (!token) return;
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/me/`, { headers: getAuthHeader() })
+        api.get(`/api/tutors/me/`, { headers: getAuthHeader() })
             .then(res => setTutorProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));
@@ -26,7 +27,7 @@ export default function TutorMedia() {
         setUploading(true);
         setUploadMsg('');
         try {
-            const profileRes = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/`, { headers: getAuthHeader() });
+            const profileRes = await api.get(`/api/tutors/`, { headers: getAuthHeader() });
             const myProfile = profileRes.data.find(t => t.user?.id === user?.id);
             if (!myProfile) throw new Error('Tutor profile not found');
 
@@ -38,8 +39,8 @@ export default function TutorMedia() {
             if (uploadedUrls.intro_video) payload.intro_video_url = uploadedUrls.intro_video;
             if (uploadedUrls.short_recitation) payload.short_recitation_url = uploadedUrls.short_recitation;
 
-            await axios.patch(
-                `${import.meta.env.VITE_API_BASE_URL}/api/tutors/${myProfile.id}/update_profile/`,
+            await api.patch(
+                `/api/tutors/${myProfile.id}/update_profile/`,
                 payload,
                 { headers: getAuthHeader() }
             );
@@ -53,8 +54,8 @@ export default function TutorMedia() {
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -69,7 +70,7 @@ export default function TutorMedia() {
                     <div className="grid md:grid-cols-2 gap-8">
                         {tutorProfile.video_url && (
                             <div className="space-y-4">
-                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Intro Video</p>
+                                <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Intro Video</p>
                                 {tutorProfile.video_type === 'youtube' ? (() => {
                                     const url = tutorProfile.video_url || '';
                                     const videoId = url.includes('youtu.be/')
@@ -114,7 +115,7 @@ export default function TutorMedia() {
                         <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-2xl border border-blue-100">🎥</div>
                         <div>
                             <h3 className="font-black text-xl text-slate-900">Intro Video</h3>
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">MP4 / MOV • Max 100MB</p>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">MP4 / MOV • Max 100MB</p>
                         </div>
                     </div>
                     <label className="block">
@@ -122,11 +123,11 @@ export default function TutorMedia() {
                             {mediaFiles.intro_video ? (
                                 <div>
                                     <p className="text-blue-600 font-black text-sm mb-1">✓ {mediaFiles.intro_video.name}</p>
-                                    <p className="text-slate-400 text-[9px] font-black">{(mediaFiles.intro_video.size / 1024 / 1024).toFixed(1)} MB READY</p>
+                                    <p className="text-slate-500 text-[9px] font-black">{(mediaFiles.intro_video.size / 1024 / 1024).toFixed(1)} MB READY</p>
                                 </div>
                             ) : (
                                 <div>
-                                    <p className="text-slate-400 font-bold text-sm mb-1">Choose Workshop Video</p>
+                                    <p className="text-slate-500 font-bold text-sm mb-1">Choose Workshop Video</p>
                                     <p className="text-slate-300 text-[9px] font-black uppercase tracking-widest">Select File</p>
                                 </div>
                             )}
@@ -140,7 +141,7 @@ export default function TutorMedia() {
                         <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl border border-indigo-100">🔊</div>
                         <div>
                             <h3 className="font-black text-xl text-slate-900">Recitation Sample</h3>
-                            <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">MP3 / WAV • Max 30MB</p>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">MP3 / WAV • Max 30MB</p>
                         </div>
                     </div>
                     <label className="block">
@@ -148,11 +149,11 @@ export default function TutorMedia() {
                             {mediaFiles.short_recitation ? (
                                 <div>
                                     <p className="text-indigo-600 font-black text-sm mb-1">✓ {mediaFiles.short_recitation.name}</p>
-                                    <p className="text-slate-400 text-[9px] font-black">{(mediaFiles.short_recitation.size / 1024 / 1024).toFixed(1)} MB READY</p>
+                                    <p className="text-slate-500 text-[9px] font-black">{(mediaFiles.short_recitation.size / 1024 / 1024).toFixed(1)} MB READY</p>
                                 </div>
                             ) : (
                                 <div>
-                                    <p className="text-slate-400 font-bold text-sm mb-1">Choose Audio Clip</p>
+                                    <p className="text-slate-500 font-bold text-sm mb-1">Choose Audio Clip</p>
                                     <p className="text-slate-300 text-[9px] font-black uppercase tracking-widest">Select File</p>
                                 </div>
                             )}

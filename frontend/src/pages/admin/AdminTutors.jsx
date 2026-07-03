@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
+import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { getLocalTime } from './adminHelpers';
+import { SkeletonTable } from '../../components/ui';
 
 export default function AdminTutors() {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [tutors, setTutors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showUserModal, setShowUserModal] = useState(false);
@@ -27,13 +31,13 @@ export default function AdminTutors() {
     useEffect(() => { fetchTutors(); }, [fetchTutors]);
 
     const handleDelete = async (userId) => {
-        if (!window.confirm('Are you sure you want to delete this Tutor? This action cannot be undone.')) return;
+        if (!await confirm('Are you sure you want to delete this Tutor? This action cannot be undone.', { confirmLabel: 'Delete', danger: true })) return;
         try {
             await api.delete(`/api/auth/admin/users/${userId}/`);
-            alert('Tutor deleted successfully.');
+            toast.success('Tutor deleted successfully.');
             fetchTutors();
         } catch (err) {
-            alert('Failed: ' + (err.response?.data?.error || err.message));
+            toast.error('Failed: ' + (err.response?.data?.error || err.message));
         }
     };
 
@@ -42,20 +46,20 @@ export default function AdminTutors() {
         setSaving(true);
         try {
             await api.post('/api/auth/admin/users/', { ...userForm, role: 'TUTOR' });
-            alert('Tutor created successfully!');
+            toast.success('Tutor created successfully!');
             setShowUserModal(false);
             setUserForm({ username: '', email: '', password: '', role: 'TUTOR', first_name: '', last_name: '', phone: '' });
             fetchTutors();
         } catch (err) {
-            alert('Failed: ' + JSON.stringify(err.response?.data || err.message));
+            toast.error('Failed: ' + JSON.stringify(err.response?.data || err.message));
         } finally {
             setSaving(false);
         }
     };
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="p-4 space-y-2">
+            <SkeletonTable rows={6} />
         </div>
     );
 
@@ -80,21 +84,21 @@ export default function AdminTutors() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 border-b border-slate-100">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Name</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact & Region</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status / Wallet</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Name</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Contact & Region</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status / Wallet</th>
+                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {tutors.length === 0 ? (
-                                <tr><td colSpan="5" className="p-12 text-center text-slate-400 italic">No approved tutors yet.</td></tr>
+                                <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No approved tutors yet.</td></tr>
                             ) : tutors.map(tutor => (
                                 <tr key={tutor.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="py-3 px-4 whitespace-nowrap">
                                         <div className="text-xs font-bold text-slate-700">{new Date(tutor.created_at).toLocaleDateString()}</div>
-                                        <div className="text-[9px] text-slate-400 uppercase font-medium">Approved</div>
+                                        <div className="text-[9px] text-slate-500 uppercase font-medium">Approved</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 text-xs">{tutor.name}</div>
@@ -108,7 +112,7 @@ export default function AdminTutors() {
                                                 🕒 {getLocalTime(tutor.user?.timezone)}
                                             </span>
                                         </div>
-                                        <div className="text-[9px] text-slate-400 font-bold uppercase mt-1">{tutor.experience} Years • {tutor.device}</div>
+                                        <div className="text-[9px] text-slate-500 font-bold uppercase mt-1">{tutor.experience} Years • {tutor.device}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
                                         <div className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-1">Active</div>
@@ -117,7 +121,7 @@ export default function AdminTutors() {
                                     <td className="py-3 px-4">
                                         <div className="flex flex-col gap-1 items-center">
                                             <button
-                                                onClick={() => alert(`Tutor Profile:\n\nName: ${tutor.name}\nEmail: ${tutor.email}\nSubjects: ${tutor.subjects}\nExperience: ${tutor.experience} years\nDevice: ${tutor.device}`)}
+                                                onClick={() => toast.info(`${tutor.name} | ${tutor.email} | ${tutor.subjects} | ${tutor.experience} yrs exp`)}
                                                 className="px-2 py-1 w-full bg-primary text-white rounded text-[9px] font-black uppercase shadow-sm hover:bg-primary/80 transition-colors"
                                             >
                                                 📋 View Profile
@@ -144,24 +148,24 @@ export default function AdminTutors() {
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">First Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name</label>
                                     <input required value={userForm.first_name} onChange={e => setUserForm({...userForm, first_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Name</label>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
                                     <input required value={userForm.last_name} onChange={e => setUserForm({...userForm, last_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Username</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Username</label>
                                 <input required value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email</label>
                                 <input required type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Password</label>
+                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Password</label>
                                 <input required type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-4">

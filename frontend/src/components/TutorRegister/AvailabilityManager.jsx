@@ -42,8 +42,9 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 rounded-3xl bg-white/[0.03] border border-white/5 group hover:border-emerald-500/30 transition-all relative"
                     >
                         <div className="space-y-2">
-                            <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">Day</label>
-                            <select 
+                            <label htmlFor={`slot-${index}-day`} className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60 ml-1">Day</label>
+                            <select
+                                id={`slot-${index}-day`}
                                 className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none cursor-pointer"
                                 value={slot.day}
                                 onChange={(e) => updateAvailabilitySlot(index, 'day', e.target.value)}
@@ -56,11 +57,12 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         </div>
                         <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">From</label>
-                                <span className="text-[8px] font-bold text-slate-500 uppercase">{formatTime12h(slot.startTime)}</span>
+                                <label htmlFor={`slot-${index}-start`} className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">From</label>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">{formatTime12h(slot.startTime)}</span>
                             </div>
-                            <input 
-                                type="time" 
+                            <input
+                                id={`slot-${index}-start`}
+                                type="time"
                                 className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all"
                                 value={slot.startTime}
                                 onChange={(e) => updateAvailabilitySlot(index, 'startTime', e.target.value)}
@@ -68,12 +70,13 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         </div>
                         <div className="space-y-2 relative">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">To</label>
-                                <span className="text-[8px] font-bold text-slate-500 uppercase">{formatTime12h(slot.endTime)}</span>
+                                <label htmlFor={`slot-${index}-end`} className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-500/60">To</label>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">{formatTime12h(slot.endTime)}</span>
                             </div>
                             <div className="flex gap-3">
-                                <input 
-                                    type="time" 
+                                <input
+                                    id={`slot-${index}-end`}
+                                    type="time"
                                     className="flex-1 bg-black/40 border border-white/5 rounded-xl px-4 py-3.5 text-xs font-black text-white outline-none focus:border-emerald-500 transition-all"
                                     value={slot.endTime}
                                     onChange={(e) => updateAvailabilitySlot(index, 'endTime', e.target.value)}

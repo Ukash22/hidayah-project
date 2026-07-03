@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -30,7 +30,7 @@ const PaymentPage = () => {
 
     const fetchBookingDetail = async (id) => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/classes/booking/request/`, {
+            const res = await api.get(`/api/classes/booking/request/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const booking = res.data.find(b => String(b.id) === String(id));
@@ -45,7 +45,7 @@ const PaymentPage = () => {
 
     const fetchPaymentStatus = async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/payments/status/`, {
+            const response = await api.get(`/api/payments/status/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProfile(response.data);
@@ -98,8 +98,8 @@ const PaymentPage = () => {
             // Handle Wallet payment locally
             if (paymentMethod === 'wallet') {
                 const walletEndpoint = bookingId 
-                    ? `${import.meta.env.VITE_API_BASE_URL}/api/payments/booking/wallet-pay/${bookingId}/`
-                    : `${import.meta.env.VITE_API_BASE_URL}/api/payments/initiate/`; // Backend should handle wallet logic in initiate if amount is 0? No, let's assume it's only for bookings for now.
+                    ? `/api/payments/booking/wallet-pay/${bookingId}/`
+                    : `/api/payments/initiate/`; // Backend should handle wallet logic in initiate if amount is 0? No, let's assume it's only for bookings for now.
                 
                 // If it's a general payment (Initial Fee) and they have wallet balance?
                 // For now, let's just support bookings.
@@ -109,7 +109,7 @@ const PaymentPage = () => {
                     return;
                 }
 
-                const response = await axios.post(walletEndpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
+                const response = await api.post(walletEndpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
                 if (response.data.success) {
                     navigate('/student', { state: { message: 'Payment processed successfully using your wallet balance!' } });
                     return;
@@ -117,14 +117,14 @@ const PaymentPage = () => {
             }
 
             const endpoint = bookingId 
-                ? `${import.meta.env.VITE_API_BASE_URL}/api/payments/booking/initiate/${bookingId}/`
-                : `${import.meta.env.VITE_API_BASE_URL}/api/payments/initiate/`;
+                ? `/api/payments/booking/initiate/${bookingId}/`
+                : `/api/payments/initiate/`;
             
             const payload = bookingId 
                 ? { booking_id: bookingId }
                 : { amount: loadAmount, method: paymentMethod };
 
-            const response = await axios.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
+            const response = await api.post(endpoint, payload, { headers: { Authorization: `Bearer ${token}` } });
 
             if (response.data.success) {
                 window.location.href = response.data.authorization_url;
@@ -194,11 +194,11 @@ const PaymentPage = () => {
 
                                 <div className="space-y-3 pt-4 border-t border-white/5">
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-slate-400">Processing Fee</span>
+                                        <span className="text-slate-500">Processing Fee</span>
                                         <span className="text-slate-300 font-bold">₦0.00</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
-                                        <span className="text-slate-400">Total Charged</span>
+                                        <span className="text-slate-500">Total Charged</span>
                                         <span className="text-lg font-black text-emerald-500">₦{parseFloat(loadAmount || 0).toLocaleString()}</span>
                                     </div>
                                 </div>
@@ -209,7 +209,7 @@ const PaymentPage = () => {
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-4 flex items-center gap-2">
                                 🛡️ Secure Gateway
                             </h4>
-                            <p className="text-[11px] text-slate-400 leading-relaxed font-medium">
+                            <p className="text-[11px] text-slate-500 leading-relaxed font-medium">
                                 Your payment is processed securely via Paystack. We do not store your card details or sensitive bank information.
                             </p>
                         </div>
@@ -223,7 +223,7 @@ const PaymentPage = () => {
                             <h1 className="text-3xl font-display font-black text-white mb-2">
                                 {bookingId ? 'Secure Booking Payment' : 'Fund Wallet'}
                             </h1>
-                            <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed">
+                            <p className="text-slate-500 text-sm font-medium mb-10 leading-relaxed">
                                 {bookingId 
                                     ? `You are paying for ${bookingDetail?.subject || 'Class'} with ${bookingDetail?.tutor_name || 'Tutor'}.` 
                                     : 'Select your preferred payment method and enter the amount.'}
@@ -257,7 +257,7 @@ const PaymentPage = () => {
                                                 <button 
                                                     key={amt}
                                                     onClick={() => setLoadAmount(amt)}
-                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${loadAmount === amt ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}
+                                                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${loadAmount === amt ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 border-white/10 text-slate-500 hover:border-white/20'}`}
                                                 >
                                                     ₦{parseInt(amt).toLocaleString()}
                                                 </button>

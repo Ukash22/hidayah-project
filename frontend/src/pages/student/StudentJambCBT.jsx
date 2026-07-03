@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
+import { SkeletonCard } from '../../components/ui';
 
 const JambCBT = lazy(() => import('../../components/JambCBT'));
 
@@ -18,7 +19,7 @@ export default function StudentJambCBT() {
 
     useEffect(() => {
         if (!token) return;
-        axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, { headers: getAuthHeader() })
+        api.get(`/api/students/me/`, { headers: getAuthHeader() })
             .then(res => setProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));
@@ -30,8 +31,8 @@ export default function StudentJambCBT() {
     );
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -42,7 +43,7 @@ export default function StudentJambCBT() {
             <div className="py-24 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
                 <div className="w-20 h-20 bg-blue-600/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8">🎯</div>
                 <h4 className="text-xl font-bold text-slate-900 mb-2">Not applicable</h4>
-                <p className="text-slate-400 font-bold italic max-w-sm mx-auto">The JAMB CBT module is available to students enrolled in JAMB, WAEC, NECO, or BECE preparation programmes.</p>
+                <p className="text-slate-500 font-bold italic max-w-sm mx-auto">The JAMB CBT module is available to students enrolled in JAMB, WAEC, NECO, or BECE preparation programmes.</p>
             </div>
         </>
     );
@@ -51,7 +52,7 @@ export default function StudentJambCBT() {
         <>
             <title>JAMB CBT — Hidayah</title>
             <PageHeader title="JAMB CBT Simulator" description="Practice mode for JAMB, WAEC, NECO and BECE examinations." />
-            <Suspense fallback={<div className="py-20 text-center text-slate-400 font-black animate-pulse uppercase tracking-[0.3em]">Initializing CBT...</div>}>
+            <Suspense fallback={<div className="py-20 text-center text-slate-500 font-black animate-pulse uppercase tracking-[0.3em]">Initializing CBT...</div>}>
                 <JambCBT token={token} studentProfile={profile} />
             </Suspense>
         </>
