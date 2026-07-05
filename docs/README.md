@@ -2,6 +2,8 @@
 
 **Hidayah** is a full-stack online tutoring platform for Islamic and Western education, targeted primarily at Nigerian students. It connects students with tutors for live one-on-one or group sessions, supports JAMB/WAEC/NECO exam preparation, and includes an AI-powered question generation engine.
 
+> **Project stage: active development — not yet published.** The web app deploys to Render for testing; the mobile app (Capacitor) is not on any store. Publish-stage work is intentionally deferred and tracked in the audit trackers under `docs/gaps-and-upgrade/tracker/` — chiefly: final mobile `appId` + icons/splash (`mobile-capacitor-progress.md` M-C), push notifications (M-D), the in-app payment flow decision (M-B, incl. App Store policy check for iOS), and the JWT-storage hardening workstream (`security-audit-progress.md` S4).
+
 ---
 
 ## What the Platform Does

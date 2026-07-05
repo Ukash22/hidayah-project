@@ -15,6 +15,8 @@ Master list of all audits run against the platform. Each audit produces an **ite
 | 5 | Error Handling Audit | ✅ All phases complete (3 low-priority pages deferred) | [error-handling-audit.md](items/error-handling-audit.md) | [error-handling-progress.md](tracker/error-handling-progress.md) |
 | 6 | API Contract Audit | ✅ All phases complete (endpoint annotation + `asList` adoption ongoing/opportunistic) | [api-contract-audit.md](items/api-contract-audit.md) | [api-contract-progress.md](tracker/api-contract-progress.md) |
 | 7 | Accessibility Audit (Deep) | ✅ All phases complete (remaining inline-label association is opportunistic) | [accessibility-audit.md](items/accessibility-audit.md) | [accessibility-progress.md](tracker/accessibility-progress.md) |
+| 8 | Mobile / Capacitor Audit | ✅ App-breaking fixes (CORS, media permissions, viewport) done · payment-flow + store-prep decisions deferred to publish stage | [mobile-capacitor-audit.md](items/mobile-capacitor-audit.md) | [mobile-capacitor-progress.md](tracker/mobile-capacitor-progress.md) |
+| 9 | Backend Code Quality Audit | ✅ Q-A + Q-B complete (money validation, withdrawal reservation, negative-balance policy) · Q-C opportunistic | [backend-quality-audit.md](items/backend-quality-audit.md) | [backend-quality-progress.md](tracker/backend-quality-progress.md) |
 
 ---
 
@@ -22,8 +24,6 @@ Master list of all audits run against the platform. Each audit produces an **ite
 
 | # | Audit | Scope | Priority |
 |---|---|---|---|
-| 8 | Mobile / Capacitor Audit | Capacitor config, Android/iOS viewport behaviour, native plugin usage, offline behaviour, push notification wiring | 🟡 Medium |
-| 9 | Backend Code Quality Audit | Duplicate logic across views, missing model validation, raw SQL strings, inconsistent serializer patterns, unused models/fields | 🟢 Low |
 | 10 | Test Coverage Audit | What has tests, what doesn't, critical paths with zero coverage (payments, auth, session scheduling) | 🟢 Low |
 
 ---
