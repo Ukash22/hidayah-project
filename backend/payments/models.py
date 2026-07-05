@@ -2,6 +2,7 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from django.db import models
+from django.core.validators import MinValueValidator
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -46,7 +47,7 @@ class Payment(models.Model):
     )
     
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     
@@ -77,6 +78,8 @@ class Payment(models.Model):
 
 class Wallet(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # No MinValueValidator here: negative balances are INTENTIONAL — admins may
+    # debit below zero to claw back over-payments (decision recorded 2026-07).
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
@@ -94,7 +97,7 @@ class Transaction(models.Model):
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wallet_transactions')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES)
     description = models.TextField()
     reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
@@ -111,7 +114,7 @@ class Withdrawal(models.Model):
     )
     
     tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='withdrawals')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     
     # Bank Details
     bank_name = models.CharField(max_length=100, blank=True, null=True)

@@ -305,6 +305,7 @@ class AdminWalletActionView(APIView):
                 wallet.balance += amount_dec
                 t_type = 'DEPOSIT'
             elif action_type == 'DEDUCTION':
+                # Balance MAY go negative: intentional clawback mechanism for over-payments.
                 wallet.balance -= amount_dec
                 t_type = 'SESSION_DEBIT'
             else:
@@ -523,8 +524,16 @@ class WithdrawalRequestView(APIView):
         if not amount or float(amount) <= 0:
             return Response({"error": "Invalid amount"}, status=400)
             
-        if wallet.balance < Decimal(str(amount)):
-            return Response({"error": "Insufficient balance"}, status=400)
+        # Available balance must cover this request PLUS any still-pending requests,
+        # otherwise a tutor could queue several withdrawals against the same funds.
+        from django.db.models import Sum
+        pending_total = Withdrawal.objects.filter(
+            tutor=request.user, status='PENDING'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        if wallet.balance - pending_total < Decimal(str(amount)):
+            return Response({
+                "error": "Insufficient available balance (pending withdrawal requests are reserved)."
+            }, status=400)
             
         withdrawal = Withdrawal.objects.create(
             tutor=request.user, 

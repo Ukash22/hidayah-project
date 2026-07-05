@@ -114,7 +114,7 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
 
     if sessions_created:
         try:
-            from notifications.models import Notification
+            from accounts.models import Notification
             from django.contrib.auth import get_user_model
             User = get_user_model()
             admins = User.objects.filter(role='ADMIN')

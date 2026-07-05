@@ -181,7 +181,7 @@ class EnrollInCourseView(generics.CreateAPIView):
             )
 
         # 1.6 Notify Admin
-        from notifications.models import Notification
+        from accounts.models import Notification
         admins = User.objects.filter(role='ADMIN')
         for admin in admins:
             Notification.objects.create(

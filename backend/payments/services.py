@@ -39,7 +39,7 @@ def fulfill_all_student_enrollments(student_user):
             
         return {"success": True, "count": enrollments.count()}
     except Exception as e:
-        print(f"Fulfillment failed: {e}")
+        logger.exception("Payment fulfillment failed")
         return {"success": False, "error": str(e)}
 
 def process_payment(booking):

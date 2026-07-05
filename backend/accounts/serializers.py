@@ -5,6 +5,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from decimal import Decimal
+import logging
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -211,7 +213,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                         last_name=parent_lname
                     )
                 except Exception as e:
-                    print(f"Non-critical error creating parent user: {e}")
+                    logger.warning("Non-critical error creating parent user: %s", e)
                 
             # Extract enrollment preferences
             days_per_week = validated_data.pop('days_per_week', 3)
@@ -332,7 +334,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                                 status='APPROVED' # Instant Approval
                             )
                         except Exception as e:
-                            print(f"Error creating auto-enrollment for {subj_name}: {e}")
+                            logger.warning("Error creating auto-enrollment for %s: %s", subj_name, e)
 
             # Generate and Send Admission Letter Immediately
             try:
@@ -362,7 +364,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 
                 send_admission_letter_email(user, profile)
             except Exception as doc_err:
-                print(f"Non-critical Error generating instant admission docs: {doc_err}")
+                logger.warning("Non-critical error generating instant admission docs: %s", doc_err)
                 
             return user
         except serializers.ValidationError:
@@ -370,8 +372,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         except Exception as e:
             import traceback
             trace_err = traceback.format_exc()
-            print(f"CRITICAL REGISTRATION ERROR: {e}")
-            print(f"TRACEBACK: {trace_err}")
+            logger.exception("Registration failed")
             # Identify specific constraint errors
             if "unique constraint" in str(e).lower() or "already exists" in str(e).lower():
                  raise serializers.ValidationError({"error": f"Database Conflict: {str(e)}"})

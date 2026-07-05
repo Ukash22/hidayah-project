@@ -93,30 +93,6 @@ class TutorViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[])
-    def by_subject(self, request):
-        """Return approved tutors who teach a given subject name."""
-        from django.db.models import Q
-        subject_name = request.query_params.get('subject', '').strip()
-        queryset = self.get_queryset().filter(status='APPROVED')
-
-        if subject_name:
-            keywords = [w for w in subject_name.replace(',', ' ').split() if len(w) > 2]
-            if keywords:
-                q = Q()
-                for kw in keywords:
-                    q |= Q(subjects_to_teach__icontains=kw)
-                matched_qs = queryset.filter(q)
-                if not matched_qs.exists():
-                    matched_qs = queryset[:12]
-            else:
-                matched_qs = queryset[:12]
-        else:
-            matched_qs = queryset[:12]
-
-        serializer = self.get_serializer(matched_qs, many=True, context=self.get_serializer_context())
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'], permission_classes=[])
     def me(self, request):
         """Endpoint for the logged-in tutor to fetch their own profile regardless of status"""
         if not request.user.is_authenticated:
@@ -178,14 +154,6 @@ class TutorViewSet(viewsets.ModelViewSet):
         response = super().list(request, *args, **kwargs)
         cache.set(cache_key, response.data, timeout=300)
         return response
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.action in ['list', 'public', 'by_subject', 'retrieve']:
-            queryset = queryset.select_related('user').prefetch_related('subjects', 'availabilities')
-        if self.action == 'list':
-            return queryset.filter(status='APPROVED')
-        return queryset
 
     @action(detail=False, methods=['post'], url_path=r'admin/action/(?P<app_id>\d+)')
     def admin_action(self, request, app_id=None):
@@ -361,6 +329,7 @@ class TutorViewSet(viewsets.ModelViewSet):
                 description=f"ADMIN CREDIT: {description}"
             )
         elif action_type == 'DEBIT':
+            # Balance MAY go negative: intentional clawback mechanism for over-payments.
             wallet.balance -= amount_dec
             wallet.save()
             Transaction.objects.create(

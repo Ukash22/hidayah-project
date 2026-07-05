@@ -43,6 +43,65 @@ class AdminAnalyticsCachingTests(TestCase):
         self.assertEqual(second.json(), first.json())
 
 
+class WalletPolicyTests(TestCase):
+    """Money-handling rules: pending withdrawals reserve funds; admin debits
+    may push a balance negative (intentional clawback — decision 2026-07)."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.tutor = make_user('tutor1', role='TUTOR')
+
+    def _wallet(self, user, balance):
+        from payments.models import Wallet
+        wallet, _ = Wallet.objects.get_or_create(user=user)
+        wallet.balance = balance
+        wallet.save()
+        return wallet
+
+    def test_withdrawal_exceeding_balance_rejected(self):
+        self._wallet(self.tutor, 1000)
+        self.client.force_authenticate(self.tutor)
+        res = self.client.post('/api/payments/tutor/withdrawal/', {
+            'amount': 5000, 'bank_name': 'GTB', 'account_number': '1', 'account_name': 'T',
+        }, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_pending_withdrawals_reserve_balance(self):
+        from payments.models import Withdrawal
+        self._wallet(self.tutor, 10000)
+        Withdrawal.objects.create(
+            tutor=self.tutor, amount=8000, bank_name='GTB',
+            account_number='1', account_name='T', status='PENDING',
+        )
+        self.client.force_authenticate(self.tutor)
+        res = self.client.post('/api/payments/tutor/withdrawal/', {
+            'amount': 5000, 'bank_name': 'GTB', 'account_number': '1', 'account_name': 'T',
+        }, format='json')
+        self.assertEqual(res.status_code, 400)
+
+        # but a request within the available (10000 - 8000) succeeds
+        res = self.client.post('/api/payments/tutor/withdrawal/', {
+            'amount': 2000, 'bank_name': 'GTB', 'account_number': '1', 'account_name': 'T',
+        }, format='json')
+        self.assertEqual(res.status_code, 201)
+
+    def test_admin_debit_may_push_balance_negative(self):
+        from students.models import StudentProfile
+        from payments.models import Wallet
+        student = make_user('student1', role='STUDENT')
+        profile = StudentProfile.objects.create(user=student)
+        self._wallet(student, 1000)
+
+        self.client.force_authenticate(make_user('admin1', role='ADMIN'))
+        res = self.client.post('/api/payments/admin/wallet-action/', {
+            'student_id': profile.id, 'action_type': 'DEDUCTION', 'amount': 3000,
+            'description': 'clawback',
+        }, format='json')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(float(Wallet.objects.get(user=student).balance), -2000.0)
+
+
 class AdminFinancialSecurityTests(TestCase):
     """Financial admin endpoints must be staff-only."""
 
