@@ -103,20 +103,20 @@ export default function StudentFinance() {
             <div className="grid lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 space-y-10">
                     {/* Wallet card */}
-                    <div className="bg-gradient-to-br from-blue-600 to-indigo-900 rounded-[3rem] p-12 shadow-2xl relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-primary to-indigo-900 rounded-card-lg p-6 md:p-12 shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-[80px] rounded-full" />
                         <div className="relative z-10">
                             <div className="flex justify-between items-start mb-12">
                                 <div>
-                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-blue-200 mb-2">Available Credits</p>
-                                    <h3 className="text-6xl font-display font-black text-white tracking-tighter">₦{parseFloat(profile?.wallet_balance || 0).toLocaleString()}</h3>
+                                    <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-blue-200 mb-2">Available Credits</p>
+                                    <h3 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter">₦{parseFloat(profile?.wallet_balance || 0).toLocaleString()}</h3>
                                 </div>
                                 <div className="w-16 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/20">
-                                    <span className="text-white text-xs font-black">PAY</span>
+                                    <span className="text-white text-xs font-bold">PAY</span>
                                 </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link to="/payment" className="flex-1 py-5 bg-white text-blue-600 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                                <Link to="/payment" className="flex-1 py-5 bg-white dark:bg-slate-900 text-primary rounded-card font-bold uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
                                     <IconPlus size={18} /> Add Funds to Wallet
                                 </Link>
                             </div>
@@ -124,25 +124,25 @@ export default function StudentFinance() {
                     </div>
 
                     {/* Transactions */}
-                    <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
-                        <h4 className="text-xl font-display font-black text-slate-900 mb-8 flex items-center gap-4">
-                            <IconTrendingUp size={20} className="text-blue-600" /> Ledger Analytics
+                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-6 md:p-10 shadow-sm">
+                        <h4 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100 mb-8 flex items-center gap-4">
+                            <IconTrendingUp size={20} className="text-primary" /> Ledger Analytics
                         </h4>
                         <div className="grid gap-4">
                             {transactions.length > 0 ? transactions.map(t => (
-                                <div key={t.id} className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex justify-between items-center hover:border-blue-600/30 transition-all shadow-sm">
+                                <div key={t.id} className="bg-slate-50 dark:bg-slate-800/60 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center hover:border-primary/30 transition-all shadow-sm">
                                     <div className="flex items-center gap-6">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${t.transaction_type === 'DEPOSIT' ? 'bg-blue-600/10 text-blue-600' : 'bg-red-500/10 text-red-500'}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold ${t.transaction_type === 'DEPOSIT' ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'}`}>
                                             {t.transaction_type === 'DEPOSIT' ? '+' : '-'}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-bold text-slate-900">{t.description}</p>
+                                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t.description}</p>
                                             <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end gap-2">
-                                        <div className="text-sm font-black tabular-nums text-slate-900">₦{parseFloat(t.amount).toLocaleString()}</div>
-                                        <button onClick={() => handleDownloadReceipt(t)} className="text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1">
+                                        <div className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">₦{parseFloat(t.amount).toLocaleString()}</div>
+                                        <button onClick={() => handleDownloadReceipt(t)} className="text-[9px] font-bold uppercase text-primary hover:text-primary-dark transition-colors flex items-center gap-1">
                                             <IconDownload size={10} /> Receipt
                                         </button>
                                     </div>
@@ -156,23 +156,23 @@ export default function StudentFinance() {
 
                 {/* Right sidebar */}
                 <div className="space-y-6">
-                    <div className="bg-white border border-slate-100 rounded-[2.5rem] p-8 shadow-sm">
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-8">Card Management</h4>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-5 md:p-8 shadow-sm">
+                        <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-8">Card Management</h4>
                         <div className="p-8 bg-slate-900 rounded-3xl border border-slate-800 relative overflow-hidden shadow-xl">
                             <div className="flex justify-between items-start mb-10 relative z-10">
                                 <div className="w-8 h-8 rounded-full border border-white/20" />
                                 <IconShieldCheck size={18} className="text-blue-400" />
                             </div>
                             <div className="relative z-10">
-                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</p>
                                 <p className="text-xs font-bold text-white">READY FOR BILLING</p>
                             </div>
                         </div>
                     </div>
-                    <div className="p-8 bg-blue-50 border border-blue-100 rounded-[2.5rem] flex items-start gap-4 shadow-sm">
+                    <div className="p-8 bg-primary-soft border border-blue-100 rounded-card-lg flex items-start gap-4 shadow-sm">
                         <IconAlertCircle className="text-blue-500 shrink-0" size={20} />
                         <div>
-                            <h5 className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-1">Billing Policy</h5>
+                            <h5 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Billing Policy</h5>
                             <p className="text-[10px] text-slate-500 leading-relaxed font-bold">Payments are non-refundable after a session has been successfully completed by the assigned tutor.</p>
                         </div>
                     </div>

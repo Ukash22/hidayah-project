@@ -40,9 +40,9 @@ export default function StudentJambCBT() {
         <>
             <title>JAMB CBT — Hidayah</title>
             <PageHeader title="JAMB CBT Simulator" />
-            <div className="py-24 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                <div className="w-20 h-20 bg-blue-600/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8">🎯</div>
-                <h4 className="text-xl font-bold text-slate-900 mb-2">Not applicable</h4>
+            <div className="py-24 text-center bg-slate-50 dark:bg-slate-800/60 rounded-card-lg border border-dashed border-slate-200 dark:border-slate-700">
+                <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8">🎯</div>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Not applicable</h4>
                 <p className="text-slate-500 font-bold italic max-w-sm mx-auto">The JAMB CBT module is available to students enrolled in JAMB, WAEC, NECO, or BECE preparation programmes.</p>
             </div>
         </>
@@ -52,7 +52,7 @@ export default function StudentJambCBT() {
         <>
             <title>JAMB CBT — Hidayah</title>
             <PageHeader title="JAMB CBT Simulator" description="Practice mode for JAMB, WAEC, NECO and BECE examinations." />
-            <Suspense fallback={<div className="py-20 text-center text-slate-500 font-black animate-pulse uppercase tracking-[0.3em]">Initializing CBT...</div>}>
+            <Suspense fallback={<div className="py-20 text-center text-slate-500 font-bold animate-pulse uppercase tracking-[0.3em]">Initializing CBT...</div>}>
                 <JambCBT token={token} studentProfile={profile} />
             </Suspense>
         </>

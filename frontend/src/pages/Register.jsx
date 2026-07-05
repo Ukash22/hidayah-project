@@ -33,10 +33,10 @@ const StepIndicator = ({ current, total }) => (
         <div className="flex justify-between items-center mb-3">
             {Array.from({ length: total }, (_, i) => i + 1).map(s => (
                 <div key={s} className="flex flex-col items-center gap-1.5">
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-black text-xs transition-all duration-300 border-2 ${current >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-200'}`}>
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 border-2 ${current >= s ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white text-slate-300 border-slate-200'}`}>
                         {current > s ? <CheckCircle2 size={14} /> : s}
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${current === s ? 'text-blue-600' : 'text-slate-500'}`}>
+                    <span className={`text-[11px] font-semibold uppercase tracking-wide ${current === s ? 'text-primary' : 'text-slate-500'}`}>
                         {['Account', 'Learning', 'Confirm'][s - 1]}
                     </span>
                 </div>
@@ -44,7 +44,7 @@ const StepIndicator = ({ current, total }) => (
         </div>
         <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
-                className="h-full bg-blue-600 rounded-full"
+                className="h-full bg-primary rounded-full"
                 animate={{ width: `${((current - 1) / (total - 1)) * 100}%` }}
                 transition={{ duration: 0.4 }}
             />
@@ -52,7 +52,7 @@ const StepIndicator = ({ current, total }) => (
     </div>
 );
 
-const cardCls = "bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-8 md:p-10";
+const cardCls = "bg-white rounded-card-lg border border-slate-100 shadow-xl p-8 md:p-10";
 
 export default function Register() {
     const navigate = useNavigate();
@@ -311,8 +311,8 @@ export default function Register() {
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
 
                     <div className="text-center mb-10">
-                        <h1 className="text-4xl font-display font-black text-primary uppercase tracking-tighter mb-2">
-                            Student <span className="text-blue-600">Enrolment</span>
+                        <h1 className="text-4xl font-display font-bold text-primary uppercase tracking-tighter mb-2">
+                            Student <span className="text-primary">Enrolment</span>
                         </h1>
                         <p className="text-slate-500 font-medium text-sm">Join Hidayah International — Western &amp; Islamic education.</p>
                     </div>
@@ -320,7 +320,7 @@ export default function Register() {
                     <StepIndicator current={step} total={3} />
 
                     {preSelectedTutorName && (
-                        <div className="mb-6 bg-blue-50 border border-blue-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm font-bold text-blue-700">
+                        <div className="mb-6 bg-primary-soft border border-blue-100 rounded-2xl px-5 py-3 flex items-center gap-3 text-sm font-bold text-blue-700">
                             <span>⭐</span> Registering with tutor: {preSelectedTutorName}
                         </div>
                     )}
@@ -375,23 +375,23 @@ export default function Register() {
                         {/* Navigation */}
                         <div className="flex gap-3 mt-6">
                             {step > 1 && (
-                                <button type="button" onClick={back} className="flex-1 bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-slate-50 transition-all">
+                                <button type="button" onClick={back} className="flex-1 bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-slate-50 transition-all">
                                     ← Back
                                 </button>
                             )}
                             {step < 3 ? (
-                                <button type="button" onClick={next} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2">
+                                <button type="button" onClick={next} className="flex-[2] bg-primary hover:bg-primary-dark text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
                                     Continue <ArrowRight size={16} />
                                 </button>
                             ) : (
-                                <button type="submit" disabled={loading} className="flex-[2] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
+                                <button type="submit" disabled={loading} className="flex-[2] bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
                                     {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><CheckCircle2 size={16} /> Complete Enrolment</>}
                                 </button>
                             )}
                         </div>
 
                         <p className="text-center text-xs font-bold text-slate-500 uppercase tracking-widest mt-6">
-                            Already enrolled? <Link to="/login" className="text-blue-600 hover:underline ml-1">Sign In</Link>
+                            Already enrolled? <Link to="/login" className="text-primary hover:underline ml-1">Sign In</Link>
                         </p>
                     </form>
                 </motion.div>

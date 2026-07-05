@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap&font-display=swap');
 @import "tailwindcss";
 
+/* Dark mode is class-scoped: DashboardShell adds .dark on its root, so
+   dark: variants only ever apply inside the portal shells. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
@@ -20,6 +24,12 @@ html {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  /* MotionConfig only covers framer-motion; this covers CSS animations.
+     Spinners are exempt (progress indicators). */
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
   }
 }
 
@@ -60,6 +70,18 @@ html {
   --font-sans:    "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
   --font-arabic:  "Amiri", serif;
+
+  /* ── UI-3: soft brand surface + gold accent (used sparingly: ratings,
+        Islamic-education moments). ── */
+  --color-primary-soft: #eff6ff;
+  --color-gold:      #d97706;
+  --color-gold-soft: #fef3c7;
+
+  /* ── Radius scale (UI-2): rounded-card for default cards/modals,
+        rounded-card-lg for feature/hero panels. Do not add new arbitrary
+        rounded-[Nrem] values — extend this scale instead. ── */
+  --radius-card:    1.25rem;
+  --radius-card-lg: 1.75rem;
 
   /* ── Effects ── */
   --shadow-sm:      0 1px 2px 0 rgb(0 0 0 / 0.05);

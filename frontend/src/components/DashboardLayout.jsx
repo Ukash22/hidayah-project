@@ -37,12 +37,12 @@ const DashboardLayout = ({
         cardBg: 'bg-slate-800',
         text: 'text-slate-100',
         textMuted: 'text-slate-500',
-        accent: brandColor === 'blue' ? 'bg-blue-600' : 'bg-emerald-500',
+        accent: brandColor === 'blue' ? 'bg-primary' : 'bg-emerald-500',
         accentText: brandColor === 'blue' ? 'text-blue-400' : 'text-emerald-400',
-        navActive: brandColor === 'blue' ? 'bg-blue-600 text-white shadow-lg' : 'bg-emerald-500 text-white shadow-lg',
-        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/15 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/15 hover:text-emerald-400 text-slate-500',
+        navActive: brandColor === 'blue' ? 'bg-primary text-white shadow-lg' : 'bg-emerald-500 text-white shadow-lg',
+        navHover: brandColor === 'blue' ? 'hover:bg-primary/15 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/15 hover:text-emerald-400 text-slate-500',
         divider: 'border-white/5',
-        avatar: brandColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-slate-900',
+        avatar: brandColor === 'blue' ? 'bg-primary text-white' : 'bg-emerald-500 text-slate-900',
         userBg: 'bg-white/5',
         logoutHover: 'hover:bg-red-500/10 hover:text-red-400 text-slate-500',
         homeHover: 'hover:bg-white/5 hover:text-slate-300 text-slate-500',
@@ -57,17 +57,17 @@ const DashboardLayout = ({
         cardBg: 'bg-white',
         text: 'text-slate-900',
         textMuted: 'text-slate-500',
-        accent: brandColor === 'blue' ? 'bg-blue-600' : 'bg-emerald-500',
-        accentText: brandColor === 'blue' ? 'text-blue-600' : 'text-emerald-500',
-        navActive: brandColor === 'blue' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/25' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25',
-        navHover: brandColor === 'blue' ? 'hover:bg-blue-600/10 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-500',
+        accent: brandColor === 'blue' ? 'bg-primary' : 'bg-emerald-500',
+        accentText: brandColor === 'blue' ? 'text-primary' : 'text-emerald-500',
+        navActive: brandColor === 'blue' ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25',
+        navHover: brandColor === 'blue' ? 'hover:bg-primary/10 hover:text-blue-400 text-slate-500' : 'hover:bg-emerald-500/10 hover:text-emerald-400 text-slate-500',
         divider: 'border-white/5',
-        avatar: brandColor === 'blue' ? 'bg-blue-600 text-white' : 'bg-emerald-500 text-slate-900',
+        avatar: brandColor === 'blue' ? 'bg-primary text-white' : 'bg-emerald-500 text-slate-900',
         userBg: 'bg-white/5',
         logoutHover: 'hover:bg-red-500/10 hover:text-red-400 text-slate-500',
         homeHover: 'hover:bg-white/5 hover:text-slate-300 text-slate-500',
         mobileHamBg: 'bg-slate-50 hover:bg-slate-100',
-        mobileHamIcon: brandColor === 'blue' ? 'text-blue-600' : 'text-emerald-600',
+        mobileHamIcon: brandColor === 'blue' ? 'text-primary' : 'text-emerald-600',
         themeBtn: 'bg-white/5 hover:bg-white/10 text-slate-500 border border-white/10',
     };
 
@@ -85,8 +85,8 @@ const DashboardLayout = ({
                         <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
                     </div>
                     <div>
-                        <p className="font-black text-white tracking-tight leading-none">HIDAYAH</p>
-                        <p className={`text-[10px] font-black uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
+                        <p className="font-bold text-white tracking-tight leading-none">HIDAYAH</p>
+                        <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
                             {role === 'TUTOR' ? 'Tutor Portal' : role === 'ADMIN' ? 'Admin Portal' : 'Student Portal'}
                         </p>
                     </div>
@@ -96,11 +96,11 @@ const DashboardLayout = ({
             {/* User Profile */}
             <div className={`px-4 py-4 border-b ${t.divider}`}>
                 <div className={`flex items-center gap-3 p-3 rounded-2xl ${t.userBg}`}>
-                    <div className={`w-10 h-10 ${t.avatar} rounded-xl flex items-center justify-center font-black shadow-lg flex-shrink-0 text-sm`}>
+                    <div className={`w-10 h-10 ${t.avatar} rounded-xl flex items-center justify-center font-bold shadow-lg flex-shrink-0 text-sm`}>
                         {user?.first_name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="overflow-hidden">
-                        <p className="text-white font-black text-sm truncate leading-none">{user?.first_name} {user?.last_name}</p>
+                        <p className="text-white font-bold text-sm truncate leading-none">{user?.first_name} {user?.last_name}</p>
                         <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-0.5 truncate">{user?.username}</p>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ const DashboardLayout = ({
                         <span className="text-lg leading-none">{item.icon}</span>
                         <span className="flex-1 text-left">{item.label}</span>
                         {item.badge > 0 && (
-                            <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-[9px] font-black flex items-center justify-center ${activeTab === item.id ? 'bg-white/20 text-white' : `${t.accent}/20 ${t.accentText}`}`}>
+                            <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-[9px] font-bold flex items-center justify-center ${activeTab === item.id ? 'bg-white/20 text-white' : `${t.accent}/20 ${t.accentText}`}`}>
                                 {item.badge}
                             </span>
                         )}
@@ -134,14 +134,14 @@ const DashboardLayout = ({
                 >
                     <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
                     <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                    <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-blue-600' : 'bg-slate-600'}`}>
+                    <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-primary' : 'bg-slate-600'}`}>
                         <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
                     </div>
                 </button>
 
                 <div className="flex items-center justify-between px-2 py-1">
                     <NotificationCenter />
-                    <span className="text-slate-600 text-[9px] font-black uppercase tracking-widest">Alerts</span>
+                    <span className="text-slate-600 text-[11px] font-semibold uppercase tracking-wide">Alerts</span>
                 </div>
                 <Link
                     to="/"
@@ -196,7 +196,7 @@ const DashboardLayout = ({
                     </button>
                     <div className="flex items-center gap-2">
                         <img src="/logo.png" alt="Hidayah" className="w-8 h-8 object-contain" />
-                        <span className={`font-black ${t.text} tracking-tight`}>HIDAYAH</span>
+                        <span className={`font-bold ${t.text} tracking-tight`}>HIDAYAH</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <button

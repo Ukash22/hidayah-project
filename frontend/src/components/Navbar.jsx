@@ -39,33 +39,33 @@ const Navbar = () => {
           <Link to="/" onClick={() => setIsOpen(false)} className="flex items-center gap-2 group">
             <img src="/logo.png" alt="Hidayah International" className="w-12 h-12 md:w-16 md:h-16 object-contain group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
-              <span className={`font-black text-lg md:text-xl leading-tight tracking-tighter text-primary`}>HIDAYAH</span>
-              <span className="text-[10px] font-black tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
+              <span className={`font-bold text-lg md:text-xl leading-tight tracking-tighter text-primary`}>HIDAYAH</span>
+              <span className="text-[10px] font-bold tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
             </div>
           </Link>
 
           {/* Desktop inline nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Home</Link>
-            <Link to="/#about" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">About</Link>
-            <Link to="/#tutors" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Tutors</Link>
+            <Link to="/" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Home</Link>
+            <Link to="/#about" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">About</Link>
+            <Link to="/#tutors" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Tutors</Link>
             {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
               <>
-                <Link to="/exam-practice" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 transition-colors">Exam Practice</Link>
-                <Link to="/ai-hub" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-indigo-600 transition-colors">AI Hub</Link>
+                <Link to="/exam-practice" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Exam Practice</Link>
+                <Link to="/ai-hub" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-indigo-600 transition-colors">AI Hub</Link>
               </>
             )}
-            <Link to="/tutor/register" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-emerald-600 transition-colors">Teach with Us</Link>
+            <Link to="/tutor/register" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-emerald-600 transition-colors">Teach with Us</Link>
             <div className="w-px h-4 bg-slate-200" />
             {user ? (
               <>
                 <NotificationCenter />
-                <Link to={dashboardPath} className="bg-primary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all">My Portal</Link>
+                <Link to={dashboardPath} className="bg-primary text-white px-4 py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wide hover:bg-primary/90 transition-all">My Portal</Link>
               </>
             ) : (
               <>
-                <Link to="/login" className="text-[11px] font-black uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Login</Link>
-                <Link to="/register" className="bg-secondary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg hover:shadow-secondary/20 transition-all">Free Trial</Link>
+                <Link to="/login" className="text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:text-primary transition-colors">Login</Link>
+                <Link to="/register" className="bg-secondary text-white px-4 py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wide hover:shadow-lg hover:shadow-secondary/20 transition-all">Free Trial</Link>
               </>
             )}
           </div>
@@ -100,8 +100,8 @@ const Navbar = () => {
           {/* Sidebar Header */}
           <div className="flex justify-between items-center mb-12">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-black">H</div>
-              <span className="font-black tracking-tighter text-lg">MENU</span>
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white font-bold">H</div>
+              <span className="font-bold tracking-tighter text-lg">MENU</span>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
@@ -114,40 +114,40 @@ const Navbar = () => {
           {/* Navigation Links */}
           <div className="flex flex-col gap-6 overflow-y-auto">
             <Link to="/" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-              <span className="text-[10px] font-black text-slate-300 group-hover:text-secondary transition-colors italic">01.</span>
-              <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">Home</span>
+              <span className="text-[10px] font-bold text-slate-300 group-hover:text-secondary transition-colors italic">01.</span>
+              <span className="text-xl font-bold text-slate-900 hover:text-secondary transition-colors tracking-tight">Home</span>
             </Link>
             <Link to="/#about" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-              <span className="text-[10px] font-black text-slate-300 group-hover:text-secondary transition-colors italic">02.</span>
-              <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">About Hidayah</span>
+              <span className="text-[10px] font-bold text-slate-300 group-hover:text-secondary transition-colors italic">02.</span>
+              <span className="text-xl font-bold text-slate-900 hover:text-secondary transition-colors tracking-tight">About Hidayah</span>
             </Link>
             <Link to="/#tutors" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-              <span className="text-[10px] font-black text-slate-300 group-hover:text-secondary transition-colors italic">03.</span>
-              <span className="text-xl font-black text-slate-900 hover:text-secondary transition-colors tracking-tight">Our Tutors</span>
+              <span className="text-[10px] font-bold text-slate-300 group-hover:text-secondary transition-colors italic">03.</span>
+              <span className="text-xl font-bold text-slate-900 hover:text-secondary transition-colors tracking-tight">Our Tutors</span>
             </Link>
             
             {(userRole === 'STUDENT' || userRole === 'ADMIN' || userRole === 'TUTOR') && (
               <>
                 <Link to="/exam-practice" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-                  <span className="text-[10px] font-black text-slate-300 group-hover:text-blue-600 transition-colors italic">04.</span>
+                  <span className="text-[10px] font-bold text-slate-300 group-hover:text-primary transition-colors italic">04.</span>
                   <div className="flex flex-col">
-                    <span className="text-xl font-black text-slate-900 hover:text-blue-600 transition-colors tracking-tight">Exam Practice</span>
-                    <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">CBT Interface</span>
+                    <span className="text-xl font-bold text-slate-900 hover:text-primary transition-colors tracking-tight">Exam Practice</span>
+                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">CBT Interface</span>
                   </div>
                 </Link>
                 <Link to="/ai-hub" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-                  <span className="text-[10px] font-black text-slate-300 group-hover:text-indigo-600 transition-colors italic">05.</span>
+                  <span className="text-[10px] font-bold text-slate-300 group-hover:text-indigo-600 transition-colors italic">05.</span>
                   <div className="flex flex-col">
-                    <span className="text-xl font-black text-slate-900 hover:text-indigo-600 transition-colors tracking-tight">AI Learning Hub</span>
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Powered by AI</span>
+                    <span className="text-xl font-bold text-slate-900 hover:text-indigo-600 transition-colors tracking-tight">AI Learning Hub</span>
+                    <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Powered by AI</span>
                   </div>
                 </Link>
               </>
             )}
 
             <Link to="/tutor/register" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
-              <span className="text-[10px] font-black text-slate-300 group-hover:text-emerald-600 transition-colors italic">06.</span>
-              <span className="text-xl font-black text-slate-900 hover:text-emerald-600 transition-colors tracking-tight">Teach with Us</span>
+              <span className="text-[10px] font-bold text-slate-300 group-hover:text-emerald-600 transition-colors italic">06.</span>
+              <span className="text-xl font-bold text-slate-900 hover:text-emerald-600 transition-colors tracking-tight">Teach with Us</span>
             </Link>
           </div>
 
@@ -156,31 +156,31 @@ const Navbar = () => {
             {user ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl">
-                  <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white font-black shadow-lg shadow-secondary/20">
+                  <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center text-white font-bold shadow-lg shadow-secondary/20">
                     {user.username?.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Logged in as</p>
-                    <p className="font-black text-slate-900 truncate">{user.username}</p>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Logged in as</p>
+                    <p className="font-bold text-slate-900 truncate">{user.username}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to={dashboardPath} onClick={() => setIsOpen(false)} className="py-4 bg-primary text-white rounded-xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-primary-600 transition-all active:scale-95 shadow-lg shadow-primary/20">
+                  <Link to={dashboardPath} onClick={() => setIsOpen(false)} className="py-4 bg-primary text-white rounded-xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-primary-600 transition-all active:scale-95 shadow-lg shadow-primary/20">
                     My Portal
                   </Link>
-                  <button onClick={handleLogout} className="py-4 bg-red-50 text-red-600 rounded-xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-all active:scale-95">
+                  <button onClick={handleLogout} className="py-4 bg-red-50 text-red-600 rounded-xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-red-100 transition-all active:scale-95">
                     Logout
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center mb-6">Join Hidayah International</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center mb-6">Join Hidayah International</p>
                 <div className="grid grid-cols-2 gap-4">
-                  <Link to="/login" onClick={() => setIsOpen(false)} className="py-5 bg-slate-50 text-slate-900 rounded-2xl text-center text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">
+                  <Link to="/login" onClick={() => setIsOpen(false)} className="py-5 bg-slate-50 text-slate-900 rounded-2xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all">
                     Login
                   </Link>
-                  <Link to="/register" onClick={() => setIsOpen(false)} className="py-5 bg-secondary text-white rounded-2xl text-center text-[10px] font-black uppercase tracking-widest hover:shadow-xl hover:shadow-secondary/30 transition-all -translate-y-0.5 active:translate-y-0">
+                  <Link to="/register" onClick={() => setIsOpen(false)} className="py-5 bg-secondary text-white rounded-2xl text-center text-[11px] font-semibold uppercase tracking-wide hover:shadow-xl hover:shadow-secondary/30 transition-all -translate-y-0.5 active:translate-y-0">
                     Free Trial
                   </Link>
                 </div>

@@ -36,7 +36,7 @@ export default function StudentLibrary() {
     );
 
     const TypeIcon = ({ type }) => {
-        if (type === 'VIDEO') return <IconPlayCircle className="text-blue-600" />;
+        if (type === 'VIDEO') return <IconPlayCircle className="text-primary" />;
         if (type === 'PDF') return <IconFileText className="text-indigo-600" />;
         return <IconMusic className="text-sky-600" />;
     };
@@ -60,7 +60,7 @@ export default function StudentLibrary() {
                             placeholder="Search resources..."
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold text-slate-900 outline-none focus:border-blue-600/40 transition-all shadow-sm"
+                            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-primary/40 transition-all shadow-sm"
                         />
                     </div>
                 }
@@ -68,18 +68,18 @@ export default function StudentLibrary() {
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filtered.length > 0 ? filtered.map((mat, i) => (
-                    <motion.div key={i} whileHover={{ y: -5 }} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 group hover:border-blue-600/30 transition-all shadow-sm">
+                    <motion.div key={i} whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-5 md:p-8 group hover:border-primary/30 transition-all shadow-sm">
                         <div className="flex justify-between items-start mb-8">
-                            <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-3xl shadow-inner ring-1 ring-slate-100">
+                            <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/60 rounded-3xl flex items-center justify-center text-3xl shadow-inner ring-1 ring-slate-100">
                                 <TypeIcon type={mat.material_type} />
                             </div>
                             <button aria-label="Open resource" className="text-slate-500 hover:text-slate-900 transition-colors"><IconExternalLink size={20} /></button>
                         </div>
-                        <h4 className="text-2xl font-display font-black text-slate-900 mb-2 leading-tight line-clamp-2">{mat.title}</h4>
+                        <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight line-clamp-2">{mat.title}</h4>
                         <p className="text-sm font-medium text-slate-500 leading-relaxed line-clamp-2 mb-8">{mat.description}</p>
                         <div className="pt-8 border-t border-slate-50 flex justify-between items-center">
-                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{mat.material_type}</span>
-                            <a href={mat.file || mat.external_url} target="_blank" rel="noreferrer" className="bg-blue-600/10 text-blue-600 p-3 rounded-xl hover:bg-blue-600 hover:text-white transition-all">
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{mat.material_type}</span>
+                            <a href={mat.file || mat.external_url} target="_blank" rel="noreferrer" className="bg-primary/10 text-primary p-3 rounded-xl hover:bg-primary hover:text-white transition-all">
                                 <IconDownload size={18} />
                             </a>
                         </div>

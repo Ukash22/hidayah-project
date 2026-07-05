@@ -7,7 +7,7 @@ const AccountFields = ({ formData, handleChange }) => {
     return (
         <div className="space-y-6">
             <div className="space-y-2">
-                <label htmlFor="tutor-username" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Username *</label>
+                <label htmlFor="tutor-username" className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 ml-1">Username *</label>
                 <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                     <input
@@ -19,12 +19,12 @@ const AccountFields = ({ formData, handleChange }) => {
                         required
                         placeholder="Instructor Username"
                         autoComplete="username"
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
+                        className="w-full bg-black/40 border border-white/15 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
                     />
                 </div>
             </div>
             <div className="space-y-2">
-                <label htmlFor="tutor-email" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Email Address *</label>
+                <label htmlFor="tutor-email" className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 ml-1">Email Address *</label>
                 <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                     <input
@@ -36,13 +36,13 @@ const AccountFields = ({ formData, handleChange }) => {
                         required
                         placeholder="you@email.com"
                         autoComplete="email"
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
+                        className="w-full bg-black/40 border border-white/15 rounded-2xl p-4 pl-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
                     />
                 </div>
             </div>
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <label htmlFor="tutor-password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Password *</label>
+                    <label htmlFor="tutor-password" className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 ml-1">Password *</label>
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                         <input
@@ -54,7 +54,7 @@ const AccountFields = ({ formData, handleChange }) => {
                             required
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 pr-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
+                            className="w-full bg-black/40 border border-white/15 rounded-2xl p-4 pl-12 pr-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
                         />
                         <button type="button" onClick={() => setShowPass(v => !v)} aria-label={showPass ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                             {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -62,7 +62,7 @@ const AccountFields = ({ formData, handleChange }) => {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label htmlFor="tutor-confirmPassword" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Confirm *</label>
+                    <label htmlFor="tutor-confirmPassword" className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 ml-1">Confirm *</label>
                     <div className="relative">
                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
                         <input
@@ -74,7 +74,7 @@ const AccountFields = ({ formData, handleChange }) => {
                             required
                             placeholder="••••••••"
                             autoComplete="new-password"
-                            className="w-full bg-black/40 border border-white/5 rounded-2xl p-4 pl-12 pr-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
+                            className="w-full bg-black/40 border border-white/15 rounded-2xl p-4 pl-12 pr-12 text-white font-bold outline-none focus:border-emerald-500/30 transition-all font-display"
                         />
                         <button type="button" onClick={() => setShowConfirmPass(v => !v)} aria-label={showConfirmPass ? 'Hide password' : 'Show password'} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
                             {showConfirmPass ? <EyeOff size={17} /> : <Eye size={17} />}

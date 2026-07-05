@@ -49,7 +49,7 @@ const TutorCard = memo(function TutorCard({
     return (
         <motion.div
             whileHover={{ y: -6 }}
-            className="bg-white/5 border border-white/5 rounded-[3rem] overflow-hidden flex flex-col hover:bg-white/[0.08] transition-all group"
+            className="bg-white/5 border border-white/5 rounded-card-lg overflow-hidden flex flex-col hover:bg-white/[0.08] transition-all group"
         >
             {/* Hero */}
             <div className="relative h-56 bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden">
@@ -63,7 +63,7 @@ const TutorCard = memo(function TutorCard({
                         }}
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-8xl font-black text-emerald-500/20">
+                    <div className="w-full h-full flex items-center justify-center text-8xl font-bold text-emerald-500/20">
                         {tutor.full_name?.[0]?.toUpperCase()}
                     </div>
                 )}
@@ -97,11 +97,11 @@ const TutorCard = memo(function TutorCard({
                 <div className="absolute bottom-4 left-5 right-5">
                     <h3 className="text-xl font-bold text-white leading-tight">{tutor.full_name}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center gap-1 text-amber-400 text-xs font-black">
+                        <div className="flex items-center gap-1 text-amber-400 text-xs font-bold">
                             <IconStar size={10} fill="currentColor" /> 4.9
                             <span className="text-slate-500 font-normal">(24)</span>
                         </div>
-                        <span className="text-emerald-500 text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                        <span className="text-emerald-500 text-[11px] font-semibold uppercase tracking-wide flex items-center gap-1">
                             <IconShieldCheck size={10} /> Verified
                         </span>
                     </div>
@@ -112,7 +112,7 @@ const TutorCard = memo(function TutorCard({
             <div className="p-7 flex flex-col flex-1">
                 <div className="flex flex-wrap gap-1.5 mb-5">
                     {tutor.subjects_to_teach?.split(',').map(s => (
-                        <span key={s} className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-emerald-400">{s.trim()}</span>
+                        <span key={s} className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-wide text-emerald-400">{s.trim()}</span>
                     ))}
                 </div>
 
@@ -120,17 +120,17 @@ const TutorCard = memo(function TutorCard({
 
                 <div className="flex justify-between items-start mb-5">
                     <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-1">Hourly Rate</p>
-                        <p className="text-2xl font-display font-black text-white">₦{tutor.hourly_rate?.toLocaleString()}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 mb-1">Hourly Rate</p>
+                        <p className="text-2xl font-display font-bold text-white">₦{tutor.hourly_rate?.toLocaleString()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-600 mb-2">Available</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 mb-2">Available</p>
                         <div className="flex flex-col gap-1 items-end">
                             {tutor.availabilities && tutor.availabilities.length > 0
                                 ? tutor.availabilities.slice(0, 2).map((av, i) => (
                                     <div key={i} className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
                                         <IconCalendar size={10} className="text-emerald-500" />
-                                        <span className="text-[9px] font-black text-emerald-400 uppercase">
+                                        <span className="text-[9px] font-bold text-emerald-400 uppercase">
                                             {av.day.slice(0, 3)}: {fmt12h(av.start_time)} - {fmt12h(av.end_time)}
                                         </span>
                                     </div>
@@ -149,7 +149,7 @@ const TutorCard = memo(function TutorCard({
 
                 <button
                     onClick={() => setIsExpanded(v => !v)}
-                    className="w-full py-3.5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:border-emerald-500/40 hover:text-emerald-400 transition-all flex items-center justify-center gap-2 mb-4"
+                    className="w-full py-3.5 border border-white/10 rounded-2xl text-[11px] font-semibold uppercase tracking-wide text-white hover:border-emerald-500/40 hover:text-emerald-400 transition-all flex items-center justify-center gap-2 mb-4"
                 >
                     {isExpanded ? <><IconChevronUp size={14} /> Hide Booking Form</> : <><IconChevronDown size={14} /> Book This Tutor</>}
                 </button>
@@ -163,13 +163,13 @@ const TutorCard = memo(function TutorCard({
                             transition={{ duration: 0.25 }}
                             className="overflow-hidden"
                         >
-                            <div className="space-y-4 bg-black/40 p-5 rounded-[2rem] border border-white/5 relative overflow-hidden">
+                            <div className="space-y-4 bg-black/40 p-5 rounded-card border border-white/5 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-2xl rounded-full" />
 
                                 <div className="space-y-1 relative z-10">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Academic Program</label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Academic Program</label>
                                     <select
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
                                         onChange={e => onUpdateField(tutor.id, 'subject', e.target.value)}
                                         value={bookingData.subject}
                                     >
@@ -182,9 +182,9 @@ const TutorCard = memo(function TutorCard({
 
                                 <div className="grid grid-cols-2 gap-3 relative z-10">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Learning Level</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Learning Level</label>
                                         <select
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
                                             onChange={e => onUpdateField(tutor.id, 'learning_level', e.target.value)}
                                             value={bookingData.learning_level}
                                         >
@@ -197,9 +197,9 @@ const TutorCard = memo(function TutorCard({
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Class Structure</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Class Structure</label>
                                         <select
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
                                             onChange={e => onUpdateField(tutor.id, 'class_structure', e.target.value)}
                                             value={bookingData.class_structure}
                                         >
@@ -211,9 +211,9 @@ const TutorCard = memo(function TutorCard({
 
                                 <div className="grid grid-cols-2 gap-3 relative z-10">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Duration / Session</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Duration / Session</label>
                                         <select
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
                                             onChange={e => onUpdateField(tutor.id, 'hours_per_session', parseFloat(e.target.value))}
                                             value={bookingData.hours_per_session}
                                         >
@@ -228,10 +228,10 @@ const TutorCard = memo(function TutorCard({
                                         </select>
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Preferred Start Date</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Preferred Start Date</label>
                                         <input
                                             type="date"
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all"
                                             min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                                             onChange={e => onUpdateField(tutor.id, 'preferred_start_date', e.target.value)}
                                             value={bookingData.preferred_start_date}
@@ -241,13 +241,13 @@ const TutorCard = memo(function TutorCard({
 
                                 <div className="space-y-3 relative z-10">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-600 block">Weekly Schedule</label>
-                                        <button onClick={() => onAddSlot(tutor.id)} className="text-[10px] font-black uppercase text-emerald-500 hover:text-emerald-400 transition-colors">+ Add Day</button>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 block">Weekly Schedule</label>
+                                        <button onClick={() => onAddSlot(tutor.id)} className="text-[10px] font-bold uppercase text-emerald-500 hover:text-emerald-400 transition-colors">+ Add Day</button>
                                     </div>
                                     {bookingData.schedule.map((slot, index) => (
                                         <div key={index} className="bg-white/5 border border-white/5 p-4 rounded-2xl space-y-4">
                                             <div className="flex justify-between items-center">
-                                                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Session Slot {index + 1}</span>
+                                                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Session Slot {index + 1}</span>
                                                 {bookingData.schedule.length > 1 && (
                                                     <button onClick={() => onRemoveSlot(tutor.id, index)} className="text-red-500 hover:text-red-400 transition-colors">
                                                         <IconX size={14} />
@@ -257,21 +257,21 @@ const TutorCard = memo(function TutorCard({
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                 <div className="space-y-1.5">
                                                     <div className="flex justify-between items-center px-1">
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Select Day</label>
+                                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Select Day</label>
                                                         {slot.day && (() => {
                                                             const av = tutor.availabilities?.find(a =>
                                                                 a.day.toUpperCase() === slot.day || a.day.toUpperCase().startsWith(slot.day.slice(0, 3))
                                                             );
                                                             if (!av) return null;
                                                             return (
-                                                                <span className="text-[7px] font-black text-amber-500 uppercase bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                                                                <span className="text-[7px] font-bold text-amber-500 uppercase bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                                                                     Tutor: {fmt12h(av.start_time)}-{fmt12h(av.end_time)}
                                                                 </span>
                                                             );
                                                         })()}
                                                     </div>
                                                     <select
-                                                        className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-3 text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
+                                                        className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-4 py-3 text-[11px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
                                                         value={slot.day}
                                                         onChange={e => onUpdateSlot(tutor.id, index, 'day', e.target.value)}
                                                     >
@@ -282,8 +282,8 @@ const TutorCard = memo(function TutorCard({
                                                 <div className="grid grid-cols-2 gap-3">
                                                     <div className="space-y-1.5">
                                                         <div className="flex justify-between items-center px-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">From</label>
-                                                            <span className="text-[7px] font-black text-emerald-500">
+                                                            <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">From</label>
+                                                            <span className="text-[7px] font-bold text-emerald-500">
                                                                 {(slot.time || '').split('-')[0] ? (() => {
                                                                     let [h, m] = (slot.time || '').split('-')[0].split(':');
                                                                     h = parseInt(h);
@@ -293,7 +293,7 @@ const TutorCard = memo(function TutorCard({
                                                         </div>
                                                         <input
                                                             type="time"
-                                                            className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-3 py-3 text-[11px] font-black text-white uppercase outline-none focus:border-emerald-500 transition-all"
+                                                            className="w-full bg-[#0a0c10] border border-white/10 rounded-xl px-3 py-3 text-[11px] font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all"
                                                             value={(slot.time || '').split('-')[0] || ''}
                                                             onChange={e => {
                                                                 const startTime = e.target.value;
@@ -304,8 +304,8 @@ const TutorCard = memo(function TutorCard({
                                                     </div>
                                                     <div className="space-y-1.5">
                                                         <div className="flex justify-between items-center px-1">
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">To (Auto)</label>
-                                                            <span className="text-[7px] font-black text-emerald-500">
+                                                            <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">To (Auto)</label>
+                                                            <span className="text-[7px] font-bold text-emerald-500">
                                                                 {(slot.time || '').split('-')[1] ? (() => {
                                                                     let [h, m] = (slot.time || '').split('-')[1].split(':');
                                                                     h = parseInt(h);
@@ -315,7 +315,7 @@ const TutorCard = memo(function TutorCard({
                                                         </div>
                                                         <input
                                                             type="time"
-                                                            className="w-full bg-[#0a0c10]/50 border border-white/10 rounded-xl px-3 py-3 text-[11px] font-black text-slate-500 uppercase outline-none cursor-not-allowed"
+                                                            className="w-full bg-[#0a0c10]/50 border border-white/10 rounded-xl px-3 py-3 text-[11px] font-bold text-slate-500 uppercase outline-none cursor-not-allowed"
                                                             value={(slot.time || '').split('-')[1] || ''}
                                                             readOnly
                                                             title="Automatically calculated based on duration"
@@ -336,15 +336,15 @@ const TutorCard = memo(function TutorCard({
                                     return (
                                         <div className="pt-4 border-t border-white/5 text-right relative z-10">
                                             <div className="flex flex-col items-end">
-                                                <p className="text-[10px] font-black uppercase text-slate-600 mb-1">Tuition Summary</p>
+                                                <p className="text-[10px] font-bold uppercase text-slate-600 mb-1">Tuition Summary</p>
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="bg-white/5 px-2 py-1 rounded-lg border border-white/5">
-                                                        <span className="text-[7px] font-black text-slate-500 uppercase">
+                                                        <span className="text-[7px] font-bold text-slate-500 uppercase">
                                                             ₦{rate.toLocaleString()} × {hours} hrs × {selectedDays} days × 4 wks
                                                         </span>
                                                     </div>
                                                 </div>
-                                                <p className="text-2xl font-display font-black text-white leading-none">₦{total.toLocaleString()}</p>
+                                                <p className="text-2xl font-display font-bold text-white leading-none">₦{total.toLocaleString()}</p>
                                                 <p className="text-[7px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Calculated Monthly Rate</p>
                                             </div>
                                         </div>
@@ -354,7 +354,7 @@ const TutorCard = memo(function TutorCard({
                                 <button
                                     onClick={() => onRequestBooking(tutor, bookingData)}
                                     disabled={requesting}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-[1.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-xl shadow-emerald-500/10 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-card font-bold text-xs uppercase tracking-[0.3em] shadow-xl shadow-emerald-500/10 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                                 >
                                     {requesting ? 'Sending...' : 'Request Class →'}
                                 </button>

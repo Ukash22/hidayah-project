@@ -213,12 +213,12 @@ const BookingRequest = () => {
 
             <main className="container pt-32 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h1 className="text-5xl font-display font-black text-white mb-4">Find Your Perfect <span className="text-emerald-500">Tutor</span></h1>
+                    <h1 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">Find Your Perfect <span className="text-emerald-500">Tutor</span></h1>
                     <p className="text-slate-500 max-w-2xl mx-auto">Browse our world-class educators and find the one that matches your learning style and goals.</p>
                 </div>
 
                 {/* Search and Filters */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 mb-12 flex flex-col md:flex-row gap-6">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-card-lg p-5 md:p-8 mb-12 flex flex-col md:flex-row gap-6">
                     <div className="flex-1 relative">
                         <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                         <input 

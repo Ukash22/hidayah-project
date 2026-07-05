@@ -80,11 +80,11 @@ export default function AdminAdmissions() {
             <title>Admissions — Hidayah Admin</title>
             <PageHeader title="Admissions" description="Review and approve student enrollment requests." />
 
-            <div className="flex bg-slate-100 p-1 rounded-2xl w-fit mb-6 gap-1">
-                <button onClick={() => setTab('pending')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'pending' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl w-fit mb-6 gap-1">
+                <button onClick={() => setTab('pending')} className={`px-5 py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all ${tab === 'pending' ? 'bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-600'}`}>
                     Pending Students {pendingStudents.length > 0 && `(${pendingStudents.length})`}
                 </button>
-                <button onClick={() => setTab('applications')} className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === 'applications' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-600'}`}>
+                <button onClick={() => setTab('applications')} className={`px-5 py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all ${tab === 'applications' ? 'bg-white dark:bg-slate-900 shadow-sm text-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-600'}`}>
                     Applications {applications.length > 0 && `(${applications.length})`}
                 </button>
             </div>
@@ -98,21 +98,21 @@ export default function AdminAdmissions() {
                 </div>
             )}
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
+                        <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
                                 {tab === 'pending' && (
                                     <th className="py-3 px-4 w-10">
                                         <input type="checkbox" checked={selectedIds.length === pendingStudents.length && pendingStudents.length > 0} onChange={toggleSelectAll} className="rounded border-slate-300 text-primary" />
                                     </th>
                                 )}
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Student</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Contact</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -120,20 +120,20 @@ export default function AdminAdmissions() {
                                 pendingStudents.length === 0 ? (
                                     <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No pending admission requests.</td></tr>
                                 ) : pendingStudents.map(student => (
-                                    <tr key={student.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.includes(student.id) ? 'bg-primary/5' : ''}`}>
+                                    <tr key={student.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${selectedIds.includes(student.id) ? 'bg-primary/5' : ''}`}>
                                         <td className="py-3 px-4">
                                             <input type="checkbox" checked={selectedIds.includes(student.id)} onChange={() => toggleSelect(student.id)} className="rounded border-slate-300 text-primary" />
                                         </td>
                                         <td className="py-3 px-4 whitespace-nowrap">
-                                            <div className="text-xs font-bold text-slate-700">New Registration</div>
+                                            <div className="text-xs font-bold text-slate-700 dark:text-slate-300">New Registration</div>
                                             <div className="text-[9px] text-slate-500 uppercase font-medium">{student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Recent'}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-base">{getCountryFlag(student.country)}</span>
                                                 <div>
-                                                    <div className="font-bold text-slate-800 text-xs">{student.first_name} {student.last_name}</div>
-                                                    <div className="text-[9px] text-slate-500 uppercase font-black">@{student.username}</div>
+                                                    <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{student.first_name} {student.last_name}</div>
+                                                    <div className="text-[9px] text-slate-500 uppercase font-bold">@{student.username}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -142,21 +142,21 @@ export default function AdminAdmissions() {
                                             <div className="text-[9px] text-slate-500 font-bold uppercase">{student.phone} / {student.country || 'Global'}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Pending Verification</span>
+                                            <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide">Pending Verification</span>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex justify-center gap-2">
                                                 <button
                                                     onClick={() => approveStudent(student.id)}
                                                     disabled={actionLoading}
-                                                    className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md text-[9px] font-black uppercase tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm flex items-center gap-1"
+                                                    className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md text-[9px] font-bold uppercase tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm flex items-center gap-1"
                                                 >
                                                     <span>✅</span> Admit
                                                 </button>
                                                 {student.profile_data && (
                                                     <button
                                                         onClick={() => setSelectedApp({ ...student.profile_data, first_name: student.first_name, last_name: student.last_name, email: student.email })}
-                                                        className="px-2 py-1 bg-slate-100 text-slate-500 rounded-md text-[9px] font-black uppercase hover:bg-slate-200"
+                                                        className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md text-[9px] font-bold uppercase hover:bg-slate-200"
                                                     >
                                                         📋 Form
                                                     </button>
@@ -169,16 +169,16 @@ export default function AdminAdmissions() {
                                 applications.length === 0 ? (
                                     <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No applications found.</td></tr>
                                 ) : applications.map(app => (
-                                    <tr key={app.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                         <td className="py-3 px-4 whitespace-nowrap">
-                                            <div className="text-xs font-bold text-slate-700">{app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}</div>
+                                            <div className="text-xs font-bold text-slate-700 dark:text-slate-300">{app.created_at ? new Date(app.created_at).toLocaleDateString() : 'N/A'}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-base">{getCountryFlag(app.country)}</span>
                                                 <div>
-                                                    <div className="font-bold text-slate-800 text-xs">{app.first_name} {app.last_name || ''}</div>
-                                                    <div className="text-[9px] text-primary font-black uppercase">{app.course_interested}</div>
+                                                    <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{app.first_name} {app.last_name || ''}</div>
+                                                    <div className="text-[9px] text-primary font-bold uppercase">{app.course_interested}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -187,12 +187,12 @@ export default function AdminAdmissions() {
                                             <div className="text-[9px] text-slate-500 font-bold uppercase">{app.phone}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase border ${app.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : app.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase border ${app.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : app.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
                                                 {app.status}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            <button onClick={() => setSelectedApp(app)} className="px-3 py-1 bg-slate-100 text-slate-600 rounded text-[9px] font-black uppercase hover:bg-slate-200">View</button>
+                                            <button onClick={() => setSelectedApp(app)} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded text-[9px] font-bold uppercase hover:bg-slate-200">View</button>
                                         </td>
                                     </tr>
                                 ))
@@ -204,17 +204,17 @@ export default function AdminAdmissions() {
 
             {selectedApp && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-start mb-6">
-                            <h3 className="text-lg font-black text-slate-800 uppercase tracking-widest">Application Details</h3>
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest">Application Details</h3>
                             <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-600 text-2xl">&times;</button>
                         </div>
                         <div className="space-y-3 text-sm">
                             {Object.entries(selectedApp).filter(([k]) => !['id', 'isViewOnly'].includes(k)).map(([key, val]) => (
-                                val ? <div key={key}><span className="font-black text-slate-500 uppercase text-[10px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 mt-0.5">{String(val)}</p></div> : null
+                                val ? <div key={key}><span className="font-bold text-slate-500 uppercase text-[10px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 dark:text-slate-300 mt-0.5">{String(val)}</p></div> : null
                             ))}
                         </div>
-                        <button onClick={() => setSelectedApp(null)} className="mt-6 w-full py-3 rounded-xl bg-slate-100 text-slate-600 font-black uppercase text-sm hover:bg-slate-200">Close</button>
+                        <button onClick={() => setSelectedApp(null)} className="mt-6 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold uppercase text-sm hover:bg-slate-200">Close</button>
                     </div>
                 </div>
             )}

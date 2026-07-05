@@ -49,7 +49,7 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-4">Request Reschedule</h2>
                 {initiatedBy === 'TUTOR' && (
                     <p className="text-sm text-yellow-600 mb-4">

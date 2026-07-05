@@ -26,7 +26,7 @@ export default function ExamTimer({ initialSeconds, isFinished, onTimeUp }) {
 
     return (
         <div className="flex flex-col items-end">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Time Remaining</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Time Remaining</span>
             <span className={`font-mono text-2xl font-bold ${timeLeft < 300 ? 'text-red-500 animate-pulse' : 'text-slate-900'}`}>
                 {formatted}
             </span>

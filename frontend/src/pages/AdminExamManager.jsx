@@ -15,13 +15,13 @@ const examTypeColors = {
 
 const ExamRow = memo(function ExamRow({ exam, onEdit, onAssign }) {
     return (
-        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex justify-between items-center transition-all hover:shadow-md">
+        <div className="bg-white p-8 rounded-card shadow-sm border border-slate-100 flex justify-between items-center transition-all hover:shadow-md">
             <div className="flex items-center gap-8">
                 <div className="p-4 bg-slate-50 rounded-2xl text-2xl">📝</div>
                 <div>
                     <div className="flex items-center gap-3 mb-1">
                         <h3 className="text-xl font-bold text-slate-800">{exam.title}</h3>
-                        <span className={`px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-tighter ${examTypeColors[exam.exam_type] || 'bg-slate-100 text-slate-600'}`}>
+                        <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase tracking-tighter ${examTypeColors[exam.exam_type] || 'bg-slate-100 text-slate-600'}`}>
                             {exam.exam_type}
                         </span>
                     </div>
@@ -178,11 +178,11 @@ const AdminExamManager = () => {
 
                 {loading ? (
                     <div className="grid gap-6">
-                        {[1, 2, 3].map(i => <div key={i} className="bg-white h-28 rounded-[2rem] animate-pulse border border-slate-100" />)}
+                        {[1, 2, 3].map(i => <div key={i} className="bg-white h-28 rounded-card animate-pulse border border-slate-100" />)}
                     </div>
                 ) : exams.length === 0 ? (
-                    <div className="bg-white rounded-[2rem] p-20 text-center border border-dashed border-slate-200">
-                        <p className="text-5xl mb-4">📝</p>
+                    <div className="bg-white rounded-card p-20 text-center border border-dashed border-slate-200">
+                        <p className="text-3xl md:text-5xl mb-4">📝</p>
                         <p className="text-slate-500 font-medium">No exams created yet. Create your first exam above.</p>
                     </div>
                 ) : (
@@ -202,13 +202,13 @@ const AdminExamManager = () => {
             {/* Create / Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-xl p-12 relative shadow-2xl">
+                    <div className="bg-white rounded-card-lg w-full max-w-xl p-12 relative shadow-2xl">
                         <button onClick={() => setShowModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-slate-600 text-xl">✕</button>
                         <h2 className="text-3xl font-display text-primary mb-8">{editingExam ? 'Edit' : 'Create'} Examination</h2>
 
                         <form onSubmit={handleCreateOrUpdate} className="space-y-6">
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Title</label>
+                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Title</label>
                                 <input
                                     type="text" required
                                     className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:border-primary/30 focus:outline-none transition-colors"
@@ -219,7 +219,7 @@ const AdminExamManager = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Category</label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Category</label>
                                     <select
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
                                         value={formData.exam_type}
@@ -233,7 +233,7 @@ const AdminExamManager = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Subject</label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Subject</label>
                                     <select
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
                                         value={formData.subject}
@@ -259,7 +259,7 @@ const AdminExamManager = () => {
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Year</label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Year</label>
                                     <input
                                         type="number" required
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
@@ -268,7 +268,7 @@ const AdminExamManager = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Duration (Mins)</label>
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Duration (Mins)</label>
                                     <input
                                         type="number" required
                                         className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none"
@@ -288,7 +288,7 @@ const AdminExamManager = () => {
             {/* Assign Exam Modal */}
             {showAssignModal && assigningExam && (
                 <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden">
+                    <div className="bg-white rounded-card-lg w-full max-w-lg shadow-2xl overflow-hidden">
                         {/* Header */}
                         <div className="bg-gradient-to-r from-primary to-primary-700 p-8 text-white relative">
                             <h2 className="text-2xl font-display font-bold">Assign Exam to Students</h2>
@@ -302,7 +302,7 @@ const AdminExamManager = () => {
                         <div className="p-8 space-y-5">
                             {/* Search */}
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Search Students</label>
+                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Search Students</label>
                                 <input
                                     type="text"
                                     placeholder="Type name or username..."
@@ -315,7 +315,7 @@ const AdminExamManager = () => {
                             {/* Student List */}
                             <div>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                    <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                         Select Students ({selectedStudents.length} selected)
                                     </label>
                                     {filteredStudents.length > 0 && (
@@ -344,9 +344,9 @@ const AdminExamManager = () => {
                                                 className={`w-full flex items-center gap-4 p-4 text-left transition-all ${isSelected ? 'bg-primary/5' : 'hover:bg-slate-50'}`}
                                             >
                                                 <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'bg-primary border-primary' : 'border-slate-300'}`}>
-                                                    {isSelected && <span className="text-white text-xs font-black">✓</span>}
+                                                    {isSelected && <span className="text-white text-xs font-bold">✓</span>}
                                                 </div>
-                                                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-black text-primary text-sm flex-shrink-0">
+                                                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0">
                                                     {(s.user?.first_name || s.user?.username || '?')[0].toUpperCase()}
                                                 </div>
                                                 <div>
@@ -363,7 +363,7 @@ const AdminExamManager = () => {
 
                             {/* Due Date */}
                             <div>
-                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Due Date (Optional)</label>
+                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-2">Due Date (Optional)</label>
                                 <input
                                     type="datetime-local"
                                     className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 focus:outline-none text-sm"
@@ -376,14 +376,14 @@ const AdminExamManager = () => {
                             <div className="flex gap-4 pt-2">
                                 <button
                                     onClick={() => setShowAssignModal(false)}
-                                    className="flex-1 py-4 bg-slate-100 text-slate-500 font-black uppercase text-xs rounded-2xl hover:bg-slate-200 transition-all"
+                                    className="flex-1 py-4 bg-slate-100 text-slate-500 font-bold uppercase text-xs rounded-2xl hover:bg-slate-200 transition-all"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleAssignExam}
                                     disabled={assigning || selectedStudents.length === 0}
-                                    className="flex-[2] py-4 bg-primary text-white font-black uppercase text-xs rounded-2xl shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-[2] py-4 bg-primary text-white font-bold uppercase text-xs rounded-2xl shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {assigning ? 'Assigning...' : `Assign to ${selectedStudents.length} Student${selectedStudents.length !== 1 ? 's' : ''} →`}
                                 </button>

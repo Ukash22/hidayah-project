@@ -42,24 +42,24 @@ export default function TutorWalletPage() {
             <PageHeader title="My Wallet" description="Earnings, commissions, and withdrawal history." />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col gap-1">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-slate-500">Gross Earnings</span>
-                    <div className="text-xl font-black text-slate-900">₦{parseFloat(financials?.gross_earnings || 0).toLocaleString()}</div>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-card border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+                    <span className="text-[11px] uppercase font-semibold tracking-wide text-slate-500">Gross Earnings</span>
+                    <div className="text-xl font-bold text-slate-900 dark:text-slate-100">₦{parseFloat(financials?.gross_earnings || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-slate-500 uppercase mt-1 italic">Before commission</p>
                 </div>
-                <div className="bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-blue-600">Net Taken</span>
-                    <div className="text-xl font-black text-blue-700">₦{parseFloat(financials?.net_earnings || 0).toLocaleString()}</div>
+                <div className="bg-primary-soft p-6 rounded-card border border-blue-100 flex flex-col gap-1 shadow-sm">
+                    <span className="text-[11px] uppercase font-semibold tracking-wide text-primary">Net Taken</span>
+                    <div className="text-xl font-bold text-blue-700">₦{parseFloat(financials?.net_earnings || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-blue-400 uppercase mt-1 italic">Your actual share</p>
                 </div>
-                <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-amber-600">Commission</span>
-                    <div className="text-xl font-black text-amber-700">₦{parseFloat(financials?.total_commission || 0).toLocaleString()}</div>
+                <div className="bg-amber-50 p-6 rounded-card border border-amber-100 flex flex-col gap-1 shadow-sm">
+                    <span className="text-[11px] uppercase font-semibold tracking-wide text-amber-600">Commission</span>
+                    <div className="text-xl font-bold text-amber-700">₦{parseFloat(financials?.total_commission || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-amber-400 uppercase mt-1 italic">Platform support fee</p>
                 </div>
-                <div className="bg-indigo-50 p-6 rounded-[2rem] border border-indigo-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[10px] uppercase font-black tracking-widest text-indigo-600">Completed</span>
-                    <div className="text-xl font-black text-indigo-700">{financials?.completed_classes || 0} / {financials?.total_classes || 0}</div>
+                <div className="bg-indigo-50 p-6 rounded-card border border-indigo-100 flex flex-col gap-1 shadow-sm">
+                    <span className="text-[11px] uppercase font-semibold tracking-wide text-indigo-600">Completed</span>
+                    <div className="text-xl font-bold text-indigo-700">{financials?.completed_classes || 0} / {financials?.total_classes || 0}</div>
                     <p className="text-[10px] font-bold text-indigo-400 uppercase mt-1 italic">Delivered classes</p>
                 </div>
             </div>

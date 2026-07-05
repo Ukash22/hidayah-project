@@ -45,15 +45,15 @@ const Login = () => {
             <title>Sign In — Hidayah</title>
             <Navbar />
             <div className="container pt-32 pb-20">
-                <div className="max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="max-w-md mx-auto bg-white rounded-card-lg shadow-2xl p-10 border border-slate-100 animate-in fade-in slide-in-from-bottom-8 duration-700">
                     <div className="text-center mb-10">
                         <img src="/logo.png" alt="Hidayah International" className="w-32 h-32 object-contain mx-auto mb-6 drop-shadow-xl" />
-                        <h2 className="text-3xl font-display text-primary mb-2 font-black tracking-tighter">Welcome Back</h2>
+                        <h2 className="text-3xl font-display text-primary mb-2 font-bold tracking-tighter">Welcome Back</h2>
                         <p className="text-text-light text-[10px] uppercase tracking-[0.2em] font-semibold opacity-50">Hidayah International Portal Access</p>
                     </div>
 
                     {error && (
-                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 mb-6 animate-pulse">
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs font-bold border border-red-100 mb-6">
                             ⚠️ {error}
                         </div>
                     )}
@@ -105,7 +105,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full group bg-primary hover:bg-primary-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            className="w-full group bg-primary hover:bg-primary-600 text-white py-5 rounded-2xl font-bold uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                         >
                             {loading ? 'Authenticating...' : 'Access Portal →'}
                         </button>

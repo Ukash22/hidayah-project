@@ -9,10 +9,10 @@ const ICONS = {
 };
 
 const BG = {
-    success: 'bg-white border-emerald-200',
-    error:   'bg-white border-red-200',
-    info:    'bg-white border-blue-200',
-    warning: 'bg-white border-amber-200',
+    success: 'bg-white dark:bg-slate-900 border-emerald-200',
+    error:   'bg-white dark:bg-slate-900 border-red-200',
+    info:    'bg-white dark:bg-slate-900 border-blue-200',
+    warning: 'bg-white dark:bg-slate-900 border-amber-200',
 };
 
 export default function ToastStack({ toasts, onDismiss }) {
@@ -30,7 +30,7 @@ export default function ToastStack({ toasts, onDismiss }) {
                         className={`pointer-events-auto flex items-start gap-3 rounded-2xl border px-4 py-3.5 shadow-lg min-w-[280px] max-w-sm ${BG[t.variant]}`}
                     >
                         {ICONS[t.variant]}
-                        <span className="flex-1 text-sm font-semibold text-slate-800 leading-snug">{t.message}</span>
+                        <span className="flex-1 text-sm font-semibold text-slate-800 dark:text-slate-200 leading-snug">{t.message}</span>
                         <button onClick={() => onDismiss(t.id)} aria-label="Dismiss notification" className="text-slate-300 hover:text-slate-500 mt-0.5">
                             <X size={15} />
                         </button>

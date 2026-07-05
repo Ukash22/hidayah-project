@@ -7,14 +7,14 @@ const Field = ({ label, children }) => (
     </label>
 );
 
-const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-blue-600/40 focus:bg-white transition-all";
+const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-primary/40 focus:bg-white transition-all";
 
 export default function RegisterStep1({ account, setAccount, showPass, setShowPass, showConfirmPass, setShowConfirmPass }) {
     const set = (key) => (e) => setAccount(a => ({ ...a, [key]: e.target.value }));
     return (
         <>
-            <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
-                <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">1</span>
+            <h2 className="text-lg font-bold text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span className="w-7 h-7 bg-primary text-white rounded-lg flex items-center justify-center text-xs">1</span>
                 Your Account
             </h2>
             <div className="grid grid-cols-2 gap-4">

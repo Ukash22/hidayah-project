@@ -23,7 +23,7 @@ const Row = ({ label, value }) => (
     </div>
 );
 
-const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-blue-600/40 focus:bg-white transition-all";
+const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-primary/40 focus:bg-white transition-all";
 
 export default function RegisterStep3({
     account, learning, subjectEnrollments,
@@ -32,8 +32,8 @@ export default function RegisterStep3({
 }) {
     return (
         <>
-            <h2 className="text-lg font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">3</span>
+            <h2 className="text-lg font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                <span className="w-7 h-7 bg-primary text-white rounded-lg flex items-center justify-center text-xs">3</span>
                 Confirm &amp; Submit
             </h2>
 
@@ -51,7 +51,7 @@ export default function RegisterStep3({
             {/* Parent fields (if minor) */}
             {isMinor && (
                 <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 mb-4 flex items-center gap-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-600 mb-4 flex items-center gap-2">
                         ⚠ Student is under 18 — parent account required
                     </p>
                     <div className="grid grid-cols-2 gap-4">

@@ -195,20 +195,20 @@ const QuranMushaf = () => {
     };
 
     return (
-        <div className="bg-[#fdfbf7] rounded-[2.5rem] p-8 border border-amber-900/10 mb-12 shadow-sm">
+        <div className="bg-[#fdfbf7] rounded-card-lg p-5 md:p-8 border border-amber-900/10 mb-12 shadow-sm">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b border-amber-900/10 pb-6">
                 <div>
                     <h3 className="text-2xl font-display text-amber-950 flex items-center gap-2">
                         <span className="text-3xl">📖</span> Quran Mushaf
                     </h3>
-                    <p className="text-amber-700 text-[10px] font-black uppercase tracking-widest mt-1 opacity-70">
+                    <p className="text-amber-700 text-[11px] font-semibold uppercase tracking-wide mt-1 opacity-70">
                         Click any verse to listen exactly
                     </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-1">Jump to Surah</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Jump to Surah</label>
                         <select 
                             value={selectedSurah} 
                             onChange={handleSurahChange}
@@ -221,7 +221,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-1">Meaning</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Meaning</label>
                         <div className="flex gap-1">
                             <button 
                                 onClick={() => setShowTranslation(!showTranslation)}
@@ -244,7 +244,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-1">Reciter</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Reciter</label>
                         <select 
                             value={selectedReciter} 
                             onChange={(e) => {
@@ -260,7 +260,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-1">Repeat</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Repeat</label>
                         <select 
                             value={verseRepeatCount} 
                             onChange={(e) => setVerseRepeatCount(Number(e.target.value))}
@@ -276,7 +276,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest px-1">Range</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Range</label>
                         <select 
                             value={versesToPlay} 
                             onChange={(e) => setVersesToPlay(Number(e.target.value))}
@@ -291,7 +291,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
-                        <label className="text-[10px] font-black text-amber-700 uppercase tracking-widest">Audio</label>
+                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Audio</label>
                         <button 
                             onClick={() => {
                                 if(isPlaying) pauseAudio();
@@ -310,20 +310,20 @@ const QuranMushaf = () => {
                 <button onClick={prevPage} disabled={currentPage === 1} className="px-4 py-2 bg-white border border-amber-900/10 rounded-xl text-amber-900 font-bold hover:bg-amber-50 disabled:opacity-50 transition-colors">
                     &laquo; Previous
                 </button>
-                <div className="px-6 py-2 bg-amber-900/5 rounded-xl text-amber-900 font-black">Page {currentPage} of 604</div>
+                <div className="px-6 py-2 bg-amber-900/5 rounded-xl text-amber-900 font-bold">Page {currentPage} of 604</div>
                 <button onClick={nextPage} disabled={currentPage === 604} className="px-4 py-2 bg-white border border-amber-900/10 rounded-xl text-amber-900 font-bold hover:bg-amber-50 disabled:opacity-50 transition-colors">
                     Next &raquo;
                 </button>
             </div>
 
-            <div className="bg-white rounded-[2rem] p-6 md:p-12 min-h-[600px] border border-amber-900/10 shadow-xl relative overflow-hidden flex flex-col items-center">
+            <div className="bg-white rounded-card p-6 md:p-12 min-h-[600px] border border-amber-900/10 shadow-xl relative overflow-hidden flex flex-col items-center">
                 <div className="absolute top-0 bottom-0 left-0 w-12 bg-gradient-to-r from-black/5 to-transparent pointer-events-none"></div>
                 <div className="absolute top-0 bottom-0 right-0 w-12 bg-gradient-to-l from-black/5 to-transparent pointer-events-none"></div>
                 
                 {loading ? (
                     <div className="flex flex-col items-center gap-4 py-32">
                         <div className="w-16 h-16 border-4 border-amber-900/20 border-t-amber-900 rounded-full animate-spin"></div>
-                        <div className="text-amber-800 font-black uppercase tracking-widest text-xs">Opening Hafs Mushaf...</div>
+                        <div className="text-amber-800 font-bold uppercase tracking-widest text-xs">Opening Hafs Mushaf...</div>
                     </div>
                 ) : (
                     <div className="w-full text-center text-justify dir-rtl select-none mx-auto max-w-4xl" style={{ direction: 'rtl', textJustify: 'inter-word' }}>
@@ -338,7 +338,7 @@ const QuranMushaf = () => {
                                         <span className="text-[32px] md:text-[44px] font-arabic leading-relaxed drop-shadow-sm">
                                             {v.text_uthmani}
                                         </span>
-                                        <span className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-amber-900/10 text-[11px] md:text-[13px] font-black text-amber-800 mx-2 md:mx-3 align-middle bg-[#fdfbf7] shadow-inner font-sans">
+                                        <span className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-amber-900/10 text-[11px] md:text-[13px] font-bold text-amber-800 mx-2 md:mx-3 align-middle bg-[#fdfbf7] shadow-inner font-sans">
                                             {v.verse_key.split(':')[1]}
                                         </span>
                                     </span>

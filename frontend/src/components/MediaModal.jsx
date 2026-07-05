@@ -23,7 +23,7 @@ export default function MediaModal({ media, onClose }) {
                     initial={{ scale: 0.9, y: 30 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 30 }}
-                    className={`relative w-full ${media.type === 'audio' ? 'max-w-md bg-[#0f1117] rounded-[3rem] p-12 text-center' : 'max-w-4xl aspect-video rounded-[2rem] overflow-hidden bg-black'}`}
+                    className={`relative w-full ${media.type === 'audio' ? 'max-w-md bg-[#0f1117] rounded-card-lg p-6 md:p-12 text-center' : 'max-w-4xl aspect-video rounded-card overflow-hidden bg-black'}`}
                     onClick={e => e.stopPropagation()}
                 >
                     <button
@@ -54,9 +54,9 @@ export default function MediaModal({ media, onClose }) {
 
                     {media.type === 'audio' && (
                         <>
-                            <div className="w-20 h-20 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center text-4xl mx-auto mb-6 border border-emerald-500/20 animate-pulse">🎙️</div>
-                            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] mb-2">Quran Recitation Sample</p>
-                            <h3 className="text-2xl font-black text-white mb-6">{media.name}</h3>
+                            <div className="w-20 h-20 bg-emerald-500/10 rounded-card flex items-center justify-center text-4xl mx-auto mb-6 border border-emerald-500/20">🎙️</div>
+                            <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.3em] mb-2">Quran Recitation Sample</p>
+                            <h3 className="text-2xl font-bold text-white mb-6">{media.name}</h3>
                             <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
                                 <audio
                                     src={media.url?.startsWith('http') ? media.url : `${import.meta.env.VITE_API_BASE_URL}${media.url}`}

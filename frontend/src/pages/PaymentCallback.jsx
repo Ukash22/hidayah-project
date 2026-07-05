@@ -141,7 +141,7 @@ const PaymentCallback = () => {
             <Navbar />
             <div className="container pt-32 pb-20 px-4">
                 <div className="max-w-md mx-auto">
-                    <div className="bg-white rounded-[2.5rem] shadow-2xl p-10 border border-slate-100 text-center">
+                    <div className="bg-white rounded-card-lg shadow-2xl p-10 border border-slate-100 text-center">
                         {status === 'verifying' && (
                             <>
                                 <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
@@ -152,7 +152,7 @@ const PaymentCallback = () => {
 
                         {status === 'success' && (
                             <>
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-3xl md:text-5xl mx-auto mb-6">
                                     ✅
                                 </div>
                                 <h2 className="text-2xl font-display font-bold text-green-600 mb-2">Payment Successful!</h2>
@@ -161,7 +161,7 @@ const PaymentCallback = () => {
                                 <div className="flex flex-col gap-3">
                                     <button
                                         onClick={handleDownloadReceipt}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2"
                                     >
                                         📄 Download Receipt
                                     </button>
@@ -178,7 +178,7 @@ const PaymentCallback = () => {
 
                         {status === 'error' && (
                             <>
-                                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
+                                <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-3xl md:text-5xl mx-auto mb-6">
                                     ⚠️
                                 </div>
                                 <h2 className="text-2xl font-display font-bold text-amber-600 mb-2">Couldn't Confirm Payment</h2>
@@ -189,7 +189,7 @@ const PaymentCallback = () => {
                                 <div className="flex flex-col gap-3">
                                     <button
                                         onClick={retryVerification}
-                                        className="w-full bg-primary hover:bg-primary-600 text-white py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all"
+                                        className="w-full bg-primary hover:bg-primary-600 text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
                                     >
                                         🔄 Retry Verification
                                     </button>
@@ -205,7 +205,7 @@ const PaymentCallback = () => {
 
                         {status === 'failed' && (
                             <>
-                                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-5xl mx-auto mb-6">
+                                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-3xl md:text-5xl mx-auto mb-6">
                                     ❌
                                 </div>
                                 <h2 className="text-2xl font-display font-bold text-red-600 mb-2">Payment Failed</h2>

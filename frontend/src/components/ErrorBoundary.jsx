@@ -38,11 +38,11 @@ export default class ErrorBoundary extends React.Component {
         const stale = isChunkLoadError(error);
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-xl p-10 max-w-md w-full text-center">
-                    <div className="w-16 h-16 mx-auto mb-6 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl">
+                <div className="bg-white rounded-card-lg border border-slate-100 shadow-xl p-10 max-w-md w-full text-center">
+                    <div className="w-16 h-16 mx-auto mb-6 bg-primary-soft rounded-2xl flex items-center justify-center text-3xl">
                         {stale ? '🔄' : '⚠️'}
                     </div>
-                    <h1 className="text-xl font-display font-black text-primary uppercase tracking-tight mb-3">
+                    <h1 className="text-xl font-display font-bold text-primary uppercase tracking-tight mb-3">
                         {stale ? 'Update Available' : 'Something went wrong'}
                     </h1>
                     <p className="text-slate-500 font-medium text-sm mb-8">
@@ -53,14 +53,14 @@ export default class ErrorBoundary extends React.Component {
                     <div className="flex gap-3">
                         <button
                             onClick={this.handleReload}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all"
+                            className="flex-1 bg-primary hover:bg-primary-dark text-white py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/20 transition-all"
                         >
                             Reload
                         </button>
                         {!stale && (
                             <button
                                 onClick={this.handleGoHome}
-                                className="flex-1 bg-white border border-slate-200 text-slate-600 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
+                                className="flex-1 bg-white border border-slate-200 text-slate-600 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition-all"
                             >
                                 Go Home
                             </button>

@@ -24,14 +24,14 @@ export default function DashboardShell({ navGroups, role }) {
     const mainBg = isDark
         ? 'bg-slate-950'
         : 'bg-gradient-to-br from-white via-blue-50/40 to-white';
-    const textColor = isDark ? 'text-slate-100' : 'text-slate-900';
+    const textColor = isDark ? 'text-slate-100' : 'text-slate-900 dark:text-slate-100';
 
     return (
-        <div className={`min-h-screen ${mainBg} flex font-sans transition-colors duration-300`}>
+        <div className={`min-h-screen ${mainBg} ${isDark ? 'dark' : ''} flex font-sans transition-colors duration-300`}>
             {/* Keyboard users can jump past the sidebar (WCAG 2.4.1) — visible only when focused */}
             <a
                 href="#main-content"
-                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[300] focus:bg-blue-600 focus:text-white focus:px-5 focus:py-3 focus:rounded-xl focus:font-bold focus:text-sm focus:shadow-xl"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[300] focus:bg-primary focus:text-white focus:px-5 focus:py-3 focus:rounded-xl focus:font-bold focus:text-sm focus:shadow-xl"
             >
                 Skip to content
             </a>

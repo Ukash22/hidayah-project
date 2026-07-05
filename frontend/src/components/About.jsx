@@ -25,7 +25,7 @@ const About = () => {
         <section id="about" className="bg-white">
             <div className="container">
                 <div className="text-center max-w-2xl mx-auto mb-16">
-                    <h2 className="text-4xl text-primary mb-4 font-black tracking-tight uppercase">Excellence in Global Learning</h2>
+                    <h2 className="text-4xl text-primary mb-4 font-bold tracking-tight uppercase">Excellence in Global Learning</h2>
                     <div className="h-1.5 w-16 bg-secondary mx-auto mb-6"></div>
                     <p className="text-text-light">Discover what makes our international platform the preferred choice for students around the world.</p>
                 </div>

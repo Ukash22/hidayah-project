@@ -59,35 +59,35 @@ export default function AdminWithdrawals() {
             <title>Withdrawals — Hidayah Admin</title>
             <PageHeader title="Withdrawal Requests" description="Review and approve tutor withdrawal requests." />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
+                        <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Tutor</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Amount</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Frequency</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Frequency</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {withdrawals.length === 0 ? (
                                 <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No withdrawal requests found.</td></tr>
                             ) : withdrawals.map(w => (
-                                <tr key={w.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={w.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-3 px-4">
                                         <div className="text-[10px] font-bold text-slate-500">{new Date(w.created_at).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="font-bold text-slate-800 text-xs">{w.tutor_name}</div>
+                                        <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{w.tutor_name}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="text-[11px] font-black text-primary">₦{parseFloat(w.amount).toLocaleString()}</div>
+                                        <div className="text-[11px] font-bold text-primary">₦{parseFloat(w.amount).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="text-[9px] text-slate-500 uppercase font-black">{w.withdrawal_frequency}</div>
+                                        <div className="text-[9px] text-slate-500 uppercase font-bold">{w.withdrawal_frequency}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
                                         <StatusBadge status={w.status} />
@@ -97,7 +97,7 @@ export default function AdminWithdrawals() {
                                             {w.status === 'PENDING' && (
                                                 <button
                                                     onClick={() => handleApprove(w.id)}
-                                                    className="bg-emerald-500 text-white px-3 py-1 rounded text-[9px] font-black uppercase"
+                                                    className="bg-emerald-500 text-white px-3 py-1 rounded text-[9px] font-bold uppercase"
                                                 >
                                                     Approve
                                                 </button>
@@ -105,7 +105,7 @@ export default function AdminWithdrawals() {
                                             {w.status === 'APPROVED' && (
                                                 <button
                                                     onClick={() => handleDownloadReceipt(w)}
-                                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-lg transition-colors border border-slate-200"
+                                                    className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-500 rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
                                                     title="Download Receipt"
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

@@ -16,7 +16,7 @@ const LiveClassRoom = () => {
       {/* Top Header Bar */}
       <div className="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 md:px-6 z-[3000]">
           <div className="flex items-center gap-2 md:gap-4">
-              <div className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+              <div className="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded-lg text-[9px] md:text-[11px] font-semibold uppercase tracking-wide border border-emerald-500/20">
                   LIVE
               </div>
               <h2 className="text-white font-bold text-xs md:text-sm truncate max-w-[120px] sm:max-w-[200px]">Room: {roomId}</h2>
@@ -25,13 +25,13 @@ const LiveClassRoom = () => {
           <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
               <button 
                   onClick={() => { setLayoutMode('classroom'); setIsVideoOpen(true); }}
-                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'classroom' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[11px] font-semibold uppercase tracking-wide transition-all ${layoutMode === 'classroom' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
               >
                   Classroom
               </button>
               <button 
                   onClick={() => { setLayoutMode('gallery'); setIsVideoOpen(true); }}
-                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${layoutMode === 'gallery' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                  className={`px-3 md:px-4 py-1 md:py-1.5 rounded-lg text-[9px] md:text-[11px] font-semibold uppercase tracking-wide transition-all ${layoutMode === 'gallery' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-400 hover:text-white'}`}
               >
                   Gallery
               </button>

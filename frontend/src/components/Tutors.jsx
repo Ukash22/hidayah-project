@@ -56,21 +56,21 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.92, opacity: 0, y: 30 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-                className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden relative"
+                className="bg-white rounded-card-lg w-full max-w-lg shadow-2xl overflow-hidden relative"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
                 <div className="bg-gradient-to-br from-primary to-primary/80 p-8 pb-6">
                     <button onClick={onClose} className="absolute top-5 right-5 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-sm transition-all">✕</button>
                     <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl font-black text-white overflow-hidden">
+                        <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
                             {tutor.image ? (
                                 <img src={tutor.image?.startsWith('http') ? tutor.image : `${import.meta.env.VITE_API_BASE_URL}${tutor.image}`} alt={tutor.full_name} className="w-full h-full object-cover" />
                             ) : tutor.full_name?.[0]}
                         </div>
                         <div>
-                            <p className="text-white/60 text-[10px] font-black uppercase tracking-widest">Book a Trial Class with</p>
-                            <h3 className="text-white font-black text-xl leading-tight">{tutor.full_name}</h3>
+                            <p className="text-white/60 text-[11px] font-semibold uppercase tracking-wide">Book a Trial Class with</p>
+                            <h3 className="text-white font-bold text-xl leading-tight">{tutor.full_name}</h3>
                             <p className="text-white/70 text-xs font-semibold mt-0.5">{tutor.subjects_to_teach} &bull; ₦{parseFloat(tutor.hourly_rate || 1500).toLocaleString()}/hr</p>
                         </div>
                     </div>
@@ -81,9 +81,9 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                     {status.type === 'success' ? (
                         <div className="py-12 text-center space-y-4">
                             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl mx-auto">✓</div>
-                            <h4 className="font-black text-primary text-lg">Request Submitted!</h4>
+                            <h4 className="font-bold text-primary text-lg">Request Submitted!</h4>
                             <p className="text-slate-500 text-sm leading-relaxed">{status.message}</p>
-                            <button onClick={onClose} className="mt-4 bg-primary text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all">
+                            <button onClick={onClose} className="mt-4 bg-primary text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-all">
                                 Close
                             </button>
                         </div>
@@ -91,27 +91,27 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label htmlFor="firstName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name *</label>
+                                    <label htmlFor="firstName" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">First Name *</label>
                                     <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Ahmad" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="lastName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
+                                    <label htmlFor="lastName" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Name</label>
                                     <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="e.g. Ali" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label htmlFor="email" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email *</label>
+                                    <label htmlFor="email" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email *</label>
                                     <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="country" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Country</label>
+                                    <label htmlFor="country" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Country</label>
                                     <input id="country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. Nigeria" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label htmlFor="courseInterested" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus Course</label>
+                                <label htmlFor="courseInterested" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Focus Course</label>
                                 <select id="courseInterested" name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm appearance-none">
                                     {(tutor.subjects_to_teach || 'Quranic Recitation').split(',').map(s => (
                                         <option key={s.trim()} value={s.trim()}>{s.trim()}</option>
@@ -122,13 +122,13 @@ const TutorTrialModal = ({ tutor, onClose }) => {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredDay" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Day</label>
+                                    <label htmlFor="preferredDay" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Day</label>
                                     <select id="preferredDay" name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredTime" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot</label>
+                                    <label htmlFor="preferredTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Slot</label>
                                     <select id="preferredTime" name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         <option>Morning</option>
                                         <option>Afternoon</option>
@@ -136,8 +136,8 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredTimeExact" className="text-[10px] font-black text-primary uppercase tracking-widest">Exact Time</label>
-                                    <input id="preferredTimeExact" type="text" name="preferredTimeExact" value={formData.preferredTimeExact} onChange={handleChange} placeholder="e.g. 4 PM" className="w-full px-3 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 focus:bg-white focus:border-primary outline-none transition-all font-black text-primary text-xs text-center placeholder:text-primary/30" />
+                                    <label htmlFor="preferredTimeExact" className="text-[10px] font-bold text-primary uppercase tracking-widest">Exact Time</label>
+                                    <input id="preferredTimeExact" type="text" name="preferredTimeExact" value={formData.preferredTimeExact} onChange={handleChange} placeholder="e.g. 4 PM" className="w-full px-3 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 focus:bg-white focus:border-primary outline-none transition-all font-bold text-primary text-xs text-center placeholder:text-primary/30" />
                                 </div>
                             </div>
 
@@ -145,7 +145,7 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                                 <p className={`text-xs font-bold text-center py-2 ${status.type === 'error' ? 'text-red-500' : 'text-blue-500'}`}>{status.message}</p>
                             )}
 
-                            <button type="submit" disabled={submitting} className="w-full bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                            <button type="submit" disabled={submitting} className="w-full bg-primary text-white py-4 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60">
                                 {submitting ? (
                                     <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Submitting...</>
                                 ) : 'Book Free Trial Class →'}
@@ -247,7 +247,7 @@ const Tutors = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: index * 0.1 }}
-                                className="bg-white rounded-[2.5rem] p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-100 group relative flex flex-col"
+                                className="bg-white rounded-card-lg p-5 md:p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-slate-100 group relative flex flex-col"
                             >
                                 {/* Avatar with media overlay */}
                                 <div className="relative mb-6 mx-auto w-32 h-32">
@@ -315,7 +315,7 @@ const Tutors = () => {
                                             <div className="flex flex-col items-end gap-1">
                                                 {Array.isArray(tutor.availabilities) && tutor.availabilities.length > 0 ? (
                                                     tutor.availabilities.map((slot, i) => (
-                                                        <span key={i} className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        <span key={i} className="text-[9px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                             {slot.day}: {to12hr(slot.start_time)} - {to12hr(slot.end_time)}
                                                         </span>
                                                     ))
@@ -327,7 +327,7 @@ const Tutors = () => {
                                                             : h.trim();
                                                         if (!label) return null;
                                                         return (
-                                                            <span key={i} className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            <span key={i} className="text-[9px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                                 {label}
                                                             </span>
                                                         );
@@ -343,7 +343,7 @@ const Tutors = () => {
                                     {/* Book Trial */}
                                     <button
                                         onClick={() => setTrialTutor(tutor)}
-                                        className="bg-primary text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 hover:shadow-primary/30 transition-all flex items-center justify-center gap-1.5"
+                                        className="bg-primary text-white py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 hover:shadow-primary/30 transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <span>📋</span> Book Trial
                                     </button>
@@ -351,7 +351,7 @@ const Tutors = () => {
                                     {/* Register as Student Button */}
                                     <Link
                                         to={`/register?tutor_id=${tutor.id}&tutor_name=${encodeURIComponent(tutor.full_name)}`}
-                                        className="bg-indigo-600 text-white py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center justify-center gap-1.5"
+                                        className="bg-indigo-600 text-white py-3 rounded-2xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:scale-105 transition-all flex items-center justify-center gap-1.5"
                                     >
                                         <span>✍️</span> Register as Student
                                     </Link>
@@ -383,7 +383,7 @@ const Tutors = () => {
                             initial={{ scale: 0.9, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className={`bg-white rounded-[3rem] overflow-hidden max-w-4xl w-full relative shadow-2xl ${selectedMedia.type === 'audio' ? 'max-w-md p-12 text-center' : 'aspect-video'}`}
+                            className={`bg-white rounded-card-lg overflow-hidden max-w-4xl w-full relative shadow-2xl ${selectedMedia.type === 'audio' ? 'max-w-md p-12 text-center' : 'aspect-video'}`}
                             onClick={e => e.stopPropagation()}
                         >
                             <button
@@ -415,25 +415,25 @@ const Tutors = () => {
                                         />
                                     )}
                                     <div className="absolute bottom-10 left-10 text-white z-10 pointer-events-none text-left">
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-2">
+                                        <p className="text-[11px] font-semibold uppercase tracking-wide text-white/60 mb-2">
                                             {selectedMedia.isRecitation ? 'Quranic Recitation' : 'Introduction'}
                                         </p>
-                                        <h4 className="text-3xl font-display font-black uppercase">{selectedMedia.name}</h4>
+                                        <h4 className="text-3xl font-display font-bold uppercase">{selectedMedia.name}</h4>
                                     </div>
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center">
-                                    <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center text-4xl mb-8 border border-primary/5 animate-pulse">🎙️</div>
-                                    <span className="text-[10px] font-black text-secondary uppercase tracking-[0.3em] mb-3 block">Voice Sample</span>
-                                    <h3 className="text-2xl font-display font-black text-primary mb-2 uppercase">{selectedMedia.name}</h3>
+                                    <div className="w-24 h-24 bg-primary/10 rounded-card flex items-center justify-center text-4xl mb-8 border border-primary/5">🎙️</div>
+                                    <span className="text-[10px] font-bold text-secondary uppercase tracking-[0.3em] mb-3 block">Voice Sample</span>
+                                    <h3 className="text-2xl font-display font-bold text-primary mb-2 uppercase">{selectedMedia.name}</h3>
                                     <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-10 italic">Quranic Recitation Performance</p>
                                     <div className="w-full bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
                                         <audio src={selectedMedia.url?.startsWith('http') ? selectedMedia.url : `${import.meta.env.VITE_API_BASE_URL}${selectedMedia.url}`} controls className="w-full" />
                                     </div>
                                     <button
                                         onClick={() => { setSelectedMedia(null); setTrialTutor(displayTutors.find(t => t.full_name === selectedMedia.name)); }}
-                                        className="mt-12 w-full bg-primary text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                                        className="mt-12 w-full bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                     >
                                         Book a Trial with this Tutor →
                                     </button>

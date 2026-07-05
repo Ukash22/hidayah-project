@@ -127,9 +127,9 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
             <div className="p-4 bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-between shadow-md">
                 <div className="flex items-center gap-2 text-white">
                     <div className="p-1.5 bg-white/20 rounded-xl"><Library size={20} /></div>
-                    <h3 className="font-black tracking-tight">Board Settings</h3>
+                    <h3 className="font-bold tracking-tight">Board Settings</h3>
                 </div>
-                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
+                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all">
                     <X size={18} />
                 </button>
             </div>
@@ -152,7 +152,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                     <div className="flex flex-col gap-4">
                         <button 
                             onClick={handleAddPage}
-                            className="w-full py-3 bg-teal-50 text-teal-600 border border-teal-200 border-dashed rounded-xl font-black text-sm uppercase tracking-widest hover:bg-teal-100 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-teal-50 text-teal-600 border border-teal-200 border-dashed rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-teal-100 transition-all flex items-center justify-center gap-2"
                         >
                             <Plus size={16} /> Add New Page
                         </button>
@@ -170,7 +170,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                                         </div>
                                         <span className="font-bold">{page.name}</span>
                                     </div>
-                                    {currentPageId === page.id && <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+                                    {currentPageId === page.id && <div className="w-2 h-2 rounded-full bg-white" />}
                                 </button>
                             ))}
                         </div>
@@ -180,7 +180,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'color' && (
                     <div className="flex flex-col gap-4">
                          <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Board Color</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Board Color</label>
                             <div className="grid grid-cols-2 gap-3">
                                 {[
                                     { color: '#ffffff', name: 'Whiteboard', border: '#e2e8f0' },
@@ -196,7 +196,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                                         className="h-16 rounded-xl border-2 hover:scale-105 transition-all flex items-end justify-center pb-2 shadow-sm relative overflow-hidden group"
                                         style={{ backgroundColor: theme.color, borderColor: theme.border }}
                                     >
-                                        <span className={`text-[10px] font-black uppercase tracking-wider z-10 ${theme.color === '#ffffff' || theme.color === '#fef3c7' || theme.color === '#ecfdf5' || theme.color === '#eff6ff' ? 'text-slate-800' : 'text-white'}`}>{theme.name}</span>
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider z-10 ${theme.color === '#ffffff' || theme.color === '#fef3c7' || theme.color === '#ecfdf5' || theme.color === '#eff6ff' ? 'text-slate-800' : 'text-white'}`}>{theme.name}</span>
                                     </button>
                                 ))}
                             </div>
@@ -208,13 +208,13 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                     <div className="flex flex-col gap-4">
                         <button 
                             onClick={saveToLibrary}
-                            className="w-full py-3 bg-teal-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-teal-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 flex items-center justify-center gap-2"
                         >
                             <Library size={16} /> Save Current Board
                         </button>
                         
                         <div className="space-y-2 mt-4">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Saved Boards</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Saved Boards</label>
                             {savedBoards.length === 0 ? (
                                 <p className="text-sm text-slate-500 italic text-center py-4 bg-slate-50 rounded-xl">No saved boards yet.</p>
                             ) : (
@@ -260,7 +260,7 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
                                     <FileUp size={24} />
                                 </div>
                                 <div>
-                                    <p className="font-black">Click or Drag to Import</p>
+                                    <p className="font-bold">Click or Drag to Import</p>
                                     <p className="text-xs font-medium text-teal-600/70">Images, Word, PDF</p>
                                 </div>
                             </div>

@@ -46,28 +46,28 @@ export default function AdminComplaints() {
             <title>Complaints — Hidayah Admin</title>
             <PageHeader title="Complaint Management" description="Review and resolve all platform complaints and disputes." />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-slate-50 border-b border-slate-100">
+                        <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Subject</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Parties</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subject</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Parties</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
+                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {allComplaints.length === 0 ? (
                                 <tr><td colSpan="5" className="p-12 text-center text-slate-500 italic">No complaints found.</td></tr>
                             ) : allComplaints.map(c => (
-                                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                                <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-3 px-4">
                                         <div className="text-[10px] font-bold text-slate-500">{new Date(c.created_at).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="font-bold text-slate-800 text-xs">{c.subject}</div>
+                                        <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{c.subject}</div>
                                         <div className="text-[10px] text-slate-500 truncate max-w-xs">{c.description}</div>
                                     </td>
                                     <td className="py-3 px-4">
@@ -81,7 +81,7 @@ export default function AdminComplaints() {
                                         {c.status !== 'RESOLVED' && (
                                             <button
                                                 onClick={() => handleResolve(c.id)}
-                                                className="bg-primary text-white px-3 py-1 rounded text-[9px] font-black uppercase"
+                                                className="bg-primary text-white px-3 py-1 rounded text-[9px] font-bold uppercase"
                                             >
                                                 Resolve
                                             </button>

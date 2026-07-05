@@ -18,11 +18,11 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
             {/* Brand */}
             <div className="p-6 border-b border-white/5">
                 <Link to="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                    <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                         <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
                     </div>
                     <div>
-                        <p className="font-black text-white tracking-tight leading-none">HIDAYAH</p>
+                        <p className="font-bold text-white tracking-tight leading-none">HIDAYAH</p>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-blue-400 opacity-80">
                             {PORTAL_LABEL[role] || 'Portal'}
                         </p>
@@ -33,7 +33,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
             {/* User */}
             <div className="px-4 py-4 border-b border-white/5">
                 <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5">
-                    <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black shadow-lg flex-shrink-0 text-sm">
+                    <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-bold shadow-lg flex-shrink-0 text-sm">
                         {user?.first_name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="overflow-hidden">
@@ -63,8 +63,8 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
                 >
                     <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
                     <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                    <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-blue-600' : 'bg-slate-600'}`}>
-                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
+                    <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-primary' : 'bg-slate-600'}`}>
+                        <div className={`absolute top-0.5 w-4 h-4 bg-white dark:bg-slate-900 rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
                     </div>
                 </button>
 

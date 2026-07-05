@@ -76,18 +76,18 @@ export default function StudentClasses() {
                         onRefetch={fetchData}
                     />
                 )) : (
-                    <div className="py-32 text-center bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-                        <div className="w-20 h-20 bg-blue-600/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8 animate-pulse">
+                    <div className="py-32 text-center bg-slate-50 dark:bg-slate-800/60 rounded-card-lg border border-dashed border-slate-200 dark:border-slate-700">
+                        <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8">
                             {profile?.wallet_balance <= 0 ? '🔒' : '📅'}
                         </div>
-                        <h4 className="text-xl font-bold text-slate-900 mb-2">{profile?.wallet_balance <= 0 ? 'Access Locked' : 'No Classes Scheduled'}</h4>
+                        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{profile?.wallet_balance <= 0 ? 'Access Locked' : 'No Classes Scheduled'}</h4>
                         <p className="text-slate-500 font-bold italic max-w-md mx-auto">
                             {profile?.wallet_balance <= 0
                                 ? 'Please fund your wallet to access your live classes.'
                                 : 'No classes are currently scheduled. Check back later.'}
                         </p>
                         {profile?.wallet_balance <= 0 && (
-                            <button onClick={() => navigate('/student/finance')} className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg">
+                            <button onClick={() => navigate('/student/finance')} className="mt-8 bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all shadow-lg">
                                 Top Up Wallet
                             </button>
                         )}

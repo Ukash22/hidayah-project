@@ -12,14 +12,14 @@ export function StatusBadge({ status }) {
         UNDER_REVIEW: 'bg-indigo-100 text-indigo-800 border-indigo-200',
         LIVE_STARTED: 'bg-red-100 text-red-800 border-red-200',
         LIVE_WAITING: 'bg-orange-100 text-orange-800 border-orange-200',
-        UPCOMING: 'bg-blue-50 text-blue-600 border-blue-100',
-        ENDED: 'bg-slate-100 text-slate-500 border-slate-200',
+        UPCOMING: 'bg-primary-soft text-primary border-blue-100',
+        ENDED: 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700',
         PAID: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         UNPAID: 'bg-red-50 text-red-600 border-red-100',
     };
-    const cls = map[status] || 'bg-slate-100 text-slate-500 border-slate-200';
+    const cls = map[status] || 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-slate-200 dark:border-slate-700';
     return (
-        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${cls}`}>
+        <span className={`px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide border ${cls}`}>
             {status?.replace(/_/g, ' ') || 'N/A'}
         </span>
     );

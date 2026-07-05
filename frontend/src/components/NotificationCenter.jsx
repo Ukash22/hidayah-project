@@ -82,11 +82,11 @@ const NotificationCenter = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
+                            className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 z-50 overflow-hidden"
                         >
                             <div className="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-bold text-primary text-sm">Notifications</h3>
-                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{unreadCount} Unread</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{unreadCount} Unread</span>
                             </div>
 
                             <div className="max-h-96 overflow-y-auto">
@@ -101,7 +101,7 @@ const NotificationCenter = () => {
                                     notifications.map(n => (
                                         <div
                                             key={n.id}
-                                            className={`p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 cursor-pointer ${!n.is_read ? 'bg-primary/5' : ''}`}
+                                            className={`p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer ${!n.is_read ? 'bg-primary/5' : ''}`}
                                             onClick={() => !n.is_read && markAsRead(n.id)}
                                         >
                                             <div className="flex justify-between items-start mb-1">
@@ -119,10 +119,10 @@ const NotificationCenter = () => {
                                 )}
                             </div>
 
-                            <div className="p-3 bg-slate-50 text-center">
+                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 text-center">
                                 <button
                                     onClick={fetchNotifications}
-                                    className="text-[10px] font-black text-primary hover:text-secondary uppercase tracking-widest transition-colors"
+                                    className="text-[10px] font-bold text-primary hover:text-secondary uppercase tracking-widest transition-colors"
                                 >
                                     Refresh All
                                 </button>

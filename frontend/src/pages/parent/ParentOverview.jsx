@@ -63,29 +63,29 @@ export default function ParentOverview() {
             <div className="grid md:grid-cols-2 gap-8">
                 {children.length > 0 ? (
                     children.map((child, idx) => (
-                        <div key={idx} className="bg-white p-8 rounded-[2rem] border border-slate-100 hover:border-blue-600/20 transition-all group shadow-sm hover:shadow-xl">
+                        <div key={idx} className="bg-white dark:bg-slate-900 p-8 rounded-card border border-slate-100 dark:border-slate-800 hover:border-primary/20 transition-all group shadow-sm hover:shadow-xl">
                             <div className="flex items-center gap-6 mb-6">
-                                <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">🧒</div>
+                                <div className="bg-white dark:bg-slate-900 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">🧒</div>
                                 <div className="flex-1">
                                     <h4 className="text-xl font-bold text-primary">
                                         {child.full_name || `${child.user_details?.first_name || ''} ${child.user_details?.last_name || ''}`.trim()}
                                     </h4>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-1">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mt-1">
                                         Admission ID: {child.user_details?.admission_number || 'N/A'}
                                     </p>
                                 </div>
-                                <span className={`text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest ${child.payment_status === 'PAID' ? 'bg-blue-600/10 text-blue-600' : 'bg-rose-500/10 text-rose-500'}`}>
+                                <span className={`text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest ${child.payment_status === 'PAID' ? 'bg-primary/10 text-primary' : 'bg-rose-500/10 text-rose-500'}`}>
                                     {child.payment_status}
                                 </span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-white/50 p-4 rounded-xl border border-slate-100">
-                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Course</span>
+                                <div className="bg-white/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                                    <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Course</span>
                                     <span className="text-sm font-bold text-primary">{child.enrolled_course || 'Not Assigned'}</span>
                                 </div>
-                                <div className="bg-white/50 p-4 rounded-xl border border-slate-100">
-                                    <span className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Class Type</span>
+                                <div className="bg-white/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                                    <span className="block text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Class Type</span>
                                     <span className="text-sm font-bold text-primary">{child.class_type?.replace('_', ' ')}</span>
                                 </div>
                             </div>
@@ -93,19 +93,19 @@ export default function ParentOverview() {
                             <div className="mt-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <span className="block text-[10px] font-black uppercase tracking-widest text-primary/50 mb-1">Assigned Tutor</span>
+                                        <span className="block text-[11px] font-semibold uppercase tracking-wide text-primary/50 mb-1">Assigned Tutor</span>
                                         <p className="text-sm font-bold text-primary">
                                             {child.assigned_tutor_details ? child.assigned_tutor_details.full_name : 'Pending Assignment'}
                                         </p>
                                     </div>
                                     <div className="flex gap-4">
                                         {child.meeting_link && (
-                                            <a href={child.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-secondary hover:underline uppercase tracking-widest">
+                                            <a href={child.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-secondary hover:underline uppercase tracking-widest">
                                                 Enter Class ↗
                                             </a>
                                         )}
                                         {child.whiteboard_link && (
-                                            <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[10px] font-black text-blue-600 hover:underline uppercase tracking-widest">
+                                            <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
                                                 Whiteboard ✏
                                             </a>
                                         )}
@@ -115,18 +115,18 @@ export default function ParentOverview() {
 
                             <div className="mt-6 pt-6 border-t border-slate-200/60 flex items-center justify-between">
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Weekly Schedule</span>
+                                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Weekly Schedule</span>
                                     <span className="text-xs font-bold text-primary">{child.days_per_week} Days ({child.preferred_days || 'Not set'})</span>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     {child.admission_letter_url && (
-                                        <a href={child.admission_letter_url} target="_blank" rel="noreferrer" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:underline flex items-center gap-1">
+                                        <a href={child.admission_letter_url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold uppercase tracking-wide text-primary hover:underline flex items-center gap-1">
                                             Admission Letter ↓
                                         </a>
                                     )}
                                     <button
                                         onClick={() => handleImpersonate(child.id)}
-                                        className="bg-primary text-white text-[10px] font-black uppercase tracking-widest py-2 px-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                                        className="bg-primary text-white text-[11px] font-semibold uppercase tracking-wide py-2 px-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                     >
                                         <span>👁️</span> View Dashboard
                                     </button>
@@ -135,9 +135,9 @@ export default function ParentOverview() {
                         </div>
                     ))
                 ) : (
-                    <div className="col-span-full bg-slate-50/50 p-12 rounded-[2rem] border border-dashed border-slate-200 text-center">
+                    <div className="col-span-full bg-slate-50/50 p-12 rounded-card border border-dashed border-slate-200 dark:border-slate-700 text-center">
                         <p className="text-slate-500 font-bold">No children registered under this account.</p>
-                        <Link to="/register" className="text-blue-600 font-black uppercase tracking-widest text-xs mt-4 inline-block hover:underline">
+                        <Link to="/register" className="text-primary font-bold uppercase tracking-widest text-xs mt-4 inline-block hover:underline">
                             Register a Student →
                         </Link>
                     </div>

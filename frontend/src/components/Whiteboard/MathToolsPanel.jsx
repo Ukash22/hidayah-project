@@ -227,9 +227,9 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
             <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-between shadow-md">
                 <div className="flex items-center gap-2 text-white">
                     <div className="p-1.5 bg-white/20 rounded-xl"><Calculator size={20} /></div>
-                    <h3 className="font-black tracking-tight">Math Suite</h3>
+                    <h3 className="font-bold tracking-tight">Math Suite</h3>
                 </div>
-                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
+                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all">
                     <X size={18} />
                 </button>
             </div>
@@ -267,14 +267,14 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                                         if (btn === 'C') setCalcInput('');
                                         else setCalcInput(prev => prev + btn);
                                     }}
-                                    className="bg-white border border-slate-200 rounded-xl font-black text-slate-700 text-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center py-4"
+                                    className="bg-white border border-slate-200 rounded-xl font-bold text-slate-700 text-lg hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm flex items-center justify-center py-4"
                                 >
                                     {btn}
                                 </button>
                             ))}
                             <button 
                                 onClick={handleCalculatorEval}
-                                className="col-span-4 bg-indigo-600 text-white rounded-xl font-black text-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 py-3"
+                                className="col-span-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 py-3"
                             >
                                 =
                             </button>
@@ -285,7 +285,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'equations' && (
                     <div className="flex flex-col gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Custom Equation</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Custom Equation</label>
                             <div className="flex gap-2">
                                 <input 
                                     type="text" 
@@ -300,7 +300,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                         </div>
 
                         <div className="space-y-2 mt-4">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Presets</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Presets</label>
                             <div className="grid grid-cols-1 gap-2">
                                 {[
                                     { name: "Quadratic Formula", eq: "x = [-b ± √(b² - 4ac)] / 2a" },
@@ -314,7 +314,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                                         onClick={() => insertText(preset.eq)}
                                         className="text-left px-4 py-3 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 rounded-xl transition-all group flex flex-col gap-1 shadow-sm"
                                     >
-                                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 group-hover:text-indigo-400">{preset.name}</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-400">{preset.name}</span>
                                         <span className="font-mono text-sm text-slate-800 font-bold">{preset.eq}</span>
                                     </button>
                                 ))}
@@ -326,7 +326,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'graphs' && (
                     <div className="flex flex-col gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Function Grapher</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Function Grapher</label>
                             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus-within:border-indigo-500 transition-colors">
                                 <span className="font-bold text-slate-500 font-mono italic">f(x) =</span>
                                 <select 
@@ -344,7 +344,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Line Color</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Line Color</label>
                             <div className="flex gap-2">
                                 {['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#000000'].map(color => (
                                     <button 
@@ -359,7 +359,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
 
                         <button 
                             onClick={insertGraph}
-                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <SquareFunction size={16} /> Insert Graph
                         </button>
@@ -369,7 +369,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'angles' && (
                     <div className="flex flex-col gap-4">
                          <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Angle (Degrees)</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Angle (Degrees)</label>
                             <div className="flex items-center gap-4">
                                 <input 
                                     type="range" 
@@ -378,13 +378,13 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                                     onChange={(e) => setAngleDegrees(Number(e.target.value))}
                                     className="flex-1 accent-indigo-600"
                                 />
-                                <span className="font-mono font-black text-lg text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg min-w-[60px] text-center">{angleDegrees}°</span>
+                                <span className="font-mono font-bold text-lg text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg min-w-[60px] text-center">{angleDegrees}°</span>
                             </div>
                         </div>
 
                         <button 
                             onClick={insertAngle}
-                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <DraftingCompass size={16} /> Draw Angle
                         </button>
@@ -394,14 +394,14 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                 {activeTab === 'pie' && (
                     <div className="flex flex-col gap-4">
                          <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Fraction</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Fraction</label>
                             <div className="flex items-center gap-4">
                                 <input 
                                     type="number" min="1" max="100"
                                     value={pieNumerator} onChange={(e) => setPieNumerator(Number(e.target.value))}
                                     className="w-20 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-center font-bold text-slate-700 outline-none"
                                 />
-                                <span className="text-2xl text-slate-300 font-black">/</span>
+                                <span className="text-2xl text-slate-300 font-bold">/</span>
                                 <input 
                                     type="number" min="1" max="100"
                                     value={pieDenominator} onChange={(e) => setPieDenominator(Number(e.target.value))}
@@ -411,7 +411,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                         </div>
 
                          <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Color Theme</label>
+                            <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Color Theme</label>
                             <div className="flex gap-2">
                                 {['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'].map(color => (
                                     <button 
@@ -425,7 +425,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
 
                         <button 
                             onClick={insertPieChart}
-                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <PieChart size={16} /> Insert Pie Chart
                         </button>

@@ -126,9 +126,9 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
             <div className="p-4 bg-gradient-to-r from-rose-500 to-red-600 flex items-center justify-between shadow-md">
                 <div className="flex items-center gap-2 text-white">
                     <div className="p-1.5 bg-white/20 rounded-xl"><FileText size={20} /></div>
-                    <h3 className="font-black tracking-tight">Assign Exam</h3>
+                    <h3 className="font-bold tracking-tight">Assign Exam</h3>
                 </div>
-                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-xl transition-all">
+                <button onClick={onClose} aria-label="Close panel" className="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-xl transition-all">
                     <X size={18} />
                 </button>
             </div>
@@ -142,7 +142,7 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
                     <select 
                         value={duration}
                         onChange={(e) => setDuration(Number(e.target.value))}
-                        className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-black text-rose-600 outline-none focus:border-rose-500 shadow-sm"
+                        className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-sm font-bold text-rose-600 outline-none focus:border-rose-500 shadow-sm"
                     >
                         <option value={1}>1 min</option>
                         <option value={3}>3 min</option>
@@ -172,14 +172,14 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
             <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
                 {activeTab === 'templates' && (
                     <div className="flex flex-col gap-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Select an exam to assign</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1">Select an exam to assign</p>
                         {templates.map(template => (
                             <div key={template.id} className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm hover:border-rose-300 hover:shadow-md transition-all group">
                                 <h4 className="font-bold text-slate-800 text-sm">{template.title}</h4>
                                 <p className="text-xs text-slate-500 mt-1 mb-3">{template.description}</p>
                                 <button 
                                     onClick={() => handleAssignTemplate(template)}
-                                    className="w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-black uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center justify-center gap-2"
                                 >
                                     <Send size={14} /> Assign to Class
                                 </button>
@@ -191,7 +191,7 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
                 {activeTab === 'custom' && (
                     <div className="flex flex-col gap-4 h-full">
                          <div className="space-y-2 flex-1 flex flex-col">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type your question</label>
+                            <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Type your question</label>
                             <textarea 
                                 value={customQuestion}
                                 onChange={(e) => setCustomQuestion(e.target.value)}
@@ -201,7 +201,7 @@ const ExamPanel = ({ role, onAssignExam, onClose }) => {
                         </div>
                         <button 
                             onClick={handleAssignCustom}
-                            className="w-full py-3 bg-rose-600 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2"
+                            className="w-full py-3 bg-rose-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 flex items-center justify-center gap-2"
                         >
                             <Send size={16} /> Assign Custom Exam
                         </button>

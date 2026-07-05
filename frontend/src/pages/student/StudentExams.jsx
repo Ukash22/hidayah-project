@@ -42,27 +42,27 @@ export default function StudentExams() {
             <div className="space-y-12">
                 {/* Pending exams */}
                 <div>
-                    <h2 className="text-xl font-display font-black text-slate-900 mb-6">Pending Examinations</h2>
+                    <h2 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100 mb-6">Pending Examinations</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {pending.length > 0 ? pending.map(ea => (
-                            <div key={ea.id} className="bg-white border border-slate-100 rounded-[2rem] p-8 hover:border-blue-600/30 transition-all group shadow-sm">
-                                <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6 group-hover:scale-110 transition-transform">
+                            <div key={ea.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card p-5 md:p-8 hover:border-primary/30 transition-all group shadow-sm">
+                                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
                                     <IconFileText size={24} />
                                 </div>
-                                <h4 className="text-lg font-bold text-slate-900 mb-2 leading-tight">{ea.exam_title}</h4>
+                                <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight">{ea.exam_title}</h4>
                                 <div className="flex flex-col gap-2 mb-8">
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Assigned by {ea.tutor_name || 'System'}</p>
-                                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'Immediate'}</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Assigned by {ea.tutor_name || 'System'}</p>
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'Immediate'}</p>
                                 </div>
                                 <a
                                     href={`/exam/practice/${ea.exam}`}
-                                    className="block w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest text-center transition-all shadow-lg shadow-blue-600/10"
+                                    className="block w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all shadow-lg shadow-primary/10"
                                 >
                                     Launch CBT Simulator
                                 </a>
                             </div>
                         )) : (
-                            <div className="col-span-full py-16 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                            <div className="col-span-full py-16 text-center bg-slate-50 dark:bg-slate-800/60 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
                                 <p className="text-slate-500 font-bold italic">No pending exams at the moment.</p>
                             </div>
                         )}
@@ -71,26 +71,26 @@ export default function StudentExams() {
 
                 {/* Results history */}
                 <div>
-                    <h2 className="text-xl font-display font-black text-slate-900 mb-6">Performance History</h2>
-                    <div className="bg-white border border-slate-100 rounded-[2.5rem] overflow-hidden shadow-sm">
-                        <div className="grid grid-cols-4 p-6 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
+                    <h2 className="text-xl font-display font-bold text-slate-900 dark:text-slate-100 mb-6">Performance History</h2>
+                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg overflow-hidden shadow-sm">
+                        <div className="grid grid-cols-4 p-6 bg-slate-50 dark:bg-slate-800/60 text-[11px] font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-100 dark:border-slate-800">
                             <div className="col-span-2">Examination</div>
                             <div>Score</div>
                             <div>Date</div>
                         </div>
                         <div className="divide-y divide-slate-50">
                             {examResults.length > 0 ? examResults.map(res => (
-                                <div key={res.id} className="grid grid-cols-4 p-6 hover:bg-slate-50 transition-all items-center">
+                                <div key={res.id} className="grid grid-cols-4 p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all items-center">
                                     <div className="col-span-2">
-                                        <h5 className="text-sm font-bold text-slate-900">{res.exam_title}</h5>
+                                        <h5 className="text-sm font-bold text-slate-900 dark:text-slate-100">{res.exam_title}</h5>
                                         <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Aggregate Performance</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className={`text-sm font-black ${parseFloat(res.score) >= 50 ? 'text-blue-600' : 'text-red-500'}`}>
+                                        <span className={`text-sm font-bold ${parseFloat(res.score) >= 50 ? 'text-primary' : 'text-red-500'}`}>
                                             {Math.round(res.score)}%
                                         </span>
-                                        <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
-                                            <div className={`h-full ${parseFloat(res.score) >= 50 ? 'bg-blue-600' : 'bg-red-500'}`} style={{ width: `${res.score}%` }} />
+                                        <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden hidden sm:block">
+                                            <div className={`h-full ${parseFloat(res.score) >= 50 ? 'bg-primary' : 'bg-red-500'}`} style={{ width: `${res.score}%` }} />
                                         </div>
                                     </div>
                                     <div className="text-[10px] font-bold text-slate-500">

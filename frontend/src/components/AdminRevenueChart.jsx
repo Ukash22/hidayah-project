@@ -4,10 +4,10 @@ import {
 
 export default function AdminRevenueChart({ financials, chartMode, onModeChange }) {
     return (
-        <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div className="bg-white p-6 rounded-card-lg shadow-sm border border-slate-100">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h3 className="text-lg font-black text-slate-800">Revenue Velocity</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Revenue Velocity</h3>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Growth Trend & Processing History</p>
                 </div>
                 <div className="flex bg-slate-50 p-1 rounded-xl gap-1">
@@ -15,7 +15,7 @@ export default function AdminRevenueChart({ financials, chartMode, onModeChange 
                         <button
                             key={m}
                             onClick={() => onModeChange(m)}
-                            className={`px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${chartMode === m ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-600'}`}
+                            className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all ${chartMode === m ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-600'}`}
                         >
                             {m}
                         </button>

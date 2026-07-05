@@ -18,7 +18,7 @@ const Field = ({ label, children }) => (
     </label>
 );
 
-const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-blue-600/40 focus:bg-white transition-all";
+const inputCls = "w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-slate-900 font-bold outline-none focus:border-primary/40 focus:bg-white transition-all";
 
 export default function RegisterStep2({
     learning, setLearning,
@@ -28,8 +28,8 @@ export default function RegisterStep2({
 }) {
     return (
         <>
-            <h2 className="text-lg font-black text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
-                <span className="w-7 h-7 bg-blue-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
+            <h2 className="text-lg font-bold text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
+                <span className="w-7 h-7 bg-primary text-white rounded-lg flex items-center justify-center text-xs">2</span>
                 Learning Plan
             </h2>
 
@@ -62,19 +62,19 @@ export default function RegisterStep2({
 
             {/* Subjects */}
             <div className="mb-6">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">Select Subjects</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Select Subjects</p>
                 {Object.keys(subjectsByCategory).length === 0 ? (
                     <div className="text-slate-500 text-sm font-bold">Loading subjects…</div>
                 ) : (
                     Object.entries(subjectsByCategory).map(([cat, subjects]) => (
                         <div key={cat} className="mb-4">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-2">{cat}</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">{cat}</p>
                             <div className="flex flex-wrap gap-2">
                                 {subjects.map(sub => {
                                     const selected = sub in subjectEnrollments;
                                     return (
                                         <button key={sub} type="button" onClick={() => toggleSubject(sub)}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${selected ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-blue-600/30'}`}>
+                                            className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wide border transition-all ${selected ? 'bg-primary text-white border-primary' : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-primary/30'}`}>
                                             {sub}
                                         </button>
                                     );
@@ -82,7 +82,7 @@ export default function RegisterStep2({
                             </div>
                             {subjects.filter(s => s in subjectEnrollments).map(sub => (
                                 <div key={`t-${sub}`} className="mt-2 ml-1">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-blue-600 mb-1">{sub} — preferred tutor (optional)</p>
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-primary mb-1">{sub} — preferred tutor (optional)</p>
                                     {loadingTutors[sub] ? (
                                         <p className="text-xs text-slate-500 font-bold">Loading tutors…</p>
                                     ) : (tutorsBySubject[sub] || []).length === 0 ? (
@@ -105,8 +105,8 @@ export default function RegisterStep2({
             {/* Schedule slots */}
             <div>
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Preferred Schedule</p>
-                    <button type="button" onClick={addScheduleSlot} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Preferred Schedule</p>
+                    <button type="button" onClick={addScheduleSlot} className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-primary hover:text-primary-dark">
                         <Plus size={12} /> Add slot
                     </button>
                 </div>

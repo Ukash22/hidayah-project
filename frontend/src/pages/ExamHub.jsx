@@ -72,10 +72,10 @@ const ExamHub = () => {
             <Navbar />
             <div className="container pt-32 pb-20">
                 {(profile && profile.wallet_balance < 1000) ? (
-                    <div className="max-w-2xl mx-auto py-20 text-center bg-white rounded-[3rem] border-2 border-slate-100 shadow-2xl relative overflow-hidden group mt-10">
+                    <div className="max-w-2xl mx-auto py-20 text-center bg-white rounded-card-lg border-2 border-slate-100 shadow-2xl relative overflow-hidden group mt-10">
                         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-50"></div>
                         <div className="relative z-10 px-10">
-                            <div className="w-32 h-32 bg-amber-50 rounded-full flex items-center justify-center text-6xl mx-auto mb-8 animate-bounce shadow-inner">📜</div>
+                            <div className="w-32 h-32 bg-amber-50 rounded-full flex items-center justify-center text-4xl md:text-6xl mx-auto mb-8 animate-bounce shadow-inner">📜</div>
                             <h3 className="text-4xl font-display font-bold text-primary mb-4 text-center">Exam Access Locked</h3>
                             <p className="text-slate-600 mb-10 font-medium leading-relaxed italic text-lg text-center">
                                 To access the Exam Practice Hub and AI Simulations, you must maintain a minimum wallet balance of ₦1,000. This ensures your account is ready for active assessment sessions.
@@ -83,13 +83,13 @@ const ExamHub = () => {
                             <div className="flex flex-col md:flex-row gap-4 justify-center">
                                 <button
                                     onClick={() => navigate('/payment')}
-                                    className="bg-primary hover:bg-primary-600 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 group-hover:-translate-y-1"
+                                    className="bg-primary hover:bg-primary-600 text-white px-12 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 group-hover:-translate-y-1"
                                 >
                                     Funding Wallet Now →
                                 </button>
                                 <button
                                     onClick={() => window.location.href = '/student'}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-12 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm transition-all active:scale-95"
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-12 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-sm transition-all active:scale-95"
                                 >
                                     Return to Dashboard
                                 </button>
@@ -100,7 +100,7 @@ const ExamHub = () => {
                     <div className="flex flex-col lg:flex-row gap-12">
                         {/* Left: Configuration & Selection */}
                         <div className="lg:w-1/3">
-                            <div className="bg-white rounded-[2rem] shadow-xl p-8 border border-slate-100 sticky top-32">
+                            <div className="bg-white rounded-card shadow-xl p-8 border border-slate-100 sticky top-32">
                                 <h2 className="text-2xl font-display text-primary mb-6 flex items-center gap-2">
                                     <span className="p-2 bg-primary/5 rounded-lg text-xl">⚙️</span>
                                     Exam Configuration
@@ -108,7 +108,7 @@ const ExamHub = () => {
 
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">Examination Type</label>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">Examination Type</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {['JAMB', 'WAEC', 'NECO', 'JSSCE', 'PRIMARY'].map(type => (
                                                 <button
@@ -125,7 +125,7 @@ const ExamHub = () => {
                                     {selectedType === 'JAMB' && (
                                         <>
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">Exam Year</label>
+                                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">Exam Year</label>
                                                 <select
                                                     value={jambYear}
                                                     onChange={(e) => setJambYear(e.target.value)}
@@ -136,7 +136,7 @@ const ExamHub = () => {
                                             </div>
 
                                             <div>
-                                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-3">
+                                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">
                                                     Subject Combination ({jambSelection.length}/4)
                                                 </label>
                                                 <div className="flex flex-wrap gap-2 mb-4">
@@ -182,21 +182,21 @@ const ExamHub = () => {
                             <div className="grid md:grid-cols-2 gap-6">
                                 {loading ? (
                                     [1, 2, 3, 4].map(i => (
-                                        <div key={i} className="bg-white h-48 rounded-[2rem] border border-slate-100 animate-pulse"></div>
+                                        <div key={i} className="bg-white h-48 rounded-card border border-slate-100 animate-pulse"></div>
                                     ))
                                 ) : filteredExams.length > 0 ? (
                                     filteredExams.map(exam => (
-                                        <div key={exam.id} className="relative overflow-hidden group bg-white p-8 rounded-[2.5rem] border border-slate-100 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all">
+                                        <div key={exam.id} className="relative overflow-hidden group bg-white p-8 rounded-card-lg border border-slate-100 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all">
                                             <div className="relative z-10">
                                                 <div className="flex justify-between items-start mb-6">
                                                     <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                                                         📚
                                                     </div>
-                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-black rounded-full uppercase tracking-tighter">
+                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-tighter">
                                                         {exam.exam_type} {exam.year}
                                                     </span>
                                                 </div>
-                                                <h3 className="text-xl font-display text-primary mb-2 font-black">{exam.title}</h3>
+                                                <h3 className="text-xl font-display text-primary mb-2 font-bold">{exam.title}</h3>
                                                 <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-8">
                                                     <span className="flex items-center gap-1">⏱️ {exam.duration_minutes} Mins</span>
                                                     <span className="flex items-center gap-1">❓ Questions</span>
@@ -211,7 +211,7 @@ const ExamHub = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="md:col-span-2 bg-white rounded-[2rem] p-20 border border-dashed border-slate-200 text-center">
+                                    <div className="md:col-span-2 bg-white rounded-card p-20 border border-dashed border-slate-200 text-center">
                                         <p className="text-4xl mb-6">🏜️</p>
                                         <p className="text-slate-500 font-medium">No exams found for this selection yet.</p>
                                     </div>
