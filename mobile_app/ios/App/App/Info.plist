@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Hidayah uses your camera during live tutoring classes.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Hidayah uses your microphone during live tutoring classes.</string>
 </dict>
 </plist>

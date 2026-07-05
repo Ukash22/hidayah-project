@@ -55,6 +55,10 @@ CORS_ALLOWED_ORIGINS = [
     'https://hidayah-frontend.onrender.com',
     'http://localhost:5173',
     'http://localhost:5174',
+    # Capacitor webview origins — the mobile app serves the bundled frontend
+    # from these origins; without them every API call from the app fails CORS.
+    'https://localhost',
+    'capacitor://localhost',
 ]
 
 if DEBUG:
