@@ -35,3 +35,7 @@ capacitor-cordova-android-plugins/
 
 # One-off debug/repair scripts and data dumps — never commit (contains user data)
 backend/scratch/
+
+# Coverage tool artifacts
+backend/.coverage
+backend/htmlcov/

@@ -321,6 +321,13 @@ class RegisterSerializer(serializers.ModelSerializer):
                             # hours_per_week in serializer is TOTAL WEEKLY HOURS
                             hours_per_session = h_per_w / d_per_w if d_per_w > 0 else h_per_w
 
+                            if s_obj is None:
+                                # Enrollment.subject is NOT NULL — attempting the insert
+                                # would poison the surrounding atomic block and fail the
+                                # entire registration. Skip; admin assigns the subject later.
+                                logger.warning("Auto-enrollment skipped — unknown subject %r", subj_name)
+                                continue
+
                             Enrollment.objects.create(
                                 student=profile,
                                 subject=s_obj,

@@ -2,7 +2,7 @@
 
 **Hidayah** is a full-stack online tutoring platform for Islamic and Western education, targeted primarily at Nigerian students. It connects students with tutors for live one-on-one or group sessions, supports JAMB/WAEC/NECO exam preparation, and includes an AI-powered question generation engine.
 
-> **Project stage: active development — not yet published.** The web app deploys to Render for testing; the mobile app (Capacitor) is not on any store. Publish-stage work is intentionally deferred and tracked in the audit trackers under `docs/gaps-and-upgrade/tracker/` — chiefly: final mobile `appId` + icons/splash (`mobile-capacitor-progress.md` M-C), push notifications (M-D), the in-app payment flow decision (M-B, incl. App Store policy check for iOS), and the JWT-storage hardening workstream (`security-audit-progress.md` S4).
+> **Project stage: active development — not yet published.** The web app deploys to Render for testing; the mobile app (Capacitor) is not on any store. Publish-stage work is intentionally deferred and tracked in the audit trackers under `docs/gaps-and-upgrade/tracker/` — chiefly: final mobile `appId` + icons/splash (`mobile-capacitor-progress.md` M-C), push notifications (M-D), the in-app payment flow decision (M-B, incl. App Store policy check for iOS), iOS webview cookie verification, and setting `PAYSTACK_MOCK_MODE=False` + a strong `ADMIN_PASSWORD` before real users arrive.
 
 ---
 
@@ -280,8 +280,12 @@ npm run dev   # runs at http://localhost:5173
 **Backend tests (performance & security suites, in `backend/tests/`):**
 ```bash
 cd backend
-python manage.py test tests --settings=core.test_settings   # fast (~2s, MD5 hashing for test users)
+python manage.py test tests --settings=core.test_settings   # fast (~4s, MD5 hashing for test users)
 python manage.py test tests                                 # normal settings (~4 min)
+
+# Coverage (pip install coverage):
+python -m coverage run --source=accounts,payments,classes,tutors,students,applications,core,programs,exams manage.py test tests --settings=core.test_settings
+python -m coverage report --skip-covered --sort=cover
 ```
 Covers: async dispatch fallback (`test_dispatch`), response caching + N+1 query-count guards + pagination shapes (`test_tutors`, `test_classes`, `test_payments`, `test_programs`), P1 index guards (`test_students`, `test_classes`), and role/permission enforcement on admin, financial, and profile endpoints.
 

@@ -17,6 +17,52 @@ from accounts.views import REFRESH_COOKIE
 User = get_user_model()
 
 
+class StudentRegistrationTests(TestCase):
+    """Happy path through RegisterSerializer — the frontend Register wizard
+    payload creates the user, profile, and subject enrollments."""
+
+    def _payload(self, **overrides):
+        base = {
+            'username': 'newstudent', 'email': 'newstudent@test.com',
+            'password': 'pass12345', 'role': 'STUDENT',
+            'first_name': 'New', 'last_name': 'Student', 'gender': 'Male',
+            'class_type': 'ONE_ON_ONE', 'level': 'PRIMARY',
+            'days_per_week': 2, 'hours_per_week': 2.0,
+            'preferred_days': 'Monday,Wednesday', 'preferred_time_exact': '09:00,10:00',
+            'subject_enrollments': [{'subject': 'Mathematics', 'preferred_tutor_id': None}],
+            'total_amount': 0,
+        }
+        base.update(overrides)
+        return base
+
+    def test_registration_creates_user_profile_and_enrollment(self):
+        from students.models import StudentProfile, Enrollment
+        from programs.models import Program, Subject
+        program = Program.objects.create(name='Western', program_type='WESTERN')
+        Subject.objects.create(program=program, name='Mathematics')
+
+        res = APIClient().post('/api/auth/register/', self._payload(), format='json')
+        self.assertEqual(res.status_code, 201, res.content)
+        user = User.objects.get(username='newstudent')
+        self.assertEqual(user.role, 'STUDENT')
+        profile = StudentProfile.objects.get(user=user)
+        self.assertTrue(Enrollment.objects.filter(student=profile, subject__name='Mathematics').exists())
+
+    def test_registration_with_unknown_subject_still_succeeds(self):
+        # Regression: an unknown subject used to raise inside the atomic block
+        # and abort the entire registration. It must now be skipped gracefully.
+        from students.models import StudentProfile
+        payload = self._payload(subject_enrollments=[{'subject': 'No Such Subject', 'preferred_tutor_id': None}])
+        res = APIClient().post('/api/auth/register/', payload, format='json')
+        self.assertEqual(res.status_code, 201, res.content)
+        self.assertTrue(StudentProfile.objects.filter(user__username='newstudent').exists())
+
+    def test_duplicate_username_rejected(self):
+        APIClient().post('/api/auth/register/', self._payload(), format='json')
+        res = APIClient().post('/api/auth/register/', self._payload(email='other@test.com'), format='json')
+        self.assertEqual(res.status_code, 400)
+
+
 class CookieAuthTests(TestCase):
     def setUp(self):
         self.client = APIClient()
