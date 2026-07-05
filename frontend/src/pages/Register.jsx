@@ -5,7 +5,7 @@ import { CheckCircle2, ArrowRight, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import api from '../services/api';
+import api, { asList } from '../services/api';
 import RegisterStep1 from './register/RegisterStep1';
 import RegisterStep2 from './register/RegisterStep2';
 import RegisterStep3 from './register/RegisterStep3';
@@ -119,7 +119,7 @@ export default function Register() {
     useEffect(() => {
         api.get('/api/programs/subjects/')
             .then(res => {
-                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                const data = asList(res.data);
                 if (data.length > 0) {
                     const grouped = data.reduce((acc, sub) => {
                         const label = sub.program_type === 'ISLAMIC' ? 'Islamic Education'
@@ -149,7 +149,7 @@ export default function Register() {
         setLoadingTutors(prev => ({ ...prev, [subject]: true }));
         try {
             const res = await api.get(`/api/tutors/by_subject/?subject=${encodeURIComponent(subject)}`);
-            setTutorsBySubject(prev => ({ ...prev, [subject]: Array.isArray(res.data) ? res.data : [] }));
+            setTutorsBySubject(prev => ({ ...prev, [subject]: asList(res.data) }));
         } catch {
             setTutorsBySubject(prev => ({ ...prev, [subject]: [] }));
         } finally {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
@@ -18,8 +18,8 @@ export default function TutorRequests() {
     const fetchRequests = useCallback(async () => {
         if (!token) return;
         try {
-            const res = await api.get(`/api/classes/booking/approval/`, { headers: getAuthHeader() });
-            setRequests(Array.isArray(res.data) ? res.data : []);
+            const res = await api.get(`/api/classes/booking/approval/`);
+            setRequests(asList(res.data));
         } catch (err) {
             console.error('Requests fetch failed', err);
         } finally {
@@ -32,11 +32,11 @@ export default function TutorRequests() {
     const handleApprove = async (id) => {
         if (!await confirm("Approve this student's request? Student will be prompted to pay.", { confirmLabel: 'Approve' })) return;
         try {
-            await api.post(`/api/classes/booking/${id}/approve/`, {}, { headers: getAuthHeader() });
+            await api.post(`/api/classes/booking/${id}/approve/`, {});
             toast.success('Request approved! Awaiting student payment.');
             fetchRequests();
         } catch (err) {
-            toast.error('Failed to approve: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Failed to approve: ' + (getApiError(err, 'Error')));
         }
     };
 
@@ -44,11 +44,11 @@ export default function TutorRequests() {
         const reason = window.prompt("Enter rejection reason:");
         if (reason === null) return;
         try {
-            await api.post(`/api/classes/booking/${id}/reject/`, { rejection_reason: reason }, { headers: getAuthHeader() });
+            await api.post(`/api/classes/booking/${id}/reject/`, { rejection_reason: reason });
             toast.info('Request rejected.');
             fetchRequests();
         } catch (err) {
-            toast.error('Failed to reject: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Failed to reject: ' + (getApiError(err, 'Error')));
         }
     };
 

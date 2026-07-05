@@ -16,7 +16,7 @@ export default function TutorProfilePage() {
 
     useEffect(() => {
         if (!token) return;
-        api.get(`/api/tutors/me/`, { headers: getAuthHeader() })
+        api.get(`/api/tutors/me/`)
             .then(res => setTutorProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));

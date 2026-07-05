@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
@@ -13,7 +13,7 @@ export default function AdminComplaints() {
     const fetchComplaints = useCallback(async () => {
         try {
             const res = await api.get('/api/complaints/admin/all/');
-            setAllComplaints(Array.isArray(res.data) ? res.data : []);
+            setAllComplaints(asList(res.data));
         } catch (err) {
             console.error('Complaints fetch failed', err);
         } finally {

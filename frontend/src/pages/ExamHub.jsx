@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ExamHub = () => {
+    const navigate = useNavigate();
     const [exams, setExams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
@@ -13,7 +15,7 @@ const ExamHub = () => {
     const [availableYears, setAvailableYears] = useState([]);
 
     const getAuthHeader = () => {
-        const token = localStorage.getItem('token') || localStorage.getItem('access');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
@@ -21,8 +23,8 @@ const ExamHub = () => {
         const fetchData = async () => {
             try {
                 const [examRes, profRes] = await Promise.all([
-                    api.get(`/api/exams/list/`, { headers: getAuthHeader() }),
-                    api.get(`/api/students/me/`, { headers: getAuthHeader() })
+                    api.get(`/api/exams/list/`),
+                    api.get(`/api/students/me/`)
                 ]);
                 
                 setExams(examRes.data);
@@ -80,7 +82,7 @@ const ExamHub = () => {
                             </p>
                             <div className="flex flex-col md:flex-row gap-4 justify-center">
                                 <button
-                                    onClick={() => window.location.href = '/payment'}
+                                    onClick={() => navigate('/payment')}
                                     className="bg-primary hover:bg-primary-600 text-white px-12 py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 group-hover:-translate-y-1"
                                 >
                                     Funding Wallet Now →

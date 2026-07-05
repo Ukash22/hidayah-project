@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 
 const AIHub = () => {
+    const navigate = useNavigate();
     const [subjects, setSubjects] = useState([]);
     const [selection, setSelection] = useState({ subject_id: '', exam_type: 'JAMB', year_range: '2010-2023' });
     const [generated, setGenerated] = useState(null);
@@ -14,7 +17,7 @@ const AIHub = () => {
     const [score, setScore] = useState(0);
 
     const getAuthHeader = () => {
-        const token = localStorage.getItem('token') || localStorage.getItem('access');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
@@ -22,8 +25,8 @@ const AIHub = () => {
         const fetchState = async () => {
             try {
                 const [subjRes, profRes] = await Promise.all([
-                    api.get(`/api/programs/subjects/`, { headers: getAuthHeader() }),
-                    api.get(`/api/students/me/`, { headers: getAuthHeader() })
+                    api.get(`/api/programs/subjects/`),
+                    api.get(`/api/students/me/`)
                 ]);
                 setSubjects(subjRes.data);
                 setProfile(profRes.data);
@@ -85,7 +88,7 @@ const AIHub = () => {
                             </p>
                             <div className="flex flex-col md:flex-row gap-6 justify-center">
                                 <button
-                                    onClick={() => window.location.href = '/payment'}
+                                    onClick={() => navigate('/payment')}
                                     className="bg-slate-900 hover:bg-black text-white px-14 py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 group-hover:-translate-y-1"
                                 >
                                     Refill Wallet →

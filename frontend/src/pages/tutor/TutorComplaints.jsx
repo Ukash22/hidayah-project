@@ -22,7 +22,7 @@ export default function TutorComplaints() {
 
     useEffect(() => {
         if (!token) return;
-        api.get(`/api/complaints/my/`, { headers: getAuthHeader() })
+        api.get(`/api/complaints/my/`)
             .then(res => setComplaints(res.data && Array.isArray(res.data.filed_by_me) ? res.data : { filed_by_me: [], filed_against_me: [] }))
             .catch(err => console.error('Complaints fetch failed', err))
             .finally(() => setLoading(false));

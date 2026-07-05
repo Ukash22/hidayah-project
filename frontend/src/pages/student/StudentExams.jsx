@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { FileText as IconFileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
@@ -17,11 +17,11 @@ export default function StudentExams() {
     useEffect(() => {
         if (!token) return;
         Promise.all([
-            api.get(`/api/exams/assignments/`, { headers: getAuthHeader() }),
-            api.get(`/api/exams/results/`, { headers: getAuthHeader() }),
+            api.get(`/api/exams/assignments/`),
+            api.get(`/api/exams/results/`),
         ]).then(([asgnRes, resRes]) => {
-            setExamAssignments(Array.isArray(asgnRes.data) ? asgnRes.data : []);
-            setExamResults(Array.isArray(resRes.data) ? resRes.data : []);
+            setExamAssignments(asList(asgnRes.data));
+            setExamResults(asList(resRes.data));
         }).catch(err => console.error('Exams fetch failed', err))
             .finally(() => setLoading(false));
     }, [token, getAuthHeader]);

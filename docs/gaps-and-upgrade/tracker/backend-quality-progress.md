@@ -28,7 +28,7 @@ Tracks implementation against [backend-quality-audit.md](../items/backend-qualit
 
 | # | Item | Status |
 |---|---|---|
-| 8 | Shared `resolve_media_url()` helper replacing 3 duplicated implementations | ⬜ Pending |
-| 9 | `TutorRegisterSerializer` replacing inline registration in `TutorViewSet.register` | ⬜ Pending |
-| 10 | Drop `notifications` stub app (app + table) in a cleanup migration | ⬜ Pending |
-| 11 | Debris: delete `backend/query/`, remove `intro_video_url` legacy field, gradual lint-header removal + ruff | ⬜ Pending |
+| 8 | `resolve_media_url()` + `TutorMediaFieldsMixin` — 3 duplicated implementations collapsed; `admin_list.safe_url` reuses it; never raises on misconfigured storage | ✅ Done |
+| 9 | `TutorRegisterSerializer` — validation/creation extracted from the ~80-line view; legacy `{'detail': msg}` contract preserved; 3 registration tests added | ✅ Done |
+| 10 | `notifications` app retired: model removed, migration `0002_delete_notification` drops the orphan table (app stays in INSTALLED_APPS only for migration history) | ✅ Done |
+| 11 | Stray `backend/query` file deleted · `intro_video_url` **verified still in use** (video URL fallback + update handler — NOT removable) · remaining: gradual lint-header removal + ruff | 🟨 Partial |

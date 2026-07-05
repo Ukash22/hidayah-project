@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
@@ -205,7 +205,7 @@ const TutorRegister = () => {
 
             setSuccess(true);
         } catch (err) {
-            setError(err.response?.data?.detail || err.response?.data?.error || 'Registration failed');
+            setError(err.response?.data?.detail || getApiError(err, 'Registration failed'));
         } finally {
             setLoading(false);
         }

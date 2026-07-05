@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
@@ -21,11 +21,11 @@ export default function TutorMaterials() {
         if (!token) return;
         try {
             const [matRes, studRes] = await Promise.all([
-                api.get(`/api/curriculum/materials/`, { headers: getAuthHeader() }),
-                api.get(`/api/students/tutor/my-students/`, { headers: getAuthHeader() }),
+                api.get(`/api/curriculum/materials/`),
+                api.get(`/api/students/tutor/my-students/`),
             ]);
-            setMaterials(Array.isArray(matRes.data) ? matRes.data : []);
-            setAssignedStudents(Array.isArray(studRes.data) ? studRes.data : []);
+            setMaterials(asList(matRes.data));
+            setAssignedStudents(asList(studRes.data));
         } catch (err) {
             console.error('Materials fetch failed', err);
         } finally {
@@ -59,7 +59,7 @@ export default function TutorMaterials() {
 
     const handleDelete = async (id) => {
         if (!await confirm('Archive this material permanently?', { confirmLabel: 'Archive', danger: true })) return;
-        await api.delete(`/api/curriculum/materials/${id}/`, { headers: getAuthHeader() });
+        await api.delete(`/api/curriculum/materials/${id}/`);
         fetchData();
     };
 
@@ -77,12 +77,12 @@ export default function TutorMaterials() {
             <div className="bg-white rounded-[3rem] border border-slate-100 shadow-sm p-10 mb-12">
                 <form className="grid md:grid-cols-2 gap-8" onSubmit={handleUpload}>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Asset Title</label>
-                        <input name="title" required className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900 placeholder:text-slate-300" placeholder="e.g., Advanced Tajweed Module 1" />
+                        <label htmlFor="title" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Asset Title</label>
+                        <input id="title" name="title" required className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900 placeholder:text-slate-300" placeholder="e.g., Advanced Tajweed Module 1" />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Classification</label>
-                        <select name="material_type" className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900">
+                        <label htmlFor="material_type" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Classification</label>
+                        <select id="material_type" name="material_type" className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900">
                             <option value="VIDEO">Video Coursework</option>
                             <option value="PDF">Academic Document (PDF)</option>
                             <option value="AUDIO">Audio Recitation / Podcast</option>
@@ -121,13 +121,13 @@ export default function TutorMaterials() {
                         </div>
                     </div>
                     <div className="space-y-3 md:col-span-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Educational Context</label>
-                        <textarea name="description" rows="3" className="w-full px-6 py-5 rounded-3xl border border-slate-100 bg-slate-50 focus:border-blue-600/30 outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300 leading-relaxed" placeholder="Provide a brief synopsis of this learning resource..." />
+                        <label htmlFor="description" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Educational Context</label>
+                        <textarea id="description" name="description" rows="3" className="w-full px-6 py-5 rounded-3xl border border-slate-100 bg-slate-50 focus:border-blue-600/30 outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300 leading-relaxed" placeholder="Provide a brief synopsis of this learning resource..." />
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Source File</label>
+                        <label htmlFor="file" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Source File</label>
                         <div className="relative group">
-                            <input type="file" name="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <input id="file" type="file" name="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                             <div className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 group-hover:bg-slate-100 transition-all flex items-center gap-4 text-slate-500 font-bold overflow-hidden">
                                 <span className="bg-blue-600/10 text-blue-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase">Attach</span>
                                 <span className="text-[10px] truncate">Select file from system...</span>

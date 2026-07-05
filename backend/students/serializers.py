@@ -81,11 +81,18 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             'full_name', 'total_amount', 'payment_reference', 'wallet_balance', 'approval_status',
             'enrollments'
         )
-        
+        # Clients only read admission_letter_url; serialising the raw FileField
+        # crashes when Cloudinary isn't configured (e.g. local dev without creds).
+        extra_kwargs = {'admission_letter': {'write_only': True}}
+
     def get_admission_letter_url(self, obj):
         if obj.admission_letter:
             from django.conf import settings
-            return f"{settings.BACKEND_URL}{obj.admission_letter.url}"
+            try:
+                return f"{settings.BACKEND_URL}{obj.admission_letter.url}"
+            except Exception:
+                # Storage backend unavailable/misconfigured — degrade to no link
+                return None
         return None
     
     def get_assigned_tutor_details(self, obj):

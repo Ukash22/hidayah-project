@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import { Link } from 'react-router-dom';
+import api, { asList } from '../../services/api';
 import { TrendingUp as IconTrendingUp, Plus as IconPlus, ShieldCheck as IconShieldCheck, AlertCircle as IconAlertCircle, Download as IconDownload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -21,11 +22,11 @@ export default function StudentFinance() {
         if (!token) return;
         setLoadError(false);
         Promise.all([
-            api.get(`/api/students/me/`, { headers: getAuthHeader() }),
-            api.get(`/api/payments/wallet/transactions/`, { headers: getAuthHeader() }),
+            api.get(`/api/students/me/`),
+            api.get(`/api/payments/wallet/transactions/`),
         ]).then(([profRes, txRes]) => {
             setProfile(profRes.data);
-            setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
+            setTransactions(asList(txRes.data));
         }).catch(err => { console.error('Finance fetch failed', err); setLoadError(true); })
             .finally(() => setLoading(false));
     }, [token, getAuthHeader]);
@@ -115,9 +116,9 @@ export default function StudentFinance() {
                                 </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <a href="/payment" className="flex-1 py-5 bg-white text-blue-600 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                                <Link to="/payment" className="flex-1 py-5 bg-white text-blue-600 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
                                     <IconPlus size={18} /> Add Funds to Wallet
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>

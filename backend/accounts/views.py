@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, inline_serializer
 from django.contrib.auth import authenticate
 from .models import Notification
 from .serializers import UserSerializer, RegisterSerializer, NotificationSerializer, PendingStudentSerializer, AdminUserManagementSerializer
@@ -40,16 +42,83 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
 
+from django.conf import settings as dj_settings
+
+REFRESH_COOKIE = dj_settings.REFRESH_COOKIE_NAME
+
+
+def set_refresh_cookie(response, refresh_token):
+    # Attributes are env-configurable (REFRESH_COOKIE_* in settings.py).
+    # Defaults are None+Secure: required in prod (cross-site onrender
+    # subdomains) and fine in dev (localhost/127.0.0.1 trustworthy-origin
+    # exemption lets Secure cookies work over http).
+    response.set_cookie(
+        REFRESH_COOKIE,
+        refresh_token,
+        max_age=int(dj_settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+        httponly=True,
+        secure=dj_settings.REFRESH_COOKIE_SECURE,
+        samesite=dj_settings.REFRESH_COOKIE_SAMESITE,
+        path='/api/auth/',
+    )
+
+
+class CookieTokenRefreshView(APIView):
+    """Refresh the access token from the httpOnly cookie (preferred) or a
+    body `refresh` field (legacy clients)."""
+    permission_classes = (permissions.AllowAny,)
+
+    @extend_schema(
+        request=inline_serializer('TokenRefreshRequest', {
+            'refresh': serializers.CharField(required=False, help_text='Optional — normally supplied via the httpOnly cookie'),
+        }),
+        responses={200: inline_serializer('TokenRefreshResponse', {'access': serializers.CharField()})},
+    )
+    def post(self, request):
+        from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+        refresh = request.data.get('refresh') or request.COOKIES.get(REFRESH_COOKIE)
+        if not refresh:
+            return Response({'error': 'No refresh token provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = TokenRefreshSerializer(data={'refresh': refresh})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception:
+            return Response({'error': 'Refresh token invalid or expired.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.validated_data)
+
+
+class LogoutView(APIView):
+    """Clear the refresh cookie server-side."""
+    permission_classes = (permissions.AllowAny,)
+
+    @extend_schema(request=None, responses={200: inline_serializer('LogoutResponse', {'message': serializers.CharField()})})
+    def post(self, request):
+        response = Response({'message': 'Logged out.'})
+        response.delete_cookie(REFRESH_COOKIE, path='/api/auth/')
+        return response
+
+
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 
+    @extend_schema(
+        request=inline_serializer('LoginRequest', {
+            'username': serializers.CharField(help_text='Username or email'),
+            'password': serializers.CharField(),
+        }),
+        responses={200: inline_serializer('LoginResponse', {
+            'access': serializers.CharField(),
+            'user': UserSerializer(),
+        })},
+        description='Sets the refresh token as an httpOnly cookie; the body contains only the access token.',
+    )
     def post(self, request):
         username_or_email = request.data.get('username')
         password = request.data.get('password')
-        
+
         # Try authenticating with username
         user = authenticate(username=username_or_email, password=password)
-        
+
         # If that fails, try authenticating with email
         if not user and '@' in username_or_email:
             try:
@@ -61,13 +130,17 @@ class LoginView(APIView):
         if user:
             if not user.is_active:
                 return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
-            
+
             refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
+            # S4: the refresh token travels only in an httpOnly cookie — never in
+            # the body — so XSS cannot exfiltrate it. The access token stays in
+            # client memory and is re-obtained via the cookie on page load.
+            response = Response({
                 'access': str(refresh.access_token),
                 'user': UserSerializer(user).data
             })
+            set_refresh_cookie(response, str(refresh))
+            return response
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):

@@ -1,25 +1,26 @@
 import axios from 'axios';
+import { getAccess, setAccess, clearAccess, isImpersonating } from './tokenStore';
 
 const getBaseUrl = () => {
+    // Dev: use relative URLs so requests go through the Vite proxy (same
+    // origin as the page). This keeps the S4 refresh cookie first-party —
+    // no SameSite/Secure cross-host edge cases on reloads.
+    if (import.meta.env.DEV) return '';
+
     let url = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
-    
+
     // Ensure URL is absolute by checking for protocol
     if (url && !url.startsWith('http')) {
         url = `https://${url}`;
     }
-    
-    // Remove trailing slash if present
-    const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
 
-    if (import.meta.env.DEV) {
-        console.log(`[API] Base URL: ${cleanUrl}`);
-    }
-    
-    return cleanUrl;
+    // Remove trailing slash if present
+    return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 const api = axios.create({
     baseURL: getBaseUrl(),
+    withCredentials: true, // S4: carries the httpOnly refresh cookie
     headers: {
         'Content-Type': 'application/json',
     },
@@ -27,7 +28,7 @@ const api = axios.create({
 
 // Helper for auth headers
 export const getAuthHeader = () => {
-    const token = localStorage.getItem('access');
+    const token = getAccess();
     return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -64,7 +65,7 @@ export const getApiError = (err, fallback = 'Something went wrong. Please try ag
 // safe to use from any component regardless of AuthContext effect ordering.
 api.interceptors.request.use((config) => {
     if (!config.headers.Authorization) {
-        const token = localStorage.getItem('access');
+        const token = getAccess();
         if (token) config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -83,26 +84,23 @@ api.interceptors.response.use(
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-            const refreshToken = localStorage.getItem('refresh');
-            
-            if (refreshToken) {
-                try {
-                    const res = await axios.post(`${getBaseUrl()}/api/auth/refresh/`, { refresh: refreshToken });
-                    const newAccess = res.data.access;
-                    localStorage.setItem('access', newAccess);
-                    
-                    // Update headers
-                    api.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;
-                    originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
-                    
-                    return api(originalRequest);
-                } catch (refreshError) {
-                    // Refresh failed
-                    localStorage.removeItem('access');
-                    localStorage.removeItem('refresh');
-                    window.location.href = '/login';
-                    return Promise.reject(refreshError);
-                }
+
+            // During impersonation the cookie belongs to the PARENT — refreshing
+            // would silently swap the session back, so don't try.
+            if (isImpersonating()) return Promise.reject(error);
+
+            try {
+                // S4: refresh comes from the httpOnly cookie, not from storage.
+                const res = await axios.post(`${getBaseUrl()}/api/auth/refresh/`, {}, { withCredentials: true });
+                const newAccess = res.data.access;
+                setAccess(newAccess);
+                api.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;
+                originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                clearAccess();
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
             }
         }
         return Promise.reject(error);

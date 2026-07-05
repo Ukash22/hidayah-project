@@ -20,7 +20,7 @@ Tracks implementation against [accessibility-audit.md](../items/accessibility-au
 | 5 | Register steps (`Field` now a wrapping `<label>`) + Login (`htmlFor` + ids) | `pages/register/`, `pages/Login.jsx` | ✅ Done |
 | 6 | TutorRegister: ExperienceFields, TechnicalFields, AvailabilityManager (per-slot ids); AccountFields + ProfileFields already had `htmlFor` | `components/TutorRegister/` | ✅ Done |
 | 7 | Modals: Withdrawal (ids added), Reschedule + Complaint (`htmlFor` to existing ids) | `components/` | ✅ Done |
-| 7b | Remaining inline labels elsewhere (~120) — associate opportunistically when editing pages | portal pages | ⏳ Ongoing |
+| 7b | +26 more associated via scripted pass (labels whose control has a `name`/`id`) — remainder are controls with no name attribute; associate opportunistically | portal pages | ⏳ Ongoing |
 
 ## Phase AY-C — Contrast pass ✅ Complete (visual spot-check recommended)
 

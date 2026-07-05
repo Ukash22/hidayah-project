@@ -61,6 +61,21 @@ CORS_ALLOWED_ORIGINS = [
     'capacitor://localhost',
 ]
 
+# Extra origins (e.g. a staging frontend or LAN device testing) without code changes
+CORS_ALLOWED_ORIGINS += [o.strip() for o in os.getenv('CORS_EXTRA_ORIGINS', '').split(',') if o.strip()]
+
+# S4: the refresh token rides an httpOnly cookie, so cross-origin requests
+# must be allowed to carry credentials (frontend sends withCredentials).
+CORS_ALLOW_CREDENTIALS = True
+
+# S4 refresh-cookie attributes. Defaults (None+Secure) work for both prod
+# (cross-site onrender subdomains) and localhost dev (trustworthy-origin
+# exemption). Override via env only for unusual setups, e.g. testing from a
+# LAN IP over plain http: REFRESH_COOKIE_SECURE=False REFRESH_COOKIE_SAMESITE=Lax
+REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'hidayah_refresh')
+REFRESH_COOKIE_SECURE = os.getenv('REFRESH_COOKIE_SECURE', 'True').lower() == 'true'
+REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', 'None')
+
 if DEBUG:
     # Local dev: plain HTTP, no proxy — explicit safe defaults so admin cookies work
     CSRF_COOKIE_SECURE = False
@@ -284,7 +299,10 @@ ZOOM_CLIENT_SECRET = os.getenv('ZOOM_CLIENT_SECRET')
 # Paystack Payment Gateway Configuration
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
-PAYSTACK_MOCK_MODE = True  # Using Mock Mode to avoid timeouts during dev/testing
+# Mock mode simulates successful payments without hitting Paystack.
+# Default True while the project is in development — MUST be set to
+# 'False' in the environment before accepting real payments.
+PAYSTACK_MOCK_MODE = os.getenv('PAYSTACK_MOCK_MODE', 'True').lower() == 'true'
 
 # Application Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://hidayah-frontend.onrender.com')

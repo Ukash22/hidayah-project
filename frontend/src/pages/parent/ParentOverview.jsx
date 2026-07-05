@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
@@ -15,7 +15,7 @@ export default function ParentOverview() {
     const fetchChildren = useCallback(async () => {
         try {
             const res = await api.get('/api/parents/dashboard/child_dashboard/');
-            setChildren(Array.isArray(res.data) ? res.data : []);
+            setChildren(asList(res.data));
         } catch (err) {
             console.error('Failed to fetch children data', err);
         } finally {
@@ -28,17 +28,17 @@ export default function ParentOverview() {
     const handleImpersonate = async (childId) => {
         try {
             const res = await api.post('/api/parents/dashboard/impersonate_child/', { child_id: childId });
-            const { access, refresh } = res.data;
+            const { access } = res.data;
 
-            // Save current parent session for easy return
-            localStorage.setItem('parent_access', localStorage.getItem('access'));
-            localStorage.setItem('parent_refresh', localStorage.getItem('refresh'));
-
-            // Swap to child session
+            // S4: the parent session lives in the httpOnly refresh cookie — it
+            // survives untouched. The child access token goes into the
+            // localStorage override (the one permitted localStorage token) so
+            // the impersonated session survives the hard redirect. The flag
+            // lets the student view offer "return to parent".
+            localStorage.setItem('parent_access', '1');
             localStorage.setItem('access', access);
-            localStorage.setItem('refresh', refresh);
 
-            // Hard redirect clears context and remounts AuthContext with child tokens
+            // Hard redirect remounts AuthContext with the child override
             window.location.href = '/student';
         } catch (err) {
             console.error('Impersonation failed:', err);

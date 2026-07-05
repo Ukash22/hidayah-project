@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getApiError } from '../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +34,7 @@ const Login = () => {
             else if (userRole === 'PARENT') navigate('/parent');
             else navigate('/student'); // Dashboard will handle locked state check
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to login. Please check credentials.');
+            setError(getApiError(err, 'Failed to login. Please check credentials.'));
         } finally {
             setLoading(false);
         }

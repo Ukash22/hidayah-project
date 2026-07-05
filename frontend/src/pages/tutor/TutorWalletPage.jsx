@@ -15,7 +15,7 @@ export default function TutorWalletPage() {
 
     const fetchData = useCallback(() => {
         if (!token) return;
-        api.get(`/api/payments/tutor/financials/`, { headers: getAuthHeader() })
+        api.get(`/api/payments/tutor/financials/`)
             .then(res => { setFinancials(res.data); setLoadError(false); })
             .catch(err => { console.error('Financials fetch failed', err); setLoadError(true); })
             .finally(() => setLoading(false));

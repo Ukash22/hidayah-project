@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import { Search as IconSearch } from 'lucide-react';
 import TutorCard from '../components/TutorCard';
 import Navbar from '../components/Navbar';
@@ -80,8 +80,8 @@ const BookingRequest = () => {
         const fetchData = async () => {
             try {
                 const [tutorRes, subRes] = await Promise.all([
-                    api.get(`/api/tutors/`, { headers: getAuthHeader() }),
-                    api.get(`/api/programs/subjects/`, { headers: getAuthHeader() })
+                    api.get(`/api/tutors/`),
+                    api.get(`/api/programs/subjects/`)
                 ]);
                 setTutors(tutorRes.data);
                 setSubjects(subRes.data);
@@ -181,11 +181,11 @@ const BookingRequest = () => {
                 class_structure: bookingData.class_structure,
                 hours_per_session: bookingData.hours_per_session
             };
-            await api.post(`/api/classes/booking/request/`, payload, { headers: getAuthHeader() });
+            await api.post(`/api/classes/booking/request/`, payload);
             toast.success('Booking successful! Proceed to your dashboard to complete payment and start your lessons.');
             navigate('/student');
         } catch (err) {
-            toast.error('Failed to send request: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Failed to send request: ' + (getApiError(err, 'Error')));
         } finally {
             setRequesting(false);
         }

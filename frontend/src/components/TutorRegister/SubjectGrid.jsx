@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BookOpen, CheckCircle2 } from 'lucide-react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { ISLAMIC_SUBJECTS, WESTERN_SUBJECTS } from '../../constants/registration';
 
 const SubjectGrid = ({ formData, handleSubjectToggle }) => {
@@ -11,7 +11,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
         const fetchSubjects = async () => {
             try {
                 const res = await api.get('/api/programs/subjects/');
-                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                const data = asList(res.data);
                 
                 if (data.length > 0) {
                     const islamic = data.filter(s => s.program_type === 'ISLAMIC').map(s => s.name);

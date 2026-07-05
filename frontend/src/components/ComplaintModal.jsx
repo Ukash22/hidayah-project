@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import { useToast } from '../context/ToastContext';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +34,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
             setDescription('');
             onClose();
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to file issue report');
+            setError(getApiError(err, 'Failed to file issue report'));
         } finally {
             setLoading(false);
         }

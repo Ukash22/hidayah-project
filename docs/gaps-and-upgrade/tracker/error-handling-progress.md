@@ -38,7 +38,7 @@ All 13 sites now `logger.exception(...)` server-side and return generic safe mes
 | 11 | Shared `FetchError` retry panel component (exported from `components/ui`) | `frontend/src/components/ui/FetchError.jsx` | ✅ Done |
 | 12 | Money pages: StudentFinance, TutorWalletPage, PaymentCallback (dedicated "couldn't confirm — don't pay again" state with retry, distinct from a rejected payment) | — | ✅ Done |
 | 13 | Main dashboards: StudentOverview, StudentClasses, TutorSchedule | — | ✅ Done |
-| 13b | Deferred (apply when next editing them): PaymentPage, AdminFinancials, AdminOverview — failures there surface via action buttons / staff users refresh | — | ⏸ Deferred |
+| 13b | AdminFinancials: FetchError + retry added · AdminOverview: already renders its own error banner · PaymentPage: deferred (failures surface via action buttons) | — | ✅ Done (PaymentPage deferred) |
 
 ## Phase EH4b — Production log visibility ✅ Complete
 
@@ -67,4 +67,4 @@ All 13 sites now `logger.exception(...)` server-side and return generic safe mes
 | # | Item | File | Status |
 |---|---|---|---|
 | 18 | `getApiError(err)` frontend helper | `frontend/src/services/api.js` | ✅ Done |
-| 19 | Adopt `getApiError` opportunistically when editing pages | — | ⏳ Ongoing |
+| 19 | `getApiError` adopted at 14 catch-sites via sweep; use it in all new code | — | ✅ Done (ongoing for new code) |

@@ -47,13 +47,18 @@ Tracks implementation progress against the security audit (`security-audit.md`).
 
 ---
 
-## Phase S4 — JWT Storage (Planned, Not Started) ⬜ Pending
+## Phase S4 — JWT Storage ✅ Complete
 
-This is the highest-effort item and requires coordinated frontend + backend changes. Treated as a separate workstream.
+Design implemented:
+- **Refresh token:** httpOnly cookie only (`hidayah_refresh`, path `/api/auth/`, Secure + SameSite=None in prod, Lax in dev). Never appears in a response body — XSS cannot exfiltrate it. `LoginView` sets it; new `LogoutView` clears it; `CookieTokenRefreshView` reads it (body `refresh` still accepted for legacy clients).
+- **Access token:** in-memory only (`services/tokenStore.js`). On page load, `AuthContext` bootstraps a fresh access token from the cookie via `/api/auth/refresh/`. The 401 interceptor in `api.js` refreshes from the cookie, not storage. `CORS_ALLOW_CREDENTIALS` enabled; the `api` instance sends `withCredentials`.
+- **One deliberate exception:** parent→child impersonation stores the CHILD access token in `localStorage('access')` as an override (it must survive a hard redirect, and the parent's cookie session stays untouched for "return to parent"). Exposure is limited to the child's 1-day access token during an active impersonation.
 
 | # | Item | File(s) | Status |
 |---|---|---|---|
-| 14 | Move access token to memory; refresh token to `httpOnly` cookie | `AuthContext.jsx`, backend token endpoint, all API service files | ⬜ Pending |
+| 14 | Access token in memory; refresh in httpOnly cookie; cookie-aware refresh/logout endpoints; impersonation reworked onto the cookie model; 6 auth-flow tests | `accounts/views.py`, `accounts/urls.py`, `core/settings.py`, `services/tokenStore.js`, `services/api.js`, `AuthContext.jsx`, `ParentOverview.jsx`, `StudentOverview.jsx`, `tests/test_auth.py` | ✅ Done |
+
+> **Mobile caveat:** in the Capacitor app the cookie is cross-site (webview origin → onrender backend); Android WebView handles it, but iOS WKWebView's tracking prevention can drop third-party cookies. Verify login persistence on a real iOS build; if it fails, fall back to Capacitor's CookiesPlugin or a native-only storage path. Noted in the mobile tracker's publish-stage checks.
 
 ---
 

@@ -234,6 +234,43 @@ class TutorProfileOwnershipTests(TestCase):
         self.assertIn(res.status_code, (401, 403))
 
 
+class TutorRegistrationTests(TestCase):
+    """Registration endpoint contract (now backed by TutorRegisterSerializer):
+    201 + user/profile/slots on success; legacy {'detail': msg} on errors."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.payload = {
+            'username': 'newtutor', 'email': 'newtutor@test.com', 'password': 'pass12345',
+            'first_name': 'New', 'last_name': 'Tutor',
+            'subjects_to_teach': 'Mathematics', 'hourly_rate': 2500,
+            'availabilitySlots': [{'day': 'Monday', 'startTime': '09:00', 'endTime': '11:00'}],
+        }
+
+    def test_successful_registration_creates_user_profile_and_slots(self):
+        res = self.client.post('/api/tutors/register/', self.payload, format='json')
+        self.assertEqual(res.status_code, 201)
+        user = User.objects.get(username='newtutor')
+        self.assertEqual(user.role, 'TUTOR')
+        profile = TutorProfile.objects.get(user=user)
+        self.assertEqual(profile.subjects_to_teach, 'Mathematics')
+        self.assertEqual(profile.availability_days, 'Monday')
+        self.assertEqual(profile.availabilities.count(), 1)
+
+    def test_duplicate_username_rejected_with_legacy_detail_shape(self):
+        self.client.post('/api/tutors/register/', self.payload, format='json')
+        res = self.client.post('/api/tutors/register/', {**self.payload, 'email': 'other@test.com'}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('already taken', res.json()['detail'])
+
+    def test_missing_password_rejected(self):
+        payload = {k: v for k, v in self.payload.items() if k != 'password'}
+        res = self.client.post('/api/tutors/register/', payload, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertIn('detail', res.json())
+
+
 class TutorPayloadLeakageTests(TestCase):
     """List payloads must not expose credentials or private financials."""
 

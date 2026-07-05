@@ -20,8 +20,8 @@ export default function StudentFeedback() {
     useEffect(() => {
         if (!token) return;
         Promise.all([
-            api.get(`/api/complaints/my/`, { headers: getAuthHeader() }),
-            api.get(`/api/students/me/`, { headers: getAuthHeader() }),
+            api.get(`/api/complaints/my/`),
+            api.get(`/api/students/me/`),
         ]).then(([compRes, profRes]) => {
             setComplaints(compRes.data && Array.isArray(compRes.data.filed_by_me) ? compRes.data : { filed_by_me: [], filed_against_me: [] });
             setProfile(profRes.data);

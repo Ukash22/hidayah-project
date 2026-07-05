@@ -119,11 +119,13 @@ class TutorViewSet(viewsets.ModelViewSet):
         # Bulk wallet lookup — avoids one Wallet.objects.get_or_create() per tutor in the loop
         wallets = {w.user_id: w.balance for w in Wallet.objects.filter(user_id__in=user_ids)}
 
+        from .serializers import resolve_media_url
+
         def safe_url(f):
-            try:
-                return request.build_absolute_uri(f.url) if f and hasattr(f, 'url') else str(f) if f else None
-            except Exception:
-                return str(f) if f else None
+            url = resolve_media_url(f)
+            if url and not url.startswith('http'):
+                return request.build_absolute_uri(url)
+            return url
 
         data = []
         for t in tutor_list:
@@ -209,88 +211,25 @@ class TutorViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[])
     def register(self, request):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        data = request.data
-        
-        from django.db import transaction
-        import logging
-        logger = logging.getLogger(__name__)
-        
+        """Tutor application. Validation + creation live in TutorRegisterSerializer;
+        this endpoint keeps the legacy {'detail': msg} error shape."""
+        from .serializers import TutorRegisterSerializer
+
         # Never log request.data here — it contains the plaintext password.
         logger.info("Tutor registration attempt: username=%s", request.data.get('username'))
-        
-        try:
-            with transaction.atomic():
-                # 1. Create User
-                username = data.get('username')
-                email = data.get('email')
-                password = data.get('password')
-                
-                if not username or not email or not password:
-                    return Response({"detail": "Username, Email, and Password are required."}, status=400)
-                
-                if User.objects.filter(username=username).exists():
-                    return Response({"detail": f"Username '{username}' is already taken. Please choose another one."}, status=400)
-                
-                if User.objects.filter(email=email).exists():
-                    return Response({"detail": f"Email '{email}' is already registered. Please login or use a different email."}, status=400)
 
-                user = User.objects.create_user(
-                    username=username,
-                    email=email,
-                    password=password,
-                    first_name=data.get('first_name', ''),
-                    last_name=data.get('last_name', ''),
-                    role='TUTOR',
-                    gender=data.get('gender'),
-                    country=data.get('country')
-                )
-                
-                # 2. Create Profile
-                profile = TutorProfile.objects.create(
-                    user=user,
-                    age=data.get('age'),
-                    address=data.get('address'),
-                    experience_years=data.get('experience_years', 0),
-                    subjects_to_teach=data.get('subjects_to_teach') or 'Not specified',
-                    languages=data.get('languages', 'English'),
-                    has_online_exp=data.get('has_online_exp') == 'true' or data.get('has_online_exp') == True,
-                    device_type=data.get('device_type', 'COMPUTER'),
-                    network_type=data.get('network_type'),
-                    availability_days=data.get('availability_days') or (", ".join(list(set([s.get('day', '').strip() for s in data.get('availabilitySlots', []) if s.get('day')]))) if data.get('availabilitySlots') else 'Flexible'),
-                    availability_hours=data.get('availability_hours') or 'Contact for details',
-                    hourly_rate=data.get('hourly_rate', 1500.00),
-                    # Use provided URLs as strings for the FileFields (Django-Cloudinary handles this if configured)
-                    image=data.get('image_url') or request.FILES.get('image'),
-                    intro_video=data.get('intro_video_url') or request.FILES.get('intro_video'),
-                    short_recitation=data.get('short_recitation_url') or request.FILES.get('short_recitation'),
-                    cv_resume=data.get('cv_url') or request.FILES.get('cv_resume'),
-                    credentials=data.get('credentials_url') or request.FILES.get('credentials')
-                )
-                
-                # 3. Create Availability Slots
-                from .models import TutorAvailability
-                availability_slots = data.get('availabilitySlots', [])
-                for slot in availability_slots:
-                    day = slot.get('day', '').strip().upper()
-                    start = slot.get('startTime')
-                    end = slot.get('endTime')
-                    if day and start and end:
-                        TutorAvailability.objects.create(
-                            tutor=profile,
-                            day=day,
-                            start_time=start,
-                            end_time=end
-                        )
-                
-                logger.info("Tutor profile and %d availability slots created for %s", len(availability_slots), username)
-                return Response({"message": "Tutor application submitted successfully!"}, status=201)
-                
-        except Exception as e:
+        serializer = TutorRegisterSerializer(data=request.data, context={'files': request.FILES})
+        if not serializer.is_valid():
+            first_errors = next(iter(serializer.errors.values()))
+            msg = first_errors[0] if isinstance(first_errors, list) else str(first_errors)
+            return Response({"detail": str(msg)}, status=400)
+
+        try:
+            profile = serializer.save()
+            logger.info("Tutor profile created for %s", profile.user.username)
+            return Response({"message": "Tutor application submitted successfully!"}, status=201)
+        except Exception:
             logger.exception("Tutor registration failed")
-            # If we already returned a Response above, this catch won't trigger if it was inside the block, 
-            # but for safety we catch everything here.
             return Response({"detail": "Registration failed. Please check your details and try again."}, status=400)
 
     @action(detail=True, methods=['patch'])

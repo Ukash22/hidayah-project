@@ -18,14 +18,14 @@ Intentionally left raw: the refresh call inside `api.js` itself, the public Clou
 | 3 | Shared components (TutorWallet, NotificationCenter, TrialForm, Tutors, modals, JambCBT) | `frontend/src/components/` | ✅ Done |
 | 4 | Remaining top-level pages (BookingRequest, CBTInterface, PaymentPage, PaymentCallback, ExamHub, AIHub, admin exam tools, …) | `frontend/src/pages/` | ✅ Done |
 
-> Note: explicit `{ headers: getAuthHeader() }` configs were deliberately left in place during migration — they're redundant but harmless (the refresh interceptor overwrites the header on retry). Remove opportunistically.
+> Header cleanup complete: 66 redundant `{ headers: getAuthHeader() }` configs removed (the request interceptor supplies the token).
 
 ## Phase AC2 — Response shape normalisation 🟠
 
 | # | Item | File | Status |
 |---|---|---|---|
 | 5 | `asList(data)` helper (array ⟶ itself, envelope ⟶ `.results`, else `[]`) | `frontend/src/services/api.js` | ✅ Done |
-| 6 | Replace ad-hoc `Array.isArray(...)` ternaries with `asList` (opportunistic, alongside AC1 migration) | ~30 files | ⬜ Pending |
+| 6 | `asList` adopted at 46 call sites (remaining `Array.isArray` uses have bespoke fallbacks like `.classes` — intentional) | 30+ files | ✅ Done |
 | 7 | Policy adopted: growable lists paginate with envelope; shape changes require same-change frontend PR | this doc / README | ✅ Documented |
 
 ## Phase AC3 — API schema & docs 🟡
@@ -33,7 +33,7 @@ Intentionally left raw: the refresh call inside `api.js` itself, the public Clou
 | # | Item | File | Status |
 |---|---|---|---|
 | 8 | Install `drf-spectacular`, add `/api/schema/` + `/api/docs/` (Swagger UI; AllowAny in DEBUG, staff-only in prod) | `backend/core/settings.py`, `core/urls.py`, `requirements.txt` | ✅ Done |
-| 9 | Annotate payments + auth `APIView`s with `@extend_schema` (they currently appear untyped — 54 unique introspection warnings) | `backend/payments/`, `backend/accounts/` | ⬜ Pending |
+| 9 | `@extend_schema` on Login/Refresh/Logout + InitiatePayment/VerifyPayment/Withdrawal; duplicate `User`/`Subject` schema components renamed (`TutorUserSerializer`/`TutorSubjectSerializer`); media method fields typed. Remaining views annotate opportunistically | `backend/accounts/`, `backend/payments/`, `backend/tutors/serializers.py` | ✅ Done (core) |
 
 ## Phase AC4 — Error shape convention 🟡
 

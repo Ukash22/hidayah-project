@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -133,7 +133,7 @@ const PaymentPage = () => {
                 setProcessing(false);
             }
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to process payment');
+            setError(getApiError(err, 'Failed to process payment'));
             setProcessing(false);
         }
     };

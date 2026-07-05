@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard } from '../../components/ui';
@@ -26,9 +26,9 @@ export default function AdminCurriculum() {
                 api.get('/api/programs/subjects/'),
                 api.get('/api/curriculum/materials/'),
             ]);
-            setPrograms(Array.isArray(progRes.data) ? progRes.data : (progRes.data?.results || []));
-            setSubjects(Array.isArray(subjRes.data) ? subjRes.data : (subjRes.data?.results || []));
-            setMaterials(Array.isArray(matRes.data) ? matRes.data : []);
+            setPrograms(asList(progRes.data));
+            setSubjects(asList(subjRes.data));
+            setMaterials(asList(matRes.data));
         } catch (err) {
             console.error('Curriculum fetch failed', err);
         } finally {

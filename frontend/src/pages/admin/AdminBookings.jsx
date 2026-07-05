@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonTable } from '../../components/ui';
@@ -15,7 +15,7 @@ export default function AdminBookings() {
         setLoading(true);
         try {
             const res = await api.get(`/api/classes/admin/bookings/?status=${status}`);
-            setBookings(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+            setBookings(asList(res.data));
         } catch (err) {
             console.error('Bookings fetch failed', err);
         } finally {

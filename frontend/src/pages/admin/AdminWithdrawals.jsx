@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
@@ -14,7 +14,7 @@ export default function AdminWithdrawals() {
     const fetchWithdrawals = useCallback(async () => {
         try {
             const res = await api.get('/api/payments/admin/withdrawals/pending/');
-            setWithdrawals(Array.isArray(res.data) ? res.data : []);
+            setWithdrawals(asList(res.data));
         } catch (err) {
             console.error('Withdrawals fetch failed', err);
         } finally {

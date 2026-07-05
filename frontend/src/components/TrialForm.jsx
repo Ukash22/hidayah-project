@@ -118,34 +118,34 @@ const TrialForm = () => {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name *</label>
-                                        <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
+                                        <label htmlFor="firstName" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">First Name *</label>
+                                        <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="John" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
-                                        <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email *</label>
-                                        <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 font-mono text-xs" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone</label>
-                                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+1..." className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
+                                        <label htmlFor="lastName" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Last Name</label>
+                                        <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Country</label>
-                                        <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Global" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
+                                        <label htmlFor="email" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Email *</label>
+                                        <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 font-mono text-xs" />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Focus Course</label>
-                                        <select name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer">
+                                        <label htmlFor="phone" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Phone</label>
+                                        <input id="phone" type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+1..." className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label htmlFor="country" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Country</label>
+                                        <input id="country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="Global" className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label htmlFor="courseInterested" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Focus Course</label>
+                                        <select id="courseInterested" name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer">
                                             <optgroup label="── Islamic Education ──">
                                                 <option>Quranic Recitation</option>
                                                 <option>Arabic Foundation</option>
@@ -209,22 +209,22 @@ const TrialForm = () => {
 
                                 <div className="grid grid-cols-3 gap-6 pt-2">
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Pref. Day</label>
-                                        <select name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
+                                        <label htmlFor="preferredDay" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Pref. Day</label>
+                                        <select id="preferredDay" name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
                                             {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <option key={d}>{d}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Slot</label>
-                                        <select name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
+                                        <label htmlFor="preferredTime" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Slot</label>
+                                        <select id="preferredTime" name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 transition-all font-bold text-slate-700 text-xs text-center appearance-none">
                                             <option>Morning</option>
                                             <option>Afternoon</option>
                                             <option>Evening</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1 italic text-primary">Exact Time</label>
-                                        <input
+                                        <label htmlFor="preferredTimeExact" className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1 italic text-primary">Exact Time</label>
+                                        <input id="preferredTimeExact"
                                             type="text"
                                             name="preferredTimeExact"
                                             value={formData.preferredTimeExact}

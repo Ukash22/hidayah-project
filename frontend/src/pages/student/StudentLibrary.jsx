@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { motion } from 'framer-motion';
 import { Search as IconSearch, Download as IconDownload, FileText as IconFileText, ExternalLink as IconExternalLink, PlayCircle as IconPlayCircle, Music as IconMusic, BookOpen as IconBookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -21,10 +21,10 @@ export default function StudentLibrary() {
     useEffect(() => {
         if (!token) return;
         Promise.all([
-            api.get(`/api/curriculum/materials/`, { headers: getAuthHeader() }),
-            api.get(`/api/students/me/`, { headers: getAuthHeader() }),
+            api.get(`/api/curriculum/materials/`),
+            api.get(`/api/students/me/`),
         ]).then(([matRes, profRes]) => {
-            setMaterials(Array.isArray(matRes.data) ? matRes.data : []);
+            setMaterials(asList(matRes.data));
             setProfile(profRes.data);
         }).catch(err => console.error('Library fetch failed', err))
             .finally(() => setLoading(false));

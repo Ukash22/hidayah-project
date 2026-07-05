@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import api from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
 import { Calendar as IconCalendar, Clock as IconClock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -37,20 +37,20 @@ export default function TutorSchedule() {
         setLoadError(false);
         try {
             const [schRes, studRes, profileRes] = await Promise.all([
-                api.get(`/api/classes/sessions/`, { headers: getAuthHeader() }),
-                api.get(`/api/students/tutor/my-students/`, { headers: getAuthHeader() }),
-                api.get(`/api/tutors/me/`, { headers: getAuthHeader() }),
+                api.get(`/api/classes/sessions/`),
+                api.get(`/api/students/tutor/my-students/`),
+                api.get(`/api/tutors/me/`),
             ]);
-            setSchedule(Array.isArray(schRes.data) ? schRes.data : (schRes.data?.results || []));
-            setAssignedStudents(Array.isArray(studRes.data) ? studRes.data : []);
+            setSchedule(asList(schRes.data));
+            setAssignedStudents(asList(studRes.data));
             setTutorProfile(profileRes.data);
 
-            api.get(`/api/exams/list/`, { headers: getAuthHeader() })
-                .then(r => setExams(Array.isArray(r.data?.results) ? r.data.results : (Array.isArray(r.data) ? r.data : []))).catch(() => {});
-            api.get(`/api/curriculum/materials/`, { headers: getAuthHeader() })
-                .then(r => setMaterials(Array.isArray(r.data) ? r.data : [])).catch(() => {});
-            api.get(`/api/exams/assignments/`, { headers: getAuthHeader() })
-                .then(r => setAssignments(Array.isArray(r.data?.results) ? r.data.results : (Array.isArray(r.data) ? r.data : []))).catch(() => {});
+            api.get(`/api/exams/list/`)
+                .then(r => setExams(Array.isArray(r.data?.results) ? r.data.results : (asList(r.data)))).catch(() => {});
+            api.get(`/api/curriculum/materials/`)
+                .then(r => setMaterials(asList(r.data))).catch(() => {});
+            api.get(`/api/exams/assignments/`)
+                .then(r => setAssignments(Array.isArray(r.data?.results) ? r.data.results : (asList(r.data)))).catch(() => {});
         } catch (err) {
             console.error('Schedule fetch failed', err);
             setLoadError(true);
@@ -69,7 +69,7 @@ export default function TutorSchedule() {
             const endpoint = isTrial
                 ? `/api/classes/trial/${sessionId}/start/`
                 : `/api/classes/session/${sessionId}/start/`;
-            await api.post(endpoint, {}, { headers: getAuthHeader() });
+            await api.post(endpoint, {});
         } catch (_e) { /* non-fatal */ }
         navigate(`/live/${sessionId}`);
     }, [getAuthHeader, navigate]);
@@ -78,11 +78,11 @@ export default function TutorSchedule() {
         const sessionId = session.db_id || session.id;
         if (!await confirm('Mark this session as COMPLETED? Commission will be deducted and net amount credited to your wallet.', { confirmLabel: 'Mark Complete' })) return;
         try {
-            const res = await api.post(`/api/classes/session/${sessionId}/complete/`, {}, { headers: getAuthHeader() });
+            const res = await api.post(`/api/classes/session/${sessionId}/complete/`, {});
             toast.success(`Session completed! Net payout: ₦${res.data.net_payout}`);
             fetchData();
         } catch (err) {
-            toast.error('Failed to complete session: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Failed to complete session: ' + (getApiError(err, 'Error')));
         }
     }, [getAuthHeader, fetchData, confirm, toast]);
 
@@ -93,9 +93,9 @@ export default function TutorSchedule() {
             if (type === 'exam') {
                 const isAssigned = assignments.some(a => a.student === studentId && a.exam === id);
                 if (isAssigned) { toast.info('Already assigned.'); return; }
-                await api.post(`/api/exams/assignments/bulk-assign/`, { exam: id, students: [studentId] }, { headers: getAuthHeader() });
+                await api.post(`/api/exams/assignments/bulk-assign/`, { exam: id, students: [studentId] });
             } else {
-                await api.post(`/api/curriculum/materials/${id}/bulk-assign/`, { students: [studentId] }, { headers: getAuthHeader() });
+                await api.post(`/api/curriculum/materials/${id}/bulk-assign/`, { students: [studentId] });
             }
             fetchData();
         } catch (_err) { toast.error('Assignment failed'); }

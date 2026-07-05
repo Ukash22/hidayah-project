@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import api from '../services/api';
+import { getAccess, setAccess, clearAccess } from '../services/tokenStore';
 
 // Auth state context — token, login, logout, register
 // Only re-renders consumers on login/logout, not on profile data changes
@@ -22,13 +23,17 @@ export const useToken = () => useContext(AuthStateContext);
 export const useUser = () => useContext(UserContext);
 
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(localStorage.getItem('access'));
+    // S4: the access token lives in memory (tokenStore), never in localStorage.
+    // The only localStorage 'access' is the parent→child impersonation override.
+    const [token, setToken] = useState(getAccess());
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const doLogout = useCallback(() => {
-        localStorage.removeItem('access');
-        localStorage.removeItem('refresh');
+        api.post('/api/auth/logout/').catch(() => { /* cookie clear is best-effort */ });
+        clearAccess();
+        localStorage.removeItem('parent_access');
+        localStorage.removeItem('parent_refresh');
         setToken(null);
         setUser(null);
         delete api.defaults.headers.common['Authorization'];
@@ -46,20 +51,34 @@ export const AuthProvider = ({ children }) => {
         }
     }, [doLogout]);
 
+    // Bootstrap: impersonation override wins; otherwise obtain a fresh access
+    // token from the httpOnly refresh cookie. No cookie -> logged out.
     useEffect(() => {
-        if (token) {
-            api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            fetchUser();
-        } else {
-            setLoading(false);
-        }
+        let cancelled = false;
+        const boot = async () => {
+            if (token) {
+                api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                fetchUser();
+                return;
+            }
+            try {
+                const res = await api.post('/api/auth/refresh/', {});
+                if (cancelled) return;
+                setAccess(res.data.access);
+                setToken(res.data.access);
+                // fetchUser runs on the next effect pass (token changed)
+            } catch {
+                if (!cancelled) setLoading(false);
+            }
+        };
+        boot();
+        return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [token]);
 
     const login = useCallback(async (username, password) => {
         const res = await api.post('/api/auth/login/', { username, password });
-        localStorage.setItem('access', res.data.access);
-        localStorage.setItem('refresh', res.data.refresh);
+        setAccess(res.data.access);          // memory only — refresh is in the httpOnly cookie
         setToken(res.data.access);
         setUser(res.data.user);
         return res.data;

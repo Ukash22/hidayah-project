@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import {
@@ -55,13 +55,13 @@ export default function AdminOverview() {
                 api.get('/api/payments/admin/settings/'),
                 api.get('/api/payments/admin/stats/'),
             ]);
-            setAllStudents(Array.isArray(studRes.data) ? studRes.data : []);
-            setTutors(Array.isArray(tutRes.data) ? tutRes.data : []);
-            setApplications(Array.isArray(appRes.data) ? appRes.data : []);
-            setPendingBookings(Array.isArray(bookRes.data) ? bookRes.data : (bookRes.data?.results || []));
-            setWithdrawalRequests(Array.isArray(withRes.data) ? withRes.data : []);
-            setAllComplaints(Array.isArray(compRes.data) ? compRes.data : []);
-            setAllClasses(Array.isArray(clsRes.data) ? clsRes.data : []);
+            setAllStudents(asList(studRes.data));
+            setTutors(asList(tutRes.data));
+            setApplications(asList(appRes.data));
+            setPendingBookings(asList(bookRes.data));
+            setWithdrawalRequests(asList(withRes.data));
+            setAllComplaints(asList(compRes.data));
+            setAllClasses(asList(clsRes.data));
             setGlobalSettings(settRes.data);
             setStats(statsRes.data);
         } catch (err) {

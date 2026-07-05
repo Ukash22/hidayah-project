@@ -3,6 +3,8 @@
 # pylint: skip-file
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework import serializers as drf_serializers
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
@@ -31,6 +33,17 @@ from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 
 User = get_user_model()
 
+@extend_schema(
+    request=inline_serializer('InitiatePaymentRequest', {
+        'amount': drf_serializers.DecimalField(max_digits=12, decimal_places=2, required=False, help_text='Custom top-up amount; omitted for the initial admission fee'),
+    }),
+    responses={200: inline_serializer('InitiatePaymentResponse', {
+        'success': drf_serializers.BooleanField(),
+        'authorization_url': drf_serializers.CharField(),
+        'reference': drf_serializers.CharField(),
+        'amount': drf_serializers.FloatField(),
+    })},
+)
 class InitiatePaymentView(APIView):
     """Initialize a Paystack payment for a student"""
     permission_classes = [IsAuthenticated]
@@ -127,6 +140,12 @@ class InitiatePaymentView(APIView):
             return Response({"error": result.get("message", "Payment initialization failed")}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(responses={200: inline_serializer('VerifyPaymentResponse', {
+    'success': drf_serializers.BooleanField(),
+    'verified': drf_serializers.BooleanField(),
+    'message': drf_serializers.CharField(),
+    'amount': drf_serializers.FloatField(required=False),
+})})
 class VerifyPaymentView(APIView):
     """Verify a Paystack payment"""
     permission_classes = [IsAuthenticated]
@@ -509,6 +528,12 @@ class TutorWalletView(APIView):
             "transactions": TransactionSerializer(transactions, many=True).data
         })
 
+@extend_schema(request=inline_serializer('WithdrawalRequest', {
+    'amount': drf_serializers.DecimalField(max_digits=12, decimal_places=2),
+    'bank_name': drf_serializers.CharField(),
+    'account_number': drf_serializers.CharField(),
+    'account_name': drf_serializers.CharField(),
+}), responses={201: WithdrawalSerializer, 200: WithdrawalSerializer(many=True)})
 class WithdrawalRequestView(APIView):
     """Tutor: Request a withdrawal"""
     permission_classes = [IsAuthenticated]

@@ -17,7 +17,7 @@ export default function TutorMedia() {
 
     useEffect(() => {
         if (!token) return;
-        api.get(`/api/tutors/me/`, { headers: getAuthHeader() })
+        api.get(`/api/tutors/me/`)
             .then(res => setTutorProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));
@@ -27,7 +27,7 @@ export default function TutorMedia() {
         setUploading(true);
         setUploadMsg('');
         try {
-            const profileRes = await api.get(`/api/tutors/`, { headers: getAuthHeader() });
+            const profileRes = await api.get(`/api/tutors/`);
             const myProfile = profileRes.data.find(t => t.user?.id === user?.id);
             if (!myProfile) throw new Error('Tutor profile not found');
 

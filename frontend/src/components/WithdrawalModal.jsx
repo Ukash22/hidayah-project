@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -34,7 +34,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
             onClose();
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to submit withdrawal request.');
+            setError(getApiError(err, 'Failed to submit withdrawal request.'));
         } finally {
             setLoading(false);
         }

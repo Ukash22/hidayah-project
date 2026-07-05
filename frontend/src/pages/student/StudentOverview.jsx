@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import api from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard as IconLayoutDashboard, Download as IconDownload, Plus as IconPlus,
@@ -49,22 +49,22 @@ export default function StudentOverview() {
         setLoadError(false);
         try {
             const [profRes, classRes, bookingRes, examAsgnRes] = await Promise.all([
-                api.get(`/api/students/me/`, { headers: getAuthHeader() }),
-                api.get(`/api/classes/sessions/`, { headers: getAuthHeader() }),
-                api.get(`/api/classes/booking/request/`, { headers: getAuthHeader() }),
-                api.get(`/api/exams/assignments/`, { headers: getAuthHeader() }),
+                api.get(`/api/students/me/`),
+                api.get(`/api/classes/sessions/`),
+                api.get(`/api/classes/booking/request/`),
+                api.get(`/api/exams/assignments/`),
             ]);
             setProfile(profRes.data);
             setClasses(Array.isArray(classRes.data) ? classRes.data : (classRes.data.results || classRes.data.classes || []));
-            setBookings(Array.isArray(bookingRes.data) ? bookingRes.data : []);
-            setExamAssignments(Array.isArray(examAsgnRes.data) ? examAsgnRes.data : []);
+            setBookings(asList(bookingRes.data));
+            setExamAssignments(asList(examAsgnRes.data));
 
             try {
-                const notifRes = await api.get(`/api/auth/notifications/`, { headers: getAuthHeader() });
+                const notifRes = await api.get(`/api/auth/notifications/`);
                 setNotifications(notifRes.data.slice(0, 3));
             } catch { /* non-critical */ }
 
-            const subRes = await api.get(`/api/programs/subjects/`, { headers: getAuthHeader() });
+            const subRes = await api.get(`/api/programs/subjects/`);
             setAvailableSubjects(subRes.data);
         } catch (err) {
             console.error('Overview fetch failed', err);
@@ -78,7 +78,7 @@ export default function StudentOverview() {
 
     const fetchTutorsForSubject = useCallback(async (subjectName) => {
         try {
-            const res = await api.get(`/api/tutors/by_subject/?subject=${subjectName}`, { headers: getAuthHeader() });
+            const res = await api.get(`/api/tutors/by_subject/?subject=${subjectName}`);
             setAvailableTutors(res.data);
             if (res.data.length > 0) {
                 const t = res.data[0];
@@ -145,7 +145,7 @@ export default function StudentOverview() {
             setShowEnrollModal(false);
             fetchData();
         } catch (err) {
-            toast.error(err.response?.data?.error || 'Enrollment request failed. Please try again.');
+            toast.error(getApiError(err, 'Enrollment request failed. Please try again.'));
         } finally {
             setEnrolling(false);
         }
@@ -154,21 +154,18 @@ export default function StudentOverview() {
     const handleJoinClass = useCallback(async (cls) => {
         const sessionId = cls.db_id || cls.id;
         if (!sessionId) { toast.error('Invalid session ID'); return; }
-        api.post(`/api/classes/session/${sessionId}/start/`, {}, { headers: getAuthHeader() })
+        api.post(`/api/classes/session/${sessionId}/start/`, {})
             .catch(e => { if (!axios.isCancel(e)) console.warn('Join notify failed:', e.message); });
         navigate(`/live/${sessionId}`);
     }, [getAuthHeader, navigate, toast]);
 
     const handleReturnToParent = () => {
-        const pa = localStorage.getItem('parent_access');
-        const pr = localStorage.getItem('parent_refresh');
-        if (pa && pr) {
-            localStorage.setItem('access', pa);
-            localStorage.setItem('refresh', pr);
-            localStorage.removeItem('parent_access');
-            localStorage.removeItem('parent_refresh');
-            window.location.href = '/parent';
-        }
+        // S4: dropping the child override is enough — the parent's session is
+        // restored from the httpOnly refresh cookie on the next page load.
+        localStorage.removeItem('access');
+        localStorage.removeItem('parent_access');
+        localStorage.removeItem('parent_refresh'); // legacy key
+        window.location.href = '/parent';
     };
 
     const activeClass = classes.find(cls => {
@@ -443,7 +440,7 @@ export default function StudentOverview() {
                                 </button>
                                 <div className="space-y-8">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Academic Program</label>
+                                        <label htmlFor="subject_id" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Academic Program</label>
                                         <select id="subject_id" name="subject_id" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none"
                                             onChange={e => {
                                                 const subj = availableSubjects.find(s => s.id == e.target.value);
@@ -456,7 +453,7 @@ export default function StudentOverview() {
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Expert Tutor</label>
+                                        <label htmlFor="tutor_id" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Expert Tutor</label>
                                         <select id="tutor_id" name="tutor_id" className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 focus:border-blue-600/30 outline-none appearance-none"
                                             value={enrollData.tutor_id}
                                             onChange={e => {
@@ -490,7 +487,7 @@ export default function StudentOverview() {
                                         </div>
                                     )}
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Preferred Start Date</label>
+                                        <label htmlFor="preferred_start_date" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">Preferred Start Date</label>
                                         <input id="preferred_start_date" name="preferred_start_date" type="date"
                                             className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 font-bold text-slate-900 outline-none focus:border-blue-600/30"
                                             min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}

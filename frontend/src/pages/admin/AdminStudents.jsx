@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge, getLocalTime } from './adminHelpers';
@@ -32,8 +32,8 @@ export default function AdminStudents() {
                 api.get('/api/students/admin/all/'),
                 api.get('/api/tutors/admin/list/?status=APPROVED'),
             ]);
-            setAllStudents(Array.isArray(studRes.data) ? studRes.data : []);
-            setApprovedTutors(Array.isArray(tutRes.data) ? tutRes.data : []);
+            setAllStudents(asList(studRes.data));
+            setApprovedTutors(asList(tutRes.data));
         } catch (err) {
             console.error('Students fetch failed', err);
         } finally {

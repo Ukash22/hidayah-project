@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { getCountryFlag } from './adminHelpers';
@@ -23,8 +23,8 @@ export default function AdminAdmissions() {
                 api.get('/api/auth/pending-students/'),
                 api.get('/api/admin/applications/'),
             ]);
-            setPendingStudents(Array.isArray(pendRes.data) ? pendRes.data : []);
-            setApplications(Array.isArray(appRes.data) ? appRes.data : []);
+            setPendingStudents(asList(pendRes.data));
+            setApplications(asList(appRes.data));
         } catch (err) {
             console.error('Admissions fetch failed', err);
         } finally {

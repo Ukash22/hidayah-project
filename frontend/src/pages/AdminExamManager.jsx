@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
+import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -71,7 +72,7 @@ const AdminExamManager = () => {
     });
 
     const getAuthHeader = () => {
-        const token = localStorage.getItem('access') || localStorage.getItem('token');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
@@ -79,9 +80,9 @@ const AdminExamManager = () => {
         const fetchData = async () => {
             try {
                 const [examsRes, subjectsRes, studentsRes] = await Promise.all([
-                    api.get(`/api/exams/list/`, { headers: getAuthHeader() }),
-                    api.get(`/api/programs/subjects/`, { headers: getAuthHeader() }),
-                    api.get(`/api/students/admin/all/`, { headers: getAuthHeader() })
+                    api.get(`/api/exams/list/`),
+                    api.get(`/api/programs/subjects/`),
+                    api.get(`/api/students/admin/all/`)
                 ]);
                 setExams(examsRes.data);
                 setSubjects(subjectsRes.data);
@@ -99,9 +100,9 @@ const AdminExamManager = () => {
         e.preventDefault();
         try {
             if (editingExam) {
-                await api.patch(`/api/exams/list/${editingExam.id}/`, formData, { headers: getAuthHeader() });
+                await api.patch(`/api/exams/list/${editingExam.id}/`, formData);
             } else {
-                await api.post(`/api/exams/list/`, formData, { headers: getAuthHeader() });
+                await api.post(`/api/exams/list/`, formData);
             }
             window.location.reload();
         } catch (err) {

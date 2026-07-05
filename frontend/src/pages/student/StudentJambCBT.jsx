@@ -19,7 +19,7 @@ export default function StudentJambCBT() {
 
     useEffect(() => {
         if (!token) return;
-        api.get(`/api/students/me/`, { headers: getAuthHeader() })
+        api.get(`/api/students/me/`)
             .then(res => setProfile(res.data))
             .catch(err => console.error('Profile fetch failed', err))
             .finally(() => setLoading(false));

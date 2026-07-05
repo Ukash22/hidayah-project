@@ -140,11 +140,20 @@ Variables marked **Required** have no fallback — the app will not start withou
 | `ALLOWED_HOSTS` | **Required in production** | Comma-separated hostnames. Must include your Render backend domain (e.g. `hidayah-backend-zgix.onrender.com`). Defaults to `localhost,127.0.0.1` — omitting this in production causes all requests to return 400. |
 | `DATABASE_URL` | **Required** | PostgreSQL connection string |
 | `REDIS_URL` | **Required** | Redis connection string (WebSockets, cache, and Celery broker) |
+| `CORS_EXTRA_ORIGINS` | Optional | Comma-separated extra allowed origins (e.g. a staging frontend or `http://192.168.x.x:5173` for LAN device testing) |
+| `REFRESH_COOKIE_NAME` | Optional | S4 refresh-cookie name. Default `hidayah_refresh` |
+| `REFRESH_COOKIE_SECURE` | Optional | Default `True`. Set `False` only when testing over plain http from a non-localhost host (e.g. LAN IP) |
+| `REFRESH_COOKIE_SAMESITE` | Optional | Default `None` (required for the cross-site prod setup). Pair with `REFRESH_COOKIE_SECURE=False` + `Lax` for LAN-http testing |
+| `VITE_DEV_PROXY_TARGET` | Optional (frontend) | Backend target for the Vite dev proxy. Default `http://localhost:8000` |
 | `CLOUDINARY_CLOUD_NAME` | Optional | Cloudinary cloud name — file uploads skipped if not set |
 | `CLOUDINARY_API_KEY` | Optional | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | Optional | Cloudinary API secret |
 | `PAYSTACK_SECRET_KEY` | **Required** | Paystack secret key — payment endpoints fail without it |
 | `PAYSTACK_PUBLIC_KEY` | **Required** | Paystack public key |
+| `PAYSTACK_MOCK_MODE` | **Required at launch** | Default `True` — payments are **simulated** (no real charge). MUST be set to `False` before accepting real payments |
+| `ADMIN_USERNAME` | Optional | Bootstrap admin username (default `admin`) — used by `create_admin.py` on deploy |
+| `ADMIN_EMAIL` | Optional | Bootstrap admin email (default `admin@hidayah.com`) |
+| `ADMIN_PASSWORD` | **Required for admin bootstrap** | If unset, `create_admin.py` does nothing (it will never fall back to a hardcoded password). Set once to create/reset the admin, then it re-applies on each deploy |
 | `OPENAI_API_KEY` | Optional | OpenAI API key — AI question generation falls back to mock bank if not set |
 | `EMAIL_HOST` | Optional | SMTP host (default: `smtp.gmail.com`) |
 | `EMAIL_HOST_USER` | Optional | Sender email address |
@@ -207,6 +216,15 @@ When `REDIS_URL` is set, some read endpoints are cached (falls back to per-proce
 
 `GET /api/classes/sessions/` returns a paginated envelope `{ count, next, previous, results }` (default limit 50). `GET /api/tutors/` supports optional `?limit=&offset=` pagination — without those params it returns a plain array as before.
 
+### Authentication (S4 hardened)
+
+JWTs no longer live in `localStorage`:
+
+- **Refresh token** — httpOnly cookie `hidayah_refresh` (path `/api/auth/`, 7 days; `Secure` + `SameSite=None` in production because frontend and backend are different onrender.com subdomains; `Lax` in local dev). Set by `POST /api/auth/login/`, consumed by `POST /api/auth/refresh/` (body `refresh` still accepted for legacy clients), cleared by `POST /api/auth/logout/`.
+- **Access token** — held in frontend memory only (`services/tokenStore.js`); re-obtained from the cookie on page load. All API calls go through the shared `api` instance, which sends `withCredentials` and auto-refreshes on 401.
+- **One exception:** parent→child impersonation stores the child's access token in `localStorage('access')` as an override so it survives the hard redirect; the parent's cookie session is untouched and restored when the override is dropped.
+- `CORS_ALLOW_CREDENTIALS = True` is required for the cookie to travel cross-origin — already configured.
+
 ### API docs
 
 Interactive Swagger UI at `/api/docs/` (OpenAPI schema at `/api/schema/`) via drf-spectacular. Open in development; staff-only in production. Many `APIView`s are not yet annotated and appear untyped — annotate with `@extend_schema` opportunistically.
@@ -219,7 +237,8 @@ The Capacitor mobile app ships on its own release cycle, so an old installed app
 
 ## Audit & Upgrade Docs
 
-See [`gaps-and-upgrade/audit-index.md`](gaps-and-upgrade/audit-index.md) for the full list of completed and pending audits.
+- [`gaps-and-upgrade/audit-index.md`](gaps-and-upgrade/audit-index.md) — full list of audits with findings + progress trackers.
+- [`gaps-and-upgrade/DECISIONS.md`](gaps-and-upgrade/DECISIONS.md) — one-page log of every design decision made during the audit work (caching TTLs, additive-only API policy, negative-balance policy, JWT storage design, deferred publish-stage items, …). **Check this before "fixing" anything that looks odd** — several deliberate choices look like bugs at first glance.
 
 | File | Purpose |
 |---|---|

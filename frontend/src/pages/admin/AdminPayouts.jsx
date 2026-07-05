@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonTable } from '../../components/ui';
@@ -13,7 +13,7 @@ export default function AdminPayouts() {
     const fetchPayouts = useCallback(async () => {
         try {
             const res = await api.get('/api/admin/classes/pending-payouts/');
-            setPendingPayouts(Array.isArray(res.data) ? res.data : []);
+            setPendingPayouts(asList(res.data));
         } catch (err) {
             console.error('Payouts fetch failed', err);
         } finally {

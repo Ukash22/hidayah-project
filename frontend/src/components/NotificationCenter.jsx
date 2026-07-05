@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +10,7 @@ const NotificationCenter = () => {
     const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const getAuthHeader = () => {
-        const token = localStorage.getItem('access');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
     const [showDropdown, setShowDropdown] = useState(false);

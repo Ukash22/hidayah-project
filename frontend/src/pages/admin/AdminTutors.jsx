@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { getLocalTime } from './adminHelpers';
@@ -20,7 +20,7 @@ export default function AdminTutors() {
     const fetchTutors = useCallback(async () => {
         try {
             const res = await api.get('/api/tutors/admin/list/?status=APPROVED');
-            setTutors(Array.isArray(res.data) ? res.data : []);
+            setTutors(asList(res.data));
         } catch (err) {
             console.error('Tutors fetch failed', err);
         } finally {

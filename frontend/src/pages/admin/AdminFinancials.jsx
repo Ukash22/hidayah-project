@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { PageHeader } from '../../components/layout';
-import { SkeletonCard } from '../../components/ui';
+import { SkeletonCard, FetchError } from '../../components/ui';
 
 const AdminRevenueChart = lazy(() => import('../../components/AdminRevenueChart'));
 
@@ -10,6 +10,7 @@ export default function AdminFinancials() {
     const [transactions, setTransactions] = useState([]);
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(false);
     const [analyticsChartMode, setAnalyticsChartMode] = useState('monthly');
 
     const fetchAll = useCallback(async () => {
@@ -20,10 +21,12 @@ export default function AdminFinancials() {
                 api.get('/api/programs/subjects/'),
             ]);
             setFinancials(finRes.data);
-            setTransactions(Array.isArray(txRes.data) ? txRes.data : []);
-            setSubjects(Array.isArray(subjRes.data) ? subjRes.data : (subjRes.data?.results || []));
+            setTransactions(asList(txRes.data));
+            setSubjects(asList(subjRes.data));
+            setLoadError(false);
         } catch (err) {
             console.error('Financials fetch failed', err);
+            setLoadError(true);
         } finally {
             setLoading(false);
         }
@@ -49,6 +52,10 @@ export default function AdminFinancials() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
             {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
+    );
+
+    if (loadError) return (
+        <FetchError message="Couldn't load financial data. Please retry." onRetry={() => { setLoadError(false); setLoading(true); fetchAll(); }} />
     );
 
     return (

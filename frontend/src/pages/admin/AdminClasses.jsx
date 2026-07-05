@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge, getCountryFlag, getLocalTime } from './adminHelpers';
 import { SkeletonCard } from '../../components/ui';
@@ -14,7 +14,7 @@ export default function AdminClasses() {
     const fetchClasses = useCallback(async () => {
         try {
             const res = await api.get('/api/classes/admin/unified-list/');
-            setAllClasses(Array.isArray(res.data) ? res.data : []);
+            setAllClasses(asList(res.data));
         } catch (err) {
             console.error('Classes fetch failed', err);
         } finally {

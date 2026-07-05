@@ -91,28 +91,28 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name *</label>
-                                    <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Ahmad" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
+                                    <label htmlFor="firstName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">First Name *</label>
+                                    <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Ahmad" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
-                                    <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="e.g. Ali" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
+                                    <label htmlFor="lastName" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Last Name</label>
+                                    <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="e.g. Ali" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email *</label>
-                                    <input type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs" />
+                                    <label htmlFor="email" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Email *</label>
+                                    <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Country</label>
-                                    <input type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. Nigeria" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
+                                    <label htmlFor="country" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Country</label>
+                                    <input id="country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. Nigeria" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus Course</label>
-                                <select name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm appearance-none">
+                                <label htmlFor="courseInterested" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Focus Course</label>
+                                <select id="courseInterested" name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm appearance-none">
                                     {(tutor.subjects_to_teach || 'Quranic Recitation').split(',').map(s => (
                                         <option key={s.trim()} value={s.trim()}>{s.trim()}</option>
                                     ))}
@@ -122,22 +122,22 @@ const TutorTrialModal = ({ tutor, onClose }) => {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Day</label>
-                                    <select name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
+                                    <label htmlFor="preferredDay" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Day</label>
+                                    <select id="preferredDay" name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot</label>
-                                    <select name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
+                                    <label htmlFor="preferredTime" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slot</label>
+                                    <select id="preferredTime" name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         <option>Morning</option>
                                         <option>Afternoon</option>
                                         <option>Evening</option>
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black text-primary uppercase tracking-widest">Exact Time</label>
-                                    <input type="text" name="preferredTimeExact" value={formData.preferredTimeExact} onChange={handleChange} placeholder="e.g. 4 PM" className="w-full px-3 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 focus:bg-white focus:border-primary outline-none transition-all font-black text-primary text-xs text-center placeholder:text-primary/30" />
+                                    <label htmlFor="preferredTimeExact" className="text-[10px] font-black text-primary uppercase tracking-widest">Exact Time</label>
+                                    <input id="preferredTimeExact" type="text" name="preferredTimeExact" value={formData.preferredTimeExact} onChange={handleChange} placeholder="e.g. 4 PM" className="w-full px-3 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 focus:bg-white focus:border-primary outline-none transition-all font-black text-primary text-xs text-center placeholder:text-primary/30" />
                                 </div>
                             </div>
 

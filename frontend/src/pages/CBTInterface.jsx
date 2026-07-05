@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { getAccess } from '../services/tokenStore';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -25,7 +26,7 @@ const CBTInterface = () => {
     const [isLoading, setIsLoading] = useState(true);
 
     const getAuthHeader = () => {
-        const token = localStorage.getItem('access') || localStorage.getItem('token');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
 
@@ -102,7 +103,7 @@ const CBTInterface = () => {
                     const res = await api.post(`/api/exams/list/${exam.id}/submit/`, {
                         exam_id: exam.id,
                         answers: examAnswers
-                    }, { headers: getAuthHeader() });
+                    });
                     
                     // The backend returns score, correct_answers, and total_questions
                     const { score, correct_answers, total_questions } = res.data;

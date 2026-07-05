@@ -25,8 +25,8 @@ export default function StudentClasses() {
         setLoadError(false);
         try {
             const [classRes, profRes] = await Promise.all([
-                api.get(`/api/classes/sessions/`, { headers: getAuthHeader() }),
-                api.get(`/api/students/me/`, { headers: getAuthHeader() }),
+                api.get(`/api/classes/sessions/`),
+                api.get(`/api/students/me/`),
             ]);
             setClasses(Array.isArray(classRes.data) ? classRes.data : (classRes.data.results || classRes.data.classes || []));
             setProfile(profRes.data);
@@ -43,7 +43,7 @@ export default function StudentClasses() {
     const handleJoinClass = useCallback(async (cls) => {
         const sessionId = cls.db_id || cls.id;
         if (!sessionId) { toast.error('Invalid session ID'); return; }
-        api.post(`/api/classes/session/${sessionId}/start/`, {}, { headers: getAuthHeader() })
+        api.post(`/api/classes/session/${sessionId}/start/`, {})
             .catch(e => { if (!axios.isCancel(e)) console.warn('Join notify failed:', e.message); });
         navigate(`/live/${sessionId}`);
     }, [getAuthHeader, navigate, toast]);

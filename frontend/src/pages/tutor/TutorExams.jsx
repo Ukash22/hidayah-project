@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
@@ -31,15 +31,15 @@ export default function TutorExams() {
         if (!token) return;
         try {
             const [examRes, asgRes, subRes, studRes] = await Promise.all([
-                api.get(`/api/exams/list/`, { headers: getAuthHeader() }),
-                api.get(`/api/exams/assignments/`, { headers: getAuthHeader() }),
-                api.get(`/api/programs/subjects/`, { headers: getAuthHeader() }),
-                api.get(`/api/students/tutor/my-students/`, { headers: getAuthHeader() }),
+                api.get(`/api/exams/list/`),
+                api.get(`/api/exams/assignments/`),
+                api.get(`/api/programs/subjects/`),
+                api.get(`/api/students/tutor/my-students/`),
             ]);
-            setExams(Array.isArray(examRes.data?.results) ? examRes.data.results : (Array.isArray(examRes.data) ? examRes.data : []));
-            setAssignments(Array.isArray(asgRes.data?.results) ? asgRes.data.results : (Array.isArray(asgRes.data) ? asgRes.data : []));
-            setSubjects(Array.isArray(subRes.data?.results) ? subRes.data.results : (Array.isArray(subRes.data) ? subRes.data : []));
-            setAssignedStudents(Array.isArray(studRes.data) ? studRes.data : []);
+            setExams(Array.isArray(examRes.data?.results) ? examRes.data.results : (asList(examRes.data)));
+            setAssignments(Array.isArray(asgRes.data?.results) ? asgRes.data.results : (asList(asgRes.data)));
+            setSubjects(Array.isArray(subRes.data?.results) ? subRes.data.results : (asList(subRes.data)));
+            setAssignedStudents(asList(studRes.data));
         } catch (err) {
             console.error('Exams fetch failed', err);
         } finally {
@@ -55,25 +55,25 @@ export default function TutorExams() {
         try {
             let examId = examFormData.id;
             if (examFormData.id) {
-                await api.patch(`/api/exams/list/${examFormData.id}/`, examFormData, { headers: getAuthHeader() });
+                await api.patch(`/api/exams/list/${examFormData.id}/`, examFormData);
             } else {
                 const res = await api.post(`/api/exams/`, {
                     ...examFormData,
                     assigned_students: selectedStudentsForBulk
-                }, { headers: getAuthHeader() });
+                });
                 examId = res.data.id;
             }
             if (selectedStudentsForBulk.length > 0 && examId) {
                 await api.post(`/api/exams/assignments/bulk-assign/`, {
                     exam: examId, students: selectedStudentsForBulk
-                }, { headers: getAuthHeader() });
+                });
             }
             toast.success('Exam saved successfully!');
             setShowCreateModal(false);
             setSelectedStudentsForBulk([]);
             fetchData();
         } catch (err) {
-            toast.error('Error saving exam: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Error saving exam: ' + (getApiError(err, 'Error')));
         } finally {
             setSaving(false);
         }
@@ -85,12 +85,12 @@ export default function TutorExams() {
         try {
             await api.post(`/api/exams/assignments/bulk-assign/`, {
                 exam: examId, students: selectedStudentsForBulk
-            }, { headers: getAuthHeader() });
+            });
             toast.success(`Exam assigned to ${selectedStudentsForBulk.length} students!`);
             setSelectedStudentsForBulk([]);
             fetchData();
         } catch (err) {
-            toast.error('Assignment failed: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Assignment failed: ' + (getApiError(err, 'Error')));
         } finally {
             setAssigning(false);
         }
@@ -100,21 +100,21 @@ export default function TutorExams() {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(e.target).entries());
         try {
-            await api.post(`/api/exams/list/${selectedExam.id}/add_question/`, data, { headers: getAuthHeader() });
+            await api.post(`/api/exams/list/${selectedExam.id}/add_question/`, data);
             toast.success('Question added!');
             e.target.reset();
-            const updated = await api.get(`/api/exams/list/${selectedExam.id}/`, { headers: getAuthHeader() });
+            const updated = await api.get(`/api/exams/list/${selectedExam.id}/`);
             setSelectedExam(updated.data);
             fetchData();
         } catch (err) {
-            toast.error('Error adding question: ' + (err.response?.data?.error || 'Error'));
+            toast.error('Error adding question: ' + (getApiError(err, 'Error')));
         }
     };
 
     const handleDeleteQuestion = async (qId) => {
         if (!await confirm('Delete this question?', { confirmLabel: 'Delete', danger: true })) return;
-        await api.delete(`/api/exams/questions/${qId}/`, { headers: getAuthHeader() });
-        const updated = await api.get(`/api/exams/list/${selectedExam.id}/`, { headers: getAuthHeader() });
+        await api.delete(`/api/exams/questions/${qId}/`);
+        const updated = await api.get(`/api/exams/list/${selectedExam.id}/`);
         setSelectedExam(updated.data);
         fetchData();
     };
@@ -336,8 +336,8 @@ export default function TutorExams() {
                                 </h3>
                                 <form className="space-y-6" onSubmit={handleAddQuestion}>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Question Content</label>
-                                        <textarea required name="text" rows="4" className="w-full px-6 py-5 rounded-3xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-600/30 outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300 leading-relaxed" placeholder="Formulate the assessment query here..." />
+                                        <label htmlFor="text" className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Question Content</label>
+                                        <textarea id="text" required name="text" rows="4" className="w-full px-6 py-5 rounded-3xl border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-600/30 outline-none transition-all font-medium text-slate-700 placeholder:text-slate-300 leading-relaxed" placeholder="Formulate the assessment query here..." />
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         {['A', 'B', 'C', 'D'].map(opt => (
@@ -348,8 +348,8 @@ export default function TutorExams() {
                                         ))}
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-[10px] font-black uppercase text-blue-600 tracking-widest ml-1">Correct Answer</label>
-                                        <select name="correct_option" className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900 text-xs">
+                                        <label htmlFor="correct_option" className="text-[10px] font-black uppercase text-blue-600 tracking-widest ml-1">Correct Answer</label>
+                                        <select id="correct_option" name="correct_option" className="w-full px-6 py-4 rounded-2xl border border-slate-100 bg-slate-50 outline-none focus:border-blue-600/50 transition-all font-bold text-slate-900 text-xs">
                                             <option value="A">Choice A</option>
                                             <option value="B">Choice B</option>
                                             <option value="C">Choice C</option>

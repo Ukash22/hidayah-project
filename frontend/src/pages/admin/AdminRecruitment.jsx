@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
@@ -16,7 +16,7 @@ export default function AdminRecruitment() {
     const fetchTutorApps = useCallback(async () => {
         try {
             const res = await api.get('/api/tutors/admin/list/');
-            setTutorApps(Array.isArray(res.data) ? res.data : []);
+            setTutorApps(asList(res.data));
         } catch (err) {
             console.error('Tutor apps fetch failed', err);
         } finally {

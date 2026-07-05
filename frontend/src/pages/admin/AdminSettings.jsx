@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard } from '../../components/ui';
@@ -19,7 +19,7 @@ export default function AdminSettings() {
     const fetchAdmins = useCallback(async () => {
         try {
             const res = await api.get('/api/auth/admin/users/?role=ADMIN');
-            setAdmins(Array.isArray(res.data) ? res.data : (res.data?.results || []));
+            setAdmins(asList(res.data));
         } catch (err) {
             console.error('Admins fetch failed', err);
         } finally {
