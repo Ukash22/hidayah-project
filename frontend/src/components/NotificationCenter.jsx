@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import { getAccess } from '../services/tokenStore';
+import api from '../services/api';
 import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +10,7 @@ const NotificationCenter = () => {
     const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const getAuthHeader = () => {
-        const token = localStorage.getItem('access');
+        const token = getAccess();
         return token ? { Authorization: `Bearer ${token}` } : {};
     };
     const [showDropdown, setShowDropdown] = useState(false);
@@ -17,7 +18,7 @@ const NotificationCenter = () => {
 
     const fetchNotifications = useCallback(async () => {
         try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/`, {
+            const res = await api.get(`/api/auth/notifications/`, {
                 headers: getAuthHeader()
             });
             if (Array.isArray(res.data)) {
@@ -42,7 +43,7 @@ const NotificationCenter = () => {
 
     const markAsRead = async (id) => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/auth/notifications/${id}/read/`, {}, {
+            await api.post(`/api/auth/notifications/${id}/read/`, {}, {
                 headers: getAuthHeader()
             });
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
@@ -56,7 +57,7 @@ const NotificationCenter = () => {
         <div className="relative">
             <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="relative p-2 text-slate-400 hover:text-primary transition-colors"
+                className="relative p-2 text-slate-500 hover:text-primary transition-colors"
                 aria-label="Notifications"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -81,11 +82,11 @@ const NotificationCenter = () => {
                             initial={{ opacity: 0, y: 10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                            className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden"
+                            className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 z-50 overflow-hidden"
                         >
                             <div className="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-bold text-primary text-sm">Notifications</h3>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{unreadCount} Unread</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{unreadCount} Unread</span>
                             </div>
 
                             <div className="max-h-96 overflow-y-auto">
@@ -100,12 +101,12 @@ const NotificationCenter = () => {
                                     notifications.map(n => (
                                         <div
                                             key={n.id}
-                                            className={`p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 cursor-pointer ${!n.is_read ? 'bg-primary/5' : ''}`}
+                                            className={`p-4 border-b border-slate-50 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer ${!n.is_read ? 'bg-primary/5' : ''}`}
                                             onClick={() => !n.is_read && markAsRead(n.id)}
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <h4 className={`text-xs font-bold ${!n.is_read ? 'text-primary' : 'text-slate-600'}`}>{n.title}</h4>
-                                                <span className="text-[9px] text-slate-400">{new Date(n.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[9px] text-slate-500">{new Date(n.created_at).toLocaleDateString()}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{n.message}</p>
                                             {!n.is_read && (
@@ -118,10 +119,10 @@ const NotificationCenter = () => {
                                 )}
                             </div>
 
-                            <div className="p-3 bg-slate-50 text-center">
+                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 text-center">
                                 <button
                                     onClick={fetchNotifications}
-                                    className="text-[10px] font-black text-primary hover:text-secondary uppercase tracking-widest transition-colors"
+                                    className="text-[10px] font-bold text-primary hover:text-secondary uppercase tracking-widest transition-colors"
                                 >
                                     Refresh All
                                 </button>

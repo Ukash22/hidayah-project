@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api, { getApiError } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy, token, onSuccess }) => {
+    const toast = useToast();
     const [requestedDate, setRequestedDate] = useState('');
     const [requestedTime, setRequestedTime] = useState('');
     const [reason, setReason] = useState('');
@@ -14,11 +16,11 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
         setError('');
 
         const endpoint = initiatedBy === 'STUDENT'
-            ? `${import.meta.env.VITE_API_BASE_URL}/api/classes/student/reschedule/`
-            : `${import.meta.env.VITE_API_BASE_URL}/api/classes/tutor/reschedule/`;
+            ? `/api/classes/student/reschedule/`
+            : `/api/classes/tutor/reschedule/`;
 
         try {
-            await axios.post(
+            await api.post(
                 endpoint,
                 {
                     session_id: sessionId,
@@ -30,14 +32,14 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            alert('Reschedule request submitted successfully');
+            toast.success('Reschedule request submitted successfully');
             setRequestedDate('');
             setRequestedTime('');
             setReason('');
             onClose();
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to submit reschedule request');
+            setError(getApiError(err, 'Failed to submit reschedule request'));
         } finally {
             setLoading(false);
         }
@@ -47,7 +49,7 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-2xl font-bold mb-4">Request Reschedule</h2>
                 {initiatedBy === 'TUTOR' && (
                     <p className="text-sm text-yellow-600 mb-4">
@@ -63,7 +65,7 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                        <label className="block text-gray-700 font-medium mb-2">New Date</label>
+                        <label htmlFor="requested_date" className="block text-gray-700 font-medium mb-2">New Date</label>
                         <input
                             id="requested_date"
                             name="requested_date"
@@ -77,7 +79,7 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-gray-700 font-medium mb-2">New Time</label>
+                        <label htmlFor="requested_time" className="block text-gray-700 font-medium mb-2">New Time</label>
                         <input
                             id="requested_time"
                             name="requested_time"
@@ -90,7 +92,7 @@ const RescheduleModal = ({ isOpen, onClose, sessionId, sessionType, initiatedBy,
                     </div>
 
                     <div className="mb-4">
-                        <label className="block text-gray-700 font-medium mb-2">Reason</label>
+                        <label htmlFor="reschedule_reason" className="block text-gray-700 font-medium mb-2">Reason</label>
                         <textarea
                             id="reschedule_reason"
                             name="reschedule_reason"

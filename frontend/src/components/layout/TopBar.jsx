@@ -1,10 +1,10 @@
 import NotificationCenter from '../NotificationCenter';
 
 export default function TopBar({ onMenuOpen, isDark, onToggleTheme }) {
-    const hamBg = isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-50 hover:bg-slate-100';
-    const hamIcon = isDark ? 'text-blue-400' : 'text-blue-600';
-    const textColor = isDark ? 'text-slate-100' : 'text-slate-900';
-    const headerBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100';
+    const hamBg = isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800';
+    const hamIcon = isDark ? 'text-blue-400' : 'text-primary';
+    const textColor = isDark ? 'text-slate-100' : 'text-slate-900 dark:text-slate-100';
+    const headerBg = isDark ? 'bg-slate-900 border-slate-800' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800';
 
     return (
         <header className={`md:hidden sticky top-0 z-50 ${headerBg} border-b px-4 py-3 flex items-center justify-between shadow-sm`}>
@@ -22,7 +22,7 @@ export default function TopBar({ onMenuOpen, isDark, onToggleTheme }) {
 
             <div className="flex items-center gap-2">
                 <img src="/logo.png" alt="Hidayah" className="w-8 h-8 object-contain" />
-                <span className={`font-black ${textColor} tracking-tight`}>HIDAYAH</span>
+                <span className={`font-bold ${textColor} tracking-tight`}>HIDAYAH</span>
             </div>
 
             <div className="flex items-center gap-2">

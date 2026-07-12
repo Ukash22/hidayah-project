@@ -46,7 +46,7 @@ export default function Drawer({ open, onClose, title, children, size = 'lg', fo
                         className={`fixed top-0 right-0 h-full w-full ${SIZES[size]} bg-slate-900 z-[301] shadow-[-20px_0_60px_rgba(0,0,0,0.4)] flex flex-col`}
                     >
                         <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 shrink-0">
-                            <h2 className="text-white font-black text-base">{title}</h2>
+                            <h2 className="text-white font-bold text-base">{title}</h2>
                             <button
                                 onClick={onClose}
                                 aria-label="Close panel"

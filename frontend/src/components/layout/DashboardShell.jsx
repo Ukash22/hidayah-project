@@ -24,10 +24,18 @@ export default function DashboardShell({ navGroups, role }) {
     const mainBg = isDark
         ? 'bg-slate-950'
         : 'bg-gradient-to-br from-white via-blue-50/40 to-white';
-    const textColor = isDark ? 'text-slate-100' : 'text-slate-900';
+    const textColor = isDark ? 'text-slate-100' : 'text-slate-900 dark:text-slate-100';
 
     return (
-        <div className={`min-h-screen ${mainBg} flex font-sans transition-colors duration-300`}>
+        <div className={`min-h-screen ${mainBg} ${isDark ? 'dark' : ''} flex font-sans transition-colors duration-300`}>
+            {/* Keyboard users can jump past the sidebar (WCAG 2.4.1) — visible only when focused */}
+            <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[300] focus:bg-primary focus:text-white focus:px-5 focus:py-3 focus:rounded-xl focus:font-bold focus:text-sm focus:shadow-xl"
+            >
+                Skip to content
+            </a>
+
             {/* Desktop Sidebar */}
             <aside className="hidden md:flex w-64 bg-slate-900 flex-col fixed h-full z-40 shadow-[20px_0_60px_rgba(0,0,0,0.15)]">
                 <Sidebar
@@ -65,7 +73,7 @@ export default function DashboardShell({ navGroups, role }) {
                     isDark={isDark}
                     onToggleTheme={toggleTheme}
                 />
-                <main className="flex-1 p-4 md:p-8 lg:p-10 overflow-auto">
+                <main id="main-content" tabIndex={-1} className="flex-1 p-4 md:p-8 lg:p-10 overflow-auto outline-none">
                     <div className={`${textColor} transition-colors duration-300`}>
                         <Outlet context={{ isDark }} />
                     </div>

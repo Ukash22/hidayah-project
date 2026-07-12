@@ -1,10 +1,15 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
+logger = logging.getLogger(__name__)
+
 from rest_framework import status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema, inline_serializer
 from django.contrib.auth import authenticate
 from .models import Notification
 from .serializers import UserSerializer, RegisterSerializer, NotificationSerializer, PendingStudentSerializer, AdminUserManagementSerializer
@@ -37,16 +42,83 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = RegisterSerializer
 
+from django.conf import settings as dj_settings
+
+REFRESH_COOKIE = dj_settings.REFRESH_COOKIE_NAME
+
+
+def set_refresh_cookie(response, refresh_token):
+    # Attributes are env-configurable (REFRESH_COOKIE_* in settings.py).
+    # Defaults are None+Secure: required in prod (cross-site onrender
+    # subdomains) and fine in dev (localhost/127.0.0.1 trustworthy-origin
+    # exemption lets Secure cookies work over http).
+    response.set_cookie(
+        REFRESH_COOKIE,
+        refresh_token,
+        max_age=int(dj_settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+        httponly=True,
+        secure=dj_settings.REFRESH_COOKIE_SECURE,
+        samesite=dj_settings.REFRESH_COOKIE_SAMESITE,
+        path='/api/auth/',
+    )
+
+
+class CookieTokenRefreshView(APIView):
+    """Refresh the access token from the httpOnly cookie (preferred) or a
+    body `refresh` field (legacy clients)."""
+    permission_classes = (permissions.AllowAny,)
+
+    @extend_schema(
+        request=inline_serializer('TokenRefreshRequest', {
+            'refresh': serializers.CharField(required=False, help_text='Optional — normally supplied via the httpOnly cookie'),
+        }),
+        responses={200: inline_serializer('TokenRefreshResponse', {'access': serializers.CharField()})},
+    )
+    def post(self, request):
+        from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+        refresh = request.data.get('refresh') or request.COOKIES.get(REFRESH_COOKIE)
+        if not refresh:
+            return Response({'error': 'No refresh token provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+        serializer = TokenRefreshSerializer(data={'refresh': refresh})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception:
+            return Response({'error': 'Refresh token invalid or expired.'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.validated_data)
+
+
+class LogoutView(APIView):
+    """Clear the refresh cookie server-side."""
+    permission_classes = (permissions.AllowAny,)
+
+    @extend_schema(request=None, responses={200: inline_serializer('LogoutResponse', {'message': serializers.CharField()})})
+    def post(self, request):
+        response = Response({'message': 'Logged out.'})
+        response.delete_cookie(REFRESH_COOKIE, path='/api/auth/')
+        return response
+
+
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 
+    @extend_schema(
+        request=inline_serializer('LoginRequest', {
+            'username': serializers.CharField(help_text='Username or email'),
+            'password': serializers.CharField(),
+        }),
+        responses={200: inline_serializer('LoginResponse', {
+            'access': serializers.CharField(),
+            'user': UserSerializer(),
+        })},
+        description='Sets the refresh token as an httpOnly cookie; the body contains only the access token.',
+    )
     def post(self, request):
         username_or_email = request.data.get('username')
         password = request.data.get('password')
-        
+
         # Try authenticating with username
         user = authenticate(username=username_or_email, password=password)
-        
+
         # If that fails, try authenticating with email
         if not user and '@' in username_or_email:
             try:
@@ -58,13 +130,17 @@ class LoginView(APIView):
         if user:
             if not user.is_active:
                 return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
-            
+
             refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
+            # S4: the refresh token travels only in an httpOnly cookie — never in
+            # the body — so XSS cannot exfiltrate it. The access token stays in
+            # client memory and is re-obtained via the cookie on page load.
+            response = Response({
                 'access': str(refresh.access_token),
                 'user': UserSerializer(user).data
             })
+            set_refresh_cookie(response, str(refresh))
+            return response
         return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -83,9 +159,11 @@ class PendingStudentListView(generics.ListAPIView):
     serializer_class = PendingStudentSerializer
 
     def get_queryset(self):
-        # Return students with PENDING approval status
-        from students.models import StudentProfile
-        return User.objects.filter(student_profile__approval_status='PENDING')
+        return (
+            User.objects
+            .filter(student_profile__approval_status='PENDING')
+            .select_related('student_profile')
+        )
 
 class ApproveStudentView(APIView):
     permission_classes = (permissions.IsAdminUser,)
@@ -94,9 +172,9 @@ class ApproveStudentView(APIView):
         try:
             from students.models import StudentProfile
             from payments.models import PricingTier
-            from core.utils.pdf_generator import generate_admission_letter
-            from applications.email_service import send_admission_letter_email
             from decimal import Decimal
+            from core.dispatch import run_async
+            from core.tasks import send_admission_letter_task
             
             profile = StudentProfile.objects.get(user__id=pk)
             user = profile.user
@@ -129,8 +207,8 @@ class ApproveStudentView(APIView):
                             status='APPROVED',
                             tutor=profile.assigned_tutor
                         )
-                except:
-                    pass
+                except Exception:
+                    logger.warning("Auto-enrollment failed during student approval", exc_info=True)
 
             # 2. Build Fee Breakdown for PDF
             enrollment_data = []
@@ -177,31 +255,24 @@ class ApproveStudentView(APIView):
 
             profile.total_amount = total_first_payment
             profile.save()
-            
+
             payment_url = f"{settings.FRONTEND_URL}/admission-portal"
-            
-            # Generate PDF
-            try:
-                letter_path = generate_admission_letter(user, profile, {
-                    'enrollments': enrollment_data,
-                    'total_payment': float(total_first_payment),
-                }, payment_url=payment_url)
-                profile.admission_letter = letter_path
-                profile.save()
-                
-                # Send Email
-                send_admission_letter_email(user, profile)
-                
-            except Exception as e:
-                print(f"Error in approval PDF/Email: {e}")
-                return Response({"message": "Approved but failed to generate/send letter", "error": str(e)}, status=status.HTTP_200_OK)
+
+            # Dispatch PDF generation + email asynchronously (Celery or thread pool)
+            run_async(
+                send_admission_letter_task,
+                profile.pk,
+                payment_url,
+                enrollment_data,
+            )
 
             return Response({"message": f"Student {user.username} approved successfully and notified."})
             
         except StudentProfile.DoesNotExist:
             return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            logger.exception("Student approval failed")
+            return Response({"error": "Approval failed. Please check server logs."}, status=status.HTTP_400_BAD_REQUEST)
 
 class RequestPasswordResetView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -238,8 +309,9 @@ class RequestPasswordResetView(APIView):
         except User.DoesNotExist:
             # Don't reveal user existence
             return Response({"message": "Password reset link sent to your email."})
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SetNewPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)

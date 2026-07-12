@@ -2,6 +2,8 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 import requests
+import logging
+logger = logging.getLogger(__name__)
 import base64
 from django.conf import settings
 
@@ -27,7 +29,7 @@ class ZoomService:
         if response.status_code == 200:
             return response.json().get("access_token")
         else:
-            print(f"Zoom Auth Error: {response.text}")
+            logger.error("Zoom auth error: %s", response.text)
             return None
 
     @staticmethod
@@ -66,5 +68,5 @@ class ZoomService:
         if response.status_code == 201:
             return response.json()
         else:
-            print(f"Zoom Meeting Creation Error: {response.text}")
+            logger.error("Zoom meeting creation error: %s", response.text)
             return None

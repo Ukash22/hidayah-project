@@ -1,6 +1,8 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
+logger = logging.getLogger(__name__)
 from django.contrib import admin
 from .models import TrialApplication, ZoomClass
 
@@ -155,8 +157,8 @@ class TrialApplicationAdmin(admin.ModelAdmin):
                 subject = "Update regarding your Trial Class at Hidayah e Madarasah International"
                 message = f"Assalamu Alaikum {application.first_name},\n\nThank you for your interest. Unfortunately, we are unable to approve your trial class at this time.\n\nBest Regards,\nHidayah Admin"
                 send_mail(subject, message, settings.EMAIL_HOST_USER, [application.email])
-            except Exception as e:
-                pass
+            except Exception:
+                logger.warning("Rejection email failed for application %s", application.pk, exc_info=True)
                 
         self.message_user(request, f"{count} application(s) rejected and emails sent.")
     make_rejected.short_description = "Reject selected applications"

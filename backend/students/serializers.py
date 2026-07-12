@@ -11,21 +11,29 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.name', read_only=True)
     tutor_name = serializers.SerializerMethodField()
     upcoming_sessions_count = serializers.SerializerMethodField()
-    
+
     class Meta:
         from .models import Enrollment
         model = Enrollment
         fields = ('id', 'subject', 'subject_name', 'tutor', 'tutor_name', 'tutor_class_link', 'hourly_rate', 'hours_per_week', 'days_per_week', 'preferred_days', 'preferred_time', 'weekly_rate', 'monthly_rate', 'status', 'upcoming_sessions_count', 'upcoming_sessions')
 
+    def _cached_sessions(self, obj):
+        """Run the session query once and cache it on the enrollment instance."""
+        if not hasattr(obj, '_upcoming_sessions_cache'):
+            from classes.models import ScheduledSession
+            from django.utils import timezone
+            obj._upcoming_sessions_cache = list(
+                ScheduledSession.objects.filter(
+                    student=obj.student.user,
+                    subject=obj.subject,
+                    status='PENDING',
+                    scheduled_at__gte=timezone.now()
+                ).order_by('scheduled_at')[:5]
+            )
+        return obj._upcoming_sessions_cache
+
     def get_upcoming_sessions_count(self, obj):
-        from classes.models import ScheduledSession
-        from django.utils import timezone
-        return ScheduledSession.objects.filter(
-            student=obj.student.user,
-            subject=obj.subject,
-            status='PENDING',
-            scheduled_at__gte=timezone.now()
-        ).count()
+        return len(self._cached_sessions(obj))
 
     def get_tutor_name(self, obj):
         if obj.tutor:
@@ -40,20 +48,15 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     upcoming_sessions = serializers.SerializerMethodField()
     def get_upcoming_sessions(self, obj):
-        from classes.models import ScheduledSession
-        from django.utils import timezone
-        sessions = ScheduledSession.objects.filter(
-            student=obj.student.user,
-            subject=obj.subject,
-            status='PENDING',
-            scheduled_at__gte=timezone.now()
-        ).order_by('scheduled_at')[:5] # Show next 5 sessions
-        
+        sessions = self._cached_sessions(obj)
+        tutor_link = None
+        if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
+            tutor_link = obj.tutor.tutor_profile.live_class_link
         return [{
             'id': s.id,
             'scheduled_at': s.scheduled_at,
-            'meeting_link': s.meeting_link or (obj.tutor.tutor_profile.live_class_link if obj.tutor and hasattr(obj.tutor, 'tutor_profile') else None),
-            'whiteboard_link': s.whiteboard_link or (obj.tutor.tutor_profile.live_class_link if obj.tutor and hasattr(obj.tutor, 'tutor_profile') else None),
+            'meeting_link': s.meeting_link or tutor_link,
+            'whiteboard_link': s.whiteboard_link or tutor_link,
             'is_started': s.is_started
         } for s in sessions]
 
@@ -78,11 +81,18 @@ class StudentProfileSerializer(serializers.ModelSerializer):
             'full_name', 'total_amount', 'payment_reference', 'wallet_balance', 'approval_status',
             'enrollments'
         )
-        
+        # Clients only read admission_letter_url; serialising the raw FileField
+        # crashes when Cloudinary isn't configured (e.g. local dev without creds).
+        extra_kwargs = {'admission_letter': {'write_only': True}}
+
     def get_admission_letter_url(self, obj):
         if obj.admission_letter:
             from django.conf import settings
-            return f"{settings.BACKEND_URL}{obj.admission_letter.url}"
+            try:
+                return f"{settings.BACKEND_URL}{obj.admission_letter.url}"
+            except Exception:
+                # Storage backend unavailable/misconfigured — degrade to no link
+                return None
         return None
     
     def get_assigned_tutor_details(self, obj):

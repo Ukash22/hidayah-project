@@ -59,7 +59,7 @@ class ExamViewSet(viewsets.ModelViewSet):
         
         # Notify Admin if a Tutor creates an exam
         if getattr(user, 'role', '') == 'TUTOR':
-            from notifications.models import Notification
+            from accounts.models import Notification
             from django.contrib.auth import get_user_model
             User = get_user_model()
             admins = User.objects.filter(role='ADMIN')
@@ -124,7 +124,7 @@ class ExamViewSet(viewsets.ModelViewSet):
             # Notify Admin if a Tutor adds a question
             user = self.request.user
             if getattr(user, 'role', '') == 'TUTOR':
-                from notifications.models import Notification
+                from accounts.models import Notification
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
                 admins = User.objects.filter(role='ADMIN')

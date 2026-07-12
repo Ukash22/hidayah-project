@@ -1,6 +1,7 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
 from rest_framework import status, views, permissions
 from rest_framework.response import Response
 from django.core.mail import send_mail
@@ -10,6 +11,8 @@ from django.utils.decorators import method_decorator
 from .models import TrialApplication, ZoomClass
 from .serializers import TrialApplicationSerializer
 from .live_class_service import LiveClassService
+
+logger = logging.getLogger(__name__)
 
 class ApplicationCreateView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -90,64 +93,37 @@ class ApproveApplicationView(views.APIView):
                 application.duration = duration
                 application.save()
                 
-                # 5. Send Email
-                email_sent = False
-                email_error = None
-                try:
-                    formatted_time = start_time.replace('T', ' ') if start_time else 'To be scheduled'
-                    join_link = meeting_data.get('join_url') if meeting_data else manual_link
-                    whiteboard_link = meeting_data.get('whiteboard_url') if meeting_data else ""
-                    
-                    subject = "Your Free Trial Class Confirmation - Hidayah e Madarasah"
-                    message = f"""Assalamu Alaikum {application.first_name},
-                    
-Your free trial class has been scheduled!
+                # 5. Send confirmation email asynchronously
+                from core.dispatch import run_async
+                from core.tasks import send_trial_confirmation_task
+                join_link = meeting_data.get('join_url') if meeting_data else manual_link
+                whiteboard_link = meeting_data.get('whiteboard_url') if meeting_data else ""
+                formatted_time = start_time.replace('T', ' ') if start_time else 'To be scheduled'
+                run_async(
+                    send_trial_confirmation_task,
+                    application.email,
+                    application.first_name,
+                    tutor_name,
+                    application.course_interested,
+                    formatted_time,
+                    duration,
+                    join_link,
+                    whiteboard_link,
+                )
 
-📅 Class Details:
-----------------
-Tutor: {tutor_name}
-Topic: {application.course_interested}
-Date & Time: {formatted_time} (UTC)
-Duration: {duration} Minutes
-
-🔴 Join Class Directly:
-{join_link}
-
-🎨 Whiteboard Link (if applicable):
-{whiteboard_link}
-
-You can also join via your Student Dashboard:
-Link: {settings.FRONTEND_URL}/student
-
-Note: Joining the class will deduct the session fee from your wallet.
-
-Best Regards,
-Hidayah e Madarasah Team"""
-                    send_mail(
-                        subject, 
-                        message, 
-                        settings.EMAIL_HOST_USER, 
-                        [application.email],
-                        fail_silently=False
-                    )
-                    email_sent = True
-                except Exception as e:
-                    email_error = str(e)
-                    print(f"Email Error: {e}")
-                
             return Response({
                 "message": "Application approved.",
                 "zoom_link": meeting_data.get('join_url') if meeting_data else manual_link,
                 "whiteboard_link": meeting_data.get('whiteboard_url') if meeting_data else "",
                 "password": meeting_data.get('password', "") if meeting_data else "",
-                "email_sent": email_sent,
-                "email_error": email_error
+                "email_sent": True,
             }, status=status.HTTP_200_OK)
                 
         except TrialApplication.DoesNotExist:
             return Response({"error": "Application not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ApplicationUpdateView(views.APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -190,8 +166,9 @@ class ApplicationUpdateView(views.APIView):
             
         except TrialApplication.DoesNotExist:
             return Response({"error": "Application not found"}, status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ApplicationListView(views.APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -263,8 +240,9 @@ class MyClassesView(views.APIView):
                 "is_paid": is_paid
             })
             
-        except Exception as e:
-            return Response({"error": str(e)}, status=400)
+        except Exception:
+            logger.exception("Unhandled application error")
+            return Response({"error": "Request failed. Please try again."}, status=400)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class RejectApplicationView(views.APIView):
@@ -281,8 +259,8 @@ class RejectApplicationView(views.APIView):
                 subject = "Update regarding your Trial Class at Hidayah e Madarasah International"
                 message = f"Assalamu Alaikum {application.first_name},\n\nThank you for your interest. Unfortunately, we are unable to approve your trial class at this time.\n\nBest Regards,\nHidayah Admin"
                 send_mail(subject, message, settings.EMAIL_HOST_USER, [application.email])
-            except Exception as e:
-                print(f"Email Error: {e}")
+            except Exception:
+                logger.exception("Rejection email failed for application %s", pk)
                 
             return Response({"message": "Application rejected and email sent."}, status=status.HTTP_200_OK)
         except TrialApplication.DoesNotExist:
@@ -342,8 +320,8 @@ class TutorScheduleView(views.APIView):
                 profile = sessions[i].student.student_profile
                 schedule_days = profile.preferred_days or ""
                 schedule_time = profile.preferred_time or ""
-            except:
-                pass
+            except AttributeError:
+                pass  # student has no profile — leave schedule fields blank
             
             unified_schedule.append({
                 'id': s['id'],
@@ -428,8 +406,9 @@ class JoinClassView(views.APIView):
             
         except StudentProfile.DoesNotExist:
             return Response({"error": "Student profile not found"}, status=404)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=500)
 @method_decorator(csrf_exempt, name='dispatch')
 class CompleteSessionView(views.APIView):
     """
@@ -470,8 +449,8 @@ class CompleteSessionView(views.APIView):
                 try:
                     pricing = PricingTier.objects.get(class_type=profile.class_type, is_active=True)
                     hourly_rate = pricing.hourly_rate
-                except:
-                    pass
+                except PricingTier.DoesNotExist:
+                    pass  # no active tier — keep fallback rate
             
             fee_amount = (Decimal(str(actual_duration)) / Decimal('60')) * hourly_rate
             
@@ -512,8 +491,9 @@ class CompleteSessionView(views.APIView):
                 "payout_status": "PENDING"
             })
             
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=500)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AdminReleasePayoutView(views.APIView):
@@ -564,8 +544,9 @@ class AdminReleasePayoutView(views.APIView):
                 "amount": float(tutor_share)
             })
             
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=500)
 
 class PendingPayoutsView(views.APIView):
     """

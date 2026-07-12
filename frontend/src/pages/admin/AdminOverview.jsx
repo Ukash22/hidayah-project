@@ -1,21 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import {
     ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     PieChart, Pie, Cell
 } from 'recharts';
+import { SkeletonCard } from '../../components/ui';
 
 function StatCard({ icon, label, value, sub, alert: isAlert }) {
     return (
-        <div className={`bg-white border p-6 rounded-[2.5rem] shadow-sm hover:shadow-md transition-shadow flex flex-col gap-1 ${isAlert ? 'border-amber-200' : 'border-slate-100'}`}>
+        <div className={`bg-white dark:bg-slate-900 border p-6 rounded-card-lg shadow-sm hover:shadow-md transition-shadow flex flex-col gap-1 ${isAlert ? 'border-amber-200' : 'border-slate-100 dark:border-slate-800'}`}>
             <div className="flex items-center justify-between mb-2">
                 <span className="text-2xl">{icon}</span>
                 {isAlert && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
             </div>
-            <div className="text-3xl font-black text-slate-800">{value}</div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</div>
+            <div className="text-3xl font-bold text-slate-800 dark:text-slate-200">{value}</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</div>
             <div className="text-[9px] text-slate-300 font-bold uppercase tracking-tighter">{sub}</div>
         </div>
     );
@@ -23,6 +25,7 @@ function StatCard({ icon, label, value, sub, alert: isAlert }) {
 
 export default function AdminOverview() {
     const navigate = useNavigate();
+    const toast = useToast();
     const [allStudents, setAllStudents] = useState([]);
     const [tutors, setTutors] = useState([]);
     const [applications, setApplications] = useState([]);
@@ -52,13 +55,13 @@ export default function AdminOverview() {
                 api.get('/api/payments/admin/settings/'),
                 api.get('/api/payments/admin/stats/'),
             ]);
-            setAllStudents(Array.isArray(studRes.data) ? studRes.data : []);
-            setTutors(Array.isArray(tutRes.data) ? tutRes.data : []);
-            setApplications(Array.isArray(appRes.data) ? appRes.data : []);
-            setPendingBookings(Array.isArray(bookRes.data) ? bookRes.data : (bookRes.data?.results || []));
-            setWithdrawalRequests(Array.isArray(withRes.data) ? withRes.data : []);
-            setAllComplaints(Array.isArray(compRes.data) ? compRes.data : []);
-            setAllClasses(Array.isArray(clsRes.data) ? clsRes.data : []);
+            setAllStudents(asList(studRes.data));
+            setTutors(asList(tutRes.data));
+            setApplications(asList(appRes.data));
+            setPendingBookings(asList(bookRes.data));
+            setWithdrawalRequests(asList(withRes.data));
+            setAllComplaints(asList(compRes.data));
+            setAllClasses(asList(clsRes.data));
             setGlobalSettings(settRes.data);
             setStats(statsRes.data);
         } catch (err) {
@@ -79,7 +82,7 @@ export default function AdminOverview() {
             setGlobalSuccess(true);
             setTimeout(() => setGlobalSuccess(false), 3000);
         } catch {
-            alert('Failed to update global share. Please ensure value is valid.');
+            toast.error('Failed to update global share. Please ensure value is valid.');
         } finally {
             setUpdatingGlobal(false);
         }
@@ -97,8 +100,8 @@ export default function AdminOverview() {
     })();
 
     if (loading) return (
-        <div className="flex items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
@@ -112,27 +115,27 @@ export default function AdminOverview() {
                     <div className="flex items-center gap-3">
                         <span className="text-xl">⚠️</span>
                         <div>
-                            <h4 className="text-sm font-black text-red-800 uppercase tracking-tight">System Alert</h4>
+                            <h4 className="text-sm font-bold text-red-800 uppercase tracking-tight">System Alert</h4>
                             <p className="text-xs text-red-600 font-bold">{error}</p>
                         </div>
                     </div>
-                    <button onClick={fetchAll} className="text-[10px] font-black text-red-800 uppercase hover:underline">Retry Sync</button>
+                    <button onClick={fetchAll} className="text-[10px] font-bold text-red-800 uppercase hover:underline">Retry Sync</button>
                 </div>
             )}
 
             {/* Active Class Banner */}
             {activeClass && (
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-800 rounded-2xl p-6 shadow-2xl shadow-blue-500/20 border border-blue-500/30 flex flex-col md:flex-row justify-between items-center gap-6 animate-pulse mb-8">
+                <div className="bg-gradient-to-r from-primary to-indigo-800 rounded-2xl p-6 shadow-2xl shadow-blue-500/20 border border-blue-500/30 flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white text-xl">🎥</div>
                         <div>
-                            <h4 className="text-white font-black text-lg">Class Active on Platform</h4>
+                            <h4 className="text-white font-bold text-lg">Class Active on Platform</h4>
                             <p className="text-blue-100 text-sm">Tr. {activeClass.tutor_name} is teaching {activeClass.student_name} ({activeClass.subject || 'Class'})</p>
                         </div>
                     </div>
                     <button
                         onClick={() => navigate(`/live/${activeClass.db_id || activeClass.id}`)}
-                        className="bg-white text-blue-700 hover:bg-slate-50 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs transition-all w-full md:w-auto text-center shadow-lg flex-shrink-0"
+                        className="bg-white dark:bg-slate-900 text-blue-700 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all w-full md:w-auto text-center shadow-lg flex-shrink-0"
                     >
                         Observe Class
                     </button>
@@ -142,11 +145,11 @@ export default function AdminOverview() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Global Commission Card */}
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-[2.5rem] shadow-xl relative overflow-hidden group border border-slate-700/50">
+                <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-card-lg shadow-xl relative overflow-hidden group border border-slate-700/50">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
                     <div className="relative z-10">
                         <div className="flex items-center justify-between mb-4">
-                            <span className="text-[10px] uppercase font-black tracking-widest text-primary">Global Platform Share</span>
+                            <span className="text-[11px] uppercase font-semibold tracking-wide text-primary">Global Platform Share</span>
                         </div>
                         <div className="flex items-baseline gap-2">
                             <input
@@ -155,7 +158,7 @@ export default function AdminOverview() {
                                 disabled={updatingGlobal}
                                 defaultValue={globalSettings?.default_commission_percentage || 5.00}
                                 onBlur={(e) => handleUpdateGlobalCommission(e.target.value)}
-                                className="bg-transparent text-3xl font-black text-white w-24 outline-none border-b-2 border-transparent focus:border-primary transition-all pb-1"
+                                className="bg-transparent text-3xl font-bold text-white w-24 outline-none border-b-2 border-transparent focus:border-primary transition-all pb-1"
                             />
                             <span className="text-xl font-bold text-slate-500">%</span>
                         </div>
@@ -163,12 +166,12 @@ export default function AdminOverview() {
                             {updatingGlobal ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Syncing...</span>
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Syncing...</span>
                                 </div>
                             ) : globalSuccess ? (
                                 <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">✓ Live & Dynamic</span>
                             ) : (
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Base Rate for all Subjects</span>
+                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Base Rate for all Subjects</span>
                             )}
                         </div>
                     </div>
@@ -182,8 +185,8 @@ export default function AdminOverview() {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* Demographics Pie */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">Platform Demographics</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Platform Demographics</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <PieChart>
@@ -208,8 +211,8 @@ export default function AdminOverview() {
                 </div>
 
                 {/* Global Reach Chart */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <BarChart data={countryData} layout="vertical">
@@ -223,8 +226,8 @@ export default function AdminOverview() {
                 </div>
 
                 {/* System Activity Pipeline */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                    <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
                     <div className="h-48 w-full">
                         <ResponsiveContainer>
                             <BarChart data={[
@@ -252,8 +255,8 @@ export default function AdminOverview() {
                     { label: 'Live Classes', value: allClasses.filter(c => c.is_live).length, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
                 ].map(({ label, value, color, bg }) => (
                     <div key={label} className={`${bg} border rounded-2xl p-4 flex flex-col gap-1`}>
-                        <div className={`text-2xl font-black ${color}`}>{value}</div>
-                        <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</div>
+                        <div className={`text-2xl font-bold ${color}`}>{value}</div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</div>
                     </div>
                 ))}
             </div>

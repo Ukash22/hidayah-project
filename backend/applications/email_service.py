@@ -2,6 +2,8 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from django.core.mail import EmailMessage
+import logging
+logger = logging.getLogger(__name__)
 from django.conf import settings
 from django.template.loader import render_to_string
 import os
@@ -62,7 +64,7 @@ def send_admission_letter_email(user, student_profile):
             if os.path.exists(pdf_path):
                 email.attach_file(pdf_path)
         except Exception as e:
-            print(f"Error attaching PDF: {e}")
+            logger.warning("Error attaching PDF: %s", e)
     
     email.send(fail_silently=False)
     return True
@@ -243,7 +245,7 @@ def send_tutor_approval_email(user, profile):
             if os.path.exists(pdf_path):
                 email.attach_file(pdf_path)
         except Exception as e:
-            print(f"Error attaching Appointment Letter: {e}")
+            logger.warning("Error attaching appointment letter: %s", e)
 
     email.send(fail_silently=False)
     return True

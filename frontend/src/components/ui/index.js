@@ -5,3 +5,4 @@ export { default as Alert } from './Alert';
 export { default as Modal } from './Modal';
 export { Skeleton, SkeletonCard, SkeletonTable, SkeletonText } from './Skeleton';
 export { default as EmptyState } from './EmptyState';
+export { default as FetchError } from './FetchError';

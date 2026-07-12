@@ -9,7 +9,7 @@ const HITISFeatures = () => {
             description: "Prepare for JAMB, WAEC & NECO with our state-of-the-art Computer Based Test simulation.",
             icon: "📝",
             link: "/exam-practice",
-            color: "from-blue-600 to-indigo-700",
+            color: "from-primary to-indigo-700",
             badge: "Exam Prep"
         },
         {
@@ -26,8 +26,8 @@ const HITISFeatures = () => {
         <section id="features" className="py-24 bg-white overflow-hidden">
             <div className="container">
                 <div className="text-center mb-16">
-                    <span className="text-secondary font-black uppercase tracking-[0.3em] text-[10px] mb-4 block">New HITIS Modules</span>
-                    <h2 className="text-4xl md:text-5xl font-display text-primary font-black mb-6 tracking-tighter">Global Academic Tools</h2>
+                    <span className="text-secondary font-semibold uppercase tracking-wide text-[11px] mb-4 block">New HITIS Modules</span>
+                    <h2 className="text-4xl md:text-5xl font-display text-primary font-bold mb-6 tracking-tighter">Global Academic Tools</h2>
                     <p className="text-slate-500 max-w-2xl mx-auto text-lg leading-relaxed">
                         We've integrated modern technology to help you excel in <span className="font-bold text-primary italic">Western Academic Subjects</span> and <span className="font-bold text-secondary italic">Timeless Islamic Sciences</span>.
                     </p>
@@ -38,19 +38,19 @@ const HITISFeatures = () => {
                         <motion.div
                             key={idx}
                             whileHover={{ y: -10 }}
-                            className={`relative overflow-hidden group bg-gradient-to-br ${feature.color} p-10 rounded-[2.5rem] shadow-2xl hover:shadow-primary/30 transition-all cursor-pointer`}
+                            className={`relative overflow-hidden group bg-gradient-to-br ${feature.color} p-10 rounded-card-lg shadow-2xl hover:shadow-primary/30 transition-all cursor-pointer`}
                             onClick={() => window.location.href = feature.link}
                         >
                             <div className="relative z-10">
-                                <span className="inline-block px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] font-black uppercase tracking-widest text-white mb-6">
+                                <span className="inline-block px-4 py-1 bg-white/20 backdrop-blur-md rounded-full text-[11px] font-semibold uppercase tracking-wide text-white mb-6">
                                     {feature.badge}
                                 </span>
-                                <h3 className="text-3xl font-display text-white font-black mb-4">{feature.title}</h3>
+                                <h3 className="text-3xl font-display text-white font-bold mb-4">{feature.title}</h3>
                                 <p className="text-white/80 text-lg font-medium mb-8 leading-relaxed">
                                     {feature.description}
                                 </p>
                                 <div className="flex items-center gap-4">
-                                    <span className="bg-white text-primary px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all group-hover:bg-secondary group-hover:text-white">
+                                    <span className="bg-white text-primary px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all group-hover:bg-secondary group-hover:text-white">
                                         Explore Now
                                     </span>
                                     <span className="text-white/60 text-sm font-bold uppercase tracking-tighter group-hover:translate-x-2 transition-transform">

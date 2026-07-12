@@ -11,6 +11,14 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
     ],
+    server: {
+      // Same-origin API in dev: the S4 refresh cookie stays first-party.
+      // WebSockets still connect directly to the backend (no cookies needed).
+      proxy: {
+        '/api': { target: env.VITE_DEV_PROXY_TARGET || 'http://localhost:8000', changeOrigin: true },
+        '/media': { target: env.VITE_DEV_PROXY_TARGET || 'http://localhost:8000', changeOrigin: true },
+      },
+    },
     define: {
       // Fallback to production URL if .env is not present
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(

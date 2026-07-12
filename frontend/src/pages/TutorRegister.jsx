@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getApiError } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
@@ -26,11 +26,11 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
     const hasFile = !!file;
     const borderClass = hasFile
         ? 'border-emerald-500/60 bg-emerald-500/5'
-        : 'border-white/5 bg-black/40';
+        : 'border-white/15 bg-black/40';
 
     return (
         <div className="space-y-1.5 h-full">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+            <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 ml-1">
                 {label} {required && <span className="text-red-500">* Required</span>}
             </label>
             <div
@@ -41,7 +41,7 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
                     <Icon size={18} className={hasFile ? 'text-emerald-500' : 'text-slate-600'} />
                     <button
                         type="button"
-                        className={`text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-xl border transition-all pointer-events-none ${
+                        className={`text-[11px] font-semibold uppercase tracking-wide px-3 py-1 rounded-xl border transition-all pointer-events-none ${
                             hasFile
                                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
                                 : 'bg-white/5 text-slate-400 border-white/10'
@@ -71,7 +71,7 @@ const FileUploadBox = ({ name, accept, onChange, file, icon: Icon, required, lab
 
 const SectionHeader = ({ icon: Icon, title, step, colorClass }) => (
     <div className="flex items-center gap-4 mb-10">
-        <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-black text-lg border border-white/5 shadow-xl`}>
+        <div className={`w-12 h-12 ${colorClass || 'bg-emerald-500/10 text-emerald-500'} rounded-2xl flex items-center justify-center font-bold text-lg border border-white/15 shadow-xl`}>
             {step || <Icon size={24} />}
         </div>
         <div>
@@ -205,7 +205,7 @@ const TutorRegister = () => {
 
             setSuccess(true);
         } catch (err) {
-            setError(err.response?.data?.detail || err.response?.data?.error || 'Registration failed');
+            setError(err.response?.data?.detail || getApiError(err, 'Registration failed'));
         } finally {
             setLoading(false);
         }
@@ -216,14 +216,14 @@ const TutorRegister = () => {
             <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-white text-slate-700">
                 <Navbar />
                 <div className="max-w-3xl mx-auto pt-32 px-4 text-center">
-                    <div className="bg-white border border-blue-100 p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                    <div className="bg-white border border-blue-100 p-12 rounded-card-lg shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl" />
-                        <div className="w-24 h-24 bg-emerald-500/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-emerald-200">
+                        <div className="w-24 h-24 bg-emerald-500/10 rounded-card flex items-center justify-center mx-auto mb-8 border border-emerald-200">
                             <IconCheckCircle2 size={48} className="text-emerald-500" />
                         </div>
-                        <h1 className="text-4xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Application Submitted!</h1>
+                        <h1 className="text-4xl font-display font-bold text-slate-900 mb-4 tracking-tighter uppercase">Application Submitted!</h1>
                         <p className="text-slate-500 mb-8 leading-relaxed font-medium">JazakAllahu Khairan. Our team will review your credentials and contact you via email.</p>
-                        <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-700 transition-all text-sm shadow-xl shadow-blue-600/20">Return Home</button>
+                        <button onClick={() => navigate('/')} className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-blue-700 transition-all text-sm shadow-xl shadow-blue-600/20">Return Home</button>
                     </div>
                 </div>
             </div>
@@ -247,10 +247,10 @@ const TutorRegister = () => {
                         <div className="flex justify-between items-center mb-4">
                             {[1, 2, 3, 4, 5, 6].map(s => (
                                 <div key={s} className="flex flex-col items-center gap-2">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-xs transition-all duration-500 border-2 ${currentStep >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-100'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-500 border-2 ${currentStep >= s ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-600/20' : 'bg-white text-slate-300 border-slate-100'}`}>
                                         {currentStep > s ? <IconCheckCircle2 size={16} /> : s}
                                     </div>
-                                    <span className={`text-[8px] font-black uppercase tracking-widest transition-colors ${currentStep === s ? 'text-blue-600' : 'text-slate-400'}`}>
+                                    <span className={`text-[11px] font-semibold uppercase tracking-wide transition-colors ${currentStep === s ? 'text-blue-600' : 'text-slate-400'}`}>
                                         Step 0{s}
                                     </span>
                                 </div>
@@ -266,16 +266,16 @@ const TutorRegister = () => {
                     </div>
 
                     <div className="text-center mb-16">
-                        <div className="w-20 h-20 bg-blue-600/10 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">
+                        <div className="w-20 h-20 bg-blue-600/10 rounded-card flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">
                             <IconBriefcase size={40} className="text-blue-600" />
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center animate-pulse"><IconSparkles size={10} className="text-white" /></div>
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center"><IconSparkles size={10} className="text-white" /></div>
                         </div>
-                        <h1 className="text-5xl font-display font-black text-slate-900 mb-4 tracking-tighter uppercase">Tutor <span className="text-blue-600">Application</span></h1>
+                        <h1 className="text-3xl md:text-5xl font-display font-bold text-slate-900 mb-4 tracking-tighter uppercase">Tutor <span className="text-blue-600">Application</span></h1>
                         <p className="text-slate-500 max-w-xl mx-auto font-medium tracking-wide">Join our global faculty and share your knowledge across Western and Islamic sciences.</p>
                     </div>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-[2rem] text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl font-display">
+                        <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-6 rounded-card text-sm font-bold flex items-center gap-4 mb-12 backdrop-blur-xl font-display">
                             <IconX className="shrink-0" /> {error}
                         </div>
                     )}
@@ -283,37 +283,37 @@ const TutorRegister = () => {
                     <form onSubmit={handleSubmit} className="space-y-12">
                         <AnimatePresence mode="wait">
                             {currentStep === 1 && (
-                                <motion.div key="st1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="01" title="Account Details" colorClass="bg-emerald-500/10 text-emerald-500" />
                                     <AccountFields formData={formData} handleChange={handleChange} />
                                 </motion.div>
                             )}
                             {currentStep === 2 && (
-                                <motion.div key="st2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="02" title="Tutor Profile" colorClass="bg-blue-500/10 text-blue-500" />
                                     <ProfileFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
                                 </motion.div>
                             )}
                             {currentStep === 3 && (
-                                <motion.div key="st3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="03" title="Professional Experience" colorClass="bg-violet-500/10 text-violet-500" />
                                     <ExperienceFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
                                 </motion.div>
                             )}
                             {currentStep === 4 && (
-                                <motion.div key="st4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="04" title="Teaching Core Subjects" colorClass="bg-amber-500/10 text-amber-500" />
                                     <SubjectGrid formData={formData} handleSubjectToggle={handleSubjectToggle} />
                                 </motion.div>
                             )}
                             {currentStep === 5 && (
-                                <motion.div key="st5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="05" title="Technical Requirements" colorClass="bg-rose-500/10 text-rose-500" />
                                     <TechnicalFields formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} files={files} FileUploadBox={FileUploadBox} />
                                 </motion.div>
                             )}
                             {currentStep === 6 && (
-                                <motion.div key="st6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-[3rem] p-8 md:p-12 shadow-2xl">
+                                <motion.div key="st6" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-card-lg p-5 md:p-8 md:p-12 shadow-2xl">
                                     <SectionHeader step="06" title="Instructor Availability" colorClass="bg-blue-500/10 text-blue-500" />
                                     <AvailabilityManager 
                                         formData={formData} 
@@ -334,7 +334,7 @@ const TutorRegister = () => {
                                     <button 
                                         type="button" 
                                         onClick={prevStep}
-                                        className="flex-1 bg-white/50 backdrop-blur-xl border border-slate-200 text-slate-600 py-6 rounded-[2rem] font-black text-sm uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-3"
+                                        className="flex-1 bg-white/50 backdrop-blur-xl border border-slate-200 text-slate-600 py-6 rounded-card font-bold text-sm uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-3"
                                     >
                                         ← Previous
                                     </button>
@@ -344,7 +344,7 @@ const TutorRegister = () => {
                                     <button 
                                         type="button" 
                                         onClick={nextStep}
-                                        className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4"
+                                        className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-card font-bold text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-600/20 transition-all flex items-center justify-center gap-4"
                                     >
                                         Next Block <IconArrowRight size={20} />
                                     </button>
@@ -354,7 +354,7 @@ const TutorRegister = () => {
                                         disabled={loading} 
                                         whileHover={{ scale: 1.02 }} 
                                         whileTap={{ scale: 0.98 }} 
-                                        className="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                                        className="flex-[2] bg-emerald-600 hover:bg-emerald-500 text-white py-6 rounded-card font-bold text-sm uppercase tracking-[0.4em] shadow-2xl shadow-emerald-500/20 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
                                     >
                                         {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <>Join Faculty <IconCheckCircle2 size={20} /></>}
                                     </motion.button>

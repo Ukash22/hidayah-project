@@ -11,7 +11,14 @@ User = get_user_model()
 
 username = os.getenv('ADMIN_USERNAME', 'admin')
 email = os.getenv('ADMIN_EMAIL', 'admin@hidayah.com')
-password = os.getenv('ADMIN_PASSWORD', 'AdminPassword123!')
+password = os.getenv('ADMIN_PASSWORD')
+
+# Never fall back to a hardcoded password: this script runs on every deploy
+# (build.sh) and would otherwise RESET the admin password to a publicly
+# visible default. Without ADMIN_PASSWORD set we do nothing.
+if not password:
+    print("ADMIN_PASSWORD not set - skipping admin creation/update.")
+    raise SystemExit(0)
 
 if not User.objects.filter(username=username).exists():
     print(f"Creating superuser {username}...")

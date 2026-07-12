@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { Badge, EmptyState, Skeleton } from '../components/ui';
 import { User, BookOpen, Globe, Clock, Star, ArrowLeft, Calendar } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function TutorProfile() {
     useEffect(() => {
         const fetch = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/tutors/${id}/`);
+                const res = await api.get(`/api/tutors/${id}/`);
                 setTutor(res.data);
             } catch {
                 setError('This tutor profile could not be loaded.');

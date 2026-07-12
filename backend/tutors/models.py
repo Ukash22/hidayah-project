@@ -3,6 +3,7 @@
 # pylint: skip-file
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator
 
 class TutorProfile(models.Model):
     STATUS_CHOICES = (
@@ -53,7 +54,7 @@ class TutorProfile(models.Model):
     availability_hours = models.TextField(help_text="e.g. 9 AM - 5 PM UTC")
     
     # Financials & Wallet
-    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00, db_index=True)
+    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, default=1500.00, db_index=True, validators=[MinValueValidator(0)])
     @property
     def wallet_balance(self):
         from payments.models import Wallet

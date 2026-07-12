@@ -1,9 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
-import axios from 'axios';
+import api, { getApiError } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) => {
+    const toast = useToast();
     const [amount, setAmount] = useState('');
     const [frequency, setFrequency] = useState('WEEKLY');
     const [loading, setLoading] = useState(false);
@@ -21,18 +23,18 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
         }
 
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_BASE_URL}/api/payments/tutor/withdrawal/`,
+            await api.post(
+                `/api/payments/tutor/withdrawal/`,
                 { amount: parseFloat(amount) },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
-            alert('✅ Withdrawal request submitted successfully!');
+            toast.success('Withdrawal request submitted successfully!');
             setAmount('');
             onClose();
             if (onSuccess) onSuccess();
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to submit withdrawal request.');
+            setError(getApiError(err, 'Failed to submit withdrawal request.'));
         } finally {
             setLoading(false);
         }
@@ -46,27 +48,27 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="bg-[#0f172a] rounded-[2.5rem] w-full max-w-md p-10 relative overflow-hidden border border-white/10 shadow-2xl"
+                        className="bg-[#0f172a] rounded-card-lg w-full max-w-md p-10 relative overflow-hidden border border-white/10 shadow-2xl"
                     >
                         {/* Ambient glow */}
                         <div className="absolute -top-32 -right-32 w-64 h-64 bg-emerald-500/20 blur-[100px] rounded-full"></div>
 
                         <button 
                             onClick={onClose} 
-                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-400 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 text-slate-500 flex items-center justify-center hover:bg-rose-500/20 hover:text-rose-400 transition-all text-xl"
                         >
                             ✕
                         </button>
                         
                         <div className="mb-8 pr-12 relative z-10">
-                            <h2 className="text-3xl font-display font-black text-white mb-2">Fund Withdrawal</h2>
-                            <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Process payout to bank account</p>
+                            <h2 className="text-3xl font-display font-bold text-white mb-2">Fund Withdrawal</h2>
+                            <p className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Process payout to bank account</p>
                         </div>
 
                         <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl mb-8 flex items-center justify-between relative z-10">
                             <div>
-                                <span className="text-[9px] font-black uppercase text-emerald-500 tracking-widest block mb-1">Available Funds</span>
-                                <span className="text-2xl font-black text-emerald-400">₦{currentBalance?.toLocaleString()}</span>
+                                <span className="text-[9px] font-bold uppercase text-emerald-500 tracking-widest block mb-1">Available Funds</span>
+                                <span className="text-2xl font-bold text-emerald-400">₦{currentBalance?.toLocaleString()}</span>
                             </div>
                             <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 text-xl border border-emerald-500/20">
                                 💰
@@ -81,12 +83,14 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Request Amount (₦)</label>
+                                <label htmlFor="withdrawal_amount" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Request Amount (₦)</label>
                                 <input
+                                    id="withdrawal_amount"
+                                    name="withdrawal_amount"
                                     type="number"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:border-emerald-500/50 outline-none transition-all font-black text-white text-lg placeholder:text-slate-600"
+                                    className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-white/5 focus:border-emerald-500/50 outline-none transition-all font-bold text-white text-lg placeholder:text-slate-600"
                                     required
                                     min="1"
                                     max={currentBalance}
@@ -95,8 +99,10 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                             </div>
 
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black uppercase text-slate-500 tracking-widest ml-1">Payout Frequency</label>
+                                <label htmlFor="withdrawal_frequency" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Payout Frequency</label>
                                 <select
+                                    id="withdrawal_frequency"
+                                    name="withdrawal_frequency"
                                     value={frequency}
                                     onChange={(e) => setFrequency(e.target.value)}
                                     className="w-full px-6 py-4 rounded-2xl border border-white/10 bg-[#0f172a] focus:border-emerald-500/50 outline-none transition-all font-bold text-slate-300 text-sm"
@@ -111,14 +117,14 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 bg-white/5 text-slate-400 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all border border-white/5"
+                                    className="flex-1 bg-white/5 text-slate-400 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all border border-white/5"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading || !amount}
-                                    className="flex-[2] bg-emerald-500 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+                                    className="flex-[2] bg-emerald-500 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
                                 >
                                     {loading ? (
                                         <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Processing</>

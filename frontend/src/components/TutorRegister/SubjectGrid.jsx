@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BookOpen, CheckCircle2 } from 'lucide-react';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { ISLAMIC_SUBJECTS, WESTERN_SUBJECTS } from '../../constants/registration';
 
 const SubjectGrid = ({ formData, handleSubjectToggle }) => {
@@ -11,7 +11,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
         const fetchSubjects = async () => {
             try {
                 const res = await api.get('/api/programs/subjects/');
-                const data = Array.isArray(res.data) ? res.data : (res.data?.results || []);
+                const data = asList(res.data);
                 
                 if (data.length > 0) {
                     const islamic = data.filter(s => s.program_type === 'ISLAMIC').map(s => s.name);
@@ -34,7 +34,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
         return (
             <div className="flex flex-col items-center justify-center p-12 space-y-4">
                 <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Loading Subject Catalog...</p>
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Loading Subject Catalog...</p>
             </div>
         );
     }
@@ -46,7 +46,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-500/20 text-emerald-500 shadow-lg">
                         <Users size={16} />
                     </div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Islamic Education</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-white/60">Islamic Education</h4>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {islamicList.map(subj => {
@@ -58,7 +58,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                 onClick={() => handleSubjectToggle(subj)}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center relative overflow-hidden group ${isSelected
                                     ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-lg shadow-emerald-500/10'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:border-white/10'
+                                    : 'bg-black/40 border-white/15 text-slate-500 hover:border-white/10'
                                 }`}
                             >
                                 {isSelected && (
@@ -66,7 +66,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                         <CheckCircle2 size={10} className="text-white" />
                                     </div>
                                 )}
-                                <span className="text-[10px] font-black uppercase tracking-tight">{subj}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-tight">{subj}</span>
                             </button>
                         );
                     })}
@@ -78,7 +78,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-blue-500/20 text-blue-500 shadow-lg">
                         <BookOpen size={16} />
                     </div>
-                    <h4 className="text-xs font-black uppercase tracking-widest text-white/60">Western Education</h4>
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-white/60">Western Education</h4>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {westernList.map(subj => {
@@ -90,7 +90,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                 onClick={() => handleSubjectToggle(subj)}
                                 className={`p-4 rounded-2xl border-2 transition-all flex flex-col items-center justify-center gap-2 text-center relative overflow-hidden group ${isSelected
                                     ? 'bg-blue-500/10 border-blue-500 text-blue-500 shadow-lg shadow-blue-500/10'
-                                    : 'bg-black/40 border-white/5 text-slate-500 hover:border-white/10'
+                                    : 'bg-black/40 border-white/15 text-slate-500 hover:border-white/10'
                                 }`}
                             >
                                 {isSelected && (
@@ -98,7 +98,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                         <CheckCircle2 size={10} className="text-white" />
                                     </div>
                                 )}
-                                <span className="text-[10px] font-black uppercase tracking-tight">{subj}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-tight">{subj}</span>
                             </button>
                         );
                     })}

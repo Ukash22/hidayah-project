@@ -1,6 +1,9 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
+logger = logging.getLogger(__name__)
+
 from rest_framework import permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -477,8 +480,9 @@ class SessionCompleteView(APIView):
                 "tutor_balance": result.get("tutor_balance")
             })
             
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
+        except Exception:
+            logger.exception("Unhandled server error")
+            return Response({"error": "Something went wrong. Please try again."}, status=500)
 class UserSessionListView(APIView):
     """
     Unified view for Student and Tutor to see their scheduled classes (regular & trial).
@@ -487,22 +491,25 @@ class UserSessionListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
+        from rest_framework.pagination import LimitOffsetPagination
         user = request.user
         now = timezone.now()
-        
+
         # 1. Fetch Regular Sessions
         if user.role == 'TUTOR':
             regular_sessions = ScheduledSession.objects.filter(tutor=user)
         else:
-            # [ACCESS CONTROL] Students only see regular classes if they have paid
-            # But we want them to still see Trial sessions (handled in step 2)
             from students.models import StudentProfile
             try:
                 regular_sessions = ScheduledSession.objects.filter(student=user)
             except StudentProfile.DoesNotExist:
                 regular_sessions = ScheduledSession.objects.none()
-            
-        regular_sessions = regular_sessions.select_related('student', 'tutor', 'subject').order_by('scheduled_at')
+
+        regular_sessions = (
+            regular_sessions
+            .select_related('student', 'tutor', 'tutor__tutor_profile', 'subject')
+            .order_by('scheduled_at')
+        )
                 
         # 2. Fetch Trial Sessions (Always visible if approved)
         from applications.models import TrialApplication
@@ -510,6 +517,7 @@ class UserSessionListView(APIView):
             trial_sessions = TrialApplication.objects.filter(tutor=user, status='approved', scheduled_at__isnull=False)
         else:
             trial_sessions = TrialApplication.objects.filter(email=user.email, status='approved', scheduled_at__isnull=False)
+        trial_sessions = trial_sessions.select_related('tutor', 'zoom_class')
             
         combined = []
         
@@ -555,4 +563,8 @@ class UserSessionListView(APIView):
             })
             
         combined.sort(key=lambda x: x['scheduled_at'] if x['scheduled_at'] else now)
-        return Response(combined)
+
+        paginator = LimitOffsetPagination()
+        paginator.default_limit = 50
+        page = paginator.paginate_queryset(combined, request)
+        return paginator.get_paginated_response(page)

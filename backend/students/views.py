@@ -7,13 +7,27 @@ from rest_framework.response import Response
 from .models import StudentProfile
 from .serializers import StudentProfileSerializer
 
+_STUDENT_SELECT = ['user', 'assigned_tutor', 'preferred_tutor']
+_STUDENT_PREFETCH = [
+    'enrollments__subject',
+    'enrollments__tutor__tutor_profile',
+]
+
+def _optimized_student_qs():
+    return (
+        StudentProfile.objects
+        .select_related(*_STUDENT_SELECT)
+        .prefetch_related(*_STUDENT_PREFETCH)
+    )
+
 class StudentProfileDetailView(generics.RetrieveAPIView):
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_object(self):
-        profile, _ = StudentProfile.objects.get_or_create(user=self.request.user)
-        return profile
+        # get_or_create ensures the profile exists, then re-fetch with full optimization
+        StudentProfile.objects.get_or_create(user=self.request.user)
+        return _optimized_student_qs().get(user=self.request.user)
 
 class ParentPortalView(generics.ListAPIView):
     """View for parents to see their linked students"""
@@ -23,13 +37,11 @@ class ParentPortalView(generics.ListAPIView):
 
 class AdminStudentViewSet(generics.ListAPIView):
     """Admin view to list all APPROVED students (Active)"""
-    # Note: We use List because retrieval/update logic can be handled via sub-views or a ViewSet
-    # For now, let's keep it simple: List, and specific Detail/Update views
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        return StudentProfile.objects.filter(payment_status='PAID')
+        return _optimized_student_qs().filter(payment_status='PAID')
 
 class AdminStudentDetailView(generics.RetrieveUpdateAPIView):
     """Admin view to Retrieve and Update Student details (Tutor, Class Type, etc)"""
@@ -83,9 +95,9 @@ class TutorAssignedStudentsView(generics.ListAPIView):
     """View for Tutors to see students assigned to them"""
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
-        return StudentProfile.objects.filter(assigned_tutor=self.request.user)
+        return _optimized_student_qs().filter(assigned_tutor=self.request.user)
 
 class EnrollInCourseView(generics.CreateAPIView):
     """Allow students to enroll in another course from dashboard"""
@@ -169,7 +181,7 @@ class EnrollInCourseView(generics.CreateAPIView):
             )
 
         # 1.6 Notify Admin
-        from notifications.models import Notification
+        from accounts.models import Notification
         admins = User.objects.filter(role='ADMIN')
         for admin in admins:
             Notification.objects.create(

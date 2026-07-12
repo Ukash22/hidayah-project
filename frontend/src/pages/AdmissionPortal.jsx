@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +12,7 @@ const AdmissionPortal = () => {
 
     const fetchProfile = React.useCallback(async () => {
         try {
-            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/students/me/`, {
+            const response = await api.get(`/api/students/me/`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setProfile(response.data);
@@ -53,14 +53,14 @@ const AdmissionPortal = () => {
             <div className="container pt-32 pb-20 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Welcome Header */}
-                    <div className="bg-gradient-to-r from-primary to-primary-600 rounded-[2.5rem] shadow-2xl p-10 mb-8 text-white">
+                    <div className="bg-gradient-to-r from-primary to-primary-600 rounded-card-lg shadow-2xl p-10 mb-8 text-white">
                         <h1 className="text-4xl font-display font-bold mb-2">Welcome, {user?.first_name}!</h1>
                         <p className="text-white/80 text-lg">Admission Number: <span className="font-mono font-bold">{user?.admission_number}</span></p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-6">
                         {/* Admission Letter Card */}
-                        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100">
+                        <div className="bg-white rounded-card-lg shadow-xl p-8 border border-slate-100">
                             <div className="text-center mb-6">
                                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                                     📄
@@ -75,25 +75,25 @@ const AdmissionPortal = () => {
                                     download
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="block w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-2xl font-black uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-center"
+                                    className="block w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-2xl font-bold uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-center"
                                 >
                                     ⬇ Download PDF
                                 </a>
                             ) : (
-                                <div className="text-center text-slate-400 italic text-sm">
+                                <div className="text-center text-slate-500 italic text-sm">
                                     Generating your admission letter...
                                 </div>
                             )}
                         </div>
 
                         {/* Payment Status Card */}
-                        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100">
+                        <div className="bg-white rounded-card-lg shadow-xl p-8 border border-slate-100">
                             <div className="text-center mb-6">
                                 <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                                     💳
                                 </div>
                                 <h2 className="text-2xl font-display font-bold text-primary mb-2">Payment Status</h2>
-                                <span className="inline-block bg-amber-100 text-amber-600 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest">
+                                <span className="inline-block bg-amber-100 text-amber-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest">
                                     {profile?.payment_status || 'UNPAID'}
                                 </span>
                             </div>
@@ -111,7 +111,7 @@ const AdmissionPortal = () => {
 
                             <button
                                 onClick={() => navigate('/payment')}
-                                className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-4 rounded-2xl font-black uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
+                                className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-4 rounded-2xl font-bold uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                             >
                                 Pay Now →
                             </button>
@@ -119,9 +119,9 @@ const AdmissionPortal = () => {
                     </div>
 
                      {/* Dashboard Access Information */}
-                    <div className="mt-8 bg-blue-50 border-2 border-blue-200 rounded-[2.5rem] p-8 text-center">
+                    <div className="mt-8 bg-primary-soft border-2 border-blue-200 rounded-card-lg p-5 md:p-8 text-center">
                         <div className="flex flex-col md:flex-row items-center gap-6 text-left">
-                            <div className="text-6xl mx-auto md:mx-0">🔓</div>
+                            <div className="text-4xl md:text-6xl mx-auto md:mx-0">🔓</div>
                             <div className="flex-1">
                                 <h3 className="text-2xl font-display font-bold text-blue-900 mb-2">Welcome to your Dashboard!</h3>
                                 <p className="text-blue-700 mb-4 font-medium leading-relaxed italic">
@@ -130,14 +130,14 @@ const AdmissionPortal = () => {
                                 
                                 <div className="grid md:grid-cols-2 gap-4 mt-8 mb-8">
                                     <div className="bg-white/60 p-6 rounded-3xl border border-blue-100 shadow-sm">
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-blue-900 mb-2">Class Rate</h4>
-                                        <p className="text-2xl font-black text-blue-600">₦1,000 <span className="text-[10px] text-blue-400 font-normal">/ Per Session</span></p>
+                                        <h4 className="text-xs font-bold uppercase tracking-widest text-blue-900 mb-2">Class Rate</h4>
+                                        <p className="text-2xl font-bold text-primary">₦1,000 <span className="text-[10px] text-blue-400 font-normal">/ Per Session</span></p>
                                         <p className="text-[10px] text-blue-500 mt-2 font-bold italic leading-tight">
                                             * Minimum ₦1,000 wallet balance is required to unlock learning materials, exams, and join live classes.
                                         </p>
                                     </div>
                                     <div className="bg-white/60 p-6 rounded-3xl border border-blue-100 shadow-sm">
-                                        <h4 className="text-xs font-black uppercase tracking-widest text-blue-900 mb-2">Platform Guidelines</h4>
+                                        <h4 className="text-xs font-bold uppercase tracking-widest text-blue-900 mb-2">Platform Guidelines</h4>
                                         <ul className="text-[10px] text-blue-700 space-y-2 font-bold uppercase tracking-tight">
                                             <li className="flex items-center gap-2">🔹 NO REFUNDS AFTER ENROLLMENT</li>
                                             <li className="flex items-center gap-2">🔹 1,000 MINIMUM BALANCE ALWAYS</li>
@@ -149,13 +149,13 @@ const AdmissionPortal = () => {
                                 <div className="flex flex-wrap gap-4">
                                     <button 
                                         onClick={() => navigate('/student')}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl transition-all active:scale-95"
+                                        className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-sm shadow-xl transition-all active:scale-95"
                                     >
                                         Enter Dashboard Now →
                                     </button>
                                     <button 
                                         onClick={() => navigate('/payment')}
-                                        className="bg-white text-blue-600 border-2 border-blue-200 hover:border-blue-400 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all active:scale-95"
+                                        className="bg-white text-primary border-2 border-blue-200 hover:border-blue-400 px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-sm transition-all active:scale-95"
                                     >
                                         Add Funds to Wallet
                                     </button>
