@@ -96,11 +96,11 @@ export default function AdminSettings() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                                 <tr>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Role</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Name</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Email</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Role</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Phone</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -108,7 +108,7 @@ export default function AdminSettings() {
                                     <tr key={admin.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                         <td className="py-3 px-4">
                                             <div className="text-xs font-bold text-slate-700 dark:text-slate-300">{admin.first_name} {admin.last_name}</div>
-                                            <div className="text-[9px] text-slate-500 uppercase font-medium">@{admin.username}</div>
+                                            <div className="text-[11px] text-slate-500 uppercase font-medium">@{admin.username}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] font-bold text-slate-600">{admin.email}</div>
@@ -122,7 +122,7 @@ export default function AdminSettings() {
                                         <td className="py-3 px-4 text-center">
                                             <button
                                                 onClick={() => handleDelete(admin.id)}
-                                                className="px-3 py-1 bg-red-50 text-red-600 border border-red-100 rounded-md text-[9px] font-bold uppercase hover:bg-red-600 hover:text-white transition-all"
+                                                className="px-3 py-1 bg-red-50 text-red-600 border border-red-100 rounded-md text-[11px] font-semibold uppercase hover:bg-red-600 hover:text-white transition-all"
                                             >
                                                 Delete
                                             </button>
@@ -142,28 +142,28 @@ export default function AdminSettings() {
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">First Name</label>
+                                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">First Name</label>
                                     <input required value={userForm.first_name} onChange={e => setUserForm({...userForm, first_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Name</label>
+                                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Last Name</label>
                                     <input required value={userForm.last_name} onChange={e => setUserForm({...userForm, last_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Username</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Username</label>
                                 <input required value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Email</label>
                                 <input required type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Password</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Password</label>
                                 <input required type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Phone (Optional)</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Phone (Optional)</label>
                                 <input value={userForm.phone} onChange={e => setUserForm({...userForm, phone: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-4">

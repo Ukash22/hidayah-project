@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { User } from 'lucide-react';
 import api, { asList, getApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
@@ -77,7 +78,7 @@ export default function TutorRequests() {
                         onClick={() => setActiveSubTab(sub)}
                         className={`px-6 py-2.5 rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all whitespace-nowrap ${activeSubTab === sub ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        {sub === 'pending' ? '📥 New Requests' : sub === 'approved' ? '⏳ Approved' : '✅ Active'}
+                        {sub === 'pending' ? 'New Requests' : sub === 'approved' ? 'Approved' : 'Active'}
                     </button>
                 ))}
             </div>
@@ -87,7 +88,7 @@ export default function TutorRequests() {
                     <div key={req.id} className="bg-white dark:bg-slate-900 p-8 rounded-card border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-8 hover:border-primary/30 transition-all">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                             <div className="flex items-center gap-6">
-                                <div className="bg-primary/10 w-16 h-16 rounded-card flex items-center justify-center text-3xl border border-primary/10">👤</div>
+                                <div className="bg-primary/10 w-16 h-16 rounded-card flex items-center justify-center border border-primary/10"><User size={28} className="text-primary" /></div>
                                 <div>
                                     <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">{req.student_name}</h4>
                                     <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide flex items-center gap-2 mt-1">
@@ -147,12 +148,12 @@ export default function TutorRequests() {
                                     </>
                                 ) : activeSubTab === 'approved' ? (
                                     <div className="text-center p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                                        <div className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Status: Approved</div>
+                                        <div className="text-[11px] font-semibold text-amber-600 uppercase tracking-wide mb-1">Status: Approved</div>
                                         <div className="text-[11px] font-bold text-amber-500">Waiting for Student Payment</div>
                                     </div>
                                 ) : (
                                     <div className="text-center p-4 bg-primary-soft rounded-2xl border border-blue-100">
-                                        <div className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Status: Active</div>
+                                        <div className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1">Status: Active</div>
                                         <div className="text-[11px] font-bold text-blue-500">Class Session Generated</div>
                                     </div>
                                 )}

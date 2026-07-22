@@ -11,14 +11,14 @@ const LEVELS = [
 
 const Field = ({ label, children }) => (
     <label className="flex flex-col gap-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 ml-1">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 ml-1">{label}</span>
         {children}
     </label>
 );
 
 const Row = ({ label, value }) => (
     <div className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
         <span className="font-bold text-slate-800 text-right max-w-[60%] truncate">{value}</span>
     </div>
 );

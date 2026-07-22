@@ -98,6 +98,34 @@ class LogoutView(APIView):
         return response
 
 
+class ChangePasswordView(APIView):
+    """Authenticated password change (all roles). Existing JWTs stay valid —
+    SimpleJWT is stateless; the refresh cookie continues to work."""
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @extend_schema(
+        request=inline_serializer('ChangePasswordRequest', {
+            'current_password': serializers.CharField(),
+            'new_password': serializers.CharField(),
+        }),
+        responses={200: inline_serializer('ChangePasswordResponse', {'message': serializers.CharField()})},
+    )
+    def post(self, request):
+        current = request.data.get('current_password') or ''
+        new = request.data.get('new_password') or ''
+        if not request.user.check_password(current):
+            return Response({'error': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        try:
+            validate_password(new, user=request.user)
+        except DjangoValidationError as e:
+            return Response({'error': ' '.join(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.set_password(new)
+        request.user.save()
+        return Response({'message': 'Password updated successfully.'})
+
+
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
 
@@ -235,13 +263,14 @@ class ApproveStudentView(APIView):
             
             # Fallback if no enrollments yet (legacy mode)
             if not enrollment_data:
-                hourly_rate = Decimal('3000')
+                from django.conf import settings as _s
+                hourly_rate = _s.DEFAULT_HOURLY_RATE
                 if profile.assigned_tutor and hasattr(profile.assigned_tutor, 'tutor_profile'):
                     hourly_rate = profile.assigned_tutor.tutor_profile.hourly_rate
-                
+
                 weekly_hours = Decimal(str(profile.hours_per_week)) * Decimal(str(profile.days_per_week))
                 weekly_rate = hourly_rate * weekly_hours
-                monthly_rate = weekly_rate * Decimal('4')
+                monthly_rate = weekly_rate * _s.BILLING_WEEKS_PER_CYCLE
                 total_first_payment = monthly_rate # Only 1 Month
                 
                 enrollment_data.append({

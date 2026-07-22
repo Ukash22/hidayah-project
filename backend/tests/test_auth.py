@@ -63,6 +63,37 @@ class StudentRegistrationTests(TestCase):
         self.assertEqual(res.status_code, 400)
 
 
+class ChangePasswordTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='pwuser', email='pw@test.com', password='OldPass123!', role='STUDENT')
+        self.client.force_authenticate(self.user)
+
+    def test_wrong_current_password_rejected(self):
+        res = self.client.post('/api/auth/password/change/', {
+            'current_password': 'nope', 'new_password': 'NewPass456!'}, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_weak_new_password_rejected(self):
+        res = self.client.post('/api/auth/password/change/', {
+            'current_password': 'OldPass123!', 'new_password': '123'}, format='json')
+        self.assertEqual(res.status_code, 400)
+
+    def test_successful_change(self):
+        res = self.client.post('/api/auth/password/change/', {
+            'current_password': 'OldPass123!', 'new_password': 'NewPass456!'}, format='json')
+        self.assertEqual(res.status_code, 200)
+        login = APIClient().post('/api/auth/login/', {
+            'username': 'pwuser', 'password': 'NewPass456!'}, format='json')
+        self.assertEqual(login.status_code, 200)
+
+    def test_anonymous_rejected(self):
+        res = APIClient().post('/api/auth/password/change/', {
+            'current_password': 'x', 'new_password': 'y'}, format='json')
+        self.assertIn(res.status_code, (401, 403))
+
+
 class CookieAuthTests(TestCase):
     def setUp(self):
         self.client = APIClient()

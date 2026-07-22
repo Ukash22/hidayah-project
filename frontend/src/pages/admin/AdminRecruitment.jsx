@@ -93,11 +93,11 @@ export default function AdminRecruitment() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Applicant</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Details</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Applicant</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Details</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -107,25 +107,25 @@ export default function AdminRecruitment() {
                                 <tr key={app.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-3 px-4 whitespace-nowrap">
                                         <div className="text-xs font-bold text-slate-700 dark:text-slate-300">{new Date(app.created_at).toLocaleDateString()}</div>
-                                        <div className="text-[9px] text-slate-500 uppercase font-medium">{app.device} • {app.network}</div>
+                                        <div className="text-[11px] text-slate-500 uppercase font-medium">{app.device} • {app.network}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{app.name}</div>
-                                        <div className="text-[10px] text-primary font-bold uppercase tracking-tight">{app.subjects?.slice(0, 30)}...</div>
+                                        <div className="text-[11px] text-primary font-semibold uppercase tracking-tight">{app.subjects?.slice(0, 30)}...</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="text-[11px] text-slate-600 font-medium italic">{app.email}</div>
                                         <div className="flex flex-wrap gap-2 mt-0.5">
-                                            <span className="text-[9px] text-slate-500 font-bold uppercase">{app.experience} Years Exp</span>
-                                            <span className="text-[9px] text-emerald-600 font-bold uppercase">₦{parseFloat(app.hourly_rate).toLocaleString()}/hr</span>
+                                            <span className="text-[11px] text-slate-500 font-semibold uppercase">{app.experience} Years Exp</span>
+                                            <span className="text-[11px] text-emerald-600 font-semibold uppercase">₦{parseFloat(app.hourly_rate).toLocaleString()}/hr</span>
                                         </div>
                                         {app.status === 'INTERVIEW_SCHEDULED' && app.interview_at && (
-                                            <div className="mt-1 text-[9px] text-amber-600 font-bold uppercase">
+                                            <div className="mt-1 text-[11px] text-amber-600 font-semibold uppercase">
                                                 🗓 {new Date(app.interview_at).toLocaleString()}
                                             </div>
                                         )}
                                         {app.status === 'INTERVIEW_SCHEDULED' && app.interview_link && (
-                                            <a href={app.interview_link} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-[9px] text-white bg-primary hover:bg-primary-dark font-bold uppercase px-2 py-0.5 rounded transition-colors">
+                                            <a href={app.interview_link} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 text-[11px] text-white bg-primary hover:bg-primary-dark font-semibold uppercase px-2 py-0.5 rounded transition-colors">
                                                 🎥 Join Interview
                                             </a>
                                         )}
@@ -139,7 +139,7 @@ export default function AdminRecruitment() {
                                                 <button
                                                     onClick={() => handleScheduleInterview(app)}
                                                     disabled={actionLoading}
-                                                    className="px-2 py-1 bg-amber-500 text-white rounded text-[9px] font-bold uppercase shadow-sm hover:bg-amber-600 transition-colors w-full"
+                                                    className="px-2 py-1 bg-amber-500 text-white rounded text-[11px] font-semibold uppercase shadow-sm hover:bg-amber-600 transition-colors w-full"
                                                 >
                                                     Schedule Interview
                                                 </button>
@@ -148,20 +148,20 @@ export default function AdminRecruitment() {
                                                 <button
                                                     onClick={() => handleUpdateInterview(app)}
                                                     disabled={actionLoading}
-                                                    className="px-2 py-1 bg-violet-500 text-white rounded text-[9px] font-bold uppercase shadow-sm hover:bg-violet-600 transition-colors w-full"
+                                                    className="px-2 py-1 bg-violet-500 text-white rounded text-[11px] font-semibold uppercase shadow-sm hover:bg-violet-600 transition-colors w-full"
                                                 >
                                                     Update Schedule
                                                 </button>
                                             )}
                                             {(app.status === 'APPLIED' || app.status === 'INTERVIEW_SCHEDULED') && (
                                                 <div className="flex gap-1 w-full">
-                                                    <button onClick={() => handleApprove(app)} className="flex-1 px-2 py-1 bg-emerald-600 text-white rounded text-[9px] font-bold uppercase">Approve</button>
-                                                    <button onClick={() => handleReject(app)} className="flex-1 text-[9px] text-red-500 font-bold underline">Reject</button>
+                                                    <button onClick={() => handleApprove(app)} className="flex-1 px-2 py-1 bg-emerald-600 text-white rounded text-[11px] font-semibold uppercase">Approve</button>
+                                                    <button onClick={() => handleReject(app)} className="flex-1 text-[10px] text-red-500 font-bold underline">Reject</button>
                                                 </div>
                                             )}
                                             <button
                                                 onClick={() => setSelectedApp(app)}
-                                                className="px-2 py-1 w-full bg-slate-100 dark:bg-slate-800 text-slate-600 border border-slate-200 dark:border-slate-700 rounded text-[9px] font-bold uppercase hover:bg-slate-200 transition-colors"
+                                                className="px-2 py-1 w-full bg-slate-100 dark:bg-slate-800 text-slate-600 border border-slate-200 dark:border-slate-700 rounded text-[11px] font-semibold uppercase hover:bg-slate-200 transition-colors"
                                             >
                                                 👁 View
                                             </button>
@@ -182,13 +182,13 @@ export default function AdminRecruitment() {
                             <button onClick={() => setSelectedApp(null)} className="text-slate-500 hover:text-slate-600 text-2xl">&times;</button>
                         </div>
                         <div className="space-y-3 text-sm">
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Name:</span><p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedApp.name}</p></div>
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Email:</span><p className="text-slate-600 mt-0.5">{selectedApp.email}</p></div>
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Subjects:</span><p className="text-slate-600 mt-0.5">{selectedApp.subjects}</p></div>
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Experience:</span><p className="text-slate-600 mt-0.5">{selectedApp.experience} years</p></div>
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Hourly Rate:</span><p className="text-slate-600 mt-0.5">₦{parseFloat(selectedApp.hourly_rate || 0).toLocaleString()}</p></div>
-                            <div><span className="font-bold text-slate-500 uppercase text-[10px]">Device / Network:</span><p className="text-slate-600 mt-0.5">{selectedApp.device} / {selectedApp.network}</p></div>
-                            {selectedApp.bio && <div><span className="font-bold text-slate-500 uppercase text-[10px]">Bio:</span><p className="text-slate-600 mt-0.5 leading-relaxed">{selectedApp.bio}</p></div>}
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Name:</span><p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{selectedApp.name}</p></div>
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Email:</span><p className="text-slate-600 mt-0.5">{selectedApp.email}</p></div>
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Subjects:</span><p className="text-slate-600 mt-0.5">{selectedApp.subjects}</p></div>
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Experience:</span><p className="text-slate-600 mt-0.5">{selectedApp.experience} years</p></div>
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Hourly Rate:</span><p className="text-slate-600 mt-0.5">₦{parseFloat(selectedApp.hourly_rate || 0).toLocaleString()}</p></div>
+                            <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Device / Network:</span><p className="text-slate-600 mt-0.5">{selectedApp.device} / {selectedApp.network}</p></div>
+                            {selectedApp.bio && <div><span className="font-semibold text-slate-500 uppercase text-[11px]">Bio:</span><p className="text-slate-600 mt-0.5 leading-relaxed">{selectedApp.bio}</p></div>}
                         </div>
                         <button onClick={() => setSelectedApp(null)} className="mt-6 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold uppercase text-sm hover:bg-slate-200">Close</button>
                     </div>

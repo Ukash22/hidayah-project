@@ -108,11 +108,11 @@ export default function AdminAdmissions() {
                                         <input type="checkbox" checked={selectedIds.length === pendingStudents.length && pendingStudents.length > 0} onChange={toggleSelectAll} className="rounded border-slate-300 text-primary" />
                                     </th>
                                 )}
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Student</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Contact</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -126,20 +126,20 @@ export default function AdminAdmissions() {
                                         </td>
                                         <td className="py-3 px-4 whitespace-nowrap">
                                             <div className="text-xs font-bold text-slate-700 dark:text-slate-300">New Registration</div>
-                                            <div className="text-[9px] text-slate-500 uppercase font-medium">{student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Recent'}</div>
+                                            <div className="text-[11px] text-slate-500 uppercase font-medium">{student.created_at ? new Date(student.created_at).toLocaleDateString() : 'Recent'}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-base">{getCountryFlag(student.country)}</span>
                                                 <div>
                                                     <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{student.first_name} {student.last_name}</div>
-                                                    <div className="text-[9px] text-slate-500 uppercase font-bold">@{student.username}</div>
+                                                    <div className="text-[11px] text-slate-500 uppercase font-semibold">@{student.username}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] text-slate-600 font-medium lowercase italic">{student.email}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold uppercase">{student.phone} / {student.country || 'Global'}</div>
+                                            <div className="text-[11px] text-slate-500 font-semibold uppercase">{student.phone} / {student.country || 'Global'}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <span className="bg-yellow-100 text-yellow-800 border border-yellow-200 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide">Pending Verification</span>
@@ -149,14 +149,14 @@ export default function AdminAdmissions() {
                                                 <button
                                                     onClick={() => approveStudent(student.id)}
                                                     disabled={actionLoading}
-                                                    className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md text-[9px] font-bold uppercase tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm flex items-center gap-1"
+                                                    className="px-3 py-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-md text-[11px] font-semibold uppercase tracking-wider hover:shadow-lg hover:-translate-y-0.5 transition-all shadow-sm flex items-center gap-1"
                                                 >
                                                     <span>✅</span> Admit
                                                 </button>
                                                 {student.profile_data && (
                                                     <button
                                                         onClick={() => setSelectedApp({ ...student.profile_data, first_name: student.first_name, last_name: student.last_name, email: student.email })}
-                                                        className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md text-[9px] font-bold uppercase hover:bg-slate-200"
+                                                        className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md text-[11px] font-semibold uppercase hover:bg-slate-200"
                                                     >
                                                         📋 Form
                                                     </button>
@@ -178,13 +178,13 @@ export default function AdminAdmissions() {
                                                 <span className="text-base">{getCountryFlag(app.country)}</span>
                                                 <div>
                                                     <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{app.first_name} {app.last_name || ''}</div>
-                                                    <div className="text-[9px] text-primary font-bold uppercase">{app.course_interested}</div>
+                                                    <div className="text-[11px] text-primary font-semibold uppercase">{app.course_interested}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[11px] text-slate-600">{app.email}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold uppercase">{app.phone}</div>
+                                            <div className="text-[11px] text-slate-500 font-semibold uppercase">{app.phone}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase border ${app.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' : app.status === 'REJECTED' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-800 border-amber-200'}`}>
@@ -192,7 +192,7 @@ export default function AdminAdmissions() {
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-center">
-                                            <button onClick={() => setSelectedApp(app)} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded text-[9px] font-bold uppercase hover:bg-slate-200">View</button>
+                                            <button onClick={() => setSelectedApp(app)} className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 rounded text-[11px] font-semibold uppercase hover:bg-slate-200">View</button>
                                         </td>
                                     </tr>
                                 ))
@@ -211,7 +211,7 @@ export default function AdminAdmissions() {
                         </div>
                         <div className="space-y-3 text-sm">
                             {Object.entries(selectedApp).filter(([k]) => !['id', 'isViewOnly'].includes(k)).map(([key, val]) => (
-                                val ? <div key={key}><span className="font-bold text-slate-500 uppercase text-[10px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 dark:text-slate-300 mt-0.5">{String(val)}</p></div> : null
+                                val ? <div key={key}><span className="font-semibold text-slate-500 uppercase text-[11px]">{key.replace(/_/g, ' ')}:</span><p className="font-medium text-slate-700 dark:text-slate-300 mt-0.5">{String(val)}</p></div> : null
                             ))}
                         </div>
                         <button onClick={() => setSelectedApp(null)} className="mt-6 w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 font-bold uppercase text-sm hover:bg-slate-200">Close</button>

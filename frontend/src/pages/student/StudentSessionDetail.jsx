@@ -47,7 +47,7 @@ export default function StudentSessionDetail() {
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] font-semibold uppercase tracking-widest ${status.cls}`}>
                         {status.icon} {status.label}
                     </span>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-600 text-[10px] font-semibold uppercase tracking-widest">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-slate-600 text-[11px] font-semibold uppercase tracking-wide">
                         {cls.type || 'Regular'}
                     </span>
                     {cls.is_live && (
@@ -74,7 +74,7 @@ export default function StudentSessionDetail() {
                 {/* Links */}
                 {(meetingLink || cls.whiteboard_link) && (
                     <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card p-5 md:p-8 space-y-4 shadow-sm">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">Session Links</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">Session Links</p>
                         {meetingLink && (
                             <a
                                 href={meetingLink}
@@ -117,7 +117,7 @@ function Row({ icon, label, children }) {
         <div className="flex items-start gap-4">
             <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center shrink-0">{icon}</div>
             <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-0.5">{label}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-0.5">{label}</p>
                 <p className="text-slate-800 dark:text-slate-200 font-semibold text-sm">{children}</p>
             </div>
         </div>

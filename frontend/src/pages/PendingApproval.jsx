@@ -21,7 +21,7 @@ const PendingApproval = () => {
                     </p>
 
                     <div className="bg-slate-50 p-8 rounded-card border border-slate-100 text-left mb-10 backdrop-blur-sm">
-                        <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-2">
+                        <h3 className="font-semibold text-[11px] uppercase tracking-wide text-primary mb-6 flex items-center gap-2">
                             <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
                             Onboarding Sequence:
                         </h3>

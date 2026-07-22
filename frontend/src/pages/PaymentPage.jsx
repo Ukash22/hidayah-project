@@ -179,13 +179,13 @@ const PaymentPage = () => {
 
                             <div className="space-y-6">
                                 <div>
-                                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-1">Student Portal</p>
+                                    <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide mb-1">Student Portal</p>
                                     <h3 className="text-xl font-display font-bold text-white leading-tight">{user?.first_name} {user?.last_name}</h3>
                                     <p className="text-xs font-mono text-emerald-500/60 mt-1">ID: {user?.admission_number || 'TBA'}</p>
                                 </div>
 
                                 <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                                    <p className="text-[9px] font-bold uppercase text-slate-500 tracking-widest mb-3">Wallet Balance</p>
+                                    <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide mb-3">Wallet Balance</p>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-2xl font-bold text-white">₦{parseFloat(profile?.wallet_balance || 0).toLocaleString()}</span>
                                         <span className="text-[10px] text-emerald-500 font-bold">Current</span>
@@ -314,7 +314,7 @@ const PaymentPage = () => {
                             </div>
 
                             <div className="flex items-center justify-center gap-6 mt-10 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all">
-                                <span className="bg-white/80 p-2 rounded-lg text-slate-900 font-bold text-[9px] uppercase tracking-tighter">Paystack</span>
+                                <span className="bg-white/80 p-2 rounded-lg text-slate-900 font-semibold text-[11px] uppercase tracking-tighter">Paystack</span>
                                 <span className="text-[14px]">💳</span>
                                 <span className="text-[14px]">🏦</span>
                                 <span className="text-[14px]">🔒</span>
@@ -323,7 +323,7 @@ const PaymentPage = () => {
 
                         <button
                             onClick={() => navigate('/student')}
-                            className="w-full mt-8 text-slate-500 hover:text-emerald-500 py-3 font-bold text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group"
+                            className="w-full mt-8 text-slate-500 hover:text-emerald-500 py-3 font-semibold text-[11px] uppercase tracking-wide transition-all flex items-center justify-center gap-2 group"
                         >
                             <span className="group-hover:-translate-x-1 transition-transform">←</span> Return to Learning Portal
                         </button>

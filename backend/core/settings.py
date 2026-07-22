@@ -385,4 +385,35 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-DEFAULT_COMMISSION_PERCENTAGE = 5.00
+# ── Business configuration ────────────────────────────────────────────────
+# Financial and policy constants. Override via .env to tune without code
+# changes. All values affect live financial calculations — review before
+# changing in production.
+from decimal import Decimal as _D
+
+# Platform commission deducted from each completed session fee.
+# Primary revenue lever: raising this lowers tutor net payout immediately.
+COMMISSION_PERCENTAGE = _D(os.getenv('COMMISSION_PERCENTAGE', '5.00'))
+
+# Legacy name kept for compatibility with any code referencing it directly.
+DEFAULT_COMMISSION_PERCENTAGE = float(COMMISSION_PERCENTAGE)
+
+# Minimum wallet balance (NGN) a student must hold to join a non-trial class.
+MIN_WALLET_BALANCE_FOR_CLASS = _D(os.getenv('MIN_WALLET_BALANCE_FOR_CLASS', '1000'))
+
+# Same threshold applied before an AI Hub query is served to students.
+MIN_WALLET_BALANCE_FOR_AI = _D(os.getenv('MIN_WALLET_BALANCE_FOR_AI', '1000'))
+
+# Absolute-fallback hourly rate (NGN) used when a tutor profile has no rate.
+DEFAULT_HOURLY_RATE = _D(os.getenv('DEFAULT_HOURLY_RATE', '3000'))
+
+# Weeks per billing cycle used when computing a student's monthly package price.
+# 4 = standard calendar month. Change to 2 for fortnightly billing, etc.
+BILLING_WEEKS_PER_CYCLE = _D(os.getenv('BILLING_WEEKS_PER_CYCLE', '4'))
+
+# WhatsApp number for the homepage float button and FAQ CTA.
+# International format without '+': e.g. 2348012345678
+WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '2348000000000')
+
+# Support / contact email shown in footer, Terms, Privacy pages.
+SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'support@hidayahinternational.com')

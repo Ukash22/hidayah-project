@@ -66,11 +66,11 @@ export default function TutorMedia() {
 
             {tutorProfile && (tutorProfile.video_url || tutorProfile.recitation_url) && (
                 <div className="bg-white dark:bg-slate-900 p-8 rounded-card-lg border border-slate-100 dark:border-slate-800 shadow-sm space-y-8 mb-10">
-                    <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">Currently Active Assets</h3>
+                    <h3 className="text-[11px] font-semibold text-primary uppercase tracking-wide">Currently Active Assets</h3>
                     <div className="grid md:grid-cols-2 gap-8">
                         {tutorProfile.video_url && (
                             <div className="space-y-4">
-                                <p className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Intro Video</p>
+                                <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Intro Video</p>
                                 {tutorProfile.video_type === 'youtube' ? (() => {
                                     const url = tutorProfile.video_url || '';
                                     const videoId = url.includes('youtu.be/')
@@ -95,7 +95,7 @@ export default function TutorMedia() {
                         )}
                         {tutorProfile.recitation_url && (
                             <div className="space-y-4">
-                                <p className="text-[10px] font-bold uppercase text-primary tracking-widest ml-1">Recitation Audio</p>
+                                <p className="text-[11px] font-semibold uppercase text-primary tracking-wide ml-1">Recitation Audio</p>
                                 <div className="bg-primary-soft p-8 rounded-2xl border border-blue-100 flex flex-col items-center gap-6">
                                     <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-3xl border border-blue-100">🎙️</div>
                                     <audio
@@ -123,7 +123,7 @@ export default function TutorMedia() {
                             {mediaFiles.intro_video ? (
                                 <div>
                                     <p className="text-primary font-bold text-sm mb-1">✓ {mediaFiles.intro_video.name}</p>
-                                    <p className="text-slate-500 text-[9px] font-bold">{(mediaFiles.intro_video.size / 1024 / 1024).toFixed(1)} MB READY</p>
+                                    <p className="text-slate-500 text-[10px] font-bold">{(mediaFiles.intro_video.size / 1024 / 1024).toFixed(1)} MB READY</p>
                                 </div>
                             ) : (
                                 <div>
@@ -149,7 +149,7 @@ export default function TutorMedia() {
                             {mediaFiles.short_recitation ? (
                                 <div>
                                     <p className="text-indigo-600 font-bold text-sm mb-1">✓ {mediaFiles.short_recitation.name}</p>
-                                    <p className="text-slate-500 text-[9px] font-bold">{(mediaFiles.short_recitation.size / 1024 / 1024).toFixed(1)} MB READY</p>
+                                    <p className="text-slate-500 text-[10px] font-bold">{(mediaFiles.short_recitation.size / 1024 / 1024).toFixed(1)} MB READY</p>
                                 </div>
                             ) : (
                                 <div>

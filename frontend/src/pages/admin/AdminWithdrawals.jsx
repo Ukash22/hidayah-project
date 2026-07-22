@@ -1,15 +1,74 @@
 import { useState, useEffect, useCallback } from 'react';
-import api, { asList } from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge } from './adminHelpers';
 import { SkeletonTable } from '../../components/ui';
+
+function RejectModal({ withdrawal, onClose, onDone }) {
+    const toast = useToast();
+    const [reason, setReason] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!reason.trim()) return;
+        setLoading(true);
+        try {
+            await api.post(`/api/payments/admin/withdrawal/approve/${withdrawal.id}/`, {
+                action: 'reject',
+                reason: reason.trim(),
+            });
+            toast.success('Withdrawal rejected and tutor notified.');
+            onDone();
+        } catch (err) {
+            toast.error(getApiError(err, 'Failed to reject withdrawal.'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[120] p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-card-lg w-full max-w-sm p-8 border border-slate-100 dark:border-slate-800 shadow-2xl">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">Reject Withdrawal</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-5">
+                    ₦{parseFloat(withdrawal.amount).toLocaleString()} · {withdrawal.tutor_name}
+                </p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-1.5">Reason (visible to tutor)</label>
+                        <textarea
+                            required
+                            rows={3}
+                            value={reason}
+                            onChange={e => setReason(e.target.value)}
+                            placeholder="e.g. Insufficient verified balance, incomplete bank details…"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm outline-none focus:border-rose-400 transition-all resize-none"
+                        />
+                    </div>
+                    <div className="flex gap-3">
+                        <button type="button" onClick={onClose}
+                            className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 py-2.5 rounded-xl font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={loading || !reason.trim()}
+                            className="flex-[2] bg-rose-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-rose-500/20 hover:bg-rose-600 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                            {loading ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Rejecting…</> : 'Reject →'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default function AdminWithdrawals() {
     const toast = useToast();
     const confirm = useConfirm();
     const [withdrawals, setWithdrawals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [rejectTarget, setRejectTarget] = useState(null);
 
     const fetchWithdrawals = useCallback(async () => {
         try {
@@ -27,7 +86,7 @@ export default function AdminWithdrawals() {
     const handleApprove = async (id) => {
         if (!await confirm("Approve this withdrawal? Funds will be deducted from the tutor's wallet.", { confirmLabel: 'Approve', danger: false })) return;
         try {
-            await api.post(`/api/payments/admin/withdrawal/approve/${id}/`, {});
+            await api.post(`/api/payments/admin/withdrawal/approve/${id}/`, { action: 'approve' });
             toast.success('Withdrawal approved successfully!');
             fetchWithdrawals();
         } catch (err) {
@@ -64,12 +123,12 @@ export default function AdminWithdrawals() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Frequency</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tutor</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Frequency</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -87,21 +146,34 @@ export default function AdminWithdrawals() {
                                         <div className="text-[11px] font-bold text-primary">₦{parseFloat(w.amount).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="text-[9px] text-slate-500 uppercase font-bold">{w.withdrawal_frequency}</div>
+                                        <div className="text-[11px] text-slate-500 uppercase font-semibold">{w.withdrawal_frequency}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
-                                        <StatusBadge status={w.status} />
+                                        <div>
+                                            <StatusBadge status={w.status} />
+                                            {w.status === 'REJECTED' && w.admin_notes && (
+                                                <p className="text-[10px] text-rose-500 font-semibold mt-1 max-w-[120px] mx-auto truncate" title={w.admin_notes}>
+                                                    {w.admin_notes}
+                                                </p>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="flex justify-center gap-2">
-                                            {w.status === 'PENDING' && (
+                                            {w.status === 'PENDING' && (<>
                                                 <button
                                                     onClick={() => handleApprove(w.id)}
-                                                    className="bg-emerald-500 text-white px-3 py-1 rounded text-[9px] font-bold uppercase"
+                                                    className="bg-emerald-500 text-white px-3 py-1 rounded text-[11px] font-semibold uppercase hover:bg-emerald-600 transition-colors"
                                                 >
                                                     Approve
                                                 </button>
-                                            )}
+                                                <button
+                                                    onClick={() => setRejectTarget(w)}
+                                                    className="bg-rose-500/10 border border-rose-500/30 text-rose-600 px-3 py-1 rounded text-[11px] font-semibold uppercase hover:bg-rose-500/20 transition-colors"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </>)}
                                             {w.status === 'APPROVED' && (
                                                 <button
                                                     onClick={() => handleDownloadReceipt(w)}
@@ -119,6 +191,14 @@ export default function AdminWithdrawals() {
                     </table>
                 </div>
             </div>
+
+            {rejectTarget && (
+                <RejectModal
+                    withdrawal={rejectTarget}
+                    onClose={() => setRejectTarget(null)}
+                    onDone={() => { setRejectTarget(null); fetchWithdrawals(); }}
+                />
+            )}
         </>
     );
 }

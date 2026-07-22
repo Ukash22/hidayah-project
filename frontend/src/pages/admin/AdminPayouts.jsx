@@ -50,11 +50,11 @@ export default function AdminPayouts() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Scheduled At</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Parties</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Fee Breakdown</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Scheduled At</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Parties</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Fee Breakdown</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -64,15 +64,15 @@ export default function AdminPayouts() {
                                 <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-3 px-4 whitespace-nowrap">
                                         <div className="text-xs font-bold text-slate-700 dark:text-slate-300">{new Date(p.scheduled_at).toLocaleDateString()}</div>
-                                        <div className="text-[9px] text-slate-500">{new Date(p.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        <div className="text-[10px] text-slate-500">{new Date(p.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">Student: {p.student_name}</div>
-                                        <div className="text-[10px] text-primary font-bold uppercase">Tutor: {p.tutor_name}</div>
+                                        <div className="text-[11px] text-primary font-semibold uppercase">Tutor: {p.tutor_name}</div>
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="text-[11px] text-slate-600 font-medium">Session Fee: ₦{parseFloat(p.fee_amount).toLocaleString()}</div>
-                                        <div className="text-[9px] text-emerald-600 font-bold uppercase">Tutor Share: ₦{(parseFloat(p.fee_amount) - parseFloat(p.commission_amount)).toLocaleString()}</div>
+                                        <div className="text-[11px] text-emerald-600 font-semibold uppercase">Tutor Share: ₦{(parseFloat(p.fee_amount) - parseFloat(p.commission_amount)).toLocaleString()}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
                                         <span className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide">Pending Review</span>
@@ -80,7 +80,7 @@ export default function AdminPayouts() {
                                     <td className="py-3 px-4 text-center">
                                         <button
                                             onClick={() => handleRelease(p.id)}
-                                            className="px-3 py-1 bg-emerald-600 text-white rounded text-[9px] font-bold uppercase shadow-sm hover:bg-emerald-700 transition-all"
+                                            className="px-3 py-1 bg-emerald-600 text-white rounded text-[11px] font-semibold uppercase shadow-sm hover:bg-emerald-700 transition-all"
                                         >
                                             🚀 Release Funds
                                         </button>

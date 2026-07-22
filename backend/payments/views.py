@@ -1,8 +1,11 @@
 # type: ignore
 # pyre-ignore-all-errors
 # pylint: skip-file
+import logging
 from rest_framework import status
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 from rest_framework import serializers as drf_serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
@@ -293,8 +296,9 @@ class PaymentStatusView(APIView):
 
 
 class PricingTiersView(APIView):
-    """Get all pricing tiers"""
-    
+    """Get all pricing tiers — public endpoint used on the homepage"""
+    permission_classes = []
+
     def get(self, request):
         tiers = PricingTier.objects.filter(is_active=True)
         return Response(PricingTierSerializer(tiers, many=True).data)
@@ -580,31 +584,41 @@ class AdminWithdrawalApprovalView(APIView):
     def post(self, request, withdrawal_id):
         if not request.user.is_staff:
             return Response({"error": "Unauthorized"}, status=403)
-            
+
         withdrawal = get_object_or_404(Withdrawal, id=withdrawal_id)
-        if withdrawal.status == 'APPROVED':
-            return Response({"error": "Already approved"}, status=400)
-            
+        if withdrawal.status != 'PENDING':
+            return Response({"error": f"Withdrawal is already {withdrawal.status.lower()}"}, status=400)
+
+        action = request.data.get('action', 'approve').lower()
+
+        if action == 'reject':
+            reason = request.data.get('reason', '').strip()
+            if not reason:
+                return Response({"error": "Rejection reason is required"}, status=400)
+            withdrawal.status = 'REJECTED'
+            withdrawal.admin_notes = reason
+            withdrawal.save()
+            logger.info("Withdrawal %s rejected by admin %s: %s", withdrawal_id, request.user.id, reason)
+            return Response({"message": "Withdrawal rejected", "reason": reason})
+
+        # Default: approve
         wallet = Wallet.objects.get(user=withdrawal.tutor)
         if wallet.balance < withdrawal.amount:
             return Response({"error": "Tutor has insufficient balance now"}, status=400)
-            
-        # Deduct wallet
+
         wallet.balance -= withdrawal.amount
         wallet.save()
-        
-        # Approve withdrawal
+
         withdrawal.status = 'APPROVED'
         withdrawal.save()
-        
-        # Record debit transaction
+
         Transaction.objects.create(
             user=withdrawal.tutor,
             amount=withdrawal.amount,
             transaction_type='WITHDRAWAL',
             description=f'Withdrawal to {withdrawal.bank_name} ({withdrawal.account_number})'
         )
-        
+
         return Response({"message": "Withdrawal approved and processed"})
 
     def get(self, request):
@@ -623,17 +637,27 @@ class AdminPaymentAnalyticsView(APIView):
             return Response({"error": "Unauthorized"}, status=403)
 
         from django.core.cache import cache
-        cached = cache.get('admin_payment_analytics')
-        if cached is not None:
-            return Response(cached)
-
         from django.db.models import Sum, Count
         from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
         from datetime import timedelta
         from decimal import Decimal
 
+        date_from = request.query_params.get('date_from', '').strip()
+        date_to = request.query_params.get('date_to', '').strip()
+        has_date_filter = bool(date_from or date_to)
+
+        if not has_date_filter:
+            cached = cache.get('admin_payment_analytics')
+            if cached is not None:
+                return Response(cached)
+
         now = timezone.now()
         all_payments = Payment.objects.all()
+
+        if date_from:
+            all_payments = all_payments.filter(created_at__date__gte=date_from)
+        if date_to:
+            all_payments = all_payments.filter(created_at__date__lte=date_to)
 
         # --- Summary Totals ---
         totals = all_payments.aggregate(
@@ -657,9 +681,12 @@ class AdminPaymentAnalyticsView(APIView):
             total_commissions=Sum('commission_amount', filter=Q(status='COMPLETED'))
         )
 
-        # --- Daily chart (last 30 days) ---
+        completed_payments = all_payments.filter(status='COMPLETED')
+
+        # --- Daily chart ---
+        daily_qs = completed_payments if has_date_filter else completed_payments.filter(created_at__gte=now - timedelta(days=30))
         daily = (
-            all_payments.filter(status='COMPLETED', created_at__gte=now - timedelta(days=30))
+            daily_qs
             .annotate(day=TruncDay('created_at'))
             .values('day')
             .annotate(total=Sum('amount'), count=Count('id'))
@@ -667,9 +694,10 @@ class AdminPaymentAnalyticsView(APIView):
         )
         daily_data = [{"date": d['day'].strftime('%b %d'), "revenue": float(d['total']), "count": d['count']} for d in daily]
 
-        # --- Weekly chart (last 12 weeks) ---
+        # --- Weekly chart ---
+        weekly_qs = completed_payments if has_date_filter else completed_payments.filter(created_at__gte=now - timedelta(weeks=12))
         weekly = (
-            all_payments.filter(status='COMPLETED', created_at__gte=now - timedelta(weeks=12))
+            weekly_qs
             .annotate(week=TruncWeek('created_at'))
             .values('week')
             .annotate(total=Sum('amount'), count=Count('id'))
@@ -677,9 +705,10 @@ class AdminPaymentAnalyticsView(APIView):
         )
         weekly_data = [{"date": w['week'].strftime('Wk %W %b'), "revenue": float(w['total']), "count": w['count']} for w in weekly]
 
-        # --- Monthly chart (last 12 months) ---
+        # --- Monthly chart ---
+        monthly_qs = completed_payments if has_date_filter else completed_payments.filter(created_at__gte=now - timedelta(days=366))
         monthly = (
-            all_payments.filter(status='COMPLETED', created_at__gte=now - timedelta(days=366))
+            monthly_qs
             .annotate(month=TruncMonth('created_at'))
             .values('month')
             .annotate(total=Sum('amount'), count=Count('id'))
@@ -734,7 +763,8 @@ class AdminPaymentAnalyticsView(APIView):
             "monthly": monthly_data,
             "history": history,
         }
-        cache.set('admin_payment_analytics', payload, timeout=300)
+        if not has_date_filter:
+            cache.set('admin_payment_analytics', payload, timeout=300)
         return Response(payload)
 
 

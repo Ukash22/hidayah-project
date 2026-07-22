@@ -71,7 +71,7 @@ export default function AdminClasses() {
                                     <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center text-2xl">📹</div>
                                     <div>
                                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{liveCls.student_name}</p>
-                                        <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">Tr. {liveCls.tutor_name}</p>
+                                        <p className="text-[11px] text-red-500 font-semibold uppercase tracking-tighter">Tr. {liveCls.tutor_name}</p>
                                     </div>
                                 </div>
                                 <button
@@ -113,14 +113,14 @@ export default function AdminClasses() {
                                     </td>
                                     <td className="py-5 px-4">
                                         <div className="text-[13px] font-bold text-slate-900 dark:text-slate-100">{new Date(cls.scheduled_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                                        <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-tight mt-1">{new Date(cls.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                        <div className="text-[11px] text-emerald-500 font-semibold uppercase tracking-tight mt-1">{new Date(cls.scheduled_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                                     </td>
                                     <td className="py-5 px-4">
                                         <div className="font-bold text-slate-800 dark:text-slate-200 text-[13px] flex items-center gap-2 uppercase tracking-tight">
                                             {cls.student_name}
                                             <span className={cls.gender === 'Female' ? 'text-pink-400' : 'text-blue-400'}>{cls.gender === 'Female' ? '♀' : '♂'}</span>
                                         </div>
-                                        <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">
+                                        <div className="text-[11px] text-slate-500 font-semibold uppercase mt-1">
                                             {cls.timezone || 'UTC'} · <span className="text-emerald-500">{getLocalTime(cls.timezone)}</span>
                                         </div>
                                     </td>
@@ -128,7 +128,7 @@ export default function AdminClasses() {
                                         <div className="text-[12px] text-slate-700 dark:text-slate-300 font-bold uppercase tracking-tight">{cls.subject || 'General Study'}</div>
                                         <div className="flex items-center gap-2 mt-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 w-fit rounded-lg">
                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                            <div className="text-[9px] text-slate-500 font-bold uppercase">Tr. {cls.tutor_name}</div>
+                                            <div className="text-[11px] text-slate-500 font-semibold uppercase">Tr. {cls.tutor_name}</div>
                                         </div>
                                     </td>
                                     <td className="py-5 px-4 text-center">

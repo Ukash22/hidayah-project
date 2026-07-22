@@ -40,7 +40,7 @@ const Navbar = () => {
             <img src="/logo.png" alt="Hidayah International" className="w-12 h-12 md:w-16 md:h-16 object-contain group-hover:scale-110 transition-transform" />
             <div className="flex flex-col">
               <span className={`font-bold text-lg md:text-xl leading-tight tracking-tighter text-primary`}>HIDAYAH</span>
-              <span className="text-[10px] font-bold tracking-widest text-secondary uppercase -mt-0.5">International Tutor Platform</span>
+              <span className="text-[11px] font-semibold tracking-wide text-secondary uppercase -mt-0.5">International Tutor Platform</span>
             </div>
           </Link>
 
@@ -132,14 +132,14 @@ const Navbar = () => {
                   <span className="text-[10px] font-bold text-slate-300 group-hover:text-primary transition-colors italic">04.</span>
                   <div className="flex flex-col">
                     <span className="text-xl font-bold text-slate-900 hover:text-primary transition-colors tracking-tight">Exam Practice</span>
-                    <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">CBT Interface</span>
+                    <span className="text-[11px] font-semibold text-blue-500 uppercase tracking-wide">CBT Interface</span>
                   </div>
                 </Link>
                 <Link to="/ai-hub" onClick={() => setIsOpen(false)} className="group flex items-center gap-4">
                   <span className="text-[10px] font-bold text-slate-300 group-hover:text-indigo-600 transition-colors italic">05.</span>
                   <div className="flex flex-col">
                     <span className="text-xl font-bold text-slate-900 hover:text-indigo-600 transition-colors tracking-tight">AI Learning Hub</span>
-                    <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Powered by AI</span>
+                    <span className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wide">Powered by AI</span>
                   </div>
                 </Link>
               </>
@@ -160,12 +160,12 @@ const Navbar = () => {
                     {user.username?.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Logged in as</p>
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Logged in as</p>
                     <p className="font-bold text-slate-900 truncate">{user.username}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link to={dashboardPath} onClick={() => setIsOpen(false)} className="py-4 bg-primary text-white rounded-xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-primary-600 transition-all active:scale-95 shadow-lg shadow-primary/20">
+                  <Link to={dashboardPath} onClick={() => setIsOpen(false)} className="py-4 bg-primary text-white rounded-xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-primary-dark transition-all active:scale-95 shadow-lg shadow-primary/20">
                     My Portal
                   </Link>
                   <button onClick={handleLogout} className="py-4 bg-red-50 text-red-600 rounded-xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-red-100 transition-all active:scale-95">
@@ -175,7 +175,7 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center mb-6">Join Hidayah International</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center mb-6">Join Hidayah International</p>
                 <div className="grid grid-cols-2 gap-4">
                   <Link to="/login" onClick={() => setIsOpen(false)} className="py-5 bg-slate-50 text-slate-900 rounded-2xl text-center text-[11px] font-semibold uppercase tracking-wide hover:bg-slate-100 transition-all">
                     Login

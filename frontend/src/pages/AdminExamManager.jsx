@@ -2,7 +2,6 @@ import React, { useState, useEffect, memo } from 'react';
 import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
 import { useToast } from '../context/ToastContext';
 
 const examTypeColors = {
@@ -160,9 +159,8 @@ const AdminExamManager = () => {
     const westernSubjects = subjects.filter(s => s.program_type !== 'ISLAMIC');
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <Navbar />
-            <div className="container pt-32 pb-20">
+        <div>
+            <div>
                 <div className="flex justify-between items-end mb-12">
                     <div>
                         <h1 className="text-4xl font-display text-primary mb-2">Exam Management</h1>
@@ -290,7 +288,7 @@ const AdminExamManager = () => {
                 <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
                     <div className="bg-white rounded-card-lg w-full max-w-lg shadow-2xl overflow-hidden">
                         {/* Header */}
-                        <div className="bg-gradient-to-r from-primary to-primary-700 p-8 text-white relative">
+                        <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white relative">
                             <h2 className="text-2xl font-display font-bold">Assign Exam to Students</h2>
                             <p className="text-primary-100/80 text-sm mt-1 font-medium">📝 {assigningExam.title}</p>
                             <button
@@ -325,7 +323,7 @@ const AdminExamManager = () => {
                                                 const allSelected = allIds.every(id => selectedStudents.includes(id));
                                                 setSelectedStudents(allSelected ? [] : allIds);
                                             }}
-                                            className="text-[10px] font-bold text-primary hover:underline uppercase"
+                                            className="text-[11px] font-semibold text-primary hover:underline uppercase"
                                         >
                                             {filteredStudents.every(s => selectedStudents.includes(s.user?.id || s.id)) ? 'Deselect All' : 'Select All'}
                                         </button>

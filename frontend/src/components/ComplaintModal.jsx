@@ -62,7 +62,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                         
                         <div className="mb-8 pr-12 relative z-10">
                             <h2 className="text-3xl font-display font-bold text-rose-500 mb-2">Report Issue</h2>
-                            <p className="text-[10px] font-bold uppercase text-slate-500 tracking-widest block">Submitting formal complaint</p>
+                            <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide block">Submitting formal complaint</p>
                         </div>
 
                         <div className="bg-rose-500/5 border border-rose-500/10 p-5 rounded-2xl mb-8 flex items-center gap-4 relative z-10">
@@ -70,7 +70,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                                 👤
                             </div>
                             <div>
-                                <span className="text-[9px] font-bold uppercase text-rose-500 tracking-widest block mb-1">Filing Against</span>
+                                <span className="text-[11px] font-semibold uppercase text-rose-500 tracking-wide block mb-1">Filing Against</span>
                                 <span className="text-sm font-bold text-white">{filedAgainstName}</span>
                             </div>
                         </div>
@@ -83,7 +83,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
-                                <label htmlFor="complaint_subject" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Incident Subject</label>
+                                <label htmlFor="complaint_subject" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Incident Subject</label>
                                 <input
                                     id="complaint_subject"
                                     name="complaint_subject"
@@ -97,7 +97,7 @@ const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, tok
                             </div>
 
                             <div className="space-y-3">
-                                <label htmlFor="complaint_description" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Detailed Description</label>
+                                <label htmlFor="complaint_description" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Detailed Description</label>
                                 <textarea
                                     id="complaint_description"
                                     name="complaint_description"

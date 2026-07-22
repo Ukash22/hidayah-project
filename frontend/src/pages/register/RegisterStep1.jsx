@@ -2,7 +2,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 const Field = ({ label, children }) => (
     <label className="flex flex-col gap-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 ml-1">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 ml-1">{label}</span>
         {children}
     </label>
 );

@@ -21,7 +21,7 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
                         Instructor Availability
                     </h4>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Set your standard weekly operating hours</p>
+                    <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mt-1">Set your standard weekly operating hours</p>
                 </div>
                 <button 
                     type="button"
@@ -58,7 +58,7 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
                                 <label htmlFor={`slot-${index}-start`} className="text-[11px] font-semibold uppercase tracking-wide text-emerald-500/60">From</label>
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">{formatTime12h(slot.startTime)}</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase">{formatTime12h(slot.startTime)}</span>
                             </div>
                             <input
                                 id={`slot-${index}-start`}
@@ -71,7 +71,7 @@ const AvailabilityManager = ({ formData, addAvailabilitySlot, removeAvailability
                         <div className="space-y-2 relative">
                             <div className="flex justify-between items-center px-1">
                                 <label htmlFor={`slot-${index}-end`} className="text-[11px] font-semibold uppercase tracking-wide text-emerald-500/60">To</label>
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">{formatTime12h(slot.endTime)}</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase">{formatTime12h(slot.endTime)}</span>
                             </div>
                             <div className="flex gap-3">
                                 <input

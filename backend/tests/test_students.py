@@ -27,3 +27,39 @@ class StudentEndpointSecurityTests(TestCase):
     def test_me_endpoint_rejects_anonymous(self):
         res = self.client.get('/api/students/me/')
         self.assertIn(res.status_code, (401, 403))
+
+
+class StudentProgressViewTests(TestCase):
+    """GET /api/students/me/progress/ returns attendance + score_trend."""
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='progstudent', email='prog@test.com', password='pass12345', role='STUDENT'
+        )
+        StudentProfile.objects.get_or_create(user=self.student)
+
+    def _login(self):
+        res = self.client.post('/api/auth/login/', {'username': 'progstudent', 'password': 'pass12345'})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {res.data['access']}")
+
+    def test_progress_returns_expected_keys(self):
+        self._login()
+        res = self.client.get('/api/students/me/progress/')
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('attendance', res.data)
+        self.assertIn('score_trend', res.data)
+        self.assertIn('subject_breakdown', res.data)
+
+    def test_progress_attendance_zero_for_new_student(self):
+        self._login()
+        res = self.client.get('/api/students/me/progress/')
+        att = res.data['attendance']
+        self.assertEqual(att['total'], 0)
+        self.assertEqual(att['rate'], 0)
+
+    def test_progress_rejects_anonymous(self):
+        res = self.client.get('/api/students/me/progress/')
+        self.assertIn(res.status_code, (401, 403))

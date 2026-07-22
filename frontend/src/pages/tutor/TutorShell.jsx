@@ -15,6 +15,7 @@ const NAV_GROUPS = [
             { to: '/tutor/exams', icon: '📝', label: 'Exams' },
             { to: '/tutor/media', icon: '📹', label: 'Media' },
             { to: '/tutor/profile', icon: '⚙️', label: 'Settings' },
+            { to: '/tutor/account', icon: '🔐', label: 'Account' },
         ]
     }
 ];

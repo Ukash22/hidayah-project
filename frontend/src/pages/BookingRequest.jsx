@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import api, { getApiError } from '../services/api';
 import { Search as IconSearch } from 'lucide-react';
 import TutorCard from '../components/TutorCard';
-import Navbar from '../components/Navbar';
+import BookingModal from '../components/BookingModal';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
+import { PageHeader } from '../components/layout';
+import { SkeletonCard } from '../components/ui';
 
 
 const DEFAULT_BOOKING = {
@@ -24,8 +27,7 @@ const BookingRequest = () => {
     const [selectedSubject, setSelectedSubject] = useState('');
     const [requesting, setRequesting] = useState(false);
     const [bookingStates, setBookingStates] = useState({});
-
-    const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
+    const [selectedTutor, setSelectedTutor] = useState(null);
 
     const getBookingData = useCallback((tutorId) => bookingStates[tutorId] || DEFAULT_BOOKING, [bookingStates]);
 
@@ -94,8 +96,6 @@ const BookingRequest = () => {
         fetchData();
     }, [token]);
 
-
-
     const handleRequestBooking = useCallback(async (tutor, bookingData) => {
         const missing = [];
         if (!bookingData.subject) missing.push("Subject");
@@ -111,21 +111,17 @@ const BookingRequest = () => {
             return;
         }
 
-        // Helper to normalize time to minutes from midnight
         const normalizeToMinutes = (t) => {
             if (!t) return null;
             let timeStr = t.trim().toUpperCase();
             const isPM = timeStr.includes('PM');
             const isAM = timeStr.includes('AM');
-            
             timeStr = timeStr.replace(/[A-Z\s]/g, '');
             const parts = timeStr.split(':');
             let h = parseInt(parts[0]);
             let m = parseInt(parts[1] || '0');
-
             if (isPM && h < 12) h += 12;
             if (isAM && h === 12) h = 0;
-
             return h * 60 + m;
         };
 
@@ -138,31 +134,25 @@ const BookingRequest = () => {
             return `${h}:${m.padStart(2, '0')} ${ampm}`;
         };
 
-        // Validate against tutor availability
         if (tutor.availabilities && tutor.availabilities.length > 0) {
             for (let slot of bookingData.schedule) {
-                const av = tutor.availabilities.find(a => 
-                    a.day.toUpperCase() === slot.day.toUpperCase() || 
+                const av = tutor.availabilities.find(a =>
+                    a.day.toUpperCase() === slot.day.toUpperCase() ||
                     a.day.toUpperCase().startsWith(slot.day.toUpperCase().slice(0, 3))
                 );
-
                 if (!av) {
                     toast.error(`Tutor is not available on ${slot.day}.`);
                     return;
                 }
-
                 const [slotStartRaw, slotEndRaw] = (slot.time || '').split('-');
                 const slotStart = normalizeToMinutes(slotStartRaw);
                 const slotEnd = normalizeToMinutes(slotEndRaw || slotStartRaw);
-
                 const avStart = normalizeToMinutes(av.start_time);
                 const avEnd = normalizeToMinutes(av.end_time);
-
                 if (slotStart === null || slotEnd === null) {
                     toast.error('Invalid time format selected.');
                     return;
                 }
-
                 if (slotStart < avStart || slotEnd > avEnd) {
                     toast.error(`${slot.day} ${slot.time} is outside tutor availability (${formatTime12h(av.start_time)} - ${formatTime12h(av.end_time)}).`);
                     return;
@@ -182,14 +172,15 @@ const BookingRequest = () => {
                 hours_per_session: bookingData.hours_per_session
             };
             await api.post(`/api/classes/booking/request/`, payload);
-            toast.success('Booking successful! Proceed to your dashboard to complete payment and start your lessons.');
-            navigate('/student');
+            toast.success('Booking request sent! Your dashboard will show your upcoming sessions once confirmed.');
+            setSelectedTutor(null);
+            navigate('/student/overview');
         } catch (err) {
             toast.error('Failed to send request: ' + (getApiError(err, 'Error')));
         } finally {
             setRequesting(false);
         }
-    }, [token, navigate, toast, getAuthHeader]);
+    }, [token, navigate, toast]);
 
     const filteredTutors = tutors.filter(t =>
         (t.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -198,66 +189,75 @@ const BookingRequest = () => {
     );
 
     if (loading) return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-950">
-            <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[#0a0c10] text-slate-300">
-            <Navbar />
-            
-            <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
-                <div className="absolute top-[10%] left-[5%] w-[40%] h-[40%] bg-emerald-600/30 blur-[150px] rounded-full"></div>
+        <>
+            <title>Find a Tutor — Hidayah</title>
+            <PageHeader
+                title="Find a Tutor"
+                description="Browse our educators and send a booking request."
+            />
+
+            {/* Search and filter bar */}
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <div className="flex-1 relative">
+                    <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Search by name or bio…"
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm font-medium text-slate-900 outline-none focus:border-emerald-400 transition-colors shadow-sm"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <select
+                    className="sm:w-56 bg-white border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium text-slate-900 outline-none focus:border-emerald-400 transition-colors shadow-sm"
+                    value={selectedSubject}
+                    onChange={e => setSelectedSubject(e.target.value)}
+                >
+                    <option value="">All Subjects</option>
+                    {subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                </select>
             </div>
 
-            <main className="container pt-32 pb-20 px-4 md:px-8 relative z-10 max-w-7xl mx-auto">
-                <div className="text-center mb-16">
-                    <h1 className="text-3xl md:text-5xl font-display font-bold text-white mb-4">Find Your Perfect <span className="text-emerald-500">Tutor</span></h1>
-                    <p className="text-slate-500 max-w-2xl mx-auto">Browse our world-class educators and find the one that matches your learning style and goals.</p>
+            {/* Tutor grid */}
+            {filteredTutors.length === 0 ? (
+                <div className="py-20 text-center bg-white rounded-2xl border border-slate-200">
+                    <p className="text-slate-400 font-semibold">No tutors match your search.</p>
                 </div>
-
-                {/* Search and Filters */}
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-card-lg p-5 md:p-8 mb-12 flex flex-col md:flex-row gap-6">
-                    <div className="flex-1 relative">
-                        <IconSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                        <input 
-                            type="text" 
-                            placeholder="Search by name or bio..." 
-                            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 pl-14 font-bold text-white outline-none focus:border-emerald-500/30 transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="md:w-64">
-                        <select 
-                            className="w-full bg-white/5 border border-white/5 rounded-2xl p-4 font-bold text-white outline-none focus:border-emerald-500/30 appearance-none transition-all"
-                            value={selectedSubject}
-                            onChange={(e) => setSelectedSubject(e.target.value)}
-                        >
-                            <option value="" className="bg-slate-900">All Subjects</option>
-                            {subjects.map(s => <option key={s.id} value={s.name} className="bg-slate-900">{s.name}</option>)}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Tutor Grid */}
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredTutors.map((tutor) => (
+            ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {filteredTutors.map(tutor => (
                         <TutorCard
+                            key={tutor.id}
                             tutor={tutor}
-                            bookingData={getBookingData(tutor.id)}
-                            requesting={requesting}
-                            onUpdateField={updateBookingField}
-                            onAddSlot={addSlot}
-                            onRemoveSlot={removeSlot}
-                            onUpdateSlot={updateSlot}
-                            onRequestBooking={handleRequestBooking}
+                            onBook={setSelectedTutor}
                         />
                     ))}
                 </div>
-            </main>
-        </div>
+            )}
+
+            {/* Booking modal */}
+            <AnimatePresence>
+                {selectedTutor && (
+                    <BookingModal
+                        tutor={selectedTutor}
+                        bookingData={getBookingData(selectedTutor.id)}
+                        requesting={requesting}
+                        onUpdateField={updateBookingField}
+                        onAddSlot={addSlot}
+                        onRemoveSlot={removeSlot}
+                        onUpdateSlot={updateSlot}
+                        onSubmit={handleRequestBooking}
+                        onClose={() => setSelectedTutor(null)}
+                    />
+                )}
+            </AnimatePresence>
+        </>
     );
 };
 

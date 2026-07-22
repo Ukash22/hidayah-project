@@ -51,11 +51,11 @@ export default function AdminComplaints() {
                     <table className="w-full text-left">
                         <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                             <tr>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subject</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Parties</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Action</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Subject</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Parties</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Action</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -71,8 +71,8 @@ export default function AdminComplaints() {
                                         <div className="text-[10px] text-slate-500 truncate max-w-xs">{c.description}</div>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <div className="text-[9px] font-bold text-primary uppercase">By: {c.filed_by_name}</div>
-                                        <div className="text-[9px] font-bold text-red-500 uppercase">Against: {c.filed_against_name}</div>
+                                        <div className="text-[11px] font-semibold text-primary uppercase">By: {c.filed_by_name}</div>
+                                        <div className="text-[11px] font-semibold text-red-500 uppercase">Against: {c.filed_against_name}</div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
                                         <StatusBadge status={c.status} />
@@ -81,7 +81,7 @@ export default function AdminComplaints() {
                                         {c.status !== 'RESOLVED' && (
                                             <button
                                                 onClick={() => handleResolve(c.id)}
-                                                className="bg-primary text-white px-3 py-1 rounded text-[9px] font-bold uppercase"
+                                                className="bg-primary text-white px-3 py-1 rounded text-[11px] font-semibold uppercase"
                                             >
                                                 Resolve
                                             </button>

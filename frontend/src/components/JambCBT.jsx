@@ -284,7 +284,7 @@ const JambCBT = ({ token, studentProfile }) => {
                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#0047AB] font-bold text-xl">H</div>
                     <div>
                         <h1 className="text-lg font-bold tracking-tighter leading-none">HIDAYAH CBT</h1>
-                        <p className="text-[10px] font-bold text-blue-200 tracking-widest uppercase">Exam Preparation Portal</p>
+                        <p className="text-[11px] font-semibold text-blue-200 tracking-wide uppercase">Exam Preparation Portal</p>
                     </div>
                 </div>
 
@@ -392,16 +392,16 @@ const JambCBT = ({ token, studentProfile }) => {
                         <div className="flex gap-4 mb-4">
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">Answered</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase">Answered</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-3 h-3 bg-white border-2 border-slate-200 rounded-full" />
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">Pending</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase">Pending</span>
                             </div>
                         </div>
                         <button 
                             onClick={async () => { if (await confirm('Are you sure you want to end this practice session?', { confirmLabel: 'Submit', danger: true })) submitExam(); }}
-                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-xl shadow-red-500/20 flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold uppercase text-[11px] tracking-wide shadow-xl shadow-red-500/20 flex items-center justify-center gap-2"
                         >
                             <IconSend size={14} /> Submit Final
                         </button>
@@ -415,14 +415,14 @@ const JambCBT = ({ token, studentProfile }) => {
                     <button 
                         onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                         disabled={currentQuestionIndex === 0}
-                        className="px-6 py-3 rounded-xl border-2 border-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-widest disabled:opacity-30 flex items-center gap-2 hover:bg-slate-50 transition-all"
+                        className="px-6 py-3 rounded-xl border-2 border-slate-100 text-slate-600 font-semibold uppercase text-[11px] tracking-wide disabled:opacity-30 flex items-center gap-2 hover:bg-slate-50 transition-all"
                     >
                         <IconChevronLeft size={16} /> Previous
                     </button>
                     <button 
                         onClick={() => setCurrentQuestionIndex(prev => Math.min(currentQuestions.length - 1, prev + 1))}
                         disabled={currentQuestionIndex === currentQuestions.length - 1}
-                        className="px-8 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold uppercase text-[10px] tracking-widest shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all"
+                        className="px-8 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold uppercase text-[11px] tracking-wide shadow-lg shadow-blue-500/20 flex items-center gap-2 transition-all"
                     >
                         Next <IconChevronRight size={16} />
                     </button>
@@ -435,7 +435,7 @@ const JambCBT = ({ token, studentProfile }) => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                         System Status: <span className="text-emerald-500">Connected</span>
                     </p>
                 </div>

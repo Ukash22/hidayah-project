@@ -182,9 +182,9 @@ export default function TutorSchedule() {
                         <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left w-full xl:w-auto">
                             <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/60 rounded-card flex items-center justify-center text-4xl border border-slate-100 dark:border-slate-800 flex-shrink-0">📖</div>
                             <div>
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">TRIAL CLASS</p>
+                                <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1">TRIAL CLASS</p>
                                 <h4 className="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-slate-100 mb-3">{trial.student_name || trial.first_name}</h4>
-                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
+                                <div className="flex flex-wrap gap-3 font-semibold text-[11px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
                                     <span className="flex items-center gap-2"><IconCalendar size={12} className="text-primary" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleDateString() : 'Pending'}</span>
                                     <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {trial.scheduled_at ? new Date(trial.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}</span>
                                     <span className="flex items-center gap-2">📍 {trial.country || 'Global'}</span>
@@ -221,9 +221,9 @@ export default function TutorSchedule() {
                         <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left w-full xl:w-auto">
                             <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800/60 rounded-card flex items-center justify-center text-4xl border border-slate-100 dark:border-slate-800 flex-shrink-0">🎓</div>
                             <div>
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{session.course_interested || 'REGULAR CLASS'}</p>
+                                <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1">{session.course_interested || 'REGULAR CLASS'}</p>
                                 <h4 className="text-2xl md:text-3xl font-display font-bold text-slate-900 dark:text-slate-100 mb-3">{session.student_name}</h4>
-                                <div className="flex flex-wrap gap-3 font-bold text-[10px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
+                                <div className="flex flex-wrap gap-3 font-semibold text-[11px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
                                     <span className="flex items-center gap-2"><IconCalendar size={12} className="text-primary" /> {new Date(session.scheduled_at).toLocaleDateString()}</span>
                                     <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {new Date(session.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
@@ -232,18 +232,18 @@ export default function TutorSchedule() {
                         <div className="flex flex-col sm:flex-row flex-wrap justify-center xl:justify-end gap-3 w-full xl:w-auto mt-4 xl:mt-0">
                             <button
                                 onClick={() => { setSelectedStudent({ id: session.student, user_details: { first_name: session.student_name } }); setShowComplaintModal(true); }}
-                                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 px-6 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap"
+                                className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Report</button>
                             <button
                                 onClick={() => { setSelectedStudentForAssign(session.student_data || { id: session.student, full_name: session.student_name }); setShowAssignmentModal(true); }}
-                                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-6 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap"
+                                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Assign</button>
                             {session.status !== 'COMPLETED' ? (
-                                <button onClick={() => handleComplete(session)} className="bg-primary-soft hover:bg-blue-100 text-primary border border-blue-100 px-6 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all shadow-sm whitespace-nowrap">Mark Done ✅</button>
+                                <button onClick={() => handleComplete(session)} className="bg-primary-soft hover:bg-blue-100 text-primary border border-blue-100 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap">Mark Done ✅</button>
                             ) : (
-                                <span className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 px-6 py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest border border-slate-100 dark:border-slate-800 whitespace-nowrap flex items-center justify-center">Completed</span>
+                                <span className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide border border-slate-100 dark:border-slate-800 whitespace-nowrap flex items-center justify-center">Completed</span>
                             )}
-                            <button onClick={() => handleJoinClass(session)} className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-bold uppercase text-[10px] sm:text-xs tracking-[0.2em] shadow-lg shadow-primary/20 active:scale-95 transition-all whitespace-nowrap">
+                            <button onClick={() => handleJoinClass(session)} className="bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-2xl font-semibold uppercase text-[11px] sm:text-xs tracking-wide shadow-lg shadow-primary/20 active:scale-95 transition-all whitespace-nowrap">
                                 Enter Class ↗
                             </button>
                         </div>
@@ -284,7 +284,7 @@ export default function TutorSchedule() {
                             {selectedStudentForAssign.id ? (
                                 <>
                                     <div className="space-y-5">
-                                        <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] ml-2">Academic Assessments</h3>
+                                        <h3 className="text-[11px] font-semibold text-primary uppercase tracking-wide ml-2">Academic Assessments</h3>
                                         <div className="grid gap-3">
                                             {exams.map(exam => {
                                                 const isAssigned = assignments.some(a => a.student === selectedStudentForAssign.id && a.exam === exam.id);
@@ -300,10 +300,10 @@ export default function TutorSchedule() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{exam.title}</p>
-                                                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{exam.subject_name || 'General'}</p>
+                                                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{exam.subject_name || 'General'}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary-soft px-3 py-1 rounded-full border border-blue-100">Active</span>}
+                                                        {isAssigned && <span className="text-[11px] font-semibold text-primary uppercase tracking-wide bg-primary-soft px-3 py-1 rounded-full border border-blue-100">Active</span>}
                                                     </div>
                                                 );
                                             })}
@@ -311,7 +311,7 @@ export default function TutorSchedule() {
                                     </div>
 
                                     <div className="space-y-5">
-                                        <h3 className="text-[10px] font-bold text-primary uppercase tracking-[0.3em] ml-2">Learning Assets</h3>
+                                        <h3 className="text-[11px] font-semibold text-primary uppercase tracking-wide ml-2">Learning Assets</h3>
                                         <div className="grid gap-3">
                                             {materials.map(mat => {
                                                 const isAssigned = mat.assigned_students?.includes(selectedStudentForAssign.id);
@@ -327,10 +327,10 @@ export default function TutorSchedule() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">{mat.title}</p>
-                                                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{mat.material_type}</p>
+                                                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{mat.material_type}</p>
                                                             </div>
                                                         </div>
-                                                        {isAssigned && <span className="text-[10px] font-bold text-primary uppercase tracking-widest bg-primary-soft px-3 py-1 rounded-full border border-blue-100">Assigned</span>}
+                                                        {isAssigned && <span className="text-[11px] font-semibold text-primary uppercase tracking-wide bg-primary-soft px-3 py-1 rounded-full border border-blue-100">Assigned</span>}
                                                     </div>
                                                 );
                                             })}

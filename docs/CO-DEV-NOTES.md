@@ -13,7 +13,8 @@ Complete handover for the audit programme (10 audits), S4 auth hardening, and UI
 | 3 | Expect **all users logged out once** | At deploy | S4 switched to httpOnly-cookie refresh; old localStorage sessions can't migrate. One re-login, done |
 | 4 | Nothing for dependencies | — | `drf-spectacular` + `celery[redis]` are in requirements.txt, auto-installed |
 | 5 | **`PAYSTACK_MOCK_MODE=False`** | Launch day only | Payments are SIMULATED until then (env default True) |
-| 6 | Optional: uncomment `hidayah-celery` worker in `render.yaml` (~$7/mo) | Whenever | Adds email/PDF retry; without it tasks run in a thread pool — fully functional |
+| 6 | **Replace WhatsApp placeholder** — set `VITE_WHATSAPP_NUMBER` (frontend env) and `WHATSAPP_NUMBER` (backend env if used) to the real Nigerian number in `2348XXXXXXXXX` format | Before launch | Homepage WhatsApp float button and FAQ CTA currently point to `2348000000000` (a dummy number). Also grep `src/` for any hardcoded `2348000000000` and replace. |
+| 7 | Optional: uncomment `hidayah-celery` worker in `render.yaml` (~$7/mo) | Whenever | Adds email/PDF retry; without it tasks run in a thread pool — fully functional |
 
 Full env-var table: `docs/README.md` → Environment Variables (incl. new `REFRESH_COOKIE_*`, `CORS_EXTRA_ORIGINS`, `ADMIN_*`, `VITE_DEV_PROXY_TARGET`).
 
@@ -64,6 +65,42 @@ Suite guide + conventions (incl. the Wallet `get_or_create` fixture gotcha): `ba
 **Rules for new UI code:** no new `rounded-[Nrem]` (use the tokens) · `font-black` only for display titles · `primary`/`secondary`/`gold` tokens, not raw palette blues · pulse ONLY for loading/live/alert semantics (keep-list in the plan doc) · min text 11px · new portal cards need `dark:` variants.
 **Remaining (opportunistic):** emoji→lucide in portal stat cards; `shadow-2xl` audit on flat cards; `Card` primitive component; stacked-card mobile variant for admin tables (they scroll fine meanwhile); dark-mode rough edges — the 608 variants were scripted, expect the odd light chip; patch individually.
 
+### Audit 11 — UI deep dive, D-1 through D-4 (complete)
+
+Full screen-by-screen review of all 45 screens. Four implementation phases, all shipped. Details in [`ui-deep-dive-progress.md`](gaps-and-upgrade/tracker/ui-deep-dive-progress.md).
+
+**D-1 — Bugs fixed:**
+- **X1** (`primary-600/700` dead classes): 13 occurrences across 11 files replaced with `primary-dark`; also defined missing `--primary-rgb` CSS variable used by button shadows.
+- **StudentLibrary ExternalLink button**: was labelled + focusable but did nothing — wired to open the resource link.
+- **X2 (5 hard navigations)**: AIHub wallet gate, ExamHub JAMB launch, ExamHub wallet lock panel, Login/Register admin redirects → all `navigate()`. Impersonation and ErrorBoundary reloads remain full-page **by design** (they need a hard refresh to rehydrate auth state).
+
+**D-2 — High-value small items:**
+- **Admin search**: AdminStudents (name/username/email/course/tutor) + AdminTutors (name/email/subject) — client-side filter + payment-status chips.
+- **Password change**: `POST /api/auth/password/change/` (old + new + confirm, validators, 4 tests) + shared `AccountSettings.jsx` page wired to all four portal shells via sidebar. **Do not create role-specific account pages** — this page is shared by design.
+- **Notifications "view all"**: `NotificationsPage.jsx` shared across all four shells + "View All" link in the bell dropdown; optimistic mark-read; portal-aware deep-link routing for notification links.
+- **Tutor availability editing**: `PUT /api/tutors/me/availability/` (replace-slots, 3 tests) + inline slot editor mounted on `TutorProfilePage`. The wizard's `AvailabilityManager` component is reused.
+
+**D-3 — Consistency sweep:**
+- **X3 micro-text** (60 files): `text-[9/10px] uppercase tracking-widest font-bold` → `text-[11px] uppercase tracking-wide font-semibold`. 16 remaining `text-[9px]` bumped to `text-[10px]`.
+- **X4 emoji → lucide in portals**: AdminStudents (📹→Video, ✅/❌→status dots), TutorRequests (📥⏳✅ tab labels stripped, 👤→User), ParentOverview (🧒→User), AdminOverview (🎥→Video), ExamHub (⚙️→Settings, 📜→Lock).
+- **X6 decorative bounce removed**: AIHub (🤖→Bot), ExamHub lock (📜→Lock), StudentOverview bell — all replaced with static lucide icons. Raised-hand + student reaction emojis kept (semantic, not decorative).
+- **ExamManager/QuestionManager into admin shell**: stripped standalone Navbar/min-h-screen; now nested admin routes at `/admin/exams` and `/admin/exams/:examId/questions`.
+
+**D-4 — Feature investments:**
+- **Parent portal build-out**: `GET /api/parents/children/{id}/detail/` (child sessions + wallet transactions) + `POST /api/parents/children/{id}/fund_wallet/` backend with 7 new tests. `ParentChildDetail.jsx` — sessions table, wallet balance, Add Funds modal; "Detail" link added alongside the impersonation button.
+- **Student progress/results history**: `GET /api/students/me/progress/` (attendance stats + exam score trend, 3 tests). `StudentProgress.jsx` with SVG bar chart, attendance ring, subject breakdown bars — previously `ExamResult` data existed but was unreachable in the UI.
+- **Homepage conversion**: `Pricing.jsx` (live data from `/api/payments/pricing/`, static fallback), `Testimonials.jsx` (4 cards + social proof bar), `FAQ.jsx` (7-item accordion, 2-col layout, WhatsApp CTA). Sticky `WhatsAppFloat` button. Footer updated with Pricing + FAQ + WhatsApp links.
+- **Smaller shipped items**: register step-2 running price estimate; TutorProfile "Book this tutor" preselects tutor (`?tutor_id=`); tutor wizard localStorage draft persistence; complaint status timeline (OPEN→UNDER_REVIEW→RESOLVED) in TutorComplaints; withdrawal reject-with-reason (`admin_notes` field + RejectModal); admin CSV export (`downloadCSV` utility on Students + Tutors pages); analytics date-range (`?date_from=&date_to=` on backend, skips cache; date pickers + Apply/Clear in AdminFinancials).
+
+**Rules for new code that come out of this audit:**
+- `AccountSettings` and `NotificationsPage` are shared — route them via all four shells, don't fork per role.
+- `downloadCSV(rows, filename)` utility exists in `src/utils/` — use it for any new CSV export.
+- `getApiError(err, fallback)` handles all DRF error shapes — use it instead of `err.response?.data?.error || fallback`.
+- Analytics endpoints that support date ranges skip the Redis cache — expected behaviour, not a bug.
+- ExamManager/QuestionManager are now inside the admin shell — don't add any more standalone authenticated pages that duplicate the portal chrome.
+
+---
+
 ### Audits 1–2 (UI/UX + Page Architecture — earlier work)
 Toast/Confirm system, portal shells (`DashboardShell` + nested routes), skeletons, per-step register wizard, drawer/sidebar structure. Trackers exist if you need history.
 
@@ -74,6 +111,108 @@ Toast/Confirm system, portal shells (`DashboardShell` + nested routes), skeleton
 - **Negative wallet balances are ALLOWED** — admin clawback mechanism; a test asserts debit-below-zero succeeds (D11)
 - **Impersonation stores child token in localStorage** — must survive a hard redirect; parent stays in the cookie (D15)
 - `/api/programs/list/` weird prefix stays (D6) · tutor list cache is 5-min stale by design (D2) · `text-slate-400` on dark toolbars is correct contrast (D10) · refresh-in-body still accepted for legacy clients (D14) · payments mocked until launch flip (D17) · scratch history purge is a public-repo precondition (D12/Q1)
+
+---
+
+## 5. July 2026 — Portal consolidation, live class UX, AI worker planning
+
+Changes made after the initial July 2026 audit wave. No new migrations or backend model changes in this batch — all are frontend or doc changes plus the AI worker plan.
+
+---
+
+### 5a. ExamHub and AIHub moved into the student portal
+
+Both pages were previously standalone routes (`/exam-practice`, `/ai-hub`) with their own `<Navbar />` and dark full-page layouts. They are now nested inside the student portal:
+
+| Old route | New route |
+|-----------|-----------|
+| `/exam-practice` | `/student/exam-practice` |
+| `/ai-hub` | `/student/ai-hub` |
+
+Legacy routes remain as `<Navigate replace />` redirects so old links/bookmarks keep working.
+
+**What changed in each file:**
+- `ExamHub.jsx` — removed `<Navbar />`, outer wrapper, and dark container; added `<PageHeader>`; `window.location.href = ...` → `navigate(...)` for JAMB launch; adjusted `sticky top-*` values from `top-32` (below navbar) to `top-6` (portal); emerald theme throughout.
+- `AIHub.jsx` — same stripping pattern; indigo theme; `profileLoading` state added to prevent wallet-gate flash.
+- `StudentShell.jsx` — two new nav items added: Exam Practice (`🎓`) and AI Hub (`🤖`).
+- `App.jsx` — new nested routes under `/student`; legacy redirects; CBTInterface stays at `/exam/practice/:id` (full-screen, must not have portal sidebar).
+
+**CBTInterface stays standalone.** It's a full-screen timed exam that must not have the portal sidebar. ExamHub links to it; CBT navigates away on completion.
+
+---
+
+### 5b. BookingModal — booking form extracted from TutorCard
+
+The inline "Book This Tutor" expand-section inside each `TutorCard` was removed. Booking is now a full-screen overlay modal (`BookingModal.jsx` — new file).
+
+**Pattern:**
+- `TutorCard` is now a ~130-line display card with a single CTA button that calls `onBook(tutor)`.
+- `BookingRequest` manages `selectedTutor` state and renders `<BookingModal>` under `<AnimatePresence>`.
+- Modal closes on backdrop click or Escape key.
+- `DAYS`, `addHoursToTime`, `fmt12h` helpers live in `BookingModal.jsx`.
+
+**Theme change:** `TutorCard` and `BookingRequest` both moved from dark-glass (`bg-white/5`) to the portal's light background (`bg-white border-slate-200`). Remove any future cards with dark-glass styling on this page.
+
+---
+
+### 5c. LiveClassRoom improvements
+
+Three changes to the live class screen (`LiveClassRoom.jsx` + `WebRTCVideoChat.jsx`):
+
+1. **Exit Room button** — The existing "Leave" button in WebRTCVideoChat only called `setIsVideoOpen(false)` (no navigation). Added a separate `Exit Room` button in the LiveClassRoom header that calls `navigate(-1)`. The header is emerald-themed with a pulsing LIVE badge.
+
+2. **Local video PIP** — The local user video panel in classroom mode was `h-48 md:h-56`. Reduced to `h-32 md:h-40` so it's less intrusive as a picture-in-picture.
+
+3. **Chat click-outside close** — Added `chatPanelRef` + `mousedown` event listener to `WebRTCVideoChat`. Clicking outside the chat panel sets `showChat(false)`.
+
+---
+
+### 5d. MathToolsPanel auto-close
+
+All five insert actions in `MathToolsPanel.jsx` (Graph, Angle, Pie Chart, Ruler, Protractor) now call `onClose()` immediately after inserting the shape. Previously the panel stayed open, requiring a manual close.
+
+---
+
+### 5e. Seed command — materials section
+
+`backend/accounts/management/commands/seed.py` gained a `_seed_materials()` method.
+
+- Triggered by `python manage.py seed --section materials` or `--section all`.
+- Creates 8 `LearningMaterial` records across 3 demo tutors using `get_or_create` (idempotent).
+- All use `material_type='LINK'` with YouTube `external_url` — Cloudinary is not configured in dev so `material_type='VIDEO'` would store a null file URL.
+- When Cloudinary is configured in production, VIDEO/PDF/AUDIO types work normally (file stored in Cloudinary, `file_url` populated).
+
+---
+
+### 5f. New/updated docs
+
+| File | What changed |
+|------|-------------|
+| `docs/frontend.md` | Full rewrite — route tables for all 4 portals, portal shell architecture, page stripping recipe, exam distinction table, components reference |
+| `docs/ai-hub-worker-plan.md` | New full implementation plan — stateless FastAPI Question Engine covering AI Hub, Exam Practice, and JAMB CBT sessions; Redis key design (5 roles); Celery task definitions; past question data sources and ingestion pipeline; 6-phase rollout |
+
+---
+
+### 5g. Planned: Question Engine (not implemented yet)
+
+See `docs/ai-hub-worker-plan.md` for the full plan. Key points for co-devs:
+
+- The current `ai_engine/services.py` calls OpenAI synchronously inside a Django request — blocks the worker thread for 5–30s under load.
+- The plan moves all AI/CBT question concerns to a stateless FastAPI service (`ai_worker/`).
+- Django becomes a proxy: JWT auth → wallet check → Redis rate limit → call worker → store result.
+- Redis adds: CBT session state (server-enforced timer + browser-crash recovery), question cache (24h TTL), AI bank cache (6h TTL, pre-warmed nightly by Celery), rate limiting.
+- The frontend does NOT change for Phase 1–3 — same API URLs, same response shapes.
+- `OPENAI_API_KEY` moves from Django to the worker service in production; Django keeps it only as the `services.py` fallback during dev.
+
+**Do not refactor `ai_engine/services.py` directly.** The migration path is additive: worker up → Django proxy with fallback → remove fallback. See the plan's Phase section.
+
+---
+
+### 5h. Student exam enrollment — known gap
+
+`StudentProfile.level` and `target_exam_type` are set at registration and cannot be changed by the student after the fact. There is no self-service update UI. JAMB CBT auto-configures from `target_exam_type`, so a student who registered incorrectly (e.g., SECONDARY instead of JAMB) gets the wrong exam type.
+
+**Fix location:** Account Settings page — expose `level` and `target_exam_type` as editable fields. No backend change needed (the fields exist and are updateable via the profile endpoint). This is not yet implemented.
 
 ---
 

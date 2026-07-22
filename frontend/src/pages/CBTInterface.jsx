@@ -171,7 +171,7 @@ const CBTInterface = () => {
                     ← Go Back
                 </button>
                 <button
-                    onClick={() => window.location.href = '/student'}
+                    onClick={() => navigate('/student')}
                     className="px-8 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold uppercase tracking-widest text-xs transition-all shadow-lg shadow-primary/20"
                 >
                     Dashboard

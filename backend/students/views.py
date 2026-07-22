@@ -2,7 +2,9 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
 from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import StudentProfile
 from .serializers import StudentProfileSerializer
@@ -74,12 +76,13 @@ class PromoteStudentView(generics.GenericAPIView):
         user_to_promote.save()
 
         # 2. Check if TutorProfile already exists to prevent duplicate key errors
+        from django.conf import settings as _s
         tutor_profile, created = TutorProfile.objects.get_or_create(
             user=user_to_promote,
             defaults={
-                'status': 'PENDING',  # This puts them 'Under Review'
+                'status': 'PENDING',
                 'experience_years': 0,
-                'hourly_rate': 1500.00
+                'hourly_rate': _s.DEFAULT_HOURLY_RATE,
             }
         )
         
@@ -141,7 +144,8 @@ class EnrollInCourseView(generics.CreateAPIView):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         tutor = None
-        rate = Decimal('3000.00') # Absolute fallback
+        from django.conf import settings as _s
+        rate = _s.DEFAULT_HOURLY_RATE  # fallback from env/settings
         
         if tutor_id:
             tutor = get_object_or_404(User, pk=tutor_id)
@@ -194,9 +198,81 @@ class EnrollInCourseView(generics.CreateAPIView):
         # 3. REGENERATE PDF to reflect changes via shared utility
         from .utils import update_student_admission_letter
         update_student_admission_letter(profile)
-        
+
         return Response({
             "message": f"Successfully requested enrollment in {subject.name}. Waiting for tutor approval.",
             "admission_letter_url": profile.admission_letter.url if profile.admission_letter else None
+        })
+
+
+class StudentProgressView(APIView):
+    """GET /api/students/me/progress/ — attendance stats + exam score trend."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from classes.models import ScheduledSession
+        from exams.models import ExamResult
+        from django.utils import timezone
+
+        user = request.user
+
+        # --- Attendance aggregation ---
+        session_qs = ScheduledSession.objects.filter(student=user)
+        agg = session_qs.aggregate(
+            total=Count('id'),
+            completed=Count('id', filter=Q(status='COMPLETED')),
+            upcoming=Count('id', filter=Q(status='PENDING', scheduled_at__gte=timezone.now())),
+            cancelled=Count('id', filter=Q(status='CANCELLED')),
+        )
+        total = agg['total'] or 0
+        completed = agg['completed'] or 0
+        attendance_rate = round((completed / total) * 100) if total > 0 else 0
+
+        # --- Subject attendance breakdown ---
+        subject_rows = (
+            session_qs.values('subject__name')
+            .annotate(
+                total=Count('id'),
+                completed=Count('id', filter=Q(status='COMPLETED')),
+            )
+            .order_by('-total')[:6]
+        )
+        subject_breakdown = [
+            {
+                'subject': r['subject__name'] or 'General',
+                'total': r['total'],
+                'completed': r['completed'],
+                'rate': round((r['completed'] / r['total']) * 100) if r['total'] > 0 else 0,
+            }
+            for r in subject_rows
+        ]
+
+        # --- Exam score trend (last 20, oldest-first for chart) ---
+        results = (
+            ExamResult.objects
+            .filter(student=user)
+            .select_related('exam')
+            .order_by('date_taken')[:20]
+        )
+        score_trend = [
+            {
+                'exam_title': r.exam.title,
+                'score': float(r.score),
+                'date_taken': r.date_taken,
+                'passed': float(r.score) >= 50,
+            }
+            for r in results
+        ]
+
+        return Response({
+            'attendance': {
+                'total': total,
+                'completed': completed,
+                'upcoming': agg['upcoming'] or 0,
+                'cancelled': agg['cancelled'] or 0,
+                'rate': attendance_rate,
+            },
+            'subject_breakdown': subject_breakdown,
+            'score_trend': score_trend,
         })
 

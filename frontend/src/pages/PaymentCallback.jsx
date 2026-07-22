@@ -189,7 +189,7 @@ const PaymentCallback = () => {
                                 <div className="flex flex-col gap-3">
                                     <button
                                         onClick={retryVerification}
-                                        className="w-full bg-primary hover:bg-primary-600 text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
+                                        className="w-full bg-primary hover:bg-primary-dark text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs transition-all"
                                     >
                                         🔄 Retry Verification
                                     </button>
@@ -212,7 +212,7 @@ const PaymentCallback = () => {
                                 <p className="text-slate-600 mb-6">{message}</p>
                                 <button
                                     onClick={() => navigate('/payment')}
-                                    className="bg-primary hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-bold transition-all"
+                                    className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-xl font-bold transition-all"
                                 >
                                     Try Again
                                 </button>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api, { asList } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -17,8 +18,8 @@ function StatCard({ icon, label, value, sub, alert: isAlert }) {
                 {isAlert && <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />}
             </div>
             <div className="text-3xl font-bold text-slate-800 dark:text-slate-200">{value}</div>
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</div>
-            <div className="text-[9px] text-slate-300 font-bold uppercase tracking-tighter">{sub}</div>
+            <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
+            <div className="text-[11px] text-slate-300 font-semibold uppercase tracking-tighter">{sub}</div>
         </div>
     );
 }
@@ -119,7 +120,7 @@ export default function AdminOverview() {
                             <p className="text-xs text-red-600 font-bold">{error}</p>
                         </div>
                     </div>
-                    <button onClick={fetchAll} className="text-[10px] font-bold text-red-800 uppercase hover:underline">Retry Sync</button>
+                    <button onClick={fetchAll} className="text-[11px] font-semibold text-red-800 uppercase hover:underline">Retry Sync</button>
                 </div>
             )}
 
@@ -127,7 +128,7 @@ export default function AdminOverview() {
             {activeClass && (
                 <div className="bg-gradient-to-r from-primary to-indigo-800 rounded-2xl p-6 shadow-2xl shadow-blue-500/20 border border-blue-500/30 flex flex-col md:flex-row justify-between items-center gap-6 mb-8">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white text-xl">🎥</div>
+                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-white"><Video size={22} /></div>
                         <div>
                             <h4 className="text-white font-bold text-lg">Class Active on Platform</h4>
                             <p className="text-blue-100 text-sm">Tr. {activeClass.tutor_name} is teaching {activeClass.student_name} ({activeClass.subject || 'Class'})</p>
@@ -166,12 +167,12 @@ export default function AdminOverview() {
                             {updatingGlobal ? (
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Syncing...</span>
+                                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tighter">Syncing...</span>
                                 </div>
                             ) : globalSuccess ? (
-                                <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">✓ Live & Dynamic</span>
+                                <span className="text-[11px] font-semibold text-emerald-400 uppercase tracking-tighter">✓ Live & Dynamic</span>
                             ) : (
-                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Base Rate for all Subjects</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tighter">Base Rate for all Subjects</span>
                             )}
                         </div>
                     </div>
@@ -256,7 +257,7 @@ export default function AdminOverview() {
                 ].map(({ label, value, color, bg }) => (
                     <div key={label} className={`${bg} border rounded-2xl p-4 flex flex-col gap-1`}>
                         <div className={`text-2xl font-bold ${color}`}>{value}</div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{label}</div>
+                        <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{label}</div>
                     </div>
                 ))}
             </div>

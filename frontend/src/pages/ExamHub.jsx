@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { getAccess } from '../services/tokenStore';
+import { Lock, Settings } from 'lucide-react';
 import api from '../services/api';
-import Navbar from '../components/Navbar';
 import { Link, useNavigate } from 'react-router-dom';
+import { PageHeader } from '../components/layout';
 
 const ExamHub = () => {
     const navigate = useNavigate();
@@ -14,11 +14,6 @@ const ExamHub = () => {
     const [jambSelection, setJambSelection] = useState(['English Language']);
     const [availableYears, setAvailableYears] = useState([]);
 
-    const getAuthHeader = () => {
-        const token = getAccess();
-        return token ? { Authorization: `Bearer ${token}` } : {};
-    };
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -26,7 +21,7 @@ const ExamHub = () => {
                     api.get(`/api/exams/list/`),
                     api.get(`/api/students/me/`)
                 ]);
-                
+
                 setExams(examRes.data);
                 setProfile(profRes.data);
 
@@ -34,7 +29,7 @@ const ExamHub = () => {
                 setAvailableYears(years);
                 if (years.length > 0 && !jambYear) setJambYear(years[0].toString());
             } catch (err) {
-                console.error("Failed to fetch data", err);
+                console.error('Failed to fetch exam data', err);
             } finally {
                 setLoading(false);
             }
@@ -60,168 +55,192 @@ const ExamHub = () => {
 
         if (selectedExams.length > 0) {
             const ids = selectedExams.map(e => e.id).join(',');
-            window.location.href = `/exam/practice/${ids}?type=JAMB&year=${jambYear}`;
+            navigate(`/exam/practice/${ids}?type=JAMB&year=${jambYear}`);
         }
     };
 
-    const filteredExams = exams.filter(e => e.exam_type === selectedType && (selectedType === 'JAMB' ? e.year?.toString() === jambYear : true));
+    const filteredExams = exams.filter(e =>
+        e.exam_type === selectedType &&
+        (selectedType === 'JAMB' ? e.year?.toString() === jambYear : true)
+    );
 
-    return (
-        <div className="min-h-screen bg-[#f8fafc]">
-            <title>Exam Practice — Hidayah</title>
-            <Navbar />
-            <div className="container pt-32 pb-20">
-                {(profile && profile.wallet_balance < 1000) ? (
-                    <div className="max-w-2xl mx-auto py-20 text-center bg-white rounded-card-lg border-2 border-slate-100 shadow-2xl relative overflow-hidden group mt-10">
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-50"></div>
-                        <div className="relative z-10 px-10">
-                            <div className="w-32 h-32 bg-amber-50 rounded-full flex items-center justify-center text-4xl md:text-6xl mx-auto mb-8 animate-bounce shadow-inner">📜</div>
-                            <h3 className="text-4xl font-display font-bold text-primary mb-4 text-center">Exam Access Locked</h3>
-                            <p className="text-slate-600 mb-10 font-medium leading-relaxed italic text-lg text-center">
-                                To access the Exam Practice Hub and AI Simulations, you must maintain a minimum wallet balance of ₦1,000. This ensures your account is ready for active assessment sessions.
-                            </p>
-                            <div className="flex flex-col md:flex-row gap-4 justify-center">
-                                <button
-                                    onClick={() => navigate('/payment')}
-                                    className="bg-primary hover:bg-primary-600 text-white px-12 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-sm shadow-2xl transition-all active:scale-95 group-hover:-translate-y-1"
-                                >
-                                    Funding Wallet Now →
-                                </button>
-                                <button
-                                    onClick={() => window.location.href = '/student'}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-12 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-sm transition-all active:scale-95"
-                                >
-                                    Return to Dashboard
-                                </button>
-                            </div>
+    // Wallet gate
+    if (!loading && profile && profile.wallet_balance < 1000) {
+        return (
+            <>
+                <title>Exam Practice — Hidayah</title>
+                <PageHeader title="Exam Practice" description="Past paper practice for JAMB, WAEC, NECO and more." />
+                <div className="max-w-2xl mx-auto py-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                    <div className="px-10">
+                        <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                            <Lock size={36} className="text-amber-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-900 mb-3">Exam Access Locked</h3>
+                        <p className="text-slate-500 mb-8 leading-relaxed">
+                            A minimum wallet balance of ₦1,000 is required to access Exam Practice. This keeps your account ready for active assessment sessions.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <button
+                                onClick={() => navigate('/payment')}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all active:scale-95 shadow-lg shadow-emerald-600/20"
+                            >
+                                Top Up Wallet →
+                            </button>
+                            <button
+                                onClick={() => navigate('/student/overview')}
+                                className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-8 py-3 rounded-xl font-bold text-sm uppercase tracking-wide transition-all active:scale-95"
+                            >
+                                Back to Dashboard
+                            </button>
                         </div>
                     </div>
-                ) : (
-                    <div className="flex flex-col lg:flex-row gap-12">
-                        {/* Left: Configuration & Selection */}
-                        <div className="lg:w-1/3">
-                            <div className="bg-white rounded-card shadow-xl p-8 border border-slate-100 sticky top-32">
-                                <h2 className="text-2xl font-display text-primary mb-6 flex items-center gap-2">
-                                    <span className="p-2 bg-primary/5 rounded-lg text-xl">⚙️</span>
-                                    Exam Configuration
-                                </h2>
+                </div>
+            </>
+        );
+    }
 
-                                <div className="space-y-6">
+    return (
+        <>
+            <title>Exam Practice — Hidayah</title>
+            <PageHeader
+                title="Exam Practice"
+                description="Practice past papers for JAMB, WAEC, NECO, JSSCE and primary levels."
+            />
+
+            <div className="flex flex-col lg:flex-row gap-8">
+                {/* Left: Config panel */}
+                <div className="lg:w-80 flex-shrink-0">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-6">
+                        <h2 className="text-base font-bold text-slate-900 mb-5 flex items-center gap-2">
+                            <Settings size={16} className="text-emerald-600" />
+                            Exam Configuration
+                        </h2>
+
+                        <div className="space-y-5">
+                            <div>
+                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">
+                                    Examination Type
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {['JAMB', 'WAEC', 'NECO', 'JSSCE', 'PRIMARY'].map(type => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setSelectedType(type)}
+                                            className={`py-2.5 rounded-xl border-2 transition-all font-bold text-xs ${
+                                                selectedType === type
+                                                    ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                                                    : 'border-slate-100 bg-slate-50 text-slate-500 hover:border-slate-200'
+                                            }`}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {selectedType === 'JAMB' && (
+                                <>
                                     <div>
-                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">Examination Type</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {['JAMB', 'WAEC', 'NECO', 'JSSCE', 'PRIMARY'].map(type => (
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">
+                                            Exam Year
+                                        </label>
+                                        <select
+                                            value={jambYear}
+                                            onChange={(e) => setJambYear(e.target.value)}
+                                            className="w-full bg-slate-50 rounded-xl p-3 border border-slate-200 font-bold text-slate-800 text-sm outline-none focus:border-emerald-400"
+                                        >
+                                            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 block mb-2">
+                                            Subject Combination ({jambSelection.length}/4)
+                                        </label>
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            {jambSelection.map(s => (
+                                                <span key={s} className="px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1.5">
+                                                    {s}
+                                                    {s !== 'English Language' && (
+                                                        <button onClick={() => toggleSubject(s)} className="hover:text-red-200 leading-none">×</button>
+                                                    )}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
+                                            {exams.filter(e => e.exam_type === 'JAMB' && e.year?.toString() === jambYear).map(e => (
                                                 <button
-                                                    key={type}
-                                                    onClick={() => setSelectedType(type)}
-                                                    className={`py-3 rounded-xl border-2 transition-all font-bold text-xs ${selectedType === type ? 'border-primary bg-primary/5 text-primary' : 'border-slate-50 bg-slate-50 text-slate-500'}`}
+                                                    key={e.id}
+                                                    disabled={jambSelection.includes(e.subject_name) && e.subject_name === 'English Language'}
+                                                    onClick={() => toggleSubject(e.subject_name)}
+                                                    className={`w-full text-left p-2.5 rounded-xl border-2 text-xs font-bold transition-all ${
+                                                        jambSelection.includes(e.subject_name)
+                                                            ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                                                            : 'border-slate-100 bg-white hover:border-slate-200 text-slate-500'
+                                                    }`}
                                                 >
-                                                    {type}
+                                                    {jambSelection.includes(e.subject_name) ? '✓ ' : '+ '}{e.subject_name}
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
 
-                                    {selectedType === 'JAMB' && (
-                                        <>
-                                            <div>
-                                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">Exam Year</label>
-                                                <select
-                                                    value={jambYear}
-                                                    onChange={(e) => setJambYear(e.target.value)}
-                                                    className="w-full bg-slate-50 rounded-xl p-4 border border-slate-100 font-bold text-primary"
-                                                >
-                                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-                                                </select>
-                                            </div>
-
-                                            <div>
-                                                <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block mb-3">
-                                                    Subject Combination ({jambSelection.length}/4)
-                                                </label>
-                                                <div className="flex flex-wrap gap-2 mb-4">
-                                                    {jambSelection.map(s => (
-                                                        <span key={s} className="px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
-                                                            {s}
-                                                            {s !== 'English Language' && (
-                                                                <button onClick={() => toggleSubject(s)} className="hover:text-red-200">×</button>
-                                                            )}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                                <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                                    {exams.filter(e => e.exam_type === 'JAMB' && e.year?.toString() === jambYear).map(e => (
-                                                        <button
-                                                            key={e.id}
-                                                            disabled={jambSelection.includes(e.subject_name) && e.subject_name === 'English Language'}
-                                                            onClick={() => toggleSubject(e.subject_name)}
-                                                            className={`w-full text-left p-3 rounded-xl border-2 text-xs font-bold transition-all ${jambSelection.includes(e.subject_name) ? 'border-primary bg-primary/5 text-primary' : 'border-slate-50 bg-white hover:border-slate-200 text-slate-500'}`}
-                                                        >
-                                                            {jambSelection.includes(e.subject_name) ? '✓ ' : '+ '}
-                                                            {e.subject_name}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                disabled={jambSelection.length < 4}
-                                                onClick={handleStartJAMB}
-                                                className="w-full btn btn-primary py-4 shadow-xl shadow-primary/20 disabled:opacity-50"
-                                            >
-                                                Launch Full JAMB Simulation 🚀
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Right: Available Single Exams */}
-                        <div className="lg:w-2/3">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                {loading ? (
-                                    [1, 2, 3, 4].map(i => (
-                                        <div key={i} className="bg-white h-48 rounded-card border border-slate-100 animate-pulse"></div>
-                                    ))
-                                ) : filteredExams.length > 0 ? (
-                                    filteredExams.map(exam => (
-                                        <div key={exam.id} className="relative overflow-hidden group bg-white p-8 rounded-card-lg border border-slate-100 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 transition-all">
-                                            <div className="relative z-10">
-                                                <div className="flex justify-between items-start mb-6">
-                                                    <div className="bg-slate-50 w-12 h-12 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                                        📚
-                                                    </div>
-                                                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-tighter">
-                                                        {exam.exam_type} {exam.year}
-                                                    </span>
-                                                </div>
-                                                <h3 className="text-xl font-display text-primary mb-2 font-bold">{exam.title}</h3>
-                                                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 mb-8">
-                                                    <span className="flex items-center gap-1">⏱️ {exam.duration_minutes} Mins</span>
-                                                    <span className="flex items-center gap-1">❓ Questions</span>
-                                                </div>
-                                                <Link
-                                                    to={`/exam/practice/${exam.id}`}
-                                                    className="w-full inline-block text-center py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-primary transition-colors"
-                                                >
-                                                    Start Practice
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="md:col-span-2 bg-white rounded-card p-20 border border-dashed border-slate-200 text-center">
-                                        <p className="text-4xl mb-6">🏜️</p>
-                                        <p className="text-slate-500 font-medium">No exams found for this selection yet.</p>
-                                    </div>
-                                )}
-                            </div>
+                                    <button
+                                        disabled={jambSelection.length < 4}
+                                        onClick={handleStartJAMB}
+                                        className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-md shadow-emerald-600/20"
+                                    >
+                                        Launch Full JAMB Simulation 🚀
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
-                )}
+                </div>
+
+                {/* Right: Exam cards */}
+                <div className="flex-1">
+                    <div className="grid md:grid-cols-2 gap-5">
+                        {loading ? (
+                            [1, 2, 3, 4].map(i => (
+                                <div key={i} className="bg-white h-48 rounded-2xl border border-slate-200 animate-pulse" />
+                            ))
+                        ) : filteredExams.length > 0 ? (
+                            filteredExams.map(exam => (
+                                <div
+                                    key={exam.id}
+                                    className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-emerald-200 hover:shadow-md transition-all group"
+                                >
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                            📚
+                                        </div>
+                                        <span className="px-2.5 py-1 bg-amber-50 text-amber-700 text-[11px] font-semibold rounded-full uppercase tracking-tight border border-amber-100">
+                                            {exam.exam_type} {exam.year}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-base font-bold text-slate-900 mb-1">{exam.title}</h3>
+                                    <div className="flex items-center gap-4 text-xs font-medium text-slate-400 mb-5">
+                                        <span>⏱ {exam.duration_minutes} min</span>
+                                    </div>
+                                    <Link
+                                        to={`/exam/practice/${exam.id}`}
+                                        className="w-full inline-block text-center py-2.5 bg-slate-900 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors"
+                                    >
+                                        Start Practice
+                                    </Link>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="md:col-span-2 bg-white rounded-2xl p-16 border border-dashed border-slate-200 text-center">
+                                <p className="text-3xl mb-4">🏜️</p>
+                                <p className="text-slate-400 font-medium">No exams found for this selection.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

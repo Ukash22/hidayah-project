@@ -85,6 +85,7 @@ export default function Register() {
     const [subjectEnrollments, setSubjectEnrollments] = useState({});
     const [tutorsBySubject, setTutorsBySubject] = useState({});
     const [loadingTutors, setLoadingTutors] = useState({});
+    const [pricingTiers, setPricingTiers] = useState({});
 
     const [parent, setParent] = useState({
         parentFirstName: '', parentLastName: '', parentEmail: '',
@@ -115,6 +116,16 @@ export default function Register() {
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preSelectedTutorId, JSON.stringify(Object.keys(subjectEnrollments))]);
+
+    useEffect(() => {
+        api.get('/api/payments/pricing/')
+            .then(res => {
+                const tiers = {};
+                asList(res.data).forEach(t => { tiers[t.class_type] = parseFloat(t.hourly_rate || 0); });
+                setPricingTiers(tiers);
+            })
+            .catch(() => {});
+    }, []);
 
     useEffect(() => {
         api.get('/api/programs/subjects/')
@@ -282,7 +293,7 @@ export default function Register() {
             toast.success('Welcome to Hidayah! Your admission letter has been sent to your email.');
 
             if (data.user?.role === 'ADMIN' || data.user?.is_superuser) {
-                window.location.href = '/admin';
+                navigate('/admin');
             } else {
                 navigate('/student');
             }
@@ -355,6 +366,8 @@ export default function Register() {
                                         addScheduleSlot={addScheduleSlot}
                                         removeScheduleSlot={removeScheduleSlot}
                                         updateScheduleSlot={updateScheduleSlot}
+                                        pricingTiers={pricingTiers}
+                                        preSelectedTutorName={preSelectedTutorName}
                                     />
                                 </motion.div>
                             )}

@@ -39,3 +39,6 @@ backend/scratch/
 # Coverage tool artifacts
 backend/.coverage
 backend/htmlcov/
+
+# Bank-statement extraction notes/scripts (references client financial data)
+yerima_extraction/

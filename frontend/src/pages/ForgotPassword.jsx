@@ -65,7 +65,7 @@ const ForgotPassword = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full group bg-primary hover:bg-primary-600 text-white py-5 rounded-2xl font-bold uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
+                            className="w-full group bg-primary hover:bg-primary-dark text-white py-5 rounded-2xl font-bold uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 disabled:opacity-50"
                         >
                             {loading ? 'Sending Link...' : 'Send Reset Link →'}
                         </button>
