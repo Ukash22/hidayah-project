@@ -208,7 +208,7 @@ const QuranMushaf = () => {
 
                 <div className="flex flex-wrap items-center gap-4">
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Jump to Surah</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide px-1">Jump to Surah</label>
                         <select 
                             value={selectedSurah} 
                             onChange={handleSurahChange}
@@ -221,7 +221,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Meaning</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide px-1">Meaning</label>
                         <div className="flex gap-1">
                             <button 
                                 onClick={() => setShowTranslation(!showTranslation)}
@@ -244,7 +244,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Reciter</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide px-1">Reciter</label>
                         <select 
                             value={selectedReciter} 
                             onChange={(e) => {
@@ -260,7 +260,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Repeat</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide px-1">Repeat</label>
                         <select 
                             value={verseRepeatCount} 
                             onChange={(e) => setVerseRepeatCount(Number(e.target.value))}
@@ -276,7 +276,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest px-1">Range</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide px-1">Range</label>
                         <select 
                             value={versesToPlay} 
                             onChange={(e) => setVersesToPlay(Number(e.target.value))}
@@ -291,7 +291,7 @@ const QuranMushaf = () => {
                     </div>
 
                     <div className="flex flex-col items-center gap-1">
-                        <label className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Audio</label>
+                        <label className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">Audio</label>
                         <button 
                             onClick={() => {
                                 if(isPlaying) pauseAudio();

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 // Parent portal — new nested route architecture
 const ParentShell = lazy(() => import('./pages/parent/ParentShell'))
 const ParentOverview = lazy(() => import('./pages/parent/ParentOverview'))
+const ParentChildDetail = lazy(() => import('./pages/parent/ParentChildDetail'))
 
 // Admin portal — new nested route architecture
 const AdminShell = lazy(() => import('./pages/admin/AdminShell'))
@@ -42,6 +43,7 @@ const StudentFinance = lazy(() => import('./pages/student/StudentFinance'))
 const StudentFeedback = lazy(() => import('./pages/student/StudentFeedback'))
 const StudentJambCBT = lazy(() => import('./pages/student/StudentJambCBT'))
 const StudentSessionDetail = lazy(() => import('./pages/student/StudentSessionDetail'))
+const StudentProgress = lazy(() => import('./pages/student/StudentProgress'))
 import { MotionConfig } from 'framer-motion'
 import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './context/ToastContext'
@@ -66,6 +68,8 @@ const AdminExamManager = lazy(() => import('./pages/AdminExamManager'))
 const AdminQuestionManager = lazy(() => import('./pages/AdminQuestionManager'))
 const LiveClassRoom = lazy(() => import('./pages/LiveClassRoom'))
 const NotFound = lazy(() => import('./pages/NotFound'))
+const AccountSettings = lazy(() => import('./pages/AccountSettings'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const TermsOfService = lazy(() => import('./pages/TermsOfService'))
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
 const TutorProfile = lazy(() => import('./pages/TutorProfile'))
@@ -135,23 +139,6 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
 
-          {/* Admin standalone tools (must appear before nested /admin parent) */}
-          <Route
-            path="/admin/exams"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
-                <AdminExamManager />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/exams/:examId/questions"
-            element={
-              <ProtectedRoute allowedRoles={['ADMIN']}>
-                <AdminQuestionManager />
-              </ProtectedRoute>
-            }
-          />
           {/* Admin portal — nested routes */}
           <Route
             path="/admin"
@@ -163,6 +150,10 @@ function App() {
           >
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<AdminOverview />} />
+            <Route path="account" element={<AccountSettings />} />
+            <Route path="notifications" element={<NotificationsPage />} />
+            <Route path="exams" element={<AdminExamManager />} />
+            <Route path="exams/:examId/questions" element={<AdminQuestionManager />} />
             <Route path="admissions" element={<AdminAdmissions />} />
             <Route path="students" element={<AdminStudents />} />
             <Route path="tutors" element={<AdminTutors />} />
@@ -185,6 +176,8 @@ function App() {
               </ProtectedRoute>
             }
           >
+            <Route path="account" element={<AccountSettings />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route index element={<Navigate to="schedule" replace />} />
             <Route path="schedule" element={<TutorSchedule />} />
             <Route path="requests" element={<TutorRequests />} />
@@ -206,10 +199,16 @@ function App() {
           >
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<StudentOverview />} />
+            <Route path="account" element={<AccountSettings />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="classes" element={<StudentClasses />} />
             <Route path="classes/:id" element={<StudentSessionDetail />} />
             <Route path="library" element={<StudentLibrary />} />
             <Route path="exams" element={<StudentExams />} />
+            <Route path="progress" element={<StudentProgress />} />
+            <Route path="find-tutor" element={<BookingRequest />} />
+            <Route path="exam-practice" element={<ExamHub />} />
+            <Route path="ai-hub" element={<AIHub />} />
             <Route path="jamb" element={<StudentJambCBT />} />
             <Route path="finance" element={<StudentFinance />} />
             <Route path="feedback" element={<StudentFeedback />} />
@@ -225,30 +224,21 @@ function App() {
           >
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<ParentOverview />} />
+            <Route path="child/:childId" element={<ParentChildDetail />} />
+            <Route path="account" element={<AccountSettings />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
-          {/* Exam & AI Routes */}
-          <Route
-            path="/exam-practice"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TUTOR']}>
-                <ExamHub />
-              </ProtectedRoute>
-            }
-          />
+          {/* Legacy redirects — ExamHub and AIHub moved into the student portal */}
+          <Route path="/exam-practice" element={<Navigate to="/student/exam-practice" replace />} />
+          <Route path="/ai-hub" element={<Navigate to="/student/ai-hub" replace />} />
+
+          {/* CBT exam interface — stays standalone (full-screen, distraction-free) */}
           <Route
             path="/exam/practice/:id"
             element={
               <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TUTOR']}>
                 <CBTInterface />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/ai-hub"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TUTOR']}>
-                <AIHub />
               </ProtectedRoute>
             }
           />
@@ -263,15 +253,8 @@ function App() {
             }
           />
 
-          {/* Booking & Enrollment Routes */}
-          <Route
-            path="/booking/request"
-            element={
-              <ProtectedRoute allowedRoles={['STUDENT']}>
-                <BookingRequest />
-              </ProtectedRoute>
-            }
-          />
+          {/* Legacy redirect — /booking/request moved inside /student/find-tutor */}
+          <Route path="/booking/request" element={<Navigate to="/student/find-tutor" replace />} />
 
 
           {/* Payment Routes */}

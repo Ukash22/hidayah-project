@@ -246,7 +246,7 @@ export default function StudentOverview() {
                             </div>
                         </div>
                         <button
-                            onClick={() => navigate('/booking/request')}
+                            onClick={() => navigate('/student/find-tutor')}
                             className="bg-gradient-to-r from-blue-700 to-primary text-white px-8 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-primary/20 flex items-center gap-3"
                         >
                             <IconSearch size={16} /> Find Tutors
@@ -269,7 +269,7 @@ export default function StudentOverview() {
                             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">{stat.label}</p>
                             <h3 className="text-3xl font-display font-bold text-slate-900 dark:text-slate-100 mb-4">{stat.value}</h3>
                             {stat.link && (
-                                <Link to={stat.link} className="text-[10px] font-bold uppercase text-primary flex items-center gap-2 hover:gap-3 transition-all">
+                                <Link to={stat.link} className="text-[11px] font-semibold uppercase text-primary flex items-center gap-2 hover:gap-3 transition-all">
                                     {stat.action} <IconArrowRight size={12} />
                                 </Link>
                             )}
@@ -316,9 +316,9 @@ export default function StudentOverview() {
                                             </span>
                                         </div>
                                         <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">{enr.subject_name}</h4>
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor: {enr.tutor_name || 'TBA'}</p>
+                                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tutor: {enr.tutor_name || 'TBA'}</p>
                                         <div className="mt-6 pt-6 border-t border-slate-50 flex flex-col gap-4">
-                                            <div className="grid grid-cols-2 gap-2 text-[9px] font-bold text-slate-500 uppercase">
+                                            <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold text-slate-500 uppercase">
                                                 <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg">
                                                     <IconCalendar size={12} className="text-primary" /> {enr.days_per_week || 0} Sessions / WK
                                                 </div>
@@ -329,12 +329,12 @@ export default function StudentOverview() {
                                             {enr.status === 'APPROVED' && enr.tutor_class_link && (
                                                 <button
                                                     onClick={() => navigate(`/live/${enr.id || enr.db_id}`)}
-                                                    className="w-full bg-primary text-white py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest text-center shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
+                                                    className="w-full bg-primary text-white py-3 rounded-xl font-semibold text-[11px] uppercase tracking-wide text-center shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
                                                 >
                                                     📹 Enter Subject Classroom ↗
                                                 </button>
                                             )}
-                                            <Link to="/student/classes" className="w-full text-primary py-1 font-bold text-[9px] uppercase tracking-widest hover:underline text-center">
+                                            <Link to="/student/classes" className="w-full text-primary py-1 font-semibold text-[11px] uppercase tracking-wide hover:underline text-center">
                                                 View Detailed Schedule →
                                             </Link>
                                         </div>
@@ -344,7 +344,7 @@ export default function StudentOverview() {
                                 {(!profile?.enrollments?.length && !bookings.filter(b => !b.paid).length) && (
                                     <div className="col-span-full py-16 text-center bg-slate-50 dark:bg-slate-800/60 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
                                         <p className="text-slate-500 font-bold italic">No registered subjects or bookings found.</p>
-                                        <button onClick={() => navigate('/booking/request')} className="mt-4 text-primary font-bold text-[10px] uppercase tracking-widest">Book Your First Subject →</button>
+                                        <button onClick={() => navigate('/student/find-tutor')} className="mt-4 text-primary font-semibold text-[11px] uppercase tracking-wide">Book Your First Subject →</button>
                                     </div>
                                 )}
                             </div>
@@ -361,7 +361,7 @@ export default function StudentOverview() {
                                         <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/60 rounded-2xl flex items-center justify-center text-2xl shadow-inner">🎓</div>
                                         <div className="flex-1 text-center md:text-left">
                                             <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">{cls.subject}</h4>
-                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mt-1">Scheduled for {new Date(cls.scheduled_at).toLocaleDateString()}</p>
+                                            <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mt-1">Scheduled for {new Date(cls.scheduled_at).toLocaleDateString()}</p>
                                         </div>
                                         <button onClick={() => handleJoinClass(cls)} className="bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-2xl text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition-all">Enter Classroom</button>
                                     </div>
@@ -393,7 +393,7 @@ export default function StudentOverview() {
                         {notifications.length > 0 && (
                             <div className="bg-primary-soft border border-blue-100 rounded-card-lg p-5 md:p-8 shadow-sm">
                                 <h4 className="text-[11px] font-semibold uppercase tracking-wide text-primary mb-6 flex items-center gap-2">
-                                    <IconBell size={12} className="animate-bounce" /> Dashboard Alerts
+                                    <IconBell size={12} /> Dashboard Alerts
                                 </h4>
                                 <div className="space-y-4">
                                     {notifications.map(n => (
@@ -475,7 +475,7 @@ export default function StudentOverview() {
                                     </div>
                                     {selectedTutorAvailability && (
                                         <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-3xl p-6">
-                                            <h5 className="text-[10px] font-bold uppercase text-slate-500 tracking-widest mb-4">Tutor Working Hours</h5>
+                                            <h5 className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide mb-4">Tutor Working Hours</h5>
                                             <div className="space-y-2">
                                                 {selectedTutorAvailability.availabilities?.map((av, i) => (
                                                     <div key={i} className="flex justify-between text-[10px] bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -497,7 +497,7 @@ export default function StudentOverview() {
                                         <div className="flex justify-between items-center px-1">
                                             <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Weekly Schedule</label>
                                             <button onClick={() => setEnrollData(prev => ({ ...prev, schedule: [...prev.schedule, { day: '', time: '' }] }))}
-                                                className="text-[10px] font-bold uppercase text-primary hover:text-primary-dark transition-colors">+ Add Day</button>
+                                                className="text-[11px] font-semibold uppercase text-primary hover:text-primary-dark transition-colors">+ Add Day</button>
                                         </div>
                                         <div className="space-y-3">
                                             {enrollData.schedule.map((slot, index) => (
@@ -547,7 +547,7 @@ export default function StudentOverview() {
                                                 <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Estimated Monthly Tuition</span>
                                                 <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">₦{(enrollData.active_tutor_rate * enrollData.hours_per_week * enrollData.schedule.length * 4).toLocaleString()}</span>
                                             </div>
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">Based on {enrollData.schedule.length} sessions/week at tutor's current hourly rate.</p>
+                                            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide italic">Based on {enrollData.schedule.length} sessions/week at tutor's current hourly rate.</p>
                                         </div>
                                     )}
                                     <button

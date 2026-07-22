@@ -77,11 +77,11 @@ export default function TutorMaterials() {
             <div className="bg-white dark:bg-slate-900 rounded-card-lg border border-slate-100 dark:border-slate-800 shadow-sm p-10 mb-12">
                 <form className="grid md:grid-cols-2 gap-8" onSubmit={handleUpload}>
                     <div className="space-y-3">
-                        <label htmlFor="title" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Asset Title</label>
+                        <label htmlFor="title" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Asset Title</label>
                         <input id="title" name="title" required className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 outline-none focus:border-primary/50 transition-all font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-300" placeholder="e.g., Advanced Tajweed Module 1" />
                     </div>
                     <div className="space-y-3">
-                        <label htmlFor="material_type" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Classification</label>
+                        <label htmlFor="material_type" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Classification</label>
                         <select id="material_type" name="material_type" className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 outline-none focus:border-primary/50 transition-all font-bold text-slate-900 dark:text-slate-100">
                             <option value="VIDEO">Video Coursework</option>
                             <option value="PDF">Academic Document (PDF)</option>
@@ -89,7 +89,7 @@ export default function TutorMaterials() {
                         </select>
                     </div>
                     <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Target Audience (Optional)</label>
+                        <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Target Audience (Optional)</label>
                         <div className="w-full px-6 py-4 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 max-h-40 overflow-y-auto space-y-3">
                             <label className="flex items-center gap-3 cursor-pointer">
                                 <input
@@ -121,15 +121,15 @@ export default function TutorMaterials() {
                         </div>
                     </div>
                     <div className="space-y-3 md:col-span-2">
-                        <label htmlFor="description" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Educational Context</label>
+                        <label htmlFor="description" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Educational Context</label>
                         <textarea id="description" name="description" rows="3" className="w-full px-6 py-5 rounded-3xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 focus:border-primary/30 outline-none transition-all font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300 leading-relaxed" placeholder="Provide a brief synopsis of this learning resource..." />
                     </div>
                     <div className="space-y-3">
-                        <label htmlFor="file" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Source File</label>
+                        <label htmlFor="file" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Source File</label>
                         <div className="relative group">
                             <input id="file" type="file" name="file" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                             <div className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 group-hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-4 text-slate-500 font-bold overflow-hidden">
-                                <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase">Attach</span>
+                                <span className="bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-[11px] font-semibold uppercase">Attach</span>
                                 <span className="text-[10px] truncate">Select file from system...</span>
                             </div>
                         </div>
@@ -160,9 +160,9 @@ export default function TutorMaterials() {
                                 {mat.material_type === 'VIDEO' ? '🎥' : mat.material_type === 'PDF' ? '📄' : '🎵'}
                             </div>
                             <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight group-hover:text-primary transition-colors">{mat.title}</h4>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-6 px-3 py-1 bg-slate-50 dark:bg-slate-800/60 rounded-lg inline-block self-start">{mat.material_type}</p>
+                            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-6 px-3 py-1 bg-slate-50 dark:bg-slate-800/60 rounded-lg inline-block self-start">{mat.material_type}</p>
                             <p className="text-xs text-slate-500 line-clamp-3 mb-8 leading-relaxed font-medium flex-grow">{mat.description}</p>
-                            <a href={mat.file} target="_blank" rel="noreferrer" className="w-full py-4 text-center bg-slate-50 dark:bg-slate-800/60 rounded-2xl text-[10px] font-bold text-primary hover:bg-primary hover:text-white uppercase tracking-widest transition-all border border-blue-100 shadow-sm">
+                            <a href={mat.file} target="_blank" rel="noreferrer" className="w-full py-4 text-center bg-slate-50 dark:bg-slate-800/60 rounded-2xl text-[11px] font-semibold text-primary hover:bg-primary hover:text-white uppercase tracking-wide transition-all border border-blue-100 shadow-sm">
                                 View Resource ↗
                             </a>
                         </div>

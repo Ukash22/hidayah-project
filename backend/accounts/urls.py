@@ -3,7 +3,7 @@
 # pylint: skip-file
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegisterView, LoginView, LogoutView, CookieTokenRefreshView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView, UserManagementViewSet
+from .views import RegisterView, LoginView, LogoutView, ChangePasswordView, CookieTokenRefreshView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView, UserManagementViewSet
 
 router = DefaultRouter()
 router.register(r'admin/users', UserManagementViewSet, basename='user_management')
@@ -13,6 +13,7 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('login/', LoginView.as_view(), name='auth_login'),
     path('logout/', LogoutView.as_view(), name='auth_logout'),
+    path('password/change/', ChangePasswordView.as_view(), name='password_change'),
     path('refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', UserProfileView.as_view(), name='user_profile'),
     path('tutors/', TutorListView.as_view(), name='tutor_list'),

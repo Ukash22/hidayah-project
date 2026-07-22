@@ -12,11 +12,18 @@ export default function AdminFinancials() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [analyticsChartMode, setAnalyticsChartMode] = useState('monthly');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
 
-    const fetchAll = useCallback(async () => {
+    const fetchAll = useCallback(async (from = '', to = '') => {
+        setLoading(true);
         try {
+            const params = new URLSearchParams();
+            if (from) params.set('date_from', from);
+            if (to) params.set('date_to', to);
+            const query = params.toString() ? `?${params.toString()}` : '';
             const [finRes, txRes, subjRes] = await Promise.all([
-                api.get('/api/payments/admin/analytics/'),
+                api.get(`/api/payments/admin/analytics/${query}`),
                 api.get('/api/payments/admin/transactions/'),
                 api.get('/api/programs/subjects/'),
             ]);
@@ -33,6 +40,9 @@ export default function AdminFinancials() {
     }, []);
 
     useEffect(() => { fetchAll(); }, [fetchAll]);
+
+    const handleApplyDateFilter = () => fetchAll(dateFrom, dateTo);
+    const handleClearDateFilter = () => { setDateFrom(''); setDateTo(''); fetchAll('', ''); };
 
     const handleDownloadReceipt = async (p, type) => {
         const { default: jsPDF } = await import('jspdf');
@@ -63,14 +73,56 @@ export default function AdminFinancials() {
             <title>Financials — Hidayah Admin</title>
             <PageHeader title="Financial Analytics" description="Platform revenue, wallet balances, and transaction audit trail." />
 
+            {/* Date-range filter */}
+            <div className="flex flex-wrap items-end gap-3 mb-2">
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">From</label>
+                    <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={e => setDateFrom(e.target.value)}
+                        className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary/40 transition-colors"
+                    />
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">To</label>
+                    <input
+                        type="date"
+                        value={dateTo}
+                        onChange={e => setDateTo(e.target.value)}
+                        className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm font-bold text-slate-800 dark:text-slate-200 outline-none focus:border-primary/40 transition-colors"
+                    />
+                </div>
+                <button
+                    onClick={handleApplyDateFilter}
+                    disabled={!dateFrom && !dateTo}
+                    className="px-4 py-2 bg-primary text-white text-[11px] font-bold uppercase tracking-wide rounded-xl hover:bg-primary/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                    Apply
+                </button>
+                {(dateFrom || dateTo) && (
+                    <button
+                        onClick={handleClearDateFilter}
+                        className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wide rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+                    >
+                        Clear
+                    </button>
+                )}
+                {(dateFrom || dateTo) && (
+                    <span className="text-[11px] font-semibold text-primary bg-primary/5 px-3 py-1.5 rounded-lg border border-primary/10">
+                        Filtered: {dateFrom || '…'} → {dateTo || '…'}
+                    </span>
+                )}
+            </div>
+
             <div className="space-y-6 pb-20">
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     {[
-                        { label: 'Gross Revenue', value: financials?.totals?.total_revenue || 0, sub: 'Total Paid by Students', color: 'text-slate-800 dark:text-slate-200' },
-                        { label: 'Platform Net', value: financials?.totals?.platform_revenue || 0, sub: 'Hidayah Commissions Earned', color: 'text-primary' },
-                        { label: 'Net to Tutors', value: financials?.totals?.net_to_tutors || 0, sub: 'Tutor Earnings Credit', color: 'text-primary' },
-                        { label: 'Class Completions', value: null, sub: 'Classes Successfully Delivered', color: 'text-slate-800 dark:text-slate-200', text: `${financials?.totals?.completed_classes || 0} / ${financials?.totals?.total_classes || 0}` },
+                        { label: 'Gross Revenue', value: financials?.total_revenue || 0, sub: 'Total Paid by Students', color: 'text-slate-800 dark:text-slate-200' },
+                        { label: 'Platform Net', value: financials?.platform_revenue || 0, sub: 'Hidayah Commissions Earned', color: 'text-primary' },
+                        { label: 'Net to Tutors', value: financials?.net_to_tutors || 0, sub: 'Tutor Earnings Credit', color: 'text-primary' },
+                        { label: 'Class Completions', value: null, sub: 'Classes Successfully Delivered', color: 'text-slate-800 dark:text-slate-200', text: `${financials?.completed_classes || 0} / ${financials?.total_classes || 0}` },
                     ].map((card, i) => (
                         <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col gap-1 hover:shadow-md transition-shadow">
                             <span className="text-[11px] uppercase font-semibold tracking-wide text-slate-500">{card.label}</span>
@@ -79,7 +131,7 @@ export default function AdminFinancials() {
                             </div>
                             <div className="flex items-center gap-1.5 mt-2">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">{card.sub}</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tighter">{card.sub}</span>
                             </div>
                         </div>
                     ))}
@@ -90,17 +142,17 @@ export default function AdminFinancials() {
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-3xl shadow-xl flex flex-col gap-1 relative overflow-hidden group">
                         <span className="text-[11px] uppercase font-semibold tracking-wide text-slate-500">Total Student Wallets</span>
                         <div className="text-3xl font-bold text-white">₦{parseFloat(financials?.wallet_stats?.student_total || 0).toLocaleString()}</div>
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Liquid Student Balance</span>
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-tighter">Liquid Student Balance</span>
                     </div>
                     <div className="bg-gradient-to-br from-indigo-800 to-indigo-900 p-6 rounded-3xl shadow-xl flex flex-col gap-1">
                         <span className="text-[11px] uppercase font-semibold tracking-wide text-indigo-300">Total Tutor Wallets</span>
                         <div className="text-3xl font-bold text-white">₦{parseFloat(financials?.wallet_stats?.tutor_total || 0).toLocaleString()}</div>
-                        <span className="text-[9px] font-bold text-indigo-300 uppercase tracking-tighter">Total Owed to Tutors</span>
+                        <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-tighter">Total Owed to Tutors</span>
                     </div>
                     <div className="bg-gradient-to-br from-red-800 to-red-900 p-6 rounded-3xl shadow-xl flex flex-col gap-1">
                         <span className="text-[11px] uppercase font-semibold tracking-wide text-red-300">Pending Withdrawals</span>
                         <div className="text-3xl font-bold text-white">₦{parseFloat(financials?.withdrawal_stats?.pending_amount || 0).toLocaleString()}</div>
-                        <span className="text-[9px] font-bold text-red-300 uppercase tracking-tighter">{financials?.withdrawal_stats?.pending_count || 0} Requests Waiting</span>
+                        <span className="text-[11px] font-semibold text-red-300 uppercase tracking-tighter">{financials?.withdrawal_stats?.pending_count || 0} Requests Waiting</span>
                     </div>
                 </div>
 
@@ -125,7 +177,7 @@ export default function AdminFinancials() {
                             <thead className="bg-[#f8fafc]">
                                 <tr>
                                     {['Date', 'Student', 'Amount', 'Status', 'Ref', 'Receipt'].map(h => (
-                                        <th key={h} className="py-3 px-6 text-[10px] font-bold uppercase text-slate-500 tracking-widest border-b border-slate-100 dark:border-slate-800">{h}</th>
+                                        <th key={h} className="py-3 px-6 text-[11px] font-semibold uppercase text-slate-500 tracking-wide border-b border-slate-100 dark:border-slate-800">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -137,7 +189,7 @@ export default function AdminFinancials() {
                                         <td className="py-4 px-6 text-[11px] font-bold text-slate-600">{new Date(p.date).toLocaleDateString()}</td>
                                         <td className="py-4 px-6">
                                             <div className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-tight">{p.student}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold lowercase italic">{p.method}</div>
+                                            <div className="text-[10px] text-slate-500 font-bold lowercase italic">{p.method}</div>
                                         </td>
                                         <td className="py-4 px-6">
                                             <div className="text-sm font-bold">₦{parseFloat(p.amount).toLocaleString()}</div>
@@ -164,14 +216,14 @@ export default function AdminFinancials() {
                         <h3 className="font-bold text-slate-800 dark:text-slate-200 tracking-tight flex items-center gap-2">
                             <span className="text-xl">💳</span> Wallet Transactions (Debits & Credits)
                         </h3>
-                        <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-indigo-100 shadow-sm">Internal Ledger</div>
+                        <div className="text-[11px] font-semibold text-indigo-500 uppercase tracking-wide bg-white dark:bg-slate-900 px-3 py-1 rounded-full border border-indigo-100 shadow-sm">Internal Ledger</div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-[#f8fafc]">
                                 <tr>
                                     {['Timestamp', 'User Details', 'Type', 'Amount', 'Description'].map(h => (
-                                        <th key={h} className="py-3 px-6 text-[10px] font-bold uppercase text-slate-500 tracking-widest border-b border-slate-100 dark:border-slate-800">{h}</th>
+                                        <th key={h} className="py-3 px-6 text-[11px] font-semibold uppercase text-slate-500 tracking-wide border-b border-slate-100 dark:border-slate-800">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -183,7 +235,7 @@ export default function AdminFinancials() {
                                         <td className="py-4 px-6 text-[11px] font-bold text-slate-500 whitespace-nowrap">{new Date(t.date).toLocaleString()}</td>
                                         <td className="py-4 px-6">
                                             <div className="font-bold text-slate-800 dark:text-slate-200 text-[11px] uppercase tracking-tight">{t.user_name}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold lowercase">{t.user_email}</div>
+                                            <div className="text-[10px] text-slate-500 font-bold lowercase">{t.user_email}</div>
                                         </td>
                                         <td className="py-4 px-6">
                                             <span className={`text-[9px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest border ${(t.type?.includes('DEBIT') || t.type?.includes('WITHDRAWAL')) ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
@@ -196,7 +248,7 @@ export default function AdminFinancials() {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <div className="text-[10px] font-bold text-slate-600 leading-relaxed uppercase tracking-tight line-clamp-1">{t.description}</div>
+                                            <div className="text-[11px] font-semibold text-slate-600 leading-relaxed uppercase tracking-tight line-clamp-1">{t.description}</div>
                                             {t.reference && <div className="text-[10px] text-slate-300 font-bold tracking-widest mt-0.5">REF: {t.reference}</div>}
                                             <button onClick={() => handleDownloadReceipt(t, 'transaction')} className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-indigo-500 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md transition-all">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>

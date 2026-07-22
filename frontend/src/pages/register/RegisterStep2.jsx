@@ -13,7 +13,7 @@ const EXAM_LEVELS = ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'];
 
 const Field = ({ label, children }) => (
     <label className="flex flex-col gap-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 ml-1">{label}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 ml-1">{label}</span>
         {children}
     </label>
 );
@@ -25,13 +25,25 @@ export default function RegisterStep2({
     subjectsByCategory, subjectEnrollments, setSubjectEnrollments, toggleSubject,
     tutorsBySubject, loadingTutors,
     addScheduleSlot, removeScheduleSlot, updateScheduleSlot,
+    pricingTiers = {}, preSelectedTutorName = '',
 }) {
+    const hourlyRate = pricingTiers[learning.classType];
+
     return (
         <>
             <h2 className="text-lg font-bold text-primary uppercase tracking-widest mb-6 flex items-center gap-2">
                 <span className="w-7 h-7 bg-primary text-white rounded-lg flex items-center justify-center text-xs">2</span>
                 Learning Plan
             </h2>
+
+            {preSelectedTutorName && (
+                <div className="mb-5 flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3">
+                    <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                    <p className="text-sm font-semibold text-primary">
+                        Preferred tutor pre-selected: <span className="font-bold">{preSelectedTutorName}</span>
+                    </p>
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <Field label="Class Type">
@@ -59,6 +71,27 @@ export default function RegisterStep2({
                     <input type="date" className={inputCls} value={learning.preferredStartDate} onChange={e => setLearning(l => ({ ...l, preferredStartDate: e.target.value }))} />
                 </Field>
             </div>
+
+            {/* Price preview */}
+            {hourlyRate ? (
+                <div className="mb-6 flex items-center justify-between bg-primary/5 border border-primary/15 rounded-xl px-5 py-3.5">
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                            {learning.classType === 'ONE_ON_ONE' ? 'One-on-One' : 'Group'} Rate
+                        </p>
+                        <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                            ₦{hourlyRate.toLocaleString()} × {learning.hoursPerSession} hr
+                            {learning.hoursPerSession !== '1' ? 's' : ''} per session
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-xl font-bold text-primary">
+                            ₦{(hourlyRate * parseFloat(learning.hoursPerSession)).toLocaleString()}
+                        </p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Per session</p>
+                    </div>
+                </div>
+            ) : null}
 
             {/* Subjects */}
             <div className="mb-6">

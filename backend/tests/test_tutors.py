@@ -271,6 +271,39 @@ class TutorRegistrationTests(TestCase):
         self.assertIn('detail', res.json())
 
 
+class TutorAvailabilityTests(TestCase):
+    """PUT /api/tutors/me/availability/ — tutors edit their own slots post-registration."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.tutor = make_tutor(1)
+        from tutors.models import TutorAvailability
+        TutorAvailability.objects.create(tutor=self.tutor, day='MONDAY', start_time='09:00', end_time='11:00')
+
+    def test_replace_slots(self):
+        self.client.force_authenticate(self.tutor.user)
+        res = self.client.put('/api/tutors/me/availability/', {'slots': [
+            {'day': 'Tuesday', 'start_time': '10:00', 'end_time': '12:00'},
+            {'day': 'Thursday', 'start_time': '14:00', 'end_time': '16:00'},
+        ]}, format='json')
+        self.assertEqual(res.status_code, 200, res.content)
+        self.tutor.refresh_from_db()
+        days = set(self.tutor.availabilities.values_list('day', flat=True))
+        self.assertEqual(days, {'TUESDAY', 'THURSDAY'})
+        self.assertIn('Tuesday', self.tutor.availability_days)
+
+    def test_empty_slots_rejected_and_existing_kept(self):
+        self.client.force_authenticate(self.tutor.user)
+        res = self.client.put('/api/tutors/me/availability/', {'slots': []}, format='json')
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(self.tutor.availabilities.count(), 1)
+
+    def test_anonymous_rejected(self):
+        res = self.client.put('/api/tutors/me/availability/', {'slots': []}, format='json')
+        self.assertIn(res.status_code, (401, 403))
+
+
 class TutorPayloadLeakageTests(TestCase):
     """List payloads must not expose credentials or private financials."""
 

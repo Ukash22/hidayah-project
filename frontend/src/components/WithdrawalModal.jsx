@@ -62,12 +62,12 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                         
                         <div className="mb-8 pr-12 relative z-10">
                             <h2 className="text-3xl font-display font-bold text-white mb-2">Fund Withdrawal</h2>
-                            <p className="text-[10px] font-bold uppercase text-slate-500 tracking-widest">Process payout to bank account</p>
+                            <p className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide">Process payout to bank account</p>
                         </div>
 
                         <div className="bg-emerald-500/10 border border-emerald-500/20 p-5 rounded-2xl mb-8 flex items-center justify-between relative z-10">
                             <div>
-                                <span className="text-[9px] font-bold uppercase text-emerald-500 tracking-widest block mb-1">Available Funds</span>
+                                <span className="text-[11px] font-semibold uppercase text-emerald-500 tracking-wide block mb-1">Available Funds</span>
                                 <span className="text-2xl font-bold text-emerald-400">₦{currentBalance?.toLocaleString()}</span>
                             </div>
                             <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 text-xl border border-emerald-500/20">
@@ -83,7 +83,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
 
                         <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
                             <div className="space-y-3">
-                                <label htmlFor="withdrawal_amount" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Request Amount (₦)</label>
+                                <label htmlFor="withdrawal_amount" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Request Amount (₦)</label>
                                 <input
                                     id="withdrawal_amount"
                                     name="withdrawal_amount"
@@ -99,7 +99,7 @@ const WithdrawalModal = ({ isOpen, onClose, currentBalance, token, onSuccess }) 
                             </div>
 
                             <div className="space-y-3">
-                                <label htmlFor="withdrawal_frequency" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Payout Frequency</label>
+                                <label htmlFor="withdrawal_frequency" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Payout Frequency</label>
                                 <select
                                     id="withdrawal_frequency"
                                     name="withdrawal_frequency"

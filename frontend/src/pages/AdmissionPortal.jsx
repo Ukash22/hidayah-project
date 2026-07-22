@@ -53,7 +53,7 @@ const AdmissionPortal = () => {
             <div className="container pt-32 pb-20 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Welcome Header */}
-                    <div className="bg-gradient-to-r from-primary to-primary-600 rounded-card-lg shadow-2xl p-10 mb-8 text-white">
+                    <div className="bg-gradient-to-r from-primary to-primary-dark rounded-card-lg shadow-2xl p-10 mb-8 text-white">
                         <h1 className="text-4xl font-display font-bold mb-2">Welcome, {user?.first_name}!</h1>
                         <p className="text-white/80 text-lg">Admission Number: <span className="font-mono font-bold">{user?.admission_number}</span></p>
                     </div>
@@ -111,7 +111,7 @@ const AdmissionPortal = () => {
 
                             <button
                                 onClick={() => navigate('/payment')}
-                                className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-4 rounded-2xl font-bold uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
+                                className="w-full bg-gradient-to-r from-primary to-primary-dark hover:from-primary-dark hover:to-primary-dark text-white py-4 rounded-2xl font-bold uppercase tracking-wider text-sm shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                             >
                                 Pay Now →
                             </button>
@@ -138,7 +138,7 @@ const AdmissionPortal = () => {
                                     </div>
                                     <div className="bg-white/60 p-6 rounded-3xl border border-blue-100 shadow-sm">
                                         <h4 className="text-xs font-bold uppercase tracking-widest text-blue-900 mb-2">Platform Guidelines</h4>
-                                        <ul className="text-[10px] text-blue-700 space-y-2 font-bold uppercase tracking-tight">
+                                        <ul className="text-[11px] text-blue-700 space-y-2 font-semibold uppercase tracking-tight">
                                             <li className="flex items-center gap-2">🔹 NO REFUNDS AFTER ENROLLMENT</li>
                                             <li className="flex items-center gap-2">🔹 1,000 MINIMUM BALANCE ALWAYS</li>
                                             <li className="flex items-center gap-2">🔹 PAYMENTS ARE END-TO-END ENCRYPTED</li>

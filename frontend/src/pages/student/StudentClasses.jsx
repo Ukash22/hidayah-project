@@ -87,7 +87,7 @@ export default function StudentClasses() {
                                 : 'No classes are currently scheduled. Check back later.'}
                         </p>
                         {profile?.wallet_balance <= 0 && (
-                            <button onClick={() => navigate('/student/finance')} className="mt-8 bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all shadow-lg">
+                            <button onClick={() => navigate('/student/finance')} className="mt-8 bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-lg">
                                 Top Up Wallet
                             </button>
                         )}

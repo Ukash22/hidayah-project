@@ -2,10 +2,11 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from django.urls import path
-from .views import StudentProfileDetailView, ParentPortalView, AdminStudentViewSet, AdminStudentDetailView, TutorAssignedStudentsView, EnrollInCourseView, PromoteStudentView
+from .views import StudentProfileDetailView, ParentPortalView, AdminStudentViewSet, AdminStudentDetailView, TutorAssignedStudentsView, EnrollInCourseView, PromoteStudentView, StudentProgressView
 
 urlpatterns = [
     path('me/', StudentProfileDetailView.as_view(), name='student-me'),
+    path('me/progress/', StudentProgressView.as_view(), name='student-progress'),
     path('children/', ParentPortalView.as_view(), name='parent-children'),
     path('tutor/my-students/', TutorAssignedStudentsView.as_view(), name='tutor_assigned_students'),
     path('enroll-subject/', EnrollInCourseView.as_view(), name='enroll_subject'),

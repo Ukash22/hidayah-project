@@ -22,7 +22,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                         <h1 className="text-base md:text-lg font-bold tracking-tighter">
                             Hidayah Whiteboard
                         </h1>
-                        <span className="text-[9px] md:text-[11px] font-semibold uppercase tracking-wide text-emerald-500">Powered by Excalidraw</span>
+                        <span className="text-[11px] md:text-[11px] font-semibold uppercase tracking-wide text-emerald-500">Powered by Excalidraw</span>
                     </div>
                 </div>
 
@@ -47,7 +47,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                             className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all relative ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
                         >
                             Student Boards
-                            {studentCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] border-2 border-[#1e293b]">{studentCount}</span>}
+                            {studentCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] border-2 border-[#1e293b]">{studentCount}</span>}
                         </button>
                     )}
                 </nav>
@@ -57,7 +57,7 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
                 {activeTab === 'student_view' && (
                     <div className="flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 mr-2 sm:mr-4">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[9px] sm:text-[11px] font-semibold uppercase tracking-wide">Coaching: {activeStudentName}</span>
+                        <span className="text-[11px] sm:text-[11px] font-semibold uppercase tracking-wide">Coaching: {activeStudentName}</span>
                         <button onClick={() => setActiveTab('my_class')} className="ml-1 sm:ml-2 hover:text-white text-sm font-bold">✕</button>
                     </div>
                 )}
@@ -380,7 +380,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f172a] text-white">
                 <div className="text-8xl mb-6 drop-shadow-2xl">🔒</div>
                 <h2 className="text-3xl font-bold mb-2 uppercase tracking-tighter">Classroom Locked</h2>
-                <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">The teacher has paused interaction.</p>
+                <p className="text-slate-500 font-semibold uppercase tracking-wide text-[11px]">The teacher has paused interaction.</p>
             </div>
         );
     }
@@ -456,7 +456,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                     title={tool.label}
                                 >
                                     {tool.icon}
-                                    <span className="absolute bottom-full mb-2 md:bottom-auto md:left-full md:ml-4 px-3 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
+                                    <span className="absolute bottom-full mb-2 md:bottom-auto md:left-full md:ml-4 px-3 py-1 bg-slate-900 text-white text-[11px] font-semibold uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
                                         {tool.label}
                                     </span>
                                 </button>
@@ -603,7 +603,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 bg-emerald-100 px-2 sm:px-3 py-1 rounded-full">
                                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span className="text-[10px] sm:text-[9px] font-bold uppercase text-emerald-600 tracking-widest">Active</span>
+                                                    <span className="text-[11px] sm:text-[11px] font-semibold uppercase text-emerald-600 tracking-wide">Active</span>
                                                 </div>
                                             </div>
                                             <div className="h-48 bg-white p-2 relative flex items-center justify-center border-b border-slate-100">

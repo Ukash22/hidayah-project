@@ -91,17 +91,37 @@ const TutorRegister = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const totalSteps = 6;
 
-    const [formData, setFormData] = useState({
+    const DRAFT_KEY = 'hidayah_tutor_register_draft';
+
+    const getInitialFormData = () => {
+        try {
+            const saved = localStorage.getItem(DRAFT_KEY);
+            if (saved) return JSON.parse(saved);
+        } catch {}
+        return null;
+    };
+
+    const DEFAULT_FORM = {
         firstName: '', lastName: '', age: '', email: '', phone: '', gender: 'Male',
         country: '', address: '', experienceYears: '0', subjects: [], languages: '',
         hasOnlineExp: false, deviceType: 'COMPUTER', hourlyRate: '1500',
         networkType: '', availabilitySlots: [{ day: 'Monday', startTime: '08:00', endTime: '12:00' }],
         username: '', password: '', confirmPassword: ''
-    });
+    };
+
+    const _savedDraft = getInitialFormData();
+    const [draftRestored, setDraftRestored] = useState(!!_savedDraft);
+    const [formData, setFormData] = useState(_savedDraft ? { ...DEFAULT_FORM, ..._savedDraft } : DEFAULT_FORM);
 
     const [files, setFiles] = useState({
         image: null, introVideo: null, shortRecitation: null, cv: null, credentials: null
     });
+
+    // Persist draft on every formData change (exclude passwords)
+    useEffect(() => {
+        const { password, confirmPassword, ...safe } = formData;
+        try { localStorage.setItem(DRAFT_KEY, JSON.stringify(safe)); } catch {}
+    }, [formData]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -203,6 +223,7 @@ const TutorRegister = () => {
                 credentials_url: uploadedUrls.credentials
             });
 
+            try { localStorage.removeItem(DRAFT_KEY); } catch {}
             setSuccess(true);
         } catch (err) {
             setError(err.response?.data?.detail || getApiError(err, 'Registration failed'));
@@ -264,6 +285,23 @@ const TutorRegister = () => {
                             />
                         </div>
                     </div>
+
+                    {draftRestored && (
+                        <div className="max-w-xl mx-auto mb-6 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-sm">
+                            <p className="font-semibold text-amber-700">Draft restored — your previous progress was saved.</p>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+                                    setFormData(DEFAULT_FORM);
+                                    setDraftRestored(false);
+                                }}
+                                className="text-[11px] font-bold uppercase tracking-wide text-amber-600 hover:text-amber-800 ml-4 shrink-0"
+                            >
+                                Clear Draft
+                            </button>
+                        </div>
+                    )}
 
                     <div className="text-center mb-16">
                         <div className="w-20 h-20 bg-blue-600/10 rounded-card flex items-center justify-center mx-auto mb-6 border border-blue-200 shadow-2xl relative">

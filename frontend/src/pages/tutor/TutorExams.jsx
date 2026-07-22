@@ -144,7 +144,7 @@ export default function TutorExams() {
                 {exams.map(exam => (
                     <div key={exam.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4">
-                            <span className="text-[10px] bg-slate-50 dark:bg-slate-800/60 text-slate-500 px-2 py-1 rounded-lg font-bold uppercase border border-slate-100 dark:border-slate-800">{exam.question_count || 0} Questions</span>
+                            <span className="text-[11px] bg-slate-50 dark:bg-slate-800/60 text-slate-500 px-2 py-1 rounded-lg font-semibold uppercase border border-slate-100 dark:border-slate-800">{exam.question_count || 0} Questions</span>
                         </div>
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-12 h-12 bg-primary-soft rounded-2xl flex items-center justify-center text-xl border border-blue-100">📝</div>
@@ -154,11 +154,11 @@ export default function TutorExams() {
                             </div>
                         </div>
                         <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{exam.title}</h3>
-                        <p className="text-[10px] text-primary font-bold uppercase tracking-widest mb-6">{exam.subject_name || 'General'} • {exam.duration_minutes} Mins</p>
+                        <p className="text-[11px] text-primary font-semibold uppercase tracking-wide mb-6">{exam.subject_name || 'General'} • {exam.duration_minutes} Mins</p>
 
                         <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                             <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Bulk Assign To</label>
+                                <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2">Bulk Assign To</label>
                                 <div className="max-h-24 overflow-y-auto space-y-2 p-1">
                                     {assignedStudents.map(student => {
                                         const sId = student.user_details?.id || student.id;
@@ -173,7 +173,7 @@ export default function TutorExams() {
                                                     }}
                                                     className="h-3 w-3 rounded border-slate-300 text-primary"
                                                 />
-                                                <span className="text-[9px] font-bold text-slate-500">{student.full_name || student.user_details?.first_name}</span>
+                                                <span className="text-[10px] font-bold text-slate-500">{student.full_name || student.user_details?.first_name}</span>
                                             </label>
                                         );
                                     })}
@@ -182,7 +182,7 @@ export default function TutorExams() {
                             <button
                                 disabled={assigning || selectedStudentsForBulk.length === 0}
                                 onClick={() => handleBulkAssign(exam.id)}
-                                className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-primary transition-all active:scale-95 disabled:opacity-50"
+                                className="w-full bg-slate-900 text-white py-2.5 rounded-xl font-semibold text-[11px] uppercase tracking-wide hover:bg-primary transition-all active:scale-95 disabled:opacity-50"
                             >
                                 {assigning ? 'Assigning...' : `Assign to ${selectedStudentsForBulk.length} Selected`}
                             </button>
@@ -206,11 +206,11 @@ export default function TutorExams() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Exam</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Assigned On</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Score</th>
+                                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Student</th>
+                                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Exam</th>
+                                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Assigned On</th>
+                                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Score</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -247,11 +247,11 @@ export default function TutorExams() {
                         <form className="space-y-8" onSubmit={handleSaveExam}>
                             <div className="grid grid-cols-2 gap-8">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Title</label>
+                                    <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Title</label>
                                     <input required value={examFormData.title} onChange={e => setExamFormData({ ...examFormData, title: e.target.value })} className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-bold placeholder:text-slate-300 focus:border-primary/50 transition-all" placeholder="Final Term Exam" />
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Subject</label>
+                                    <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Subject</label>
                                     <select value={examFormData.subject} onChange={e => setExamFormData({ ...examFormData, subject: e.target.value })} required className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-bold focus:border-primary/50 transition-all text-xs">
                                         <option value="">Select Subject...</option>
                                         {subjects.filter(s => s.program_type === 'ISLAMIC').length > 0 && (
@@ -269,7 +269,7 @@ export default function TutorExams() {
                             </div>
                             <div className="grid grid-cols-3 gap-8">
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Type</label>
+                                    <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Type</label>
                                     <select value={examFormData.exam_type} onChange={e => setExamFormData({ ...examFormData, exam_type: e.target.value })} className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-bold focus:border-primary/50 transition-all text-xs">
                                         <option value="INTERNAL">Internal</option>
                                         <option value="JAMB">JAMB Simulation</option>
@@ -279,18 +279,18 @@ export default function TutorExams() {
                                     </select>
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Year</label>
+                                    <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Year</label>
                                     <input type="number" value={examFormData.year} onChange={e => setExamFormData({ ...examFormData, year: e.target.value })} className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-bold focus:border-primary/50 transition-all" />
                                 </div>
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Mins</label>
+                                    <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Mins</label>
                                     <input type="number" value={examFormData.duration_minutes} onChange={e => setExamFormData({ ...examFormData, duration_minutes: e.target.value })} className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 font-bold focus:border-primary/50 transition-all" />
                                 </div>
                             </div>
 
                             {!examFormData.id && (
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold uppercase text-primary tracking-widest ml-1">Assign To (Optional)</label>
+                                    <label className="text-[11px] font-semibold uppercase text-primary tracking-wide ml-1">Assign To (Optional)</label>
                                     <div className="bg-slate-50 dark:bg-slate-800/60 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 max-h-40 overflow-y-auto flex flex-wrap gap-3">
                                         {assignedStudents.map(student => {
                                             const sId = student.id || student.user_details?.id;
@@ -304,7 +304,7 @@ export default function TutorExams() {
                                                 </button>
                                             );
                                         })}
-                                        {assignedStudents.length === 0 && <p className="text-[10px] font-bold text-slate-500 italic uppercase">No students available.</p>}
+                                        {assignedStudents.length === 0 && <p className="text-[11px] font-semibold text-slate-500 italic uppercase">No students available.</p>}
                                     </div>
                                 </div>
                             )}
@@ -336,19 +336,19 @@ export default function TutorExams() {
                                 </h3>
                                 <form className="space-y-6" onSubmit={handleAddQuestion}>
                                     <div className="space-y-3">
-                                        <label htmlFor="text" className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Question Content</label>
+                                        <label htmlFor="text" className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Question Content</label>
                                         <textarea id="text" required name="text" rows="4" className="w-full px-6 py-5 rounded-3xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 focus:bg-white focus:border-primary/30 outline-none transition-all font-medium text-slate-700 dark:text-slate-300 placeholder:text-slate-300 leading-relaxed" placeholder="Formulate the assessment query here..." />
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         {['A', 'B', 'C', 'D'].map(opt => (
                                             <div key={opt} className="space-y-2">
-                                                <label className="text-[10px] font-bold uppercase text-slate-500 tracking-widest ml-1">Option {opt}</label>
+                                                <label className="text-[11px] font-semibold uppercase text-slate-500 tracking-wide ml-1">Option {opt}</label>
                                                 <input required name={`option_${opt.toLowerCase()}`} className="w-full px-5 py-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 outline-none focus:border-primary/30 transition-all font-bold text-slate-700 dark:text-slate-300 text-xs" />
                                             </div>
                                         ))}
                                     </div>
                                     <div className="space-y-3">
-                                        <label htmlFor="correct_option" className="text-[10px] font-bold uppercase text-primary tracking-widest ml-1">Correct Answer</label>
+                                        <label htmlFor="correct_option" className="text-[11px] font-semibold uppercase text-primary tracking-wide ml-1">Correct Answer</label>
                                         <select id="correct_option" name="correct_option" className="w-full px-6 py-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 outline-none focus:border-primary/50 transition-all font-bold text-slate-900 dark:text-slate-100 text-xs">
                                             <option value="A">Choice A</option>
                                             <option value="B">Choice B</option>

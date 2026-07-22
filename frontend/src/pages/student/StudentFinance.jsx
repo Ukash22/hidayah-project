@@ -137,12 +137,12 @@ export default function StudentFinance() {
                                         </div>
                                         <div>
                                             <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{t.description}</p>
-                                            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
+                                            <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wide">{new Date(t.timestamp || t.created_at).toLocaleDateString()}</p>
                                         </div>
                                     </div>
                                     <div className="text-right flex flex-col items-end gap-2">
                                         <div className="text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100">₦{parseFloat(t.amount).toLocaleString()}</div>
-                                        <button onClick={() => handleDownloadReceipt(t)} className="text-[9px] font-bold uppercase text-primary hover:text-primary-dark transition-colors flex items-center gap-1">
+                                        <button onClick={() => handleDownloadReceipt(t)} className="text-[11px] font-semibold uppercase text-primary hover:text-primary-dark transition-colors flex items-center gap-1">
                                             <IconDownload size={10} /> Receipt
                                         </button>
                                     </div>
@@ -164,7 +164,7 @@ export default function StudentFinance() {
                                 <IconShieldCheck size={18} className="text-blue-400" />
                             </div>
                             <div className="relative z-10">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Status</p>
+                                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Status</p>
                                 <p className="text-xs font-bold text-white">READY FOR BILLING</p>
                             </div>
                         </div>
@@ -172,7 +172,7 @@ export default function StudentFinance() {
                     <div className="p-8 bg-primary-soft border border-blue-100 rounded-card-lg flex items-start gap-4 shadow-sm">
                         <IconAlertCircle className="text-blue-500 shrink-0" size={20} />
                         <div>
-                            <h5 className="text-[10px] font-bold uppercase text-primary tracking-widest mb-1">Billing Policy</h5>
+                            <h5 className="text-[11px] font-semibold uppercase text-primary tracking-wide mb-1">Billing Policy</h5>
                             <p className="text-[10px] text-slate-500 leading-relaxed font-bold">Payments are non-refundable after a session has been successfully completed by the assigned tutor.</p>
                         </div>
                     </div>

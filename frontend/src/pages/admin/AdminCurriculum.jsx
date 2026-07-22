@@ -150,7 +150,7 @@ export default function AdminCurriculum() {
                             <div key={p.id} className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
                                 <div>
                                     <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{p.name}</h4>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{p.program_type}</span>
+                                    <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{p.program_type}</span>
                                 </div>
                                 <button onClick={() => handleDeleteProgram(p.id)} className="text-slate-300 hover:text-red-500 transition-colors">🗑️</button>
                             </div>
@@ -186,7 +186,7 @@ export default function AdminCurriculum() {
                                 <div key={subj.id} className={`bg-white dark:bg-slate-900 p-5 rounded-2xl border shadow-sm group hover:shadow-md transition-all ${status === 'success' ? 'border-emerald-300' : 'border-slate-100 dark:border-slate-800 hover:border-primary/20'}`}>
                                     <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <div className="text-[9px] font-bold text-primary uppercase tracking-tighter mb-1 bg-primary/5 px-2 py-0.5 rounded-full w-fit">{subj.program_name || 'Program'}</div>
+                                            <div className="text-[11px] font-semibold text-primary uppercase tracking-tighter mb-1 bg-primary/5 px-2 py-0.5 rounded-full w-fit">{subj.program_name || 'Program'}</div>
                                             <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">{subj.name}</h4>
                                         </div>
                                         <button onClick={() => handleDeleteSubject(subj.id)} className="text-slate-300 hover:text-red-500 transition-colors p-1">🗑️</button>
@@ -222,10 +222,10 @@ export default function AdminCurriculum() {
                         <table className="w-full text-left min-w-[560px]">
                             <thead className="bg-slate-50/50 border-b border-slate-100 dark:border-slate-800">
                                 <tr>
-                                    <th className="py-2 px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Material</th>
-                                    <th className="py-2 px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type</th>
-                                    <th className="py-2 px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Owner</th>
-                                    <th className="py-2 px-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                    <th className="py-2 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Material</th>
+                                    <th className="py-2 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                                    <th className="py-2 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Owner</th>
+                                    <th className="py-2 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -235,10 +235,10 @@ export default function AdminCurriculum() {
                                     <tr key={mat.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
                                         <td className="py-3 px-6">
                                             <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{mat.title}</div>
-                                            <div className="text-[9px] text-slate-500">{new Date(mat.created_at).toLocaleDateString()}</div>
+                                            <div className="text-[10px] text-slate-500">{new Date(mat.created_at).toLocaleDateString()}</div>
                                         </td>
                                         <td className="py-3 px-6">
-                                            <span className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase">{mat.material_type}</span>
+                                            <span className="text-[11px] font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase">{mat.material_type}</span>
                                         </td>
                                         <td className="py-3 px-6">
                                             <div className="text-[11px] text-slate-600 font-medium">Tr. {mat.tutor_name}</div>
@@ -268,11 +268,11 @@ export default function AdminCurriculum() {
                         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 uppercase tracking-widest">New Program</h3>
                         <form onSubmit={handleCreateProgram} className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Program Name</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Program Name</label>
                                 <input required value={programForm.name} onChange={e => setProgramForm({...programForm, name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</label>
                                 <select value={programForm.program_type} onChange={e => setProgramForm({...programForm, program_type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
                                     <option value="WESTERN">Western</option>
                                     <option value="ISLAMIC">Islamic</option>
@@ -297,18 +297,18 @@ export default function AdminCurriculum() {
                         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 uppercase tracking-widest">Add Subject</h3>
                         <form onSubmit={handleAddSubject} className="space-y-4">
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Subject Name</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Subject Name</label>
                                 <input required value={subjectForm.name} onChange={e => setSubjectForm({...subjectForm, name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Program</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Program</label>
                                 <select required value={subjectForm.program} onChange={e => setSubjectForm({...subjectForm, program: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
                                     <option value="">Select Program</option>
                                     {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Admin Commission (%)</label>
+                                <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Admin Commission (%)</label>
                                 <input type="number" step="0.01" value={subjectForm.admin_percentage} onChange={e => setSubjectForm({...subjectForm, admin_percentage: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-2">

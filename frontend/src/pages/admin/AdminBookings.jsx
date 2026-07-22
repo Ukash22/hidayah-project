@@ -72,12 +72,12 @@ export default function AdminBookings() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
                                 <tr>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Student</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Course</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tutor</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Status</th>
-                                    <th className="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Actions</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Student</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Course</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tutor</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
+                                    <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -87,18 +87,18 @@ export default function AdminBookings() {
                                     <tr key={booking.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                         <td className="py-3 px-4">
                                             <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{booking.student_name}</div>
-                                            <div className="text-[9px] text-slate-500 uppercase font-bold">@{booking.student_email?.split('@')[0]}</div>
+                                            <div className="text-[11px] text-slate-500 uppercase font-semibold">@{booking.student_email?.split('@')[0]}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="font-bold text-primary text-xs">{booking.subject}</div>
-                                            <div className="text-[9px] text-slate-500 uppercase font-bold">₦{parseFloat(booking.price).toLocaleString()} • {booking.hours_per_week}h/wk</div>
+                                            <div className="text-[11px] text-slate-500 uppercase font-semibold">₦{parseFloat(booking.price).toLocaleString()} • {booking.hours_per_week}h/wk</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="font-bold text-slate-800 dark:text-slate-200 text-xs">{booking.tutor_name}</div>
                                         </td>
                                         <td className="py-3 px-4">
                                             <div className="text-[10px] font-medium text-slate-500">{new Date(booking.created_at).toLocaleDateString()}</div>
-                                            <div className="text-[10px] font-bold uppercase text-slate-500">Start: {booking.preferred_start_date || 'ASAP'}</div>
+                                            <div className="text-[11px] font-semibold uppercase text-slate-500">Start: {booking.preferred_start_date || 'ASAP'}</div>
                                         </td>
                                         <td className="py-3 px-4 text-center">
                                             <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-block ${
@@ -113,8 +113,8 @@ export default function AdminBookings() {
                                             <div className="flex flex-col gap-1 items-center">
                                                 {booking.status === 'PENDING' && (
                                                     <div className="flex gap-1">
-                                                        <button onClick={() => handleApprove(booking.id)} className="px-2 py-1 bg-emerald-500 text-white rounded text-[9px] font-bold uppercase hover:bg-emerald-600">✅</button>
-                                                        <button onClick={() => handleReject(booking.id)} className="px-2 py-1 bg-red-500 text-white rounded text-[9px] font-bold uppercase hover:bg-red-600">❌</button>
+                                                        <button onClick={() => handleApprove(booking.id)} className="px-2 py-1 bg-emerald-500 text-white rounded text-[11px] font-semibold uppercase hover:bg-emerald-600">✅</button>
+                                                        <button onClick={() => handleReject(booking.id)} className="px-2 py-1 bg-red-500 text-white rounded text-[11px] font-semibold uppercase hover:bg-red-600">❌</button>
                                                     </div>
                                                 )}
                                             </div>

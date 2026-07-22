@@ -314,7 +314,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                                         onClick={() => insertText(preset.eq)}
                                         className="text-left px-4 py-3 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 rounded-xl transition-all group flex flex-col gap-1 shadow-sm"
                                     >
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-indigo-400">{preset.name}</span>
+                                        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 group-hover:text-indigo-400">{preset.name}</span>
                                         <span className="font-mono text-sm text-slate-800 font-bold">{preset.eq}</span>
                                     </button>
                                 ))}
@@ -357,8 +357,8 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                             </div>
                         </div>
 
-                        <button 
-                            onClick={insertGraph}
+                        <button
+                            onClick={() => { insertGraph(); onClose(); }}
                             className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <SquareFunction size={16} /> Insert Graph
@@ -382,8 +382,8 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                             </div>
                         </div>
 
-                        <button 
-                            onClick={insertAngle}
+                        <button
+                            onClick={() => { insertAngle(); onClose(); }}
                             className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <DraftingCompass size={16} /> Draw Angle
@@ -423,8 +423,8 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                             </div>
                         </div>
 
-                        <button 
-                            onClick={insertPieChart}
+                        <button
+                            onClick={() => { insertPieChart(); onClose(); }}
                             className="mt-4 w-full py-3 bg-indigo-600 text-white rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2"
                         >
                             <PieChart size={16} /> Insert Pie Chart
@@ -434,8 +434,8 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
 
                 {activeTab === 'instruments' && (
                     <div className="flex flex-col gap-3">
-                        <button 
-                            onClick={() => insertInstrument('ruler')}
+                        <button
+                            onClick={() => { insertInstrument('ruler'); onClose(); }}
                             className="px-4 py-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 rounded-xl transition-all group flex items-center gap-4 shadow-sm"
                         >
                             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><Ruler size={24} /></div>
@@ -444,9 +444,9 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
                                 <span className="text-[10px] text-slate-500">Virtual measuring tool</span>
                             </div>
                         </button>
-                        
-                        <button 
-                            onClick={() => insertInstrument('protractor')}
+
+                        <button
+                            onClick={() => { insertInstrument('protractor'); onClose(); }}
                             className="px-4 py-4 bg-white border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 rounded-xl transition-all group flex items-center gap-4 shadow-sm"
                         >
                             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg"><DraftingCompass size={24} /></div>

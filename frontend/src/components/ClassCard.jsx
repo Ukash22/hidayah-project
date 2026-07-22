@@ -12,9 +12,9 @@ const ClassCard = memo(function ClassCard({ cls, token, onJoin, onRefetch }) {
             <div className="flex flex-col md:flex-row items-center gap-10 text-center md:text-left">
                 <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800/60 rounded-card flex items-center justify-center text-4xl shadow-inner ring-1 ring-slate-100">🏫</div>
                 <div>
-                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">{cls.type || 'REGULAR COURSE'}</p>
+                    <p className="text-[11px] font-semibold text-primary uppercase tracking-wide mb-1">{cls.type || 'REGULAR COURSE'}</p>
                     <h4 className="text-3xl font-display font-bold text-slate-900 dark:text-slate-100 mb-3">{cls.subject}</h4>
-                    <div className="flex flex-wrap gap-4 font-bold text-[10px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
+                    <div className="flex flex-wrap gap-4 font-semibold text-[11px] text-slate-500 uppercase bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl w-fit">
                         <span className="flex items-center gap-2"><IconCalendar size={12} className="text-primary" /> {new Date(cls.scheduled_at).toLocaleDateString()}</span>
                         <span className="flex items-center gap-2"><IconClock size={12} className="text-indigo-600" /> {new Date(cls.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         <span className="flex items-center gap-2"><IconUser size={12} className="text-sky-600" /> Tutor: {cls.tutor_name}</span>

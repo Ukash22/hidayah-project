@@ -18,6 +18,7 @@ Master list of all audits run against the platform. Each audit produces an **ite
 | 8 | Mobile / Capacitor Audit | ✅ App-breaking fixes (CORS, media permissions, viewport) done · payment-flow + store-prep decisions deferred to publish stage | [mobile-capacitor-audit.md](items/mobile-capacitor-audit.md) | [mobile-capacitor-progress.md](tracker/mobile-capacitor-progress.md) |
 | 9 | Backend Code Quality Audit | ✅ Q-A + Q-B complete (money validation, withdrawal reservation, negative-balance policy) · Q-C opportunistic | [backend-quality-audit.md](items/backend-quality-audit.md) | [backend-quality-progress.md](tracker/backend-quality-progress.md) |
 | 10 | Test Coverage Audit | ✅ Baseline 48% measured · money-path + registration tests added (63 total) · T-B gaps ranked, testing policy adopted | [test-coverage-audit.md](items/test-coverage-audit.md) | [test-coverage-progress.md](tracker/test-coverage-progress.md) |
+| 11 | UI Deep Dive (screen-by-screen) | ✅ D-1–D-4 complete — bugs fixed, high-value items shipped, consistency sweep done, feature investments delivered (parent portal, student progress, homepage conversion) | [ui-deep-dive.md](items/ui-deep-dive.md) | [ui-deep-dive-progress.md](tracker/ui-deep-dive-progress.md) |
 
 ---
 

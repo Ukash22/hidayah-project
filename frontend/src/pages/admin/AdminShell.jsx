@@ -17,6 +17,7 @@ const NAV_GROUPS = [
             { to: '/admin/withdrawals', icon: '🏧', label: 'Withdrawals' },
             { to: '/admin/complaints', icon: '⚠️', label: 'Complaints' },
             { to: '/admin/settings', icon: '⚙️', label: 'Settings' },
+            { to: '/admin/account', icon: '🔐', label: 'Account' },
         ]
     }
 ];

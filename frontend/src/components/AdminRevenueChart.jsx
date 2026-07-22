@@ -8,7 +8,7 @@ export default function AdminRevenueChart({ financials, chartMode, onModeChange 
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h3 className="text-lg font-bold text-slate-800">Revenue Velocity</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Growth Trend & Processing History</p>
+                    <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Growth Trend & Processing History</p>
                 </div>
                 <div className="flex bg-slate-50 p-1 rounded-xl gap-1">
                     {['daily', 'weekly', 'monthly'].map(m => (

@@ -331,8 +331,9 @@ class BookingRequestView(APIView):
         hours_per_week = calculate_schedule_hours(schedule)
         
         from decimal import Decimal
-        # Price calculation: monthly estimate (4 weeks)
-        total_price = Decimal(str(tutor_profile.hourly_rate)) * hours_per_week * Decimal('4.0')
+        from django.conf import settings as _s
+        # Price calculation: monthly estimate (BILLING_WEEKS_PER_CYCLE weeks, default 4)
+        total_price = Decimal(str(tutor_profile.hourly_rate)) * hours_per_week * _s.BILLING_WEEKS_PER_CYCLE
         
         booking = Booking.objects.create(
             student=request.user,

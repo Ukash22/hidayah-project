@@ -101,7 +101,7 @@ const DashboardLayout = ({
                     </div>
                     <div className="overflow-hidden">
                         <p className="text-white font-bold text-sm truncate leading-none">{user?.first_name} {user?.last_name}</p>
-                        <p className="text-slate-500 text-[9px] font-bold uppercase tracking-widest mt-0.5 truncate">{user?.username}</p>
+                        <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide mt-0.5 truncate">{user?.username}</p>
                     </div>
                 </div>
             </div>

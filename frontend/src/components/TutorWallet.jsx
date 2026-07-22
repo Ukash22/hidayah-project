@@ -130,7 +130,7 @@ const TutorWallet = ({ token }) => {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16 rounded-full group-hover:bg-white/20 transition-all"></div>
                     <div className="relative z-10 flex flex-col h-full justify-between gap-8">
                         <div>
-                            <h3 className="text-[10px] font-bold text-white/70 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <h3 className="text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 bg-white dark:bg-slate-900 rounded-full"></span>
                                 Available Balance
                             </h3>
@@ -148,10 +148,10 @@ const TutorWallet = ({ token }) => {
                 <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-5 md:p-8 shadow-sm flex flex-col justify-between group hover:border-primary/20 transition-all">
                     <div>
                         <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-xl mb-6 border border-primary/20 text-primary">⏱️</div>
-                        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Base Hourly Rate</h3>
+                        <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-1">Base Hourly Rate</h3>
                         <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">₦{profile?.hourly_rate?.toLocaleString() || '0'}<span className="text-sm text-slate-500 ml-2">/ hr</span></p>
                     </div>
-                    <p className="text-[9px] font-bold uppercase text-primary tracking-widest bg-primary/10 inline-block px-3 py-1.5 rounded-lg border border-primary/10 mt-6 self-start">Active Rate</p>
+                    <p className="text-[11px] font-semibold uppercase text-primary tracking-wide bg-primary/10 inline-block px-3 py-1.5 rounded-lg border border-primary/10 mt-6 self-start">Active Rate</p>
                 </div>
             </div>
 
@@ -171,12 +171,12 @@ const TutorWallet = ({ token }) => {
                         <table className="w-full text-left bg-transparent">
                             <thead>
                                 <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Type</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Amount</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Date</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest hidden md:table-cell">Description</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Receipt</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Description</th>
+                                    <th className="px-6 py-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-right">Receipt</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">

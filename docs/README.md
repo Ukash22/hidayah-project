@@ -12,8 +12,11 @@
 - Tutors apply, get interviewed, and receive payouts after completing sessions.
 - Admins oversee everything: approvals, scheduling, payments, commissions, exam content.
 - Parents can monitor their child's progress via a parent dashboard.
-- An AI Hub generates CBT (Computer-Based Testing) practice questions for Nigerian university entrance exams.
+- An AI Hub generates CBT (Computer-Based Testing) practice questions for Nigerian university entrance exams (currently via OpenAI in-process; see `docs/ai-hub-worker-plan.md` for the planned stateless Question Engine with Redis + Celery).
 - A built-in collaborative whiteboard (Excalidraw) is available inside every live session.
+- Each user role has a dedicated portal shell (`StudentShell`, `TutorShell`, `AdminShell`, `ParentShell`) — nested routes render inside the shell's sidebar layout with no full-page wrapper.
+- Parents can view their child's session history, exam results, and wallet balance, and fund the child's wallet directly without impersonating.
+- The public homepage includes a live pricing section, testimonials, FAQ accordion, and a WhatsApp contact float button.
 
 ---
 
@@ -77,6 +80,7 @@ hidayah/
 │   ├── ios/          # iOS project
 │   └── capacitor.config.json
 │
+├── ai_worker/        # Planned: FastAPI stateless Question Engine (see docs/ai-hub-worker-plan.md)
 ├── docs/             # This documentation folder
 └── render.yaml       # Render deployment config
 ```
@@ -116,16 +120,29 @@ hidayah/
 3. A reminder email is sent before the session.
 
 **Exam Practice:**
-1. Student navigates to `/exam-practice` (ExamHub).
-2. Selects an exam type (JAMB, WAEC, etc.) and subject.
-3. Takes a timed CBT at `/exam/practice/:id`.
-4. Score and results are saved to their profile.
+1. Student navigates to `/student/exam-practice` (ExamHub) inside the student portal.
+2. Selects an exam type (JAMB, WAEC, NECO, JSSCE, PRIMARY) and optionally a year.
+3. For JAMB: builds a 4-subject combination and launches a full timed simulation.
+4. Takes a timed CBT at `/exam/practice/:id` (standalone, no portal sidebar).
+5. Score and results are saved to their profile.
+
+Legacy route `/exam-practice` redirects to `/student/exam-practice`.
 
 **AI Hub:**
-1. Student or tutor visits `/ai-hub`.
-2. Selects subject, exam type, and year range.
+1. Student visits `/student/ai-hub` inside the student portal.
+2. Selects subject and exam type (JAMB/WAEC/NECO).
 3. Backend calls OpenAI GPT-4o-mini to generate 10 custom questions.
 4. Falls back to a mock question bank if no API key is configured.
+5. Requires ≥ ₦1,000 wallet balance (configured via `MIN_WALLET_BALANCE_FOR_AI`).
+
+Legacy route `/ai-hub` redirects to `/student/ai-hub`.
+
+**Booking a Tutor:**
+1. Student navigates to Find Tutor (`/student/find-tutor`).
+2. Browses approved tutors on a light-themed card grid.
+3. Clicks "Book This Tutor" → a full-screen `BookingModal` opens.
+4. Fills in subject, schedule slots, duration, and level — submits booking request.
+5. Admin or tutor approves the request.
 
 ---
 
@@ -154,7 +171,12 @@ Variables marked **Required** have no fallback — the app will not start withou
 | `ADMIN_USERNAME` | Optional | Bootstrap admin username (default `admin`) — used by `create_admin.py` on deploy |
 | `ADMIN_EMAIL` | Optional | Bootstrap admin email (default `admin@hidayah.com`) |
 | `ADMIN_PASSWORD` | **Required for admin bootstrap** | If unset, `create_admin.py` does nothing (it will never fall back to a hardcoded password). Set once to create/reset the admin, then it re-applies on each deploy |
-| `OPENAI_API_KEY` | Optional | OpenAI API key — AI question generation falls back to mock bank if not set |
+| `OPENAI_API_KEY` | Optional | OpenAI API key — AI question generation falls back to mock bank if not set. In the planned Question Engine architecture this moves to the AI worker service only. |
+| `AI_WORKER_URL` | Optional | Base URL of the stateless FastAPI Question Engine (e.g. `https://hidayah-ai-worker.onrender.com`). When set, Django proxies AI generation requests to the worker instead of calling OpenAI in-process. |
+| `AI_WORKER_SECRET` | Optional (required if `AI_WORKER_URL` set) | Shared secret Django sends as `X-Worker-Secret` header to the worker. Generate: `python -c "import secrets; print(secrets.token_hex(32))"` |
+| `AI_MAX_REQUESTS_PER_HOUR` | Optional | Max AI question generation requests per student per hour (Redis rate limit). Default `3`. |
+| `MIN_WALLET_BALANCE_FOR_AI` | Optional | Minimum wallet balance in Naira for AI Hub access. Default `1000`. |
+| `VITE_WHATSAPP_NUMBER` | Optional (frontend) | Nigerian phone number (e.g. `2348012345678`) shown on the homepage WhatsApp float button and FAQ CTA. Default is a placeholder — replace before launch. |
 | `EMAIL_HOST` | Optional | SMTP host (default: `smtp.gmail.com`) |
 | `EMAIL_HOST_USER` | Optional | Sender email address |
 | `EMAIL_HOST_PASSWORD` | Optional | App password for SMTP |
@@ -181,8 +203,10 @@ Defined in `render.yaml`:
 | **hidayah-backend** | Web service | Django + Daphne (ASGI, WebSocket support) |
 | **hidayah-frontend** | Static site | React SPA, built with `npm run build` |
 | **hidayah-db** | PostgreSQL | Managed database |
-| **hidayah-redis** | Redis | WebSockets (Channels), API cache, Celery broker |
+| **hidayah-redis** | Redis | WebSockets (Channels), API cache, CBT session state, Celery broker |
 | **hidayah-celery** | Background worker | Async task processing — **commented out by default** |
+| **hidayah-ai-worker** | Web service | Planned: FastAPI Question Engine (OpenAI proxy, PDF ingestion, scoring). See `docs/ai-hub-worker-plan.md`. Not yet deployed. |
+| **hidayah-celery-beat** | Background worker | Planned: Celery Beat for nightly AI pre-generation and cache warming. Not yet deployed. |
 
 Production URLs:
 - Backend: `https://hidayah-backend-zgix.onrender.com`
@@ -211,6 +235,21 @@ When `REDIS_URL` is set, some read endpoints are cached (falls back to per-proce
 | `GET /api/tutors/` (approved tutor list) | 5 min | A newly approved tutor may take up to 5 min to appear |
 | `GET /api/programs/` (programme catalogue) | 10 min | Invalidated automatically on write |
 | `GET /api/payments/analytics/` (admin analytics) | 5 min | Admin dashboards can lag real payments by up to 5 min |
+
+### Key API endpoints (added during July 2026 audit wave)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/auth/password/change/` | POST | Change password while logged in (old + new + confirm). Available to all roles. |
+| `/api/tutors/me/availability/` | PUT | Replace tutor's availability slots (used by TutorProfilePage inline editor). |
+| `/api/students/me/progress/` | GET | Attendance stats + exam score trend for the logged-in student. |
+| `/api/parents/children/{id}/detail/` | GET | Child's sessions + wallet transactions (parent-scoped). |
+| `/api/parents/children/{id}/fund_wallet/` | POST | Fund a child's wallet directly (parent-scoped, no impersonation needed). |
+| `/api/payments/analytics/` | GET | Admin financial analytics. Supports `?date_from=&date_to=` (skips Redis cache when date params present). |
+
+### Shared portal pages
+
+`AccountSettings` and `NotificationsPage` are **shared across all four portals** — they are mounted as nested routes inside each shell and linked from the sidebar. Do not create role-specific versions.
 
 ### Paginated endpoints
 
@@ -242,13 +281,15 @@ The Capacitor mobile app ships on its own release cycle, so an old installed app
 
 | File | Purpose |
 |---|---|
-| `gaps-and-upgrade/audit-index.md` | Master audit index — all completed and pending audits |
+| `gaps-and-upgrade/audit-index.md` | Master audit index — all 11 audits complete |
 | `gaps-and-upgrade/items/ui-ux-audit.md` | UI/UX audit findings (13 themes, 22 items) |
 | `gaps-and-upgrade/tracker/ui-ux-progress.md` | Phase 1–5 implementation tracker |
 | `gaps-and-upgrade/items/page-architecture.md` | Page architecture refactor plan |
 | `gaps-and-upgrade/tracker/page-architecture-progress.md` | Phase A–E implementation tracker |
 | `gaps-and-upgrade/items/security-audit.md` | Security audit findings (12 items + 1 confirmed safe) |
 | `gaps-and-upgrade/tracker/security-audit-progress.md` | Phase S1–S4 implementation tracker |
+| `frontend.md` | Full frontend reference — routes, portal shell architecture, components, services |
+| `ai-hub-worker-plan.md` | Question Engine implementation plan — stateless AI worker, Redis, Celery, PDF ingestion, past question data sources |
 
 ---
 

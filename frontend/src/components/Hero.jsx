@@ -32,7 +32,7 @@ const Hero = () => {
                         <Link to="/exam-practice" className="btn bg-white border border-slate-200 text-primary px-8 py-4 hover:bg-slate-50 flex items-center justify-center gap-2">
                             <MonitorCheck size={18} className="text-secondary" />
                             <span>HITIS CBT Center</span>
-                            <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-semibold rounded-full uppercase tracking-wide">New</span>
+                            <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[11px] font-semibold rounded-full uppercase tracking-wide">New</span>
                         </Link>
                     </div>
 

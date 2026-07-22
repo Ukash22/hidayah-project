@@ -387,12 +387,12 @@ class JoinClassView(views.APIView):
                 
                 whiteboard_url = session_obj.whiteboard_link or profile.whiteboard_link
             
-            # 2. Check Balance (₦1,000 Minimum to JOIN Regular classes)
-            # Trials are FREE - bypass balance check
+            # 2. Check Balance — minimum threshold is a business config value
+            from django.conf import settings as _s
             is_trial = isinstance(session_obj, TrialApplication)
-            if not is_trial and profile.wallet_balance < 1000:
+            if not is_trial and profile.wallet_balance < _s.MIN_WALLET_BALANCE_FOR_CLASS:
                  return Response({
-                     "error": "Minimum balance of ₦1,000 required to join regular classes. Please top up your wallet.",
+                     "error": f"Minimum balance of NGN {int(_s.MIN_WALLET_BALANCE_FOR_CLASS):,} required to join regular classes. Please top up your wallet.",
                      "balance": float(profile.wallet_balance)
                  }, status=402)
                  
@@ -442,7 +442,8 @@ class CompleteSessionView(views.APIView):
             profile = StudentProfile.objects.get(user=session.student)
             
             # Determine hourly rate
-            hourly_rate = Decimal('3000') # Absolute fallback
+            from django.conf import settings as _s
+            hourly_rate = _s.DEFAULT_HOURLY_RATE  # absolute fallback from env/settings
             if profile.assigned_tutor and hasattr(profile.assigned_tutor, 'tutor_profile'):
                 hourly_rate = profile.assigned_tutor.tutor_profile.hourly_rate
             else:
@@ -451,11 +452,11 @@ class CompleteSessionView(views.APIView):
                     hourly_rate = pricing.hourly_rate
                 except PricingTier.DoesNotExist:
                     pass  # no active tier — keep fallback rate
-            
+
             fee_amount = (Decimal(str(actual_duration)) / Decimal('60')) * hourly_rate
-            
-            # 3. Calculate Commission
-            admin_percentage = Decimal('5.00')
+
+            # 3. Calculate Commission — platform rate from settings, overridden per-subject
+            admin_percentage = _s.COMMISSION_PERCENTAGE
             if session.subject:
                 admin_percentage = session.subject.admin_percentage
             

@@ -73,12 +73,12 @@ export default function StudentLibrary() {
                             <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800/60 rounded-3xl flex items-center justify-center text-3xl shadow-inner ring-1 ring-slate-100">
                                 <TypeIcon type={mat.material_type} />
                             </div>
-                            <button aria-label="Open resource" className="text-slate-500 hover:text-slate-900 transition-colors"><IconExternalLink size={20} /></button>
+                            <a href={mat.file || mat.external_url} target="_blank" rel="noreferrer" aria-label="Open resource" className="text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"><IconExternalLink size={20} /></a>
                         </div>
                         <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight line-clamp-2">{mat.title}</h4>
                         <p className="text-sm font-medium text-slate-500 leading-relaxed line-clamp-2 mb-8">{mat.description}</p>
                         <div className="pt-8 border-t border-slate-50 flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{mat.material_type}</span>
+                            <span className="text-[11px] font-semibold text-primary uppercase tracking-wide">{mat.material_type}</span>
                             <a href={mat.file || mat.external_url} target="_blank" rel="noreferrer" className="bg-primary/10 text-primary p-3 rounded-xl hover:bg-primary hover:text-white transition-all">
                                 <IconDownload size={18} />
                             </a>

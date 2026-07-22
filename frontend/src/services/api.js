@@ -99,7 +99,13 @@ api.interceptors.response.use(
                 return api(originalRequest);
             } catch (refreshError) {
                 clearAccess();
-                window.location.href = '/login';
+                // Only hard-redirect when the user is actually inside a protected portal.
+                // Public pages (homepage, /tutors, etc.) should handle 401s gracefully
+                // in their own catch blocks — not be yanked to /login.
+                const PORTAL_PREFIXES = ['/admin', '/tutor', '/student', '/parent', '/live', '/ai-hub', '/exam-practice', '/booking', '/payment'];
+                if (PORTAL_PREFIXES.some(p => window.location.pathname.startsWith(p))) {
+                    window.location.href = '/login';
+                }
                 return Promise.reject(refreshError);
             }
         }

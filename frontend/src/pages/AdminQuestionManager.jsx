@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
-import Navbar from '../components/Navbar';
 import { useToast } from '../context/ToastContext';
 
 const AdminQuestionManager = () => {
@@ -50,9 +49,8 @@ const AdminQuestionManager = () => {
     if (!exam) return <div className="p-20 text-center">Loading Question Bank...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            <Navbar />
-            <div className="container pt-32 pb-20">
+        <div>
+            <div>
                 <div className="mb-12 flex justify-between items-end">
                     <div>
                         <Link to="/admin/exams" className="text-primary font-bold text-sm mb-4 inline-block">← Back to Exams</Link>

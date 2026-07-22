@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Bell } from 'lucide-react';
@@ -8,6 +9,7 @@ import { EmptyState } from './ui';
 
 const NotificationCenter = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const [notifications, setNotifications] = useState([]);
     const getAuthHeader = () => {
         const token = getAccess();
@@ -86,7 +88,7 @@ const NotificationCenter = () => {
                         >
                             <div className="p-4 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-bold text-primary text-sm">Notifications</h3>
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{unreadCount} Unread</span>
+                                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">{unreadCount} Unread</span>
                             </div>
 
                             <div className="max-h-96 overflow-y-auto">
@@ -106,7 +108,7 @@ const NotificationCenter = () => {
                                         >
                                             <div className="flex justify-between items-start mb-1">
                                                 <h4 className={`text-xs font-bold ${!n.is_read ? 'text-primary' : 'text-slate-600'}`}>{n.title}</h4>
-                                                <span className="text-[9px] text-slate-500">{new Date(n.created_at).toLocaleDateString()}</span>
+                                                <span className="text-[10px] text-slate-500">{new Date(n.created_at).toLocaleDateString()}</span>
                                             </div>
                                             <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-wrap">{n.message}</p>
                                             {!n.is_read && (
@@ -119,13 +121,20 @@ const NotificationCenter = () => {
                                 )}
                             </div>
 
-                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 text-center">
+                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 flex items-center justify-center gap-6">
                                 <button
                                     onClick={fetchNotifications}
-                                    className="text-[10px] font-bold text-primary hover:text-secondary uppercase tracking-widest transition-colors"
+                                    className="text-[11px] font-semibold text-primary hover:text-secondary uppercase tracking-wide transition-colors"
                                 >
-                                    Refresh All
+                                    Refresh
                                 </button>
+                                <Link
+                                    to={`/${location.pathname.split('/')[1] || 'student'}/notifications`}
+                                    onClick={() => setShowDropdown(false)}
+                                    className="text-[11px] font-semibold text-primary hover:text-secondary uppercase tracking-wide transition-colors"
+                                >
+                                    View All →
+                                </Link>
                             </div>
                         </motion.div>
                     </>

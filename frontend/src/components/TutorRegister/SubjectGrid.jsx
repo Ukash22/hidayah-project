@@ -66,7 +66,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                         <CheckCircle2 size={10} className="text-white" />
                                     </div>
                                 )}
-                                <span className="text-[10px] font-bold uppercase tracking-tight">{subj}</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-tight">{subj}</span>
                             </button>
                         );
                     })}
@@ -98,7 +98,7 @@ const SubjectGrid = ({ formData, handleSubjectToggle }) => {
                                         <CheckCircle2 size={10} className="text-white" />
                                     </div>
                                 )}
-                                <span className="text-[10px] font-bold uppercase tracking-tight">{subj}</span>
+                                <span className="text-[11px] font-semibold uppercase tracking-tight">{subj}</span>
                             </button>
                         );
                     })}

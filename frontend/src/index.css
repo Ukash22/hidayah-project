@@ -100,6 +100,7 @@ html {
 @layer base {
   :root {
     --primary: var(--color-primary);
+    --primary-rgb: 30, 64, 175; /* legacy rgba(var(--primary-rgb), a) callers need commas */
     --primary-light: var(--color-primary-light);
     --secondary: var(--color-secondary);
     --secondary-light: var(--color-secondary-light);

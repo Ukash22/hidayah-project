@@ -104,6 +104,44 @@ class TutorViewSet(viewsets.ModelViewSet):
         except TutorProfile.DoesNotExist:
             return Response({"error": "Tutor profile not found"}, status=404)
 
+    @action(detail=False, methods=['put'], url_path='me/availability')
+    def set_availability(self, request):
+        """Tutor replaces their own availability slots (post-registration editing)."""
+        if not request.user.is_authenticated:
+            return Response({"error": "Not authenticated"}, status=401)
+        try:
+            profile = TutorProfile.objects.get(user=request.user)
+        except TutorProfile.DoesNotExist:
+            return Response({"error": "Tutor profile not found"}, status=404)
+
+        slots = request.data.get('slots', [])
+        if not isinstance(slots, list):
+            return Response({"error": "slots must be a list"}, status=400)
+        cleaned = []
+        for s in slots:
+            day = str(s.get('day', '')).strip().upper()
+            start = s.get('start_time') or s.get('startTime')
+            end = s.get('end_time') or s.get('endTime')
+            if day and start and end:
+                cleaned.append((day, start, end))
+        if not cleaned:
+            return Response({"error": "Provide at least one complete slot (day, start_time, end_time)."}, status=400)
+
+        from .models import TutorAvailability
+        from django.db import transaction
+        with transaction.atomic():
+            profile.availabilities.all().delete()
+            for day, start, end in cleaned:
+                TutorAvailability.objects.create(tutor=profile, day=day, start_time=start, end_time=end)
+            profile.availability_days = ", ".join(sorted({d.capitalize() for d, _, _ in cleaned}))
+            profile.save(update_fields=['availability_days'])
+
+        from .serializers import TutorAvailabilitySerializer
+        return Response({
+            "message": "Availability updated.",
+            "availabilities": TutorAvailabilitySerializer(profile.availabilities.all(), many=True).data,
+        })
+
     @action(detail=False, methods=['get'], url_path='admin/list')
     def admin_list(self, request):
         """Optimized admin list view for recruiter oversight."""

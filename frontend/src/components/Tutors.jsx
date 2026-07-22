@@ -91,27 +91,27 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label htmlFor="firstName" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">First Name *</label>
+                                    <label htmlFor="firstName" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">First Name *</label>
                                     <input id="firstName" type="text" name="firstName" value={formData.firstName} onChange={handleChange} required placeholder="e.g. Ahmad" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="lastName" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Last Name</label>
+                                    <label htmlFor="lastName" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Last Name</label>
                                     <input id="lastName" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="e.g. Ali" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label htmlFor="email" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email *</label>
+                                    <label htmlFor="email" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Email *</label>
                                     <input id="email" type="email" name="email" value={formData.email} onChange={handleChange} required placeholder="you@email.com" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs" />
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="country" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Country</label>
+                                    <label htmlFor="country" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Country</label>
                                     <input id="country" type="text" name="country" value={formData.country} onChange={handleChange} placeholder="e.g. Nigeria" className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm" />
                                 </div>
                             </div>
 
                             <div className="space-y-1">
-                                <label htmlFor="courseInterested" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Focus Course</label>
+                                <label htmlFor="courseInterested" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Focus Course</label>
                                 <select id="courseInterested" name="courseInterested" value={formData.courseInterested} onChange={handleChange} className="w-full px-4 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-sm appearance-none">
                                     {(tutor.subjects_to_teach || 'Quranic Recitation').split(',').map(s => (
                                         <option key={s.trim()} value={s.trim()}>{s.trim()}</option>
@@ -122,13 +122,13 @@ const TutorTrialModal = ({ tutor, onClose }) => {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredDay" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Day</label>
+                                    <label htmlFor="preferredDay" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Day</label>
                                     <select id="preferredDay" name="preferredDay" value={formData.preferredDay} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredTime" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Slot</label>
+                                    <label htmlFor="preferredTime" className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Slot</label>
                                     <select id="preferredTime" name="preferredTime" value={formData.preferredTime} onChange={handleChange} className="w-full px-3 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 text-xs appearance-none text-center">
                                         <option>Morning</option>
                                         <option>Afternoon</option>
@@ -136,7 +136,7 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                                     </select>
                                 </div>
                                 <div className="space-y-1">
-                                    <label htmlFor="preferredTimeExact" className="text-[10px] font-bold text-primary uppercase tracking-widest">Exact Time</label>
+                                    <label htmlFor="preferredTimeExact" className="text-[11px] font-semibold text-primary uppercase tracking-wide">Exact Time</label>
                                     <input id="preferredTimeExact" type="text" name="preferredTimeExact" value={formData.preferredTimeExact} onChange={handleChange} placeholder="e.g. 4 PM" className="w-full px-3 py-3 rounded-xl border-2 border-primary/10 bg-primary/5 focus:bg-white focus:border-primary outline-none transition-all font-bold text-primary text-xs text-center placeholder:text-primary/30" />
                                 </div>
                             </div>
@@ -315,7 +315,7 @@ const Tutors = () => {
                                             <div className="flex flex-col items-end gap-1">
                                                 {Array.isArray(tutor.availabilities) && tutor.availabilities.length > 0 ? (
                                                     tutor.availabilities.map((slot, i) => (
-                                                        <span key={i} className="text-[9px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                        <span key={i} className="text-[10px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                             {slot.day}: {to12hr(slot.start_time)} - {to12hr(slot.end_time)}
                                                         </span>
                                                     ))
@@ -327,7 +327,7 @@ const Tutors = () => {
                                                             : h.trim();
                                                         if (!label) return null;
                                                         return (
-                                                            <span key={i} className="text-[9px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
+                                                            <span key={i} className="text-[10px] font-bold text-primary bg-primary-soft border border-blue-100 px-2 py-0.5 rounded-md whitespace-nowrap">
                                                                 {label}
                                                             </span>
                                                         );
@@ -425,9 +425,9 @@ const Tutors = () => {
                             ) : (
                                 <div className="flex flex-col items-center">
                                     <div className="w-24 h-24 bg-primary/10 rounded-card flex items-center justify-center text-4xl mb-8 border border-primary/5">🎙️</div>
-                                    <span className="text-[10px] font-bold text-secondary uppercase tracking-[0.3em] mb-3 block">Voice Sample</span>
+                                    <span className="text-[11px] font-semibold text-secondary uppercase tracking-wide mb-3 block">Voice Sample</span>
                                     <h3 className="text-2xl font-display font-bold text-primary mb-2 uppercase">{selectedMedia.name}</h3>
-                                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-10 italic">Quranic Recitation Performance</p>
+                                    <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide mb-10 italic">Quranic Recitation Performance</p>
                                     <div className="w-full bg-slate-50 p-6 rounded-3xl border border-slate-100 shadow-inner">
                                         <audio src={selectedMedia.url?.startsWith('http') ? selectedMedia.url : `${import.meta.env.VITE_API_BASE_URL}${selectedMedia.url}`} controls className="w-full" />
                                     </div>

@@ -180,7 +180,7 @@ const TrialForm = () => {
                                 <div className="space-y-2">
                                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest ml-1 flex justify-between">
                                         <span>Preferred Tutor</span>
-                                        {loadingTutors && <span className="text-primary italic normal-case text-[9px] animate-pulse">Loading tutors...</span>}
+                                        {loadingTutors && <span className="text-primary italic normal-case text-[10px] animate-pulse">Loading tutors...</span>}
                                     </label>
                                     <select name="preferredTutor" value={formData.preferredTutor} onChange={handleChange} className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer">
                                         <option value="">Any Available Tutor (₦1,500/hr avg)</option>
@@ -195,14 +195,14 @@ const TrialForm = () => {
                                 {formData.preferredTutor && (
                                     <div className="bg-primary-soft border border-blue-100 p-4 rounded-2xl flex justify-between items-center animate-fade-in">
                                         <div>
-                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Premium Session Estimate</p>
+                                            <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Premium Session Estimate</p>
                                             <h4 className="text-lg font-bold text-primary">
                                                 ₦{parseFloat(availableTutors.find(t => t.full_name === formData.preferredTutor)?.hourly_rate || 0).toLocaleString()}
                                                 <span className="text-xs font-normal text-slate-500"> / per hour session</span>
                                             </h4>
                                         </div>
                                         <div className="text-right">
-                                            <span className="inline-block px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase">Special Rate</span>
+                                            <span className="inline-block px-3 py-1 bg-primary text-white text-[11px] font-semibold rounded-full uppercase">Special Rate</span>
                                         </div>
                                     </div>
                                 )}
@@ -235,7 +235,7 @@ const TrialForm = () => {
                                     </div>
                                 </div>
 
-                                <button type="submit" className="w-full group bg-primary hover:bg-primary-600 text-white py-5 rounded-2xl font-bold uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3">
+                                <button type="submit" className="w-full group bg-primary hover:bg-primary-dark text-white py-5 rounded-2xl font-bold uppercase tracking-[0.25em] text-sm shadow-[0_10px_30px_rgba(var(--primary-rgb),0.3)] transition-all active:scale-95 flex items-center justify-center gap-3">
                                     🚀 Submit Application <span className="text-xl transition-transform group-hover:translate-x-1">→</span>
                                 </button>
 

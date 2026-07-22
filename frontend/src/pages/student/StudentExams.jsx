@@ -51,12 +51,12 @@ export default function StudentExams() {
                                 </div>
                                 <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2 leading-tight">{ea.exam_title}</h4>
                                 <div className="flex flex-col gap-2 mb-8">
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Assigned by {ea.tutor_name || 'System'}</p>
-                                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'Immediate'}</p>
+                                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Assigned by {ea.tutor_name || 'System'}</p>
+                                    <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">Due: {ea.due_date ? new Date(ea.due_date).toLocaleDateString() : 'Immediate'}</p>
                                 </div>
                                 <a
                                     href={`/exam/practice/${ea.exam}`}
-                                    className="block w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-[10px] uppercase tracking-widest text-center transition-all shadow-lg shadow-primary/10"
+                                    className="block w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-semibold text-[11px] uppercase tracking-wide text-center transition-all shadow-lg shadow-primary/10"
                                 >
                                     Launch CBT Simulator
                                 </a>
@@ -83,7 +83,7 @@ export default function StudentExams() {
                                 <div key={res.id} className="grid grid-cols-4 p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all items-center">
                                     <div className="col-span-2">
                                         <h5 className="text-sm font-bold text-slate-900 dark:text-slate-100">{res.exam_title}</h5>
-                                        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Aggregate Performance</p>
+                                        <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide">Aggregate Performance</p>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`text-sm font-bold ${parseFloat(res.score) >= 50 ? 'text-primary' : 'text-red-500'}`}>

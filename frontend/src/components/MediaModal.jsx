@@ -55,7 +55,7 @@ export default function MediaModal({ media, onClose }) {
                     {media.type === 'audio' && (
                         <>
                             <div className="w-20 h-20 bg-emerald-500/10 rounded-card flex items-center justify-center text-4xl mx-auto mb-6 border border-emerald-500/20">🎙️</div>
-                            <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.3em] mb-2">Quran Recitation Sample</p>
+                            <p className="text-[11px] font-semibold text-emerald-500 uppercase tracking-wide mb-2">Quran Recitation Sample</p>
                             <h3 className="text-2xl font-bold text-white mb-6">{media.name}</h3>
                             <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
                                 <audio

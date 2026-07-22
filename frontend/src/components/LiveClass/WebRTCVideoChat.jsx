@@ -19,6 +19,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const localVideoRef = useRef(null);
     const peerConnections = useRef({});
     const chatEndRef = useRef(null);
+    const chatPanelRef = useRef(null);
     
     // WebSocket URL for signaling
     const socketUrl = React.useMemo(() => {
@@ -239,6 +240,18 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }, [messages, showChat]);
 
+    // Close chat on outside click
+    useEffect(() => {
+        if (!showChat) return;
+        const handleClickOutside = (e) => {
+            if (chatPanelRef.current && !chatPanelRef.current.contains(e.target)) {
+                setShowChat(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showChat]);
+
     // Media Controls
     const toggleMute = () => {
         if (localStream) {
@@ -320,8 +333,8 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
                 <div className={gridClasses}>
                     
-                    {/* Local User */}
-                    <div className={`relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border-2 transition-all duration-300 ${layoutMode === 'gallery' ? 'aspect-video h-auto' : 'h-48 md:h-56'} ${isScreenSharing ? 'border-emerald-500' : 'border-slate-700'}`}>
+                    {/* Local User (smaller in classroom mode — remote users get priority space) */}
+                    <div className={`relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border-2 transition-all duration-300 ${layoutMode === 'gallery' ? 'aspect-video h-auto' : 'h-32 md:h-40'} ${isScreenSharing ? 'border-emerald-500' : 'border-slate-700'}`}>
                         <video ref={localVideoRef} autoPlay muted playsInline className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''} ${isScreenSharing ? '' : '-scale-x-100'}`} />
                         {isVideoOff && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-4">
@@ -331,11 +344,11 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                                 <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Camera Off</span>
                             </div>
                         )}
-                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 border border-white/10">
+                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider flex items-center gap-2 border border-white/10">
                             {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={12} className="text-red-400" />}
                         </div>
                         {raisedHands[user.id] && <div className="absolute top-3 right-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={16} className="text-white" /></div>}
-                        {isScreenSharing && <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded text-[10px] font-bold uppercase">Sharing Screen</div>}
+                        {isScreenSharing && <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded text-[11px] font-semibold uppercase">Sharing Screen</div>}
                     </div>
 
                     {/* Remote Users */}
@@ -346,7 +359,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                                 ref={el => { if (el && el.srcObject !== data.stream) el.srcObject = data.stream; }} 
                                 className="w-full h-full object-cover" 
                             />
-                            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider border border-white/10">
                                 {data.name}
                             </div>
                             {raisedHands[id] && <div className="absolute top-3 right-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={16} className="text-white" /></div>}
@@ -359,7 +372,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                                 <Video size={24} className="text-slate-600" />
                             </div>
                             <p className="font-bold uppercase tracking-widest text-xs mb-1">Waiting for participants...</p>
-                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">
+                            <p className="text-[11px] text-slate-600 font-semibold uppercase tracking-tighter">
                                 Status: {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting to Server...'}
                             </p>
                             {readyState !== ReadyState.OPEN && (
@@ -369,7 +382,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                             )}
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-bold uppercase rounded-lg transition-all"
+                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-semibold uppercase rounded-lg transition-all"
                             >
                                 Refresh Connection
                             </button>
@@ -380,7 +393,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
             {/* Chat Drawer Overlay */}
             {showChat && (
-                <div className="absolute bottom-24 right-6 left-6 md:left-auto md:w-96 h-[500px] max-h-[70vh] bg-slate-900 border border-slate-700 rounded-card shadow-[0_30px_100px_rgba(0,0,0,0.8)] flex flex-col z-[100] animate-in slide-in-from-bottom-10">
+                <div ref={chatPanelRef} className="absolute bottom-24 right-6 left-6 md:left-auto md:w-96 h-[500px] max-h-[70vh] bg-slate-900 border border-slate-700 rounded-card shadow-[0_30px_100px_rgba(0,0,0,0.8)] flex flex-col z-[100] animate-in slide-in-from-bottom-10">
                     <div className="flex justify-between items-center p-5 border-b border-slate-800">
                         <div className="flex items-center gap-2">
                             <MessageSquare size={18} className="text-emerald-500" />
@@ -391,7 +404,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     <div className="flex-1 p-5 overflow-y-auto space-y-4 custom-scrollbar">
                         {messages.map((msg, i) => (
                             <div key={i} className={`flex flex-col ${msg.name === 'You' ? 'items-end' : 'items-start'}`}>
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mb-1">{msg.name} • {msg.time}</span>
+                                <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-tighter mb-1">{msg.name} • {msg.time}</span>
                                 <div className={`px-4 py-2.5 rounded-2xl text-xs font-medium leading-relaxed ${msg.name === 'You' ? 'bg-emerald-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none border border-slate-700'}`}>
                                     {msg.text}
                                 </div>

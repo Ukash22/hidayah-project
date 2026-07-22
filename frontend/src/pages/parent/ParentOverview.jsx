@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { User, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api, { asList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -65,7 +66,7 @@ export default function ParentOverview() {
                     children.map((child, idx) => (
                         <div key={idx} className="bg-white dark:bg-slate-900 p-8 rounded-card border border-slate-100 dark:border-slate-800 hover:border-primary/20 transition-all group shadow-sm hover:shadow-xl">
                             <div className="flex items-center gap-6 mb-6">
-                                <div className="bg-white dark:bg-slate-900 w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm group-hover:scale-110 transition-transform">🧒</div>
+                                <div className="bg-primary/10 w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm"><User size={24} className="text-primary" /></div>
                                 <div className="flex-1">
                                     <h4 className="text-xl font-bold text-primary">
                                         {child.full_name || `${child.user_details?.first_name || ''} ${child.user_details?.last_name || ''}`.trim()}
@@ -100,12 +101,12 @@ export default function ParentOverview() {
                                     </div>
                                     <div className="flex gap-4">
                                         {child.meeting_link && (
-                                            <a href={child.meeting_link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-secondary hover:underline uppercase tracking-widest">
+                                            <a href={child.meeting_link} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-secondary hover:underline uppercase tracking-wide">
                                                 Enter Class ↗
                                             </a>
                                         )}
                                         {child.whiteboard_link && (
-                                            <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest">
+                                            <a href={child.whiteboard_link} target="_blank" rel="noreferrer" className="text-[11px] font-semibold text-primary hover:underline uppercase tracking-wide">
                                                 Whiteboard ✏
                                             </a>
                                         )}
@@ -118,17 +119,23 @@ export default function ParentOverview() {
                                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Weekly Schedule</span>
                                     <span className="text-xs font-bold text-primary">{child.days_per_week} Days ({child.preferred_days || 'Not set'})</span>
                                 </div>
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-3 flex-wrap">
                                     {child.admission_letter_url && (
                                         <a href={child.admission_letter_url} target="_blank" rel="noreferrer" className="text-[11px] font-semibold uppercase tracking-wide text-primary hover:underline flex items-center gap-1">
                                             Admission Letter ↓
                                         </a>
                                     )}
+                                    <Link
+                                        to={`/parent/child/${child.id}`}
+                                        className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold uppercase tracking-wide py-2 px-4 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700"
+                                    >
+                                        <ExternalLink size={12} /> Detail
+                                    </Link>
                                     <button
                                         onClick={() => handleImpersonate(child.id)}
                                         className="bg-primary text-white text-[11px] font-semibold uppercase tracking-wide py-2 px-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                                     >
-                                        <span>👁️</span> View Dashboard
+                                        <User size={12} /> View Dashboard
                                     </button>
                                 </div>
                             </div>

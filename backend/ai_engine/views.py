@@ -24,8 +24,9 @@ class AIQuestionViewSet(viewsets.ViewSet):
         if not user.is_staff and getattr(user, 'role', '') == 'STUDENT':
             try:
                 profile = StudentProfile.objects.get(user=user)
-                if profile.wallet_balance < 1000:
-                    return Response({'error': 'Insufficient wallet balance to access AI tools. Minimum ₦1,000 required.'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+                from django.conf import settings as _s
+                if profile.wallet_balance < _s.MIN_WALLET_BALANCE_FOR_AI:
+                    return Response({'error': f'Insufficient wallet balance to access AI tools. Minimum NGN {int(_s.MIN_WALLET_BALANCE_FOR_AI):,} required.'}, status=status.HTTP_402_PAYMENT_REQUIRED)
             except StudentProfile.DoesNotExist:
                 return Response({'error': 'Student profile not found'}, status=status.HTTP_404_NOT_FOUND)
                 
