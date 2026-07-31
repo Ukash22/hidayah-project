@@ -22,6 +22,24 @@ Master list of all audits run against the platform. Each audit produces an **ite
 
 ---
 
+## Feature Implementations
+
+| # | Feature | Status | Items | Tracker |
+|---|---|---|---|---|
+| 12 | Batch / Study Groups | ✅ B-1–B-4 complete (backend, admin, tutor, student portals) · F-1–F-4 deferred | [batch-study-groups.md](items/batch-study-groups.md) | [batch-study-groups-progress.md](tracker/batch-study-groups-progress.md) |
+| 13 | Exam Enrollment Self-Edit | ✅ E-1–E-2 complete (PATCH endpoint + AccountSettings card for students) | [exam-enrollment-self-edit.md](items/exam-enrollment-self-edit.md) | [exam-enrollment-progress.md](tracker/exam-enrollment-progress.md) |
+| 14 | Library Type Filter | ✅ L-1 complete — chips, composed filters, TypeIcon LINK fix | [library-type-filter.md](items/library-type-filter.md) | [library-type-filter-progress.md](tracker/library-type-filter-progress.md) |
+| 15 | Tutor Earnings Chart | ✅ T-1 complete — monthly bar chart, 6M/12M toggle, useMemo derivation | [tutor-earnings-chart.md](items/tutor-earnings-chart.md) | [tutor-earnings-chart-progress.md](tracker/tutor-earnings-chart-progress.md) |
+| 16 | Platform Announcement Broadcast | ✅ A-1–A-2 complete — bulk_create endpoint + AdminSettings form | [platform-announcement.md](items/platform-announcement.md) | [platform-announcement-progress.md](tracker/platform-announcement-progress.md) |
+| 17 | Tutor Request Decline-with-Reason | ✅ D-1–D-2 complete — student notification + decline modal replaces window.prompt | [tutor-request-decline.md](items/tutor-request-decline.md) | [tutor-request-decline-progress.md](tracker/tutor-request-decline-progress.md) |
+| 18 | AIHub — Save to Practice Sets | ✅ P-1–P-6 complete — PracticeSet model, API, save modal, My Sets review view | [aihub-practice-sets.md](items/aihub-practice-sets.md) | [aihub-practice-sets-progress.md](tracker/aihub-practice-sets-progress.md) |
+
+## Bug Fixes
+
+| # | Bug | Status | Findings | Tracker |
+|---|---|---|---|---|
+| W-1 | Whiteboard panel clipping (`absolute`/`bottom-24` → `fixed`/`bottom-4`) | ✅ All 3 panels fixed (MathToolsPanel, LibraryPanel, ExamPanel) | [whiteboard-panel-fix.md](items/whiteboard-panel-fix.md) | [whiteboard-panel-progress.md](tracker/whiteboard-panel-progress.md) |
+
 ## Pending Audits
 
 None — all ten audits are complete. Remaining work lives in the individual trackers (opportunistic items) and the publish-stage deferrals noted in the README.

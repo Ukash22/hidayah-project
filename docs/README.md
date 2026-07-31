@@ -290,6 +290,10 @@ The Capacitor mobile app ships on its own release cycle, so an old installed app
 | `gaps-and-upgrade/tracker/security-audit-progress.md` | Phase S1–S4 implementation tracker |
 | `frontend.md` | Full frontend reference — routes, portal shell architecture, components, services |
 | `ai-hub-worker-plan.md` | Question Engine implementation plan — stateless AI worker, Redis, Celery, PDF ingestion, past question data sources |
+| `gaps-and-upgrade/items/batch-study-groups.md` | Batch/Study Groups feature — model, API endpoints, access control, admin/tutor/student portal UIs |
+| `gaps-and-upgrade/tracker/batch-study-groups-progress.md` | Batch implementation tracker — B-1 backend, B-2 admin, B-3 tutor, B-4 student portals |
+| `gaps-and-upgrade/items/whiteboard-panel-fix.md` | Whiteboard panel clipping — root cause and fix (`absolute`/`bottom-24` → `fixed`/`bottom-4`) |
+| `gaps-and-upgrade/tracker/whiteboard-panel-progress.md` | Whiteboard panel fix tracker with verification checklist |
 
 ---
 
