@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import api, { asList } from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard } from '../../components/ui';
+import { Megaphone } from 'lucide-react';
 
 export default function AdminSettings() {
     const toast = useToast();
@@ -15,6 +16,23 @@ export default function AdminSettings() {
         first_name: '', last_name: '', phone: '', is_superuser: true, is_staff: true
     });
     const [saving, setSaving] = useState(false);
+
+    const [broadcast, setBroadcast] = useState({ title: '', message: '', target_role: 'ALL' });
+    const [broadcasting, setBroadcasting] = useState(false);
+
+    const handleBroadcast = async (e) => {
+        e.preventDefault();
+        setBroadcasting(true);
+        try {
+            const res = await api.post('/api/auth/notifications/broadcast/', broadcast);
+            toast.success(`Announcement sent to ${res.data.created} user${res.data.created !== 1 ? 's' : ''}.`);
+            setBroadcast({ title: '', message: '', target_role: 'ALL' });
+        } catch (err) {
+            toast.error(getApiError(err, 'Failed to send announcement.'));
+        } finally {
+            setBroadcasting(false);
+        }
+    };
 
     const fetchAdmins = useCallback(async () => {
         try {
@@ -77,6 +95,62 @@ export default function AdminSettings() {
                     </button>
                 }
             />
+
+            {/* Broadcast Announcement */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-6 mb-8">
+                <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-2">
+                    <Megaphone size={16} className="text-primary" /> Broadcast Announcement
+                </h3>
+                <p className="text-[11px] text-slate-500 font-semibold uppercase tracking-wide mb-5">
+                    Send a notification to all users or a specific role. Appears in their notification bell.
+                </p>
+                <form onSubmit={handleBroadcast} className="grid sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Title</label>
+                        <input
+                            required
+                            value={broadcast.title}
+                            onChange={e => setBroadcast(v => ({ ...v, title: e.target.value }))}
+                            placeholder="e.g. Platform maintenance on Friday"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-primary/40 transition-all"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Send To</label>
+                        <select
+                            value={broadcast.target_role}
+                            onChange={e => setBroadcast(v => ({ ...v, target_role: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-primary/40 transition-all"
+                        >
+                            <option value="ALL">All Users</option>
+                            <option value="STUDENT">Students only</option>
+                            <option value="TUTOR">Tutors only</option>
+                            <option value="PARENT">Parents only</option>
+                        </select>
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-1.5">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Message</label>
+                        <textarea
+                            required
+                            rows={3}
+                            value={broadcast.message}
+                            onChange={e => setBroadcast(v => ({ ...v, message: e.target.value }))}
+                            placeholder="Write your announcement here…"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-primary/40 transition-all resize-none"
+                        />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <button
+                            type="submit"
+                            disabled={broadcasting || !broadcast.title || !broadcast.message}
+                            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark disabled:opacity-50 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary/20"
+                        >
+                            <Megaphone size={13} />
+                            {broadcasting ? 'Sending…' : 'Send Announcement'}
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
                 {admins.length === 0 ? (

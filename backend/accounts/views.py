@@ -33,6 +33,37 @@ class NotificationListView(APIView):
             return Response({"message": "Marked as read"})
         except Notification.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+
+
+class BroadcastNotificationView(APIView):
+    """POST /api/auth/notifications/broadcast/ — admin-only fan-out."""
+    permission_classes = [permissions.IsAdminUser]
+
+    def post(self, request):
+        title = (request.data.get('title') or '').strip()
+        message = (request.data.get('message') or '').strip()
+        target_role = (request.data.get('target_role') or 'ALL').upper()
+
+        if not title or not message:
+            return Response({'error': 'title and message are required.'}, status=400)
+
+        _User = get_user_model()
+        VALID_ROLES = {'ALL', 'STUDENT', 'TUTOR', 'PARENT'}
+        if target_role not in VALID_ROLES:
+            return Response({'error': f'target_role must be one of {sorted(VALID_ROLES)}.'}, status=400)
+
+        qs = _User.objects.filter(is_active=True).exclude(role='ADMIN')
+        if target_role != 'ALL':
+            qs = qs.filter(role=target_role)
+
+        notifications = [
+            Notification(user=u, title=title, message=message)
+            for u in qs.only('id')
+        ]
+        Notification.objects.bulk_create(notifications, batch_size=500)
+        return Response({'created': len(notifications)})
+
+
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
