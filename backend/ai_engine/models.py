@@ -18,3 +18,20 @@ class AIGeneratedQuestion(models.Model):
     
     def __str__(self):
         return f"AI {self.exam_type} {self.subject.name} - {self.created_at.date()}"
+
+
+class PracticeSet(models.Model):
+    """A saved set of AI-generated questions belonging to one student."""
+    from django.conf import settings as _s
+    owner = models.ForeignKey(_s.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='practice_sets')
+    title = models.CharField(max_length=200)
+    subject_name = models.CharField(max_length=100, blank=True)
+    exam_type = models.CharField(max_length=20, blank=True)
+    questions = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} — {self.owner.username}"

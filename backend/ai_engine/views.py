@@ -4,10 +4,11 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from .models import AIGeneratedQuestion
+from rest_framework.views import APIView
+from .models import AIGeneratedQuestion, PracticeSet
 from .services import generate_ai_questions
 from programs.models import Subject
 from students.models import StudentProfile
@@ -59,3 +60,51 @@ class AIQuestionViewSet(viewsets.ViewSet):
         except Exception:
             logger.exception("AI question generation failed")
             return Response({'error': 'Question generation failed. Please try again.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PracticeSetView(APIView):
+    """GET /api/ai/practice-sets/         — list own sets
+       POST /api/ai/practice-sets/        — save a new set
+       DELETE /api/ai/practice-sets/<id>/ — delete own set
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        sets = PracticeSet.objects.filter(owner=request.user)
+        data = [
+            {
+                'id': s.id,
+                'title': s.title,
+                'subject_name': s.subject_name,
+                'exam_type': s.exam_type,
+                'question_count': len(s.questions) if isinstance(s.questions, list) else 0,
+                'questions': s.questions,
+                'created_at': s.created_at,
+            }
+            for s in sets
+        ]
+        return Response(data)
+
+    def post(self, request):
+        title = (request.data.get('title') or '').strip()
+        questions = request.data.get('questions')
+        if not title:
+            return Response({'error': 'title is required.'}, status=400)
+        if not questions or not isinstance(questions, list):
+            return Response({'error': 'questions must be a non-empty list.'}, status=400)
+        ps = PracticeSet.objects.create(
+            owner=request.user,
+            title=title,
+            subject_name=request.data.get('subject_name', ''),
+            exam_type=request.data.get('exam_type', ''),
+            questions=questions,
+        )
+        return Response({'id': ps.id, 'title': ps.title}, status=201)
+
+    def delete(self, request, pk=None):
+        try:
+            ps = PracticeSet.objects.get(pk=pk, owner=request.user)
+            ps.delete()
+            return Response(status=204)
+        except PracticeSet.DoesNotExist:
+            return Response({'error': 'Not found.'}, status=404)
