@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { User } from 'lucide-react';
+import { User, X } from 'lucide-react';
 import api, { asList, getApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
@@ -13,6 +13,8 @@ export default function TutorRequests() {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeSubTab, setActiveSubTab] = useState('pending');
+    const [declineModal, setDeclineModal] = useState({ open: false, bookingId: null, studentName: '', reason: '' });
+    const [declining, setDeclining] = useState(false);
 
     const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
@@ -41,15 +43,22 @@ export default function TutorRequests() {
         }
     };
 
-    const handleReject = async (id) => {
-        const reason = window.prompt("Enter rejection reason:");
-        if (reason === null) return;
+    const openDecline = (req) => setDeclineModal({ open: true, bookingId: req.id, studentName: req.student_name, reason: '' });
+    const closeDecline = () => setDeclineModal({ open: false, bookingId: null, studentName: '', reason: '' });
+
+    const handleDeclineSubmit = async () => {
+        setDeclining(true);
         try {
-            await api.post(`/api/classes/booking/${id}/reject/`, { rejection_reason: reason });
-            toast.info('Request rejected.');
+            await api.post(`/api/classes/booking/${declineModal.bookingId}/reject/`, {
+                rejection_reason: declineModal.reason,
+            });
+            toast.info('Request declined. Student has been notified.');
+            closeDecline();
             fetchRequests();
         } catch (err) {
-            toast.error('Failed to reject: ' + (getApiError(err, 'Error')));
+            toast.error('Failed to decline: ' + getApiError(err, 'Error'));
+        } finally {
+            setDeclining(false);
         }
     };
 
@@ -142,8 +151,8 @@ export default function TutorRequests() {
                                         <button onClick={() => handleApprove(req.id)} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                                             Approve Request
                                         </button>
-                                        <button onClick={() => handleReject(req.id)} className="w-full bg-slate-50 dark:bg-slate-800/60 text-red-500 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all border border-red-100">
-                                            Reject
+                                        <button onClick={() => openDecline(req)} className="w-full bg-slate-50 dark:bg-slate-800/60 text-red-500 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all border border-red-100">
+                                            Decline
                                         </button>
                                     </>
                                 ) : activeSubTab === 'approved' ? (
@@ -171,6 +180,40 @@ export default function TutorRequests() {
                     </div>
                 )}
             </div>
+            {/* Decline modal */}
+            {declineModal.open && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-8 border border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                                Decline Request — {declineModal.studentName}
+                            </h3>
+                            <button onClick={closeDecline} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
+                                <X size={14} />
+                            </button>
+                        </div>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-4">
+                            The student will be notified with your reason. This cannot be undone.
+                        </p>
+                        <textarea
+                            rows={4}
+                            placeholder="Optional: explain why (e.g. schedule conflict, subject mismatch)…"
+                            value={declineModal.reason}
+                            onChange={e => setDeclineModal(v => ({ ...v, reason: e.target.value }))}
+                            className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-800 dark:text-slate-200 outline-none focus:border-red-300 transition-all resize-none mb-6"
+                        />
+                        <div className="flex gap-3">
+                            <button onClick={closeDecline} className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                Cancel
+                            </button>
+                            <button onClick={handleDeclineSubmit} disabled={declining}
+                                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-bold uppercase tracking-wide transition-all">
+                                {declining ? 'Declining…' : 'Decline Request'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
