@@ -239,7 +239,7 @@ export default function AdminStudents() {
                                         <div className="text-[11px] text-slate-500 font-semibold uppercase flex items-center gap-1">
                                             <span className={`w-1.5 h-1.5 rounded-full inline-block ${student.assigned_tutor_details ? 'bg-emerald-500' : 'bg-red-400'}`} /> {student.assigned_tutor_details ? student.assigned_tutor_details.full_name : 'No Tutor'}
                                             {(student.meeting_link || student.assigned_tutor_details?.live_class_link) && (
-                                                <button onClick={() => navigate(`/live/${student.db_id || student.id}`)} title="Join Live Class" className="text-primary hover:text-primary-dark transition-colors"><Video size={14} /></button>
+                                                <button onClick={() => navigate(`/live/${student.db_id || student.id}`)} aria-label="Join Live Class" title="Join Live Class" className="text-primary hover:text-primary-dark transition-colors"><Video size={14} /></button>
                                             )}
                                         </div>
                                     </td>

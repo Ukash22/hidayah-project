@@ -149,8 +149,8 @@ export default function TutorExams() {
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-12 h-12 bg-primary-soft rounded-2xl flex items-center justify-center text-xl border border-blue-100">📝</div>
                             <div className="flex gap-2">
-                                <button onClick={() => { setExamFormData({ ...exam, assigned_students: [] }); setShowCreateModal(true); }} className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg text-slate-500 hover:text-primary transition-colors text-xs border border-slate-100 dark:border-slate-800" title="Edit">✏️</button>
-                                <button onClick={() => { setSelectedExam(exam); setShowQuestionModal(true); }} className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors text-xs border border-slate-100 dark:border-slate-800" title="Questions">📂</button>
+                                <button onClick={() => { setExamFormData({ ...exam, assigned_students: [] }); setShowCreateModal(true); }} aria-label="Edit exam" className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg text-slate-500 hover:text-primary transition-colors text-xs border border-slate-100 dark:border-slate-800" title="Edit">✏️</button>
+                                <button onClick={() => { setSelectedExam(exam); setShowQuestionModal(true); }} aria-label="Manage questions" className="p-2 bg-slate-50 dark:bg-slate-800/60 rounded-lg text-slate-500 hover:text-indigo-600 transition-colors text-xs border border-slate-100 dark:border-slate-800" title="Questions">📂</button>
                             </div>
                         </div>
                         <h3 className="font-bold text-slate-900 dark:text-slate-100 mb-1">{exam.title}</h3>

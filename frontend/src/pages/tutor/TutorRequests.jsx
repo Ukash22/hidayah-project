@@ -188,7 +188,7 @@ export default function TutorRequests() {
                             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                                 Decline Request — {declineModal.studentName}
                             </h3>
-                            <button onClick={closeDecline} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
+                            <button onClick={closeDecline} aria-label="Close decline dialog" className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
                                 <X size={14} />
                             </button>
                         </div>

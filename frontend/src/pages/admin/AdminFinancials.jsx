@@ -199,7 +199,7 @@ export default function AdminFinancials() {
                                         </td>
                                         <td className="py-4 px-6 text-[10px] font-bold text-slate-500 italic">#{p.ref}</td>
                                         <td className="py-4 px-6">
-                                            <button onClick={() => handleDownloadReceipt(p, 'payment')} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-primary transition-colors" title="Download Receipt">
+                                            <button onClick={() => handleDownloadReceipt(p, 'payment')} aria-label="Download Receipt" className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 hover:text-primary transition-colors" title="Download Receipt">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                             </button>
                                         </td>

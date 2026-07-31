@@ -435,7 +435,7 @@ export default function StudentOverview() {
                                 </div>
                             </div>
                             <div className="flex-1 p-8 md:p-12 relative max-h-[90vh] overflow-y-auto">
-                                <button onClick={() => setShowEnrollModal(false)} className="absolute top-8 right-8 text-slate-500 hover:text-slate-900 transition-colors">
+                                <button onClick={() => setShowEnrollModal(false)} aria-label="Close enrollment modal" className="absolute top-8 right-8 text-slate-500 hover:text-slate-900 transition-colors">
                                     <IconX size={24} />
                                 </button>
                                 <div className="space-y-8">
