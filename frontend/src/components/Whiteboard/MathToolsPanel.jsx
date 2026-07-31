@@ -223,7 +223,7 @@ const MathToolsPanel = ({ excalidrawAPI, onClose }) => {
     ];
 
     return (
-        <div className="absolute left-4 top-20 bottom-24 w-80 bg-white/95 backdrop-blur-3xl rounded-3xl shadow-2xl border border-slate-200/60 overflow-hidden flex flex-col z-[2000] transition-all transform origin-left">
+        <div className="fixed left-4 top-20 bottom-4 w-80 bg-white/95 backdrop-blur-3xl rounded-3xl shadow-2xl border border-slate-200/60 overflow-hidden flex flex-col z-[2000] transition-all transform origin-left">
             <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-between shadow-md">
                 <div className="flex items-center gap-2 text-white">
                     <div className="p-1.5 bg-white/20 rounded-xl"><Calculator size={20} /></div>
