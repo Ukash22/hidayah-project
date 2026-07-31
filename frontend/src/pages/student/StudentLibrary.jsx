@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { asList } from '../../services/api';
 import { motion } from 'framer-motion';
-import { Search as IconSearch, Download as IconDownload, FileText as IconFileText, ExternalLink as IconExternalLink, PlayCircle as IconPlayCircle, Music as IconMusic, BookOpen as IconBookOpen } from 'lucide-react';
+import { Search as IconSearch, Download as IconDownload, FileText as IconFileText, ExternalLink as IconExternalLink, PlayCircle as IconPlayCircle, Music as IconMusic, BookOpen as IconBookOpen, Link as IconLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';
 import { EmptyState, SkeletonCard } from '../../components/ui';
@@ -14,6 +14,7 @@ export default function StudentLibrary() {
     const [materials, setMaterials] = useState([]);
     const [profile, setProfile] = useState(null);
     const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState('');
     const [loading, setLoading] = useState(true);
 
     const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
@@ -30,15 +31,27 @@ export default function StudentLibrary() {
             .finally(() => setLoading(false));
     }, [token, getAuthHeader]);
 
-    const filtered = materials.filter(m =>
-        m.title?.toLowerCase().includes(search.toLowerCase()) ||
-        m.description?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = materials.filter(m => {
+        const matchesSearch = !search ||
+            m.title?.toLowerCase().includes(search.toLowerCase()) ||
+            m.description?.toLowerCase().includes(search.toLowerCase());
+        const matchesType = !typeFilter || m.material_type === typeFilter;
+        return matchesSearch && matchesType;
+    });
+
+    const TYPE_CHIPS = [
+        { value: '', label: 'All', icon: IconBookOpen, color: 'text-slate-600' },
+        { value: 'VIDEO', label: 'Video', icon: IconPlayCircle, color: 'text-primary' },
+        { value: 'PDF', label: 'PDF', icon: IconFileText, color: 'text-indigo-600' },
+        { value: 'AUDIO', label: 'Audio', icon: IconMusic, color: 'text-sky-600' },
+        { value: 'LINK', label: 'Link', icon: IconLink, color: 'text-emerald-600' },
+    ].filter(chip => chip.value === '' || materials.some(m => m.material_type === chip.value));
 
     const TypeIcon = ({ type }) => {
         if (type === 'VIDEO') return <IconPlayCircle className="text-primary" />;
         if (type === 'PDF') return <IconFileText className="text-indigo-600" />;
-        return <IconMusic className="text-sky-600" />;
+        if (type === 'AUDIO') return <IconMusic className="text-sky-600" />;
+        return <IconLink className="text-emerald-600" />;
     };
 
     if (loading) return (
@@ -66,6 +79,33 @@ export default function StudentLibrary() {
                 }
             />
 
+            {TYPE_CHIPS.length > 1 && (
+                <div className="flex flex-wrap gap-2 mb-8">
+                    {TYPE_CHIPS.map(chip => {
+                        const Icon = chip.icon;
+                        const count = chip.value === '' ? materials.length : materials.filter(m => m.material_type === chip.value).length;
+                        const active = typeFilter === chip.value;
+                        return (
+                            <button
+                                key={chip.value}
+                                onClick={() => setTypeFilter(chip.value)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wide border transition-all ${
+                                    active
+                                        ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-primary/40 hover:text-primary'
+                                }`}
+                            >
+                                <Icon size={13} className={active ? 'text-white' : chip.color} />
+                                {chip.label}
+                                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${active ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                    {count}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filtered.length > 0 ? filtered.map((mat, i) => (
                     <motion.div key={i} whileHover={{ y: -5 }} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-5 md:p-8 group hover:border-primary/30 transition-all shadow-sm">
@@ -88,15 +128,25 @@ export default function StudentLibrary() {
                     <div className="col-span-full">
                         <EmptyState
                             icon={IconBookOpen}
-                            title={profile?.wallet_balance <= 0 ? 'Library locked' : (search ? 'No results' : 'No materials yet')}
-                            description={profile?.wallet_balance <= 0
-                                ? 'Complete your monthly payment to access learning materials.'
-                                : search
-                                    ? `No materials match "${search}".`
-                                    : 'No learning resources have been uploaded for your courses yet.'}
-                            action={profile?.wallet_balance <= 0
-                                ? { label: 'Add Funds', onClick: () => navigate('/student/finance') }
-                                : search ? { label: 'Clear search', onClick: () => setSearch('') } : undefined}
+                            title={
+                                profile?.wallet_balance <= 0 ? 'Library locked'
+                                : (search || typeFilter) ? 'No results'
+                                : 'No materials yet'
+                            }
+                            description={
+                                profile?.wallet_balance <= 0
+                                    ? 'Complete your monthly payment to access learning materials.'
+                                    : (search || typeFilter)
+                                        ? `No ${typeFilter || ''} materials${search ? ` matching "${search}"` : ''}.`
+                                        : 'No learning resources have been uploaded for your courses yet.'
+                            }
+                            action={
+                                profile?.wallet_balance <= 0
+                                    ? { label: 'Add Funds', onClick: () => navigate('/student/finance') }
+                                    : (search || typeFilter)
+                                        ? { label: 'Clear filters', onClick: () => { setSearch(''); setTypeFilter(''); } }
+                                        : undefined
+                            }
                         />
                     </div>
                 )}
