@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import api from '../../services/api';
+import api, { asList } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard, FetchError } from '../../components/ui';
 import ClassCard from '../../components/ClassCard';
+import { Users } from 'lucide-react';
 
 export default function StudentClasses() {
     const { token } = useAuth();
@@ -15,6 +16,7 @@ export default function StudentClasses() {
 
     const [classes, setClasses] = useState([]);
     const [profile, setProfile] = useState(null);
+    const [batches, setBatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -30,6 +32,7 @@ export default function StudentClasses() {
             ]);
             setClasses(Array.isArray(classRes.data) ? classRes.data : (classRes.data.results || classRes.data.classes || []));
             setProfile(profRes.data);
+            api.get('/api/classes/batches/').then(r => setBatches(asList(r.data))).catch(() => {});
         } catch (err) {
             console.error('Classes fetch failed', err);
             setLoadError(true);
@@ -65,6 +68,33 @@ export default function StudentClasses() {
         <>
             <title>My Classes — Hidayah</title>
             <PageHeader title="Live Learning Sessions" description="Your upcoming and scheduled class sessions." />
+
+            {batches.length > 0 && (
+                <div className="mb-8">
+                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+                        <Users size={18} className="text-emerald-600" /> My Study Groups
+                    </h2>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {batches.map(batch => (
+                            <div key={batch.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-9 h-9 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <Users size={16} className="text-emerald-600" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">{batch.name}</p>
+                                        <p className="text-[10px] text-slate-400 font-semibold uppercase">{batch.subject_name || 'All subjects'}</p>
+                                    </div>
+                                </div>
+                                <div className="text-[11px] text-slate-500">
+                                    <span className="font-semibold text-slate-600 dark:text-slate-400">Tutor:</span> {batch.tutor_name}
+                                </div>
+                                <div className="text-[11px] text-slate-400 mt-1">{batch.student_count} member{batch.student_count !== 1 ? 's' : ''} in this group</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-6">
                 {classes.length > 0 ? classes.map((cls, i) => (

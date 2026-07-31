@@ -34,6 +34,7 @@ class ScheduledSession(models.Model):
     admin_percentage_at_completion = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     payout_status = models.CharField(max_length=20, choices=PAYOUT_STATUS_CHOICES, default='NONE')
     
+    batch = models.ForeignKey('Batch', on_delete=models.SET_NULL, null=True, blank=True, related_name='sessions')
     reminder_sent = models.BooleanField(default=False)
     meeting_link = models.URLField(blank=True, null=True)
     whiteboard_link = models.URLField(blank=True, null=True)
@@ -78,6 +79,23 @@ class WhiteboardSession(models.Model):
     session = models.ForeignKey(ScheduledSession, on_delete=models.CASCADE, related_name='whiteboard_sessions')
     saved_image = models.ImageField(upload_to='whiteboards/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Batch(models.Model):
+    """A named group of students studying the same subject under one tutor."""
+    name = models.CharField(max_length=100)
+    tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_batches')
+    subject = models.ForeignKey('programs.Subject', on_delete=models.SET_NULL, null=True, blank=True, related_name='batches')
+    students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='student_batches', blank=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.name} — {self.tutor.get_full_name()}"
 
 
 class Booking(models.Model):

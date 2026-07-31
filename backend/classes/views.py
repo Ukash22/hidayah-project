@@ -11,8 +11,8 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import datetime, timedelta
 
-from .models import ScheduledSession, RescheduleRequest
-from .serializers import ScheduledSessionSerializer, RescheduleRequestSerializer
+from .models import ScheduledSession, RescheduleRequest, Batch
+from .serializers import ScheduledSessionSerializer, RescheduleRequestSerializer, BatchSerializer
 from applications.email_service import send_reschedule_notification
 
 
@@ -387,8 +387,19 @@ class BookingApprovalView(APIView):
             booking.save()
             return Response({"message": "Booking approved. Student notified."})
         elif 'reject' in action:
-            # Instead of deleting, mark it so we can keep records or just delete if preferred
-            booking.delete() 
+            rejection_reason = (request.data.get('rejection_reason') or '').strip()
+            # Notify the student before deleting so they see the reason in their bell
+            from accounts.models import Notification
+            tutor_name = request.user.get_full_name() or request.user.username
+            note_msg = f"Your booking request for {booking.subject} was declined by {tutor_name}."
+            if rejection_reason:
+                note_msg += f" Reason: {rejection_reason}"
+            Notification.objects.create(
+                user=booking.student,
+                title="Booking Request Declined",
+                message=note_msg,
+            )
+            booking.delete()
             return Response({"message": "Booking rejected."})
         
         return Response({"error": "Invalid action"}, status=400)
@@ -569,3 +580,125 @@ class UserSessionListView(APIView):
         paginator.default_limit = 50
         page = paginator.paginate_queryset(combined, request)
         return paginator.get_paginated_response(page)
+
+
+class BatchView(APIView):
+    """
+    GET  /api/classes/batches/        — list batches (admin: all; tutor: own; student: enrolled)
+    POST /api/classes/batches/        — create batch (admin or tutor)
+    GET  /api/classes/batches/<id>/   — retrieve single batch
+    PUT  /api/classes/batches/<id>/   — update (admin or owning tutor)
+    DELETE /api/classes/batches/<id>/ — soft-delete via is_active=False
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _get_batch(self, pk, user):
+        batch = get_object_or_404(Batch, pk=pk)
+        role = getattr(user, 'role', '')
+        if role == 'ADMIN' or user.is_staff:
+            return batch
+        if role == 'TUTOR' and batch.tutor == user:
+            return batch
+        if role == 'STUDENT' and batch.students.filter(pk=user.pk).exists():
+            return batch
+        return None
+
+    def get(self, request, pk=None):
+        user = request.user
+        role = getattr(user, 'role', '')
+        if pk:
+            batch = self._get_batch(pk, user)
+            if not batch:
+                return Response({'error': 'Not found or access denied'}, status=404)
+            return Response(BatchSerializer(batch).data)
+
+        if role == 'ADMIN' or user.is_staff:
+            qs = Batch.objects.all()
+        elif role == 'TUTOR':
+            qs = Batch.objects.filter(tutor=user)
+        elif role == 'STUDENT':
+            qs = Batch.objects.filter(students=user, is_active=True)
+        else:
+            return Response([], status=200)
+
+        active_only = request.query_params.get('active', 'true').lower() == 'true'
+        if active_only and role != 'ADMIN':
+            qs = qs.filter(is_active=True)
+        return Response(BatchSerializer(qs.prefetch_related('students'), many=True).data)
+
+    def post(self, request):
+        user = request.user
+        role = getattr(user, 'role', '')
+        if role not in ('ADMIN', 'TUTOR') and not user.is_staff:
+            return Response({'error': 'Only admins and tutors can create batches'}, status=403)
+
+        data = request.data.copy()
+        if role == 'TUTOR':
+            data['tutor'] = user.pk  # tutors can only create batches for themselves
+
+        serializer = BatchSerializer(data=data)
+        if serializer.is_valid():
+            batch = serializer.save()
+            logger.info("Batch %s created by %s", batch.id, user.email)
+            return Response(BatchSerializer(batch).data, status=201)
+        return Response(serializer.errors, status=400)
+
+    def put(self, request, pk=None):
+        user = request.user
+        batch = get_object_or_404(Batch, pk=pk)
+        role = getattr(user, 'role', '')
+        if not (role == 'ADMIN' or user.is_staff or (role == 'TUTOR' and batch.tutor == user)):
+            return Response({'error': 'Access denied'}, status=403)
+        serializer = BatchSerializer(batch, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk=None):
+        user = request.user
+        batch = get_object_or_404(Batch, pk=pk)
+        role = getattr(user, 'role', '')
+        if not (role == 'ADMIN' or user.is_staff or (role == 'TUTOR' and batch.tutor == user)):
+            return Response({'error': 'Access denied'}, status=403)
+        batch.is_active = False
+        batch.save(update_fields=['is_active'])
+        return Response({'status': 'deactivated'}, status=200)
+
+
+class BatchMemberView(APIView):
+    """
+    POST /api/classes/batches/<id>/students/add/    — add one or more students
+    POST /api/classes/batches/<id>/students/remove/ — remove one or more students
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _get_editable_batch(self, pk, user):
+        batch = get_object_or_404(Batch, pk=pk)
+        role = getattr(user, 'role', '')
+        if role == 'ADMIN' or user.is_staff:
+            return batch
+        if role == 'TUTOR' and batch.tutor == user:
+            return batch
+        return None
+
+    def post(self, request, pk, action):
+        batch = self._get_editable_batch(pk, request.user)
+        if not batch:
+            return Response({'error': 'Access denied'}, status=403)
+
+        student_ids = request.data.get('student_ids', [])
+        if not student_ids:
+            return Response({'error': 'student_ids required'}, status=400)
+
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        students = User.objects.filter(pk__in=student_ids, role='STUDENT')
+
+        if action == 'add':
+            batch.students.add(*students)
+            return Response({'added': len(students), 'total': batch.students.count()})
+        elif action == 'remove':
+            batch.students.remove(*students)
+            return Response({'removed': len(students), 'total': batch.students.count()})
+        return Response({'error': 'Unknown action'}, status=400)

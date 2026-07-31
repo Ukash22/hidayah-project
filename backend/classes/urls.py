@@ -16,6 +16,8 @@ from .views import (
     SessionCompleteView,
     UserSessionListView,
     BackfillSessionsView,
+    BatchView,
+    BatchMemberView,
 )
 
 urlpatterns = [
@@ -35,4 +37,9 @@ urlpatterns = [
     path('session/<int:session_id>/complete/', SessionCompleteView.as_view(), name='session_complete'),
     path('sessions/', UserSessionListView.as_view(), name='user_sessions'),
     path('admin/backfill-sessions/', BackfillSessionsView.as_view(), name='backfill_sessions'),
+
+    # Batch / study-group endpoints
+    path('batches/', BatchView.as_view(), name='batch_list_create'),
+    path('batches/<int:pk>/', BatchView.as_view(), name='batch_detail'),
+    path('batches/<int:pk>/students/<str:action>/', BatchMemberView.as_view(), name='batch_members'),
 ]

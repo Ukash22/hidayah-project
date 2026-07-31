@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import api, { asList, getApiError } from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar as IconCalendar, Clock as IconClock } from 'lucide-react';
+import { Calendar as IconCalendar, Clock as IconClock, Users, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
@@ -22,6 +22,36 @@ export default function TutorSchedule() {
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
+
+    const [batches, setBatches] = useState([]);
+    const [batchLoading, setBatchLoading] = useState(true);
+    const [expandedBatch, setExpandedBatch] = useState(null);
+    const [addingStudentId, setAddingStudentId] = useState('');
+
+    const fetchBatches = useCallback(async () => {
+        try {
+            const res = await api.get('/api/classes/batches/');
+            setBatches(asList(res.data));
+        } catch { /* silent */ } finally { setBatchLoading(false); }
+    }, []);
+
+    const handleBatchAddStudent = async (batchId) => {
+        if (!addingStudentId) return;
+        try {
+            await api.post(`/api/classes/batches/${batchId}/students/add/`, { student_ids: [addingStudentId] });
+            toast.success('Student added to batch');
+            setAddingStudentId('');
+            fetchBatches();
+        } catch (err) { toast.error(getApiError(err, 'Failed to add')); }
+    };
+
+    const handleBatchRemoveStudent = async (batchId, studentId) => {
+        try {
+            await api.post(`/api/classes/batches/${batchId}/students/remove/`, { student_ids: [studentId] });
+            toast.success('Removed from batch');
+            fetchBatches();
+        } catch (err) { toast.error(getApiError(err, 'Failed to remove')); }
+    };
 
     const [showComplaintModal, setShowComplaintModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -59,7 +89,7 @@ export default function TutorSchedule() {
         }
     }, [token, getAuthHeader]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => { fetchData(); fetchBatches(); }, [fetchData, fetchBatches]);
 
     const handleJoinClass = useCallback(async (session) => {
         const sessionId = session.db_id || session.id;
@@ -254,6 +284,85 @@ export default function TutorSchedule() {
                     </div>
                 )}
             </div>
+
+            {/* My Study Batches */}
+            <h2 className="text-2xl font-display text-slate-900 dark:text-slate-100 mb-8 mt-16 flex items-center gap-3">
+                <span className="w-1.5 h-8 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                My Study Batches
+            </h2>
+            {batchLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-16">
+                    {[...Array(2)].map((_, i) => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl animate-pulse" />)}
+                </div>
+            ) : batches.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-card border border-dashed border-slate-200 dark:border-slate-700 p-12 text-center mb-16">
+                    <Users size={36} className="mx-auto text-slate-300 mb-3" />
+                    <p className="text-slate-500 font-semibold">No study batches yet.</p>
+                    <p className="text-[11px] text-slate-400 mt-1">Ask admin to create a batch and assign you as the tutor.</p>
+                </div>
+            ) : (
+                <div className="space-y-4 mb-16">
+                    {batches.map(batch => (
+                        <div key={batch.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg shadow-sm">
+                            <div
+                                className="flex items-center justify-between p-5 cursor-pointer"
+                                onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
+                                        <Users size={18} className="text-emerald-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">{batch.name}</p>
+                                        <p className="text-[11px] text-slate-400 font-semibold">{batch.subject_name || 'All subjects'} · {batch.student_count} student{batch.student_count !== 1 ? 's' : ''}</p>
+                                    </div>
+                                </div>
+                                {expandedBatch === batch.id ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                            </div>
+
+                            {expandedBatch === batch.id && (
+                                <div className="border-t border-slate-100 dark:border-slate-800 p-5 space-y-4">
+                                    {batch.description && <p className="text-[12px] text-slate-500">{batch.description}</p>}
+                                    <div className="space-y-2">
+                                        {batch.students_detail?.map(s => (
+                                            <div key={s.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-2.5">
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">{s.name}</p>
+                                                    <p className="text-[10px] text-slate-400">{s.email}</p>
+                                                </div>
+                                                <button onClick={() => handleBatchRemoveStudent(batch.id, s.id)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2 pt-1">
+                                        <select
+                                            value={addingStudentId}
+                                            onChange={e => setAddingStudentId(e.target.value)}
+                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 outline-none focus:border-emerald-400"
+                                        >
+                                            <option value="">Add a student from my roster…</option>
+                                            {assignedStudents
+                                                .filter(s => !batch.students_detail?.find(bd => bd.id === (s.user_details?.id || s.id)))
+                                                .map(s => (
+                                                    <option key={s.user_details?.id || s.id} value={s.user_details?.id || s.id}>
+                                                        {s.user_details?.first_name} {s.user_details?.last_name}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                        <button onClick={() => handleBatchAddStudent(batch.id)} disabled={!addingStudentId}
+                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all">
+                                            Add
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Complaint Modal */}
             <Suspense fallback={null}>

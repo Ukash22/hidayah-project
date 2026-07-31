@@ -2,7 +2,7 @@
 # pyre-ignore-all-errors
 # pylint: skip-file
 from rest_framework import serializers
-from .models import ScheduledSession, RescheduleRequest, Booking
+from .models import ScheduledSession, RescheduleRequest, Booking, Batch
 
 class BookingSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
@@ -46,8 +46,28 @@ class ScheduledSessionSerializer(serializers.ModelSerializer):
 
 class RescheduleRequestSerializer(serializers.ModelSerializer):
     session_details = ScheduledSessionSerializer(source='session', read_only=True)
-    
+
     class Meta:
         model = RescheduleRequest
         fields = '__all__'
         read_only_fields = ('created_at', 'processed_at')
+
+
+class BatchSerializer(serializers.ModelSerializer):
+    tutor_name = serializers.CharField(source='tutor.get_full_name', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True, default=None)
+    student_count = serializers.IntegerField(source='students.count', read_only=True)
+    students_detail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Batch
+        fields = ['id', 'name', 'description', 'tutor', 'tutor_name',
+                  'subject', 'subject_name', 'students', 'students_detail',
+                  'student_count', 'is_active', 'created_at']
+        read_only_fields = ['created_at']
+
+    def get_students_detail(self, obj):
+        return [
+            {'id': s.id, 'name': s.get_full_name(), 'email': s.email}
+            for s in obj.students.all()
+        ]
