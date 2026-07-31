@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import WithdrawalModal from './WithdrawalModal';
 import { useToast } from '../context/ToastContext';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 
 const TutorWallet = ({ token }) => {
     const toast = useToast();
@@ -9,6 +10,23 @@ const TutorWallet = ({ token }) => {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+    const [period, setPeriod] = useState(6);
+
+    const chartData = useMemo(() => {
+        const earnings = transactions.filter(
+            t => t.transaction_type === 'EARNING' && t.status === 'COMPLETED'
+        );
+        const now = new Date();
+        return Array.from({ length: period }, (_, i) => {
+            const d = new Date(now.getFullYear(), now.getMonth() - (period - 1 - i), 1);
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            const label = d.toLocaleDateString('en', { month: 'short', year: '2-digit' });
+            const total = earnings
+                .filter(t => t.created_at?.startsWith(key))
+                .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+            return { month: label, earnings: total };
+        });
+    }, [transactions, period]);
 
     const fetchData = React.useCallback(async () => {
         try {
@@ -153,6 +171,45 @@ const TutorWallet = ({ token }) => {
                     </div>
                     <p className="text-[11px] font-semibold uppercase text-primary tracking-wide bg-primary/10 inline-block px-3 py-1.5 rounded-lg border border-primary/10 mt-6 self-start">Active Rate</p>
                 </div>
+            </div>
+
+            {/* Earnings Chart */}
+            <div className="bg-white dark:bg-slate-900 rounded-card-lg shadow-sm p-8 border border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                        <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                        Earnings Trend
+                    </h3>
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl gap-1">
+                        {[6, 12].map(p => (
+                            <button key={p} onClick={() => setPeriod(p)}
+                                className={`px-4 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide transition-all ${period === p ? 'bg-white dark:bg-slate-900 shadow text-slate-900 dark:text-slate-100' : 'text-slate-500 hover:text-slate-600'}`}>
+                                {p}M
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={chartData} barSize={28} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                        <YAxis
+                            tickFormatter={v => v >= 1000 ? `₦${(v / 1000).toFixed(0)}k` : v > 0 ? `₦${v}` : ''}
+                            tick={{ fontSize: 10, fill: '#94a3b8' }}
+                            axisLine={false} tickLine={false} width={52}
+                        />
+                        <Tooltip
+                            formatter={v => [`₦${parseFloat(v).toLocaleString()}`, 'Net Earnings']}
+                            contentStyle={{ borderRadius: 12, fontSize: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}
+                            cursor={{ fill: 'rgba(16,185,129,0.06)' }}
+                        />
+                        <Bar dataKey="earnings" fill="#10b981" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                </ResponsiveContainer>
+                {chartData.every(d => d.earnings === 0) && (
+                    <p className="text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-2">
+                        No completed earnings in this period yet.
+                    </p>
+                )}
             </div>
 
             {/* Transaction History */}
