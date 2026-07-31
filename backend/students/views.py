@@ -22,14 +22,27 @@ def _optimized_student_qs():
         .prefetch_related(*_STUDENT_PREFETCH)
     )
 
-class StudentProfileDetailView(generics.RetrieveAPIView):
+_STUDENT_SELF_EDITABLE = {'level', 'target_exam_type', 'target_exam_year'}
+
+class StudentProfileDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch']
 
     def get_object(self):
         # get_or_create ensures the profile exists, then re-fetch with full optimization
         StudentProfile.objects.get_or_create(user=self.request.user)
         return _optimized_student_qs().get(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        allowed = {k: v for k, v in request.data.items() if k in _STUDENT_SELF_EDITABLE}
+        if not allowed:
+            return Response({'error': 'No editable fields provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=allowed, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 class ParentPortalView(generics.ListAPIView):
     """View for parents to see their linked students"""

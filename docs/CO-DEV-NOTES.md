@@ -208,11 +208,13 @@ See `docs/ai-hub-worker-plan.md` for the full plan. Key points for co-devs:
 
 ---
 
-### 5h. Student exam enrollment — known gap
+### 5h. Student exam enrollment — ✅ fixed
 
-`StudentProfile.level` and `target_exam_type` are set at registration and cannot be changed by the student after the fact. There is no self-service update UI. JAMB CBT auto-configures from `target_exam_type`, so a student who registered incorrectly (e.g., SECONDARY instead of JAMB) gets the wrong exam type.
+`StudentProfile.level` and `target_exam_type` are now editable by the student via Account Settings.
 
-**Fix location:** Account Settings page — expose `level` and `target_exam_type` as editable fields. No backend change needed (the fields exist and are updateable via the profile endpoint). This is not yet implemented.
+- `StudentProfileDetailView` upgraded to `RetrieveUpdateAPIView` with `http_method_names = ['get', 'patch']`. PATCH is whitelisted to `level`, `target_exam_type`, `target_exam_year` only — no other profile fields can be changed by the student via this endpoint.
+- `AccountSettings.jsx` gained an "Exam Enrollment" card (Level + Target Exam + Target Year) that renders only for `role === 'STUDENT'`. Fetches current values on mount, PATCHes on save.
+- No migration needed — both fields already existed on the model.
 
 ---
 
