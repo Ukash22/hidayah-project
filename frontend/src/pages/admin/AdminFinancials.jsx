@@ -51,8 +51,8 @@ export default function AdminFinancials() {
         doc.text(`${type === 'payment' ? 'Payment' : 'Transaction'} Receipt`, 20, 20);
         doc.setFontSize(10);
         doc.text(`Student: ${p.student || p.user_name || 'N/A'}`, 20, 35);
-        doc.text(`Amount: ₦${parseFloat(p.amount || 0).toLocaleString()}`, 20, 45);
-        doc.text(`Date: ${new Date(p.date || p.date).toLocaleString()}`, 20, 55);
+        doc.text(`Amount: NGN ${parseFloat(p.amount || 0).toLocaleString()}`, 20, 45);
+        doc.text(`Date: ${new Date(p.date || p.created_at).toLocaleString()}`, 20, 55);
         doc.text(`Status: ${p.status || 'N/A'}`, 20, 65);
         if (p.ref || p.reference) doc.text(`Ref: ${p.ref || p.reference}`, 20, 75);
         doc.save(`receipt-${p.id}.pdf`);
