@@ -46,5 +46,6 @@ urlpatterns = [
     path('admin/withdrawal/approve/<int:withdrawal_id>/', AdminWithdrawalApprovalView.as_view(), name='admin_withdrawal_approve'),
     path('admin/withdrawals/pending/', AdminWithdrawalApprovalView.as_view(), name='admin_pending_withdrawals'),
     path('admin/analytics/', AdminPaymentAnalyticsView.as_view(), name='admin_payment_analytics'),
+    path('admin/stats/', AdminFinancialStatsView.as_view(), name='admin_stats'),
     path('admin/settings/', AdminPlatformSettingsView.as_view(), name='admin_platform_settings'),
 ]

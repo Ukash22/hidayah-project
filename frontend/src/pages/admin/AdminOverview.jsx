@@ -45,7 +45,7 @@ export default function AdminOverview() {
         setLoading(true);
         setError(null);
         try {
-            const [studRes, tutRes, appRes, bookRes, withRes, compRes, clsRes, settRes, statsRes] = await Promise.all([
+            const results = await Promise.allSettled([
                 api.get('/api/students/admin/all/'),
                 api.get('/api/tutors/admin/list/?status=APPROVED'),
                 api.get('/api/admin/applications/'),
@@ -56,15 +56,19 @@ export default function AdminOverview() {
                 api.get('/api/payments/admin/settings/'),
                 api.get('/api/payments/admin/stats/'),
             ]);
-            setAllStudents(asList(studRes.data));
-            setTutors(asList(tutRes.data));
-            setApplications(asList(appRes.data));
-            setPendingBookings(asList(bookRes.data));
-            setWithdrawalRequests(asList(withRes.data));
-            setAllComplaints(asList(compRes.data));
-            setAllClasses(asList(clsRes.data));
-            setGlobalSettings(settRes.data);
-            setStats(statsRes.data);
+            const ok = (i) => results[i].status === 'fulfilled' ? results[i].value : null;
+            const [studRes, tutRes, appRes, bookRes, withRes, compRes, clsRes, settRes, statsRes] = results.map(ok);
+            if (studRes) setAllStudents(asList(studRes.data));
+            if (tutRes) setTutors(asList(tutRes.data));
+            if (appRes) setApplications(asList(appRes.data));
+            if (bookRes) setPendingBookings(asList(bookRes.data));
+            if (withRes) setWithdrawalRequests(asList(withRes.data));
+            if (compRes) setAllComplaints(asList(compRes.data));
+            if (clsRes) setAllClasses(asList(clsRes.data));
+            if (settRes) setGlobalSettings(settRes.data);
+            if (statsRes) setStats(statsRes.data);
+            const criticalFailed = !studRes && !tutRes && !appRes;
+            if (criticalFailed) setError('Failed to fetch dashboard data.');
         } catch (err) {
             if (err.response?.status === 401) setError('Authentication Failed: Please login again.');
             else setError('Failed to fetch dashboard data.');
