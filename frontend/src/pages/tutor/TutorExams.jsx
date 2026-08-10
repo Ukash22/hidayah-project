@@ -57,7 +57,7 @@ export default function TutorExams() {
             if (examFormData.id) {
                 await api.patch(`/api/exams/list/${examFormData.id}/`, examFormData);
             } else {
-                const res = await api.post(`/api/exams/`, {
+                const res = await api.post(`/api/exams/list/`, {
                     ...examFormData,
                     assigned_students: selectedStudentsForBulk
                 });

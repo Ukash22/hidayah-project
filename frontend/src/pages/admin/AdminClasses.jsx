@@ -29,15 +29,15 @@ function BatchesTab() {
 
     useEffect(() => {
         fetchBatches();
-        Promise.all([
+        Promise.allSettled([
             api.get('/api/tutors/admin/list/'),
             api.get('/api/programs/subjects/'),
-            api.get('/api/students/admin/list/'),
+            api.get('/api/students/admin/all/'),
         ]).then(([t, s, st]) => {
-            setTutors(asList(t.data));
-            setSubjects(asList(s.data));
-            setAllStudents(asList(st.data));
-        }).catch(() => {});
+            if (t.status === 'fulfilled') setTutors(asList(t.value.data));
+            if (s.status === 'fulfilled') setSubjects(asList(s.value.data));
+            if (st.status === 'fulfilled') setAllStudents(asList(st.value.data));
+        });
     }, [fetchBatches]);
 
     const handleCreate = async () => {

@@ -51,8 +51,11 @@ export default function AdminAdmissions() {
     const handleBulkApprove = async () => {
         if (!await confirm(`Approve ${selectedIds.length} selected applications?`, { confirmLabel: 'Approve All' })) return;
         try {
-            await Promise.all(selectedIds.map(id => api.post(`/api/auth/approve-student/${id}/`, {})));
-            toast.success('Selected students approved!');
+            const results = await Promise.allSettled(selectedIds.map(id => api.post(`/api/auth/approve-student/${id}/`, {})));
+            const failed = results.filter(r => r.status === 'rejected').length;
+            const passed = results.length - failed;
+            if (passed > 0) toast.success(`${passed} student${passed > 1 ? 's' : ''} approved!`);
+            if (failed > 0) toast.error(`${failed} approval${failed > 1 ? 's' : ''} failed.`);
             setSelectedIds([]);
             fetchData();
         } catch (err) {

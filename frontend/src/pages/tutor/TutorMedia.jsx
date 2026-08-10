@@ -27,9 +27,7 @@ export default function TutorMedia() {
         setUploading(true);
         setUploadMsg('');
         try {
-            const profileRes = await api.get(`/api/tutors/`);
-            const myProfile = profileRes.data.find(t => t.user?.id === user?.id);
-            if (!myProfile) throw new Error('Tutor profile not found');
+            if (!tutorProfile) throw new Error('Tutor profile not loaded');
 
             setUploading('Syncing with Cloudinary...');
             const uploadMap = { intro_video: 'tutor_videos', short_recitation: 'tutor_recitations' };
@@ -40,7 +38,7 @@ export default function TutorMedia() {
             if (uploadedUrls.short_recitation) payload.short_recitation_url = uploadedUrls.short_recitation;
 
             await api.patch(
-                `/api/tutors/${myProfile.id}/update_profile/`,
+                `/api/tutors/${tutorProfile.id}/update_profile/`,
                 payload,
                 { headers: getAuthHeader() }
             );

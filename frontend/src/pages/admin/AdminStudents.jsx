@@ -95,7 +95,12 @@ export default function AdminStudents() {
         if (!walletAction.amount || !selectedStudent) return;
         setSaving(true);
         try {
-            await api.post(`/api/payments/admin/wallet-action/${selectedStudent.user?.id || selectedStudent.id}/`, walletAction);
+            await api.post('/api/payments/admin/wallet-action/', {
+                student_id: selectedStudent.id,
+                amount: walletAction.amount,
+                action_type: walletAction.type,
+                description: walletAction.description,
+            });
             toast.success('Wallet updated!');
             fetchData();
         } catch (err) {
