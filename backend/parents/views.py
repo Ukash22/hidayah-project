@@ -3,7 +3,7 @@
 # pylint: skip-file
 import logging
 from decimal import Decimal, InvalidOperation
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.utils import timezone
@@ -15,8 +15,16 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
 
+
+class ParentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ParentProfile
+        fields = ('id', 'phone', 'address')
+
+
 class ParentViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ParentProfileSerializer
 
     def get_queryset(self):
         return ParentProfile.objects.filter(user=self.request.user)

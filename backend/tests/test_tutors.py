@@ -211,9 +211,10 @@ class TutorProfileOwnershipTests(TestCase):
 
     def test_tutor_cannot_update_another_tutors_profile(self):
         self.client.force_authenticate(self.tutor_a.user)
-        res = self.client.patch(
-            f'/api/tutors/{self.tutor_b.id}/update_profile/', {'hourly_rate': 1}, format='json',
-        )
+        with self.assertLogs('django.request', level='WARNING'):
+            res = self.client.patch(
+                f'/api/tutors/{self.tutor_b.id}/update_profile/', {'hourly_rate': 1}, format='json',
+            )
         self.assertEqual(res.status_code, 403)
         self.tutor_b.refresh_from_db()
         self.assertEqual(float(self.tutor_b.hourly_rate), 2000.0)
@@ -228,9 +229,10 @@ class TutorProfileOwnershipTests(TestCase):
         self.assertEqual(self.tutor_a.bio, 'Updated bio')
 
     def test_anonymous_cannot_update_profile(self):
-        res = self.client.patch(
-            f'/api/tutors/{self.tutor_a.id}/update_profile/', {'bio': 'x'}, format='json',
-        )
+        with self.assertLogs('django.request', level='WARNING'):
+            res = self.client.patch(
+                f'/api/tutors/{self.tutor_a.id}/update_profile/', {'bio': 'x'}, format='json',
+            )
         self.assertIn(res.status_code, (401, 403))
 
 

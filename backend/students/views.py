@@ -48,7 +48,10 @@ class ParentPortalView(generics.ListAPIView):
     """View for parents to see their linked students"""
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
+    def get_queryset(self):
+        return _optimized_student_qs().filter(parent=self.request.user)
+
 
 class AdminStudentViewSet(generics.ListAPIView):
     """Admin view to list all APPROVED students (Active)"""

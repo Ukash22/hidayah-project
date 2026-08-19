@@ -245,13 +245,20 @@ class TutorRegisterSerializer(serializers.Serializer):
         data = self.initial_data
         files = self.context.get('files') or {}
 
+        def _get(key_snake, key_camel=None, default=None):
+            """Accept either camelCase (frontend) or snake_case (fallback)."""
+            v = data.get(key_snake)
+            if v is None and key_camel:
+                v = data.get(key_camel)
+            return v if v is not None else default
+
         with transaction.atomic():
             user = User.objects.create_user(
                 username=validated_data['username'],
                 email=validated_data['email'],
                 password=validated_data['password'],
-                first_name=data.get('first_name', ''),
-                last_name=data.get('last_name', ''),
+                first_name=_get('first_name', 'firstName', ''),
+                last_name=_get('last_name', 'lastName', ''),
                 role='TUTOR',
                 gender=data.get('gender'),
                 country=data.get('country'),
@@ -260,19 +267,21 @@ class TutorRegisterSerializer(serializers.Serializer):
             slots = data.get('availabilitySlots', []) or []
             derived_days = ", ".join(sorted({s.get('day', '').strip() for s in slots if s.get('day')}))
 
+            raw_has_online = _get('has_online_exp', 'hasOnlineExp')
             profile = TutorProfile.objects.create(
                 user=user,
                 age=data.get('age'),
                 address=data.get('address'),
-                experience_years=data.get('experience_years', 0),
+                phone_number=_get('phone_number', 'phone'),
+                experience_years=_get('experience_years', 'experienceYears', 0),
                 subjects_to_teach=data.get('subjects_to_teach') or 'Not specified',
                 languages=data.get('languages', 'English'),
-                has_online_exp=data.get('has_online_exp') in ('true', True),
-                device_type=data.get('device_type', 'COMPUTER'),
-                network_type=data.get('network_type'),
+                has_online_exp=raw_has_online in ('true', True),
+                device_type=_get('device_type', 'deviceType', 'COMPUTER'),
+                network_type=_get('network_type', 'networkType'),
                 availability_days=data.get('availability_days') or derived_days or 'Flexible',
                 availability_hours=data.get('availability_hours') or 'Contact for details',
-                hourly_rate=data.get('hourly_rate', 1500.00),
+                hourly_rate=_get('hourly_rate', 'hourlyRate', 1500.00),
                 # Direct-to-cloud URLs take precedence over multipart files
                 image=data.get('image_url') or files.get('image'),
                 intro_video=data.get('intro_video_url') or files.get('intro_video'),

@@ -339,7 +339,7 @@ def send_reschedule_notification(recipient_user, request_obj):
     
     DETAILS:
     - Original Time: {request_obj.session.scheduled_at}
-    - Requested New Time: {request_obj.new_time}
+    - Requested New Date: {request_obj.requested_date} at {request_obj.requested_time}
     - Reason: {request_obj.reason}
     - Status: {request_obj.status}
     

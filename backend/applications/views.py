@@ -64,7 +64,8 @@ class ApproveApplicationView(views.APIView):
             generate_zoom = request.data.get('generate_zoom', True)
             manual_link = request.data.get('meeting_link', '')
             zoom_data = None
-            
+            meeting_data = None
+
             if generate_zoom:
                 topic = f"Trial Class: {application.first_name} with {tutor_name}"
                 description = f"Course: {application.course_interested}. Student: {application.first_name} {application.last_name or ''}"

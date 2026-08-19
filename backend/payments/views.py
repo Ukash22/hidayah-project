@@ -632,7 +632,7 @@ class AdminPaymentAnalyticsView(APIView):
     """Admin: Comprehensive payment analytics — totals, status breakdown, and time-series charts."""
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def get(self, request, analytics_type=None):
         if not request.user.is_staff:
             return Response({"error": "Unauthorized"}, status=403)
 

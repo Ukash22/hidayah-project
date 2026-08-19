@@ -229,6 +229,7 @@ class ApproveStudentView(APIView):
 
     def post(self, request, pk):
         try:
+            from django.conf import settings as _s
             from students.models import StudentProfile
             from payments.models import PricingTier
             from decimal import Decimal
@@ -294,7 +295,6 @@ class ApproveStudentView(APIView):
             
             # Fallback if no enrollments yet (legacy mode)
             if not enrollment_data:
-                from django.conf import settings as _s
                 hourly_rate = _s.DEFAULT_HOURLY_RATE
                 if profile.assigned_tutor and hasattr(profile.assigned_tutor, 'tutor_profile'):
                     hourly_rate = profile.assigned_tutor.tutor_profile.hourly_rate
@@ -316,7 +316,7 @@ class ApproveStudentView(APIView):
             profile.total_amount = total_first_payment
             profile.save()
 
-            payment_url = f"{settings.FRONTEND_URL}/admission-portal"
+            payment_url = f"{_s.FRONTEND_URL}/admission-portal"
 
             # Dispatch PDF generation + email asynchronously (Celery or thread pool)
             run_async(
@@ -358,7 +358,7 @@ class RequestPasswordResetView(APIView):
             token = PasswordResetTokenGenerator().make_token(user)
             
             # Construct Link (Point to Frontend)
-            reset_link = f"{settings.FRONTEND_URL}/reset-password/{uidb64}/{token}"
+            reset_link = f"{dj_settings.FRONTEND_URL}/reset-password/{uidb64}/{token}"
             
             # Send Email
             from applications.email_service import send_password_reset_email
