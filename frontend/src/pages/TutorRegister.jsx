@@ -1,11 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api, { getApiError } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
     CheckCircle2 as IconCheckCircle2, Sparkles as IconSparkles, Briefcase as IconBriefcase, ArrowRight as IconArrowRight, X as IconX,
-    BookOpen as IconBookOpen, GraduationCap as IconGraduationCap
 } from 'lucide-react';
 
 // Core Components & Services
