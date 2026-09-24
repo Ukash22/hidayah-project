@@ -146,7 +146,7 @@ class TutorViewSet(viewsets.ModelViewSet):
     def admin_list(self, request):
         """Optimized admin list view for recruiter oversight."""
         from payments.models import Wallet
-        queryset = TutorProfile.objects.all().select_related('user').prefetch_related('subjects')
+        queryset = TutorProfile.objects.all().select_related('user').prefetch_related('subjects', 'availabilities')
         status = request.query_params.get('status')
         if status:
             queryset = queryset.filter(status=status)
@@ -167,20 +167,62 @@ class TutorViewSet(viewsets.ModelViewSet):
 
         data = []
         for t in tutor_list:
+            u = t.user
+            avail_slots = [
+                {
+                    'id': a.id,
+                    'day': a.day,
+                    'start_time': str(a.start_time),
+                    'end_time': str(a.end_time)
+                }
+                for a in t.availabilities.all()
+            ]
             data.append({
                 'id': t.id,
-                'user_id': t.user.id,
-                'name': t.user.get_full_name(),
-                'email': t.user.email,
-                'phone': t.phone_number,
+                'user_id': u.id,
+                'username': u.username,
+                'name': u.get_full_name() or u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'email': u.email,
+                'phone': t.phone_number or getattr(u, 'phone', '') or '',
+                'personal_gmail': t.personal_gmail or '',
+                'gender': getattr(u, 'gender', None),
+                'country': getattr(u, 'country', None),
+                'state': t.state or '',
+                'city': t.city or '',
+                'address': t.address or '',
+                'age': t.age,
+                'qualification': t.qualification or '',
                 'status': t.status,
-                'subjects': t.subjects_to_teach,
+                'interview_at': t.interview_at,
+                'interview_link': t.interview_link or '',
+                'rejection_reason': t.rejection_reason or '',
+                'subjects': t.subjects_to_teach or '',
+                'languages': t.languages or 'English',
                 'experience': t.experience_years,
+                'has_online_exp': t.has_online_exp,
+                'device': t.device_type,
+                'device_type': t.device_type,
+                'network': t.network_type or '',
+                'network_type': t.network_type or '',
+                'mode': t.mode,
                 'hourly_rate': str(t.hourly_rate),
+                'rate_per_month': str(t.rate_per_month),
+                'availability_days': t.availability_days or '',
+                'availability_hours': t.availability_hours or '',
+                'availabilities': avail_slots,
+                'bio': t.bio or '',
                 'created_at': t.created_at,
                 'image_url': safe_url(t.image),
                 'cv_url': safe_url(t.cv_resume),
-                'wallet_balance': str(wallets.get(t.user_id, 0)),
+                'credentials_url': safe_url(t.credentials),
+                'recitation_url': safe_url(t.short_recitation),
+                'video_url': safe_url(t.intro_video) or t.intro_video_url or '',
+                'appointment_letter_url': safe_url(t.appointment_letter),
+                'live_class_link': t.live_class_link or '',
+                'trial_class_link': t.trial_class_link or '',
+                'wallet_balance': str(wallets.get(u.id, 0)),
                 'commission_percentage': t.commission_percentage,
             })
         return Response(data)

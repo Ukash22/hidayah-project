@@ -94,6 +94,9 @@ else:
     SECURE_HSTS_PRELOAD = True
     SECURE_SSL_REDIRECT = True
     X_FRAME_OPTIONS = 'DENY'
+ 
+# Frontend URL for payment redirects and email links
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173' if DEBUG else 'https://hidayah-frontend.onrender.com')
 
 # Application definition
 
@@ -261,10 +264,20 @@ STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] # Updated for static folder
 
-# WhiteNoise storage to compress and cache static files
+# Storage configuration
+if os.getenv('CLOUDINARY_CLOUD_NAME'):
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    }
+    _default_storage = "cloudinary_storage.storage.MediaCloudinaryStorage"
+else:
+    _default_storage = "django.core.files.storage.FileSystemStorage"
+
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        "BACKEND": _default_storage,
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.StaticFilesStorage",
@@ -279,8 +292,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS configuration (Origins defined at the top of the file)
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"

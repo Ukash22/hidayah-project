@@ -39,10 +39,10 @@ const PaymentCallback = () => {
                 setPaymentData(response.data);
                 setMessage('Payment verified successfully!');
 
-                // Redirect to student dashboard after 8 seconds
+                const destination = user?.role === 'PARENT' ? '/parent' : '/student';
                 setTimeout(() => {
-                    navigate('/student');
-                }, 8000);
+                    navigate(destination);
+                }, 5000);
             } else {
                 setStatus('failed');
                 setMessage('Payment verification failed. Please contact support.');
@@ -166,7 +166,7 @@ const PaymentCallback = () => {
                                         📄 Download Receipt
                                     </button>
                                     <button
-                                        onClick={() => navigate('/student')}
+                                        onClick={() => navigate(user?.role === 'PARENT' ? '/parent' : '/student')}
                                         className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                                     >
                                         Go to Dashboard
@@ -194,7 +194,7 @@ const PaymentCallback = () => {
                                         🔄 Retry Verification
                                     </button>
                                     <button
-                                        onClick={() => navigate('/student')}
+                                        onClick={() => navigate(user?.role === 'PARENT' ? '/parent' : '/student')}
                                         className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                                     >
                                         Go to Dashboard

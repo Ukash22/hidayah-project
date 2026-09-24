@@ -37,6 +37,16 @@ class AdminUserManagementSerializer(serializers.ModelSerializer):
         if password:
             user.set_password(password)
             user.save()
+        if user.role == 'STUDENT':
+            from students.models import StudentProfile
+            StudentProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'approval_status': 'APPROVED',
+                    'payment_status': 'UNPAID',
+                    'enrolled_course': 'General Studies',
+                }
+            )
         return user
 
     def update(self, instance, validated_data):
@@ -232,8 +242,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             import json
             days_list = [d.strip().upper() for d in str(preferred_days).split(',') if d.strip()]
             times_list = [t.strip() for t in str(preferred_time_exact).split(',') if t.strip()]
+            default_time = times_list[0] if times_list else (preferred_time or "10:00 AM")
             enrollment_schedule = []
-            for d, t in zip(days_list, times_list):
+            for i, d in enumerate(days_list):
+                t = times_list[i] if i < len(times_list) else default_time
                 enrollment_schedule.append({"day": d, "time": t})
             
             # Calculate first payment (Tuition ONLY, No One-Time Fees)
@@ -372,6 +384,13 @@ class RegisterSerializer(serializers.ModelSerializer):
                 send_admission_letter_email(user, profile)
             except Exception as doc_err:
                 logger.warning("Non-critical error generating instant admission docs: %s", doc_err)
+
+            if final_tutor:
+                try:
+                    from classes.scheduler import ensure_student_sessions
+                    ensure_student_sessions(user)
+                except Exception as sched_err:
+                    logger.warning("Non-critical error generating initial sessions on registration: %s", sched_err)
                 
             return user
         except serializers.ValidationError:

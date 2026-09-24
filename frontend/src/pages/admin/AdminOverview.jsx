@@ -56,7 +56,7 @@ export default function AdminOverview() {
                 api.get('/api/payments/admin/settings/'),
                 api.get('/api/payments/admin/stats/'),
             ]);
-            const ok = (i) => results[i].status === 'fulfilled' ? results[i].value : null;
+            const ok = (r) => r.status === 'fulfilled' ? r.value : null;
             const [studRes, tutRes, appRes, bookRes, withRes, compRes, clsRes, settRes, statsRes] = results.map(ok);
             if (studRes) setAllStudents(asList(studRes.data));
             if (tutRes) setTutors(asList(tutRes.data));
@@ -192,8 +192,8 @@ export default function AdminOverview() {
                 {/* Demographics Pie */}
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Platform Demographics</h3>
-                    <div className="h-48 w-full">
-                        <ResponsiveContainer>
+                    <div className="h-48 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                             <PieChart>
                                 <Pie
                                     data={[
@@ -218,8 +218,8 @@ export default function AdminOverview() {
                 {/* Global Reach Chart */}
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
-                    <div className="h-48 w-full">
-                        <ResponsiveContainer>
+                    <div className="h-48 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                             <BarChart data={countryData} layout="vertical">
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} width={80} />
@@ -233,8 +233,8 @@ export default function AdminOverview() {
                 {/* System Activity Pipeline */}
                 <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
-                    <div className="h-48 w-full">
-                        <ResponsiveContainer>
+                    <div className="h-48 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
                             <BarChart data={[
                                 { name: 'Admissions', count: applications.length },
                                 { name: 'Bookings', count: pendingBookings.length },

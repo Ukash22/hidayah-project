@@ -5,7 +5,34 @@ from rest_framework import serializers
 from .models import StudentProfile
 
 from accounts.serializers import UserSerializer
-from tutors.serializers import PublicTutorSerializer
+from tutors.serializers import PublicTutorSerializer, resolve_media_url
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class FlexibleTutorRelatedField(serializers.PrimaryKeyRelatedField):
+    """PrimaryKeyRelatedField that gracefully accepts None/empty string and
+    can resolve either a User ID or a TutorProfile ID."""
+
+    def get_queryset(self):
+        return User.objects.filter(role='TUTOR')
+
+    def to_internal_value(self, data):
+        if data in ('', 0, '0', None, 'null'):
+            return None
+        try:
+            return super().to_internal_value(data)
+        except serializers.ValidationError:
+            from tutors.models import TutorProfile
+            try:
+                tp = TutorProfile.objects.filter(id=int(data)).select_related('user').first()
+                if tp and tp.user and tp.user.role == 'TUTOR':
+                    return tp.user
+            except (ValueError, TypeError):
+                pass
+            raise
+
 
 class EnrollmentSerializer(serializers.ModelSerializer):
     subject_name = serializers.CharField(source='subject.name', read_only=True)
@@ -69,6 +96,16 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     assigned_tutor_details = serializers.SerializerMethodField()
     enrollments = EnrollmentSerializer(many=True, read_only=True)
     wallet_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    assigned_tutor = FlexibleTutorRelatedField(required=False, allow_null=True)
+    preferred_tutor = FlexibleTutorRelatedField(required=False, allow_null=True)
+    level = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    meeting_link = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    whiteboard_link = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    class_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    days_per_week = serializers.IntegerField(required=False, default=3)
+    hours_per_week = serializers.DecimalField(max_digits=5, decimal_places=2, required=False, default=1.0)
+    enrolled_course = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
     class Meta:
         model = StudentProfile
@@ -102,7 +139,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
                 'id': tp.id,
                 'user_id': obj.assigned_tutor.id,
                 'full_name': f"{obj.assigned_tutor.first_name} {obj.assigned_tutor.last_name}",
-                'image': tp.image.url if tp.image else None,
+                'image': resolve_media_url(tp.image),
                 'bio': tp.bio,
                 'rating': 5.0, # Placeholder
                 'subjects': tp.subjects_to_teach or tp.subjects or "",

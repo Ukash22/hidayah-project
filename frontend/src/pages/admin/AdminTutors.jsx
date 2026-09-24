@@ -4,12 +4,14 @@ import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { getLocalTime, downloadCSV } from './adminHelpers';
 import { SkeletonTable } from '../../components/ui';
+import TutorProfileModal from './TutorProfileModal';
 
 export default function AdminTutors() {
     const toast = useToast();
     const confirm = useConfirm();
     const [tutors, setTutors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [selectedTutor, setSelectedTutor] = useState(null);
     const [showUserModal, setShowUserModal] = useState(false);
     const [userForm, setUserForm] = useState({
         username: '', email: '', password: '', role: 'TUTOR',
@@ -154,8 +156,8 @@ export default function AdminTutors() {
                                     <td className="py-3 px-4">
                                         <div className="flex flex-col gap-1 items-center">
                                             <button
-                                                onClick={() => toast.info(`${tutor.name} | ${tutor.email} | ${tutor.subjects} | ${tutor.experience} yrs exp`)}
-                                                className="px-2 py-1 w-full bg-primary text-white rounded text-[11px] font-semibold uppercase shadow-sm hover:bg-primary/80 transition-colors"
+                                                onClick={() => setSelectedTutor(tutor)}
+                                                className="px-2 py-1 w-full bg-primary text-white rounded text-[11px] font-semibold uppercase shadow-sm hover:bg-primary/80 transition-colors flex items-center justify-center gap-1"
                                             >
                                                 📋 View Profile
                                             </button>
@@ -210,6 +212,13 @@ export default function AdminTutors() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {selectedTutor && (
+                <TutorProfileModal
+                    tutor={selectedTutor}
+                    onClose={() => setSelectedTutor(null)}
+                />
             )}
         </>
     );

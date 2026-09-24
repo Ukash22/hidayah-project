@@ -218,6 +218,20 @@ See `docs/ai-hub-worker-plan.md` for the full plan. Key points for co-devs:
 
 ---
 
+### 5i. Payment Redirection Flow & FRONTEND_URL — ✅ fixed
+
+Ensured payment workflows properly redirect back to the student dashboard (`/student/overview`) in both local dev and production.
+
+- **Missing `FRONTEND_URL`**:
+  - `backend/payments/paystack_service.py` requires `settings.FRONTEND_URL` for the callback URL. In dev, it previously fell back to the live Render domain, navigating developers to production instead of `localhost:5173`.
+  - Added `FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173' if DEBUG else 'https://hidayah-frontend.onrender.com')` in `backend/core/settings.py` and `FRONTEND_URL=http://localhost:5173` in `backend/.env`.
+- **Role-Aware Dashboard Redirection**:
+  - `PaymentCallback.jsx` and `PaymentPage.jsx` now route to `user?.role === 'PARENT' ? '/parent' : '/student'`.
+  - In `App.jsx`, navigating to `/student` lands on `StudentShell` and auto-redirects via `<Route index>` to `/student/overview`.
+- Full details documented in `docs/PAYMENT_FLOW_AND_REDIRECT_NOTE.md`.
+
+---
+
 ## 4. Local dev quickstart deltas
 
 ```bash

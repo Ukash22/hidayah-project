@@ -26,6 +26,11 @@ export default function NotificationsPage() {
         api.post(`/api/auth/notifications/${n.id}/read/`).catch(() => { /* optimistic */ });
     };
 
+    const markAllRead = () => {
+        setItems(prev => prev.map(x => ({ ...x, is_read: true })));
+        api.post('/api/auth/notifications/read-all/').catch(() => { /* optimistic */ });
+    };
+
     // Resolve links like "/admin/classes" relative to the CURRENT portal
     const portal = `/${location.pathname.split('/')[1]}`;
     const resolveLink = (link) => {
@@ -44,7 +49,17 @@ export default function NotificationsPage() {
     return (
         <>
             <title>Notifications — Hidayah</title>
-            <PageHeader title="Notifications" description="Your latest platform updates." />
+            <div className="flex items-center justify-between mb-2">
+                <PageHeader title="Notifications" description="Your latest platform updates." />
+                {items.some(n => !n.is_read) && (
+                    <button
+                        onClick={markAllRead}
+                        className="text-xs font-semibold text-primary hover:text-secondary uppercase tracking-wide transition-colors shrink-0"
+                    >
+                        Mark all read
+                    </button>
+                )}
+            </div>
 
             <div className="space-y-3 max-w-3xl">
                 {items.length === 0 ? (

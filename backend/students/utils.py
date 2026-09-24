@@ -44,4 +44,7 @@ def update_student_admission_letter(profile):
     
     profile.admission_letter = letter_path
     profile.save()
-    return profile.admission_letter.url if profile.admission_letter else None
+    try:
+        return profile.admission_letter.url if profile.admission_letter else None
+    except Exception:
+        return None

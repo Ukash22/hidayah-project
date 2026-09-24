@@ -1,0 +1,5 @@
+# Set default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Ensure shell scripts always use LF (Render runs on Linux)
+*.sh text eol=lf

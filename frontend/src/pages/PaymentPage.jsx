@@ -111,7 +111,7 @@ const PaymentPage = () => {
 
                 const response = await api.post(walletEndpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
                 if (response.data.success) {
-                    navigate('/student', { state: { message: 'Payment processed successfully using your wallet balance!' } });
+                    navigate(user?.role === 'PARENT' ? '/parent' : '/student', { state: { message: 'Payment processed successfully using your wallet balance!' } });
                     return;
                 }
             }
