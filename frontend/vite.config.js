@@ -31,13 +31,14 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vendor-icons': ['lucide-react'],
+            'vendor-react':     ['react', 'react-dom', 'react-router-dom'],
+            'vendor-icons':     ['lucide-react'],
             'vendor-animation': ['framer-motion'],
-            'vendor-utils': ['axios'],
+            'vendor-utils':     ['axios'],
           }
         }
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1500,
     }
   }
 })
