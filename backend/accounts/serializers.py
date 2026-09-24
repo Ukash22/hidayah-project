@@ -277,27 +277,29 @@ class RegisterSerializer(serializers.ModelSerializer):
                 except (ValueError, TypeError):
                     pass  # non-numeric tutor id — fall through to admin assignment
 
-            profile = StudentProfile.objects.create(
+            profile, _ = StudentProfile.objects.update_or_create(
                 user=user,
-                parent=parent_user,
-                relationship=relationship,
-                address=address,
-                enrolled_course=enrolled_course_str,
-                days_per_week=days_per_week,
-                hours_per_week=hours_per_week,
-                preferred_days=preferred_days,
-                preferred_time=preferred_time,
-                preferred_time_exact=preferred_time_exact,
-                class_type=class_type,
-                level=level,
-                target_exam_type=target_exam_type,
-                target_exam_year=target_exam_year,
-                preferred_tutor=final_tutor,
-                assigned_tutor=final_tutor,
-                approval_status='APPROVED', # Instant Admission
-                payment_reference=f"HEMI-{uuid.uuid4().hex[:8].upper()}",
-                total_amount=Decimal('0.00'), # No Admission Fee
-                payment_status='PAID' # Instant Access
+                defaults={
+                    'parent': parent_user,
+                    'relationship': relationship,
+                    'address': address,
+                    'enrolled_course': enrolled_course_str,
+                    'days_per_week': days_per_week,
+                    'hours_per_week': hours_per_week,
+                    'preferred_days': preferred_days,
+                    'preferred_time': preferred_time,
+                    'preferred_time_exact': preferred_time_exact,
+                    'class_type': class_type,
+                    'level': level,
+                    'target_exam_type': target_exam_type,
+                    'target_exam_year': target_exam_year,
+                    'preferred_tutor': final_tutor,
+                    'assigned_tutor': final_tutor,
+                    'approval_status': 'APPROVED', # Instant Admission
+                    'payment_reference': f"HEMI-{uuid.uuid4().hex[:8].upper()}",
+                    'total_amount': Decimal('0.00'), # No Admission Fee
+                    'payment_status': 'PAID' # Instant Access
+                }
             )
 
             # Create formal Enrollment objects for each subject (Instant Enrollment)
