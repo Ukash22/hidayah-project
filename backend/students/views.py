@@ -54,12 +54,33 @@ class ParentPortalView(generics.ListAPIView):
 
 
 class AdminStudentViewSet(generics.ListAPIView):
-    """Admin view to list all APPROVED students (Active)"""
+    """Admin view to list all students"""
     serializer_class = StudentProfileSerializer
     permission_classes = [permissions.IsAdminUser]
 
     def get_queryset(self):
-        return _optimized_student_qs().filter(payment_status='PAID')
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        # Backfill profiles for any student users missing a profile
+        missing = User.objects.filter(role='STUDENT', student_profile__isnull=True)
+        for u in missing:
+            StudentProfile.objects.get_or_create(
+                user=u,
+                defaults={
+                    'approval_status': 'APPROVED',
+                    'payment_status': 'UNPAID',
+                    'enrolled_course': 'General Studies',
+                }
+            )
+
+        qs = _optimized_student_qs()
+        status_param = self.request.query_params.get('status')
+        payment_param = self.request.query_params.get('payment_status')
+        if payment_param and payment_param.upper() != 'ALL':
+            qs = qs.filter(payment_status=payment_param.upper())
+        if status_param and status_param.upper() != 'ALL':
+            qs = qs.filter(approval_status=status_param.upper())
+        return qs.order_by('-id')
 
 class AdminStudentDetailView(generics.RetrieveUpdateAPIView):
     """Admin view to Retrieve and Update Student details (Tutor, Class Type, etc)"""
@@ -76,6 +97,15 @@ class AdminStudentDetailView(generics.RetrieveUpdateAPIView):
         if old_tutor != new_tutor and new_tutor:
             from classes.utils import sync_student_tutor_change
             sync_student_tutor_change(instance.user, new_tutor)
+
+        # If an assigned tutor is present, ensure enrollment and sessions exist
+        if new_tutor:
+            try:
+                from classes.scheduler import ensure_student_sessions
+                ensure_student_sessions(instance.user)
+            except Exception as err:
+                import logging
+                logging.getLogger(__name__).warning("Error ensuring student sessions on admin update: %s", err)
 
 class PromoteStudentView(generics.GenericAPIView):
     """Admin view to promote a Student to a Tutor (Under Review)"""
@@ -215,9 +245,16 @@ class EnrollInCourseView(generics.CreateAPIView):
         from .utils import update_student_admission_letter
         update_student_admission_letter(profile)
 
+        adm_url = None
+        if profile.admission_letter:
+            try:
+                adm_url = profile.admission_letter.url
+            except Exception:
+                adm_url = None
+
         return Response({
             "message": f"Successfully requested enrollment in {subject.name}. Waiting for tutor approval.",
-            "admission_letter_url": profile.admission_letter.url if profile.admission_letter else None
+            "admission_letter_url": adm_url
         })
 
 

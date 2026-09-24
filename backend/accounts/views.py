@@ -19,11 +19,17 @@ from rest_framework import viewsets
 User = get_user_model()
 
 class NotificationListView(APIView):
+    """GET /api/auth/notifications/ — returns the 20 most recent notifications for the authenticated user."""
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         notifications = Notification.objects.filter(user=request.user).order_by('-created_at')[:20]
         return Response(NotificationSerializer(notifications, many=True).data)
+
+
+class NotificationMarkReadView(APIView):
+    """POST /api/auth/notifications/<pk>/read/ — marks a single notification as read."""
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk):
         try:
@@ -33,6 +39,15 @@ class NotificationListView(APIView):
             return Response({"message": "Marked as read"})
         except Notification.DoesNotExist:
             return Response({"error": "Not found"}, status=404)
+
+
+class NotificationMarkAllReadView(APIView):
+    """POST /api/auth/notifications/read-all/ — marks all unread notifications as read."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        updated = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({"marked_read": updated})
 
 
 class BroadcastNotificationView(APIView):

@@ -98,6 +98,7 @@ class TutorProfileSerializer(TutorMediaFieldsMixin, serializers.ModelSerializer)
 
     busy_slots = serializers.SerializerMethodField()
     wallet_balance = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = TutorProfile

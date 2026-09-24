@@ -507,15 +507,24 @@ class UserSessionListView(APIView):
         user = request.user
         now = timezone.now()
 
+        from django.db.models import Q
+
         # 1. Fetch Regular Sessions
         if user.role == 'TUTOR':
-            regular_sessions = ScheduledSession.objects.filter(tutor=user)
+            regular_sessions = ScheduledSession.objects.filter(Q(tutor=user) | Q(batch__tutor=user)).distinct()
         else:
             from students.models import StudentProfile
-            try:
-                regular_sessions = ScheduledSession.objects.filter(student=user)
-            except StudentProfile.DoesNotExist:
-                regular_sessions = ScheduledSession.objects.none()
+            profile = StudentProfile.objects.filter(user=user).first()
+            if profile:
+                try:
+                    from classes.scheduler import ensure_student_sessions
+                    ensure_student_sessions(user)
+                except Exception as err:
+                    logger.warning("Error ensuring student sessions in UserSessionListView: %s", err)
+
+            regular_sessions = ScheduledSession.objects.filter(
+                Q(student=user) | Q(batch__students=user)
+            ).distinct()
 
         regular_sessions = (
             regular_sessions
@@ -547,6 +556,7 @@ class UserSessionListView(APIView):
                 'student_name': s.student.get_full_name(),
                 'tutor_name': s.tutor.get_full_name() if s.tutor else 'Unassigned',
                 'subject': s.subject.name if s.subject else 'General',
+                'course': s.subject.name if s.subject else 'General',
                 'scheduled_at': s.scheduled_at,
                 'duration': s.duration,
                 'status': s.status,
@@ -565,6 +575,7 @@ class UserSessionListView(APIView):
                 'student_name': f"{t.first_name} {t.last_name or ''}".strip(),
                 'tutor_name': t.tutor.get_full_name() if t.tutor else 'Unassigned',
                 'subject': t.course_interested or "Trial session",
+                'course': t.course_interested or "Trial session",
                 'scheduled_at': t.scheduled_at,
                 'duration': t.duration,
                 'status': 'APPROVED',

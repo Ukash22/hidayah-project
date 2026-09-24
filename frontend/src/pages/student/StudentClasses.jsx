@@ -64,6 +64,8 @@ export default function StudentClasses() {
         </>
     );
 
+    const isUnpaidLocked = profile?.payment_status === 'UNPAID' && parseFloat(profile?.wallet_balance || 0) <= 0;
+
     return (
         <>
             <title>My Classes — Hidayah</title>
@@ -97,28 +99,36 @@ export default function StudentClasses() {
             )}
 
             <div className="space-y-6">
-                {classes.length > 0 ? classes.map((cls, i) => (
-                    <ClassCard
-                        key={cls.db_id || i}
-                        cls={cls}
-                        token={token}
-                        onJoin={handleJoinClass}
-                        onRefetch={fetchData}
-                    />
-                )) : (
+                {classes.length > 0 ? (
+                    classes.map((cls, i) => (
+                        <ClassCard
+                            key={cls.db_id || i}
+                            cls={cls}
+                            token={token}
+                            onJoin={handleJoinClass}
+                            onRefetch={fetchData}
+                        />
+                    ))
+                ) : (
                     <div className="py-32 text-center bg-slate-50 dark:bg-slate-800/60 rounded-card-lg border border-dashed border-slate-200 dark:border-slate-700">
                         <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center text-3xl mx-auto mb-8">
-                            {profile?.wallet_balance <= 0 ? '🔒' : '📅'}
+                            {isUnpaidLocked ? '🔒' : '📅'}
                         </div>
-                        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">{profile?.wallet_balance <= 0 ? 'Access Locked' : 'No Classes Scheduled'}</h4>
+                        <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+                            {isUnpaidLocked ? 'Access Locked' : 'No Classes Scheduled'}
+                        </h4>
                         <p className="text-slate-500 font-bold italic max-w-md mx-auto">
-                            {profile?.wallet_balance <= 0
-                                ? 'Please fund your wallet to access your live classes.'
-                                : 'No classes are currently scheduled. Check back later.'}
+                            {isUnpaidLocked
+                                ? 'Please complete your payment or fund your wallet to access your live classes.'
+                                : 'No classes are currently scheduled for you. When your tutor or admin schedules sessions, they will appear here.'}
                         </p>
-                        {profile?.wallet_balance <= 0 && (
+                        {isUnpaidLocked ? (
                             <button onClick={() => navigate('/student/finance')} className="mt-8 bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-lg">
                                 Top Up Wallet
+                            </button>
+                        ) : (
+                            <button onClick={() => navigate('/student/find-tutor')} className="mt-8 bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-lg">
+                                Browse Tutors & Subjects
                             </button>
                         )}
                     </div>

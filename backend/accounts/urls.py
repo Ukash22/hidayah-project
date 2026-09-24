@@ -3,7 +3,7 @@
 # pylint: skip-file
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import RegisterView, LoginView, LogoutView, ChangePasswordView, CookieTokenRefreshView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView, BroadcastNotificationView, UserManagementViewSet
+from .views import RegisterView, LoginView, LogoutView, ChangePasswordView, CookieTokenRefreshView, UserProfileView, TutorListView, ApproveStudentView, PendingStudentListView, RequestPasswordResetView, SetNewPasswordView, NotificationListView, NotificationMarkReadView, NotificationMarkAllReadView, BroadcastNotificationView, UserManagementViewSet
 
 router = DefaultRouter()
 router.register(r'admin/users', UserManagementViewSet, basename='user_management')
@@ -22,6 +22,7 @@ urlpatterns = [
     path('password-reset/request/', RequestPasswordResetView.as_view(), name='password_reset_request'),
     path('password-reset/confirm/', SetNewPasswordView.as_view(), name='password_reset_confirm'),
     path('notifications/', NotificationListView.as_view(), name='notification_list'),
-    path('notifications/<int:pk>/read/', NotificationListView.as_view(), name='notification_read'),
+    path('notifications/read-all/', NotificationMarkAllReadView.as_view(), name='notification_read_all'),
+    path('notifications/<int:pk>/read/', NotificationMarkReadView.as_view(), name='notification_read'),
     path('notifications/broadcast/', BroadcastNotificationView.as_view(), name='notification_broadcast'),
 ]

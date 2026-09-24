@@ -68,7 +68,7 @@ export default function AdminStudents() {
             preferred_time: student.preferred_time || '',
             preferred_time_exact: student.preferred_time_exact || '',
             level: student.level || '',
-            assigned_tutor: student.assigned_tutor || '',
+            assigned_tutor: student.assigned_tutor_details?.user_id || student.assigned_tutor || '',
             meeting_link: student.meeting_link || '',
             whiteboard_link: student.whiteboard_link || ''
         });
@@ -85,7 +85,11 @@ export default function AdminStudents() {
             fetchData();
             setShowModal(false);
         } catch (err) {
-            toast.error('Failed to update student: ' + (err.response?.data?.error || err.message));
+            const errData = err.response?.data;
+            const errMsg = typeof errData === 'object' && errData !== null
+                ? (errData.error || Object.entries(errData).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | '))
+                : err.message;
+            toast.error('Failed to update student: ' + errMsg);
         } finally {
             setSaving(false);
         }
@@ -162,7 +166,7 @@ export default function AdminStudents() {
                                 'Approval Status': s.approval_status || '',
                                 Tutor: s.assigned_tutor_details?.full_name || 'Unassigned',
                                 'Wallet Balance': s.wallet_balance || 0,
-                            })), `students-${new Date().toISOString().slice(0,10)}.csv`)}
+                            })), `students-${new Date().toISOString().slice(0, 10)}.csv`)}
                             className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wide rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
                         >
                             Export CSV
@@ -278,41 +282,41 @@ export default function AdminStudents() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Enrolled Course</label>
-                                    <input value={studentForm.enrolled_course} onChange={e => setStudentForm({...studentForm, enrolled_course: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input value={studentForm.enrolled_course} onChange={e => setStudentForm({ ...studentForm, enrolled_course: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Level</label>
-                                    <input value={studentForm.level} onChange={e => setStudentForm({...studentForm, level: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input value={studentForm.level} onChange={e => setStudentForm({ ...studentForm, level: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Class Type</label>
-                                    <select value={studentForm.class_type} onChange={e => setStudentForm({...studentForm, class_type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
+                                    <select value={studentForm.class_type} onChange={e => setStudentForm({ ...studentForm, class_type: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
                                         <option value="ONE_ON_ONE">One on One</option>
                                         <option value="GROUP">Group</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Assign Tutor</label>
-                                    <select value={studentForm.assigned_tutor} onChange={e => setStudentForm({...studentForm, assigned_tutor: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
+                                    <select value={studentForm.assigned_tutor} onChange={e => setStudentForm({ ...studentForm, assigned_tutor: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
                                         <option value="">No Tutor</option>
-                                        {approvedTutors.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                        {approvedTutors.map(t => <option key={t.id} value={t.user_id || t.id}>{t.name || `${t.first_name} ${t.last_name}`.trim()}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Days/Week</label>
-                                    <input type="number" min="1" max="7" value={studentForm.days_per_week} onChange={e => setStudentForm({...studentForm, days_per_week: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input type="number" min="1" max="7" value={studentForm.days_per_week} onChange={e => setStudentForm({ ...studentForm, days_per_week: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Hours/Week</label>
-                                    <input type="number" min="1" value={studentForm.hours_per_week} onChange={e => setStudentForm({...studentForm, hours_per_week: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input type="number" min="1" value={studentForm.hours_per_week} onChange={e => setStudentForm({ ...studentForm, hours_per_week: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Meeting Link</label>
-                                    <input value={studentForm.meeting_link} onChange={e => setStudentForm({...studentForm, meeting_link: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input value={studentForm.meeting_link} onChange={e => setStudentForm({ ...studentForm, meeting_link: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Whiteboard Link</label>
-                                    <input value={studentForm.whiteboard_link} onChange={e => setStudentForm({...studentForm, whiteboard_link: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input value={studentForm.whiteboard_link} onChange={e => setStudentForm({ ...studentForm, whiteboard_link: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <button type="submit" disabled={saving} className="w-full py-3 rounded-xl bg-primary text-white font-bold uppercase text-sm hover:bg-primary/80 transition-colors disabled:opacity-50">
@@ -325,11 +329,11 @@ export default function AdminStudents() {
                         <div className="grid grid-cols-3 gap-3">
                             <div>
                                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Amount (₦)</label>
-                                <input type="number" value={walletAction.amount} onChange={e => setWalletAction({...walletAction, amount: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                <input type="number" value={walletAction.amount} onChange={e => setWalletAction({ ...walletAction, amount: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Type</label>
-                                <select value={walletAction.type} onChange={e => setWalletAction({...walletAction, type: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
+                                <select value={walletAction.type} onChange={e => setWalletAction({ ...walletAction, type: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold bg-white dark:bg-slate-900">
                                     <option value="DEPOSIT">Deposit</option>
                                     <option value="DEBIT">Debit</option>
                                 </select>
@@ -351,24 +355,24 @@ export default function AdminStudents() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">First Name</label>
-                                    <input required value={userForm.first_name} onChange={e => setUserForm({...userForm, first_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input required value={userForm.first_name} onChange={e => setUserForm({ ...userForm, first_name: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                                 <div>
                                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Last Name</label>
-                                    <input required value={userForm.last_name} onChange={e => setUserForm({...userForm, last_name: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                    <input required value={userForm.last_name} onChange={e => setUserForm({ ...userForm, last_name: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                                 </div>
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Username</label>
-                                <input required value={userForm.username} onChange={e => setUserForm({...userForm, username: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                <input required value={userForm.username} onChange={e => setUserForm({ ...userForm, username: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Email</label>
-                                <input required type="email" value={userForm.email} onChange={e => setUserForm({...userForm, email: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                <input required type="email" value={userForm.email} onChange={e => setUserForm({ ...userForm, email: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Password</label>
-                                <input required type="password" value={userForm.password} onChange={e => setUserForm({...userForm, password: e.target.value})} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
+                                <input required type="password" value={userForm.password} onChange={e => setUserForm({ ...userForm, password: e.target.value })} className="mt-1 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-primary/20 font-bold" />
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button type="button" onClick={() => setShowUserModal(false)} className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-bold text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800">Cancel</button>
