@@ -713,3 +713,116 @@ class BatchMemberView(APIView):
             batch.students.remove(*students)
             return Response({'removed': len(students), 'total': batch.students.count()})
         return Response({'error': 'Unknown action'}, status=400)
+
+
+class SchemeOfWorkView(APIView):
+    """
+    GET    /api/classes/scheme-of-work/       — list topics
+    GET    /api/classes/scheme-of-work/<id>/  — retrieve single topic
+    POST   /api/classes/scheme-of-work/       — create topic (tutors/admins)
+    PUT    /api/classes/scheme-of-work/<id>/  — edit topic
+    DELETE /api/classes/scheme-of-work/<id>/  — delete topic
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk=None):
+        user = request.user
+        role = getattr(user, 'role', '')
+        from .models import SchemeOfWork
+        from .serializers import SchemeOfWorkSerializer
+
+        if pk:
+            scheme = get_object_or_404(SchemeOfWork, pk=pk)
+            if role == 'ADMIN' or user.is_staff or scheme.tutor == user or scheme.student == user:
+                return Response(SchemeOfWorkSerializer(scheme).data)
+            if scheme.batch and scheme.batch.students.filter(pk=user.pk).exists():
+                return Response(SchemeOfWorkSerializer(scheme).data)
+            return Response({'error': 'Access denied'}, status=403)
+
+        qs = SchemeOfWork.objects.select_related('tutor', 'student', 'batch', 'subject').all()
+
+        if role == 'TUTOR':
+            qs = qs.filter(tutor=user)
+        elif role == 'STUDENT':
+            from django.db.models import Q
+            qs = qs.filter(Q(student=user) | Q(batch__students=user)).distinct()
+        elif role != 'ADMIN' and not user.is_staff:
+            return Response([], status=200)
+
+        student_id = request.query_params.get('student_id')
+        if student_id:
+            qs = qs.filter(student_id=student_id)
+
+        batch_id = request.query_params.get('batch_id')
+        if batch_id:
+            qs = qs.filter(batch_id=batch_id)
+
+        subject_id = request.query_params.get('subject_id')
+        if subject_id:
+            qs = qs.filter(subject_id=subject_id)
+
+        serializer = SchemeOfWorkSerializer(qs, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        user = request.user
+        role = getattr(user, 'role', '')
+        if role not in ('ADMIN', 'TUTOR') and not user.is_staff:
+            return Response({'error': 'Only tutors and admins can create scheme of work items'}, status=403)
+
+        from .serializers import SchemeOfWorkSerializer
+        data = request.data.copy()
+        serializer = SchemeOfWorkSerializer(data=data)
+        if serializer.is_valid():
+            scheme = serializer.save(tutor=user if role == 'TUTOR' else serializer.validated_data.get('tutor', user))
+            return Response(SchemeOfWorkSerializer(scheme).data, status=201)
+        return Response(serializer.errors, status=400)
+
+    def put(self, request, pk=None):
+        user = request.user
+        role = getattr(user, 'role', '')
+        from .models import SchemeOfWork
+        from .serializers import SchemeOfWorkSerializer
+        scheme = get_object_or_404(SchemeOfWork, pk=pk)
+
+        if not (role == 'ADMIN' or user.is_staff or (role == 'TUTOR' and scheme.tutor == user)):
+            return Response({'error': 'Access denied'}, status=403)
+
+        serializer = SchemeOfWorkSerializer(scheme, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+
+    def delete(self, request, pk=None):
+        user = request.user
+        role = getattr(user, 'role', '')
+        from .models import SchemeOfWork
+        scheme = get_object_or_404(SchemeOfWork, pk=pk)
+
+        if not (role == 'ADMIN' or user.is_staff or (role == 'TUTOR' and scheme.tutor == user)):
+            return Response({'error': 'Access denied'}, status=403)
+
+        scheme.delete()
+        return Response({'status': 'deleted'}, status=200)
+
+
+class SchemeOfWorkToggleView(APIView):
+    """
+    POST /api/classes/scheme-of-work/<id>/toggle/ — toggle topic completion
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        user = request.user
+        role = getattr(user, 'role', '')
+        from .models import SchemeOfWork
+        from .serializers import SchemeOfWorkSerializer
+        scheme = get_object_or_404(SchemeOfWork, pk=pk)
+
+        if not (role == 'ADMIN' or user.is_staff or (role == 'TUTOR' and scheme.tutor == user)):
+            return Response({'error': 'Only the assigned tutor can check off topics'}, status=403)
+
+        notes = request.data.get('notes')
+        scheme.toggle_complete(notes=notes)
+        return Response(SchemeOfWorkSerializer(scheme).data, status=200)

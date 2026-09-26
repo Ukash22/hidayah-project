@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/layout';
 import { EmptyState, SkeletonCard, FetchError } from '../../components/ui';
 
 const ComplaintModal = lazy(() => import('../../components/ComplaintModal'));
+const SchemeOfWorkModal = lazy(() => import('../../components/SchemeOfWork/SchemeOfWorkModal'));
 
 export default function TutorSchedule() {
     const { token, user } = useAuth();
@@ -22,6 +23,10 @@ export default function TutorSchedule() {
     const [materials, setMaterials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
+
+    // Scheme of Work state
+    const [schemeModalOpen, setSchemeModalOpen] = useState(false);
+    const [schemeTarget, setSchemeTarget] = useState({ studentId: null, batchId: null, subjectId: null, title: '', subtitle: '' });
 
     const [batches, setBatches] = useState([]);
     const [batchLoading, setBatchLoading] = useState(true);
@@ -265,6 +270,18 @@ export default function TutorSchedule() {
                                 className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Report</button>
                             <button
+                                onClick={() => {
+                                    setSchemeTarget({
+                                        studentId: session.student,
+                                        subjectId: session.subject,
+                                        title: `Scheme of Work — ${session.student_name}`,
+                                        subtitle: `Curriculum tracking & topic checklist for ${session.student_name}`
+                                    });
+                                    setSchemeModalOpen(true);
+                                }}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
+                            >Scheme 📋</button>
+                            <button
                                 onClick={() => { setSelectedStudentForAssign(session.student_data || { id: session.student, full_name: session.student_name }); setShowAssignmentModal(true); }}
                                 className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Assign</button>
@@ -372,6 +389,20 @@ export default function TutorSchedule() {
                     filedAgainstId={selectedStudent?.user_details?.id}
                     filedAgainstName={`${selectedStudent?.user_details?.first_name || ''}`}
                     token={token}
+                />
+            </Suspense>
+
+            {/* Scheme of Work Modal */}
+            <Suspense fallback={null}>
+                <SchemeOfWorkModal
+                    isOpen={schemeModalOpen}
+                    onClose={() => setSchemeModalOpen(false)}
+                    studentId={schemeTarget.studentId}
+                    batchId={schemeTarget.batchId}
+                    subjectId={schemeTarget.subjectId}
+                    isTutor={true}
+                    title={schemeTarget.title}
+                    subtitle={schemeTarget.subtitle}
                 />
             </Suspense>
 

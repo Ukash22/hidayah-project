@@ -28,7 +28,8 @@ class StudentProfile(models.Model):
     level = models.CharField(max_length=255, blank=True, null=True, 
                              choices=(('PRIMARY', 'Primary'), ('SECONDARY', 'Secondary'), 
                                       ('JUNIOR_WAEC', 'Junior WAEC (BECE)'),
-                                      ('JAMB', 'JAMB'), ('WAEC', 'WAEC'), ('NECO', 'NECO')))
+                                      ('JAMB', 'JAMB'), ('WAEC', 'WAEC'), ('NECO', 'NECO'),
+                                      ('ADULT', 'Adult')))
     
     preferred_mode = models.CharField(max_length=20, default='ONLINE', 
                                       choices=(('ONLINE', 'Online'), ('PHYSICAL', 'Physical')))

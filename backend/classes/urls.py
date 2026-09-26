@@ -18,6 +18,8 @@ from .views import (
     BackfillSessionsView,
     BatchView,
     BatchMemberView,
+    SchemeOfWorkView,
+    SchemeOfWorkToggleView,
 )
 
 urlpatterns = [
@@ -42,4 +44,9 @@ urlpatterns = [
     path('batches/', BatchView.as_view(), name='batch_list_create'),
     path('batches/<int:pk>/', BatchView.as_view(), name='batch_detail'),
     path('batches/<int:pk>/students/<str:action>/', BatchMemberView.as_view(), name='batch_members'),
+
+    # Scheme of Work endpoints
+    path('scheme-of-work/', SchemeOfWorkView.as_view(), name='scheme_of_work_list_create'),
+    path('scheme-of-work/<int:pk>/', SchemeOfWorkView.as_view(), name='scheme_of_work_detail'),
+    path('scheme-of-work/<int:pk>/toggle/', SchemeOfWorkToggleView.as_view(), name='scheme_of_work_toggle'),
 ]

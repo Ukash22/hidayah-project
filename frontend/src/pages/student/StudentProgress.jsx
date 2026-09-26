@@ -3,6 +3,7 @@ import { TrendingUp, BookOpen, CheckCircle, Clock, XCircle, BarChart2 } from 'lu
 import api, { asList, getApiError } from '../../services/api';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard, FetchError } from '../../components/ui';
+import SchemeOfWorkView from '../../components/SchemeOfWork/SchemeOfWorkView';
 
 // SVG bar chart — no dependency, pure primitives
 function ScoreTrendChart({ scores }) {
@@ -208,6 +209,15 @@ export default function StudentProgress() {
                         — Dashed line marks the 50% pass threshold
                     </p>
                 </div>
+            </div>
+
+            {/* Scheme of Work / Syllabus Progress */}
+            <div className="mb-8">
+                <SchemeOfWorkView
+                    isTutor={false}
+                    title="My Scheme of Work"
+                    subtitle="Track weekly covered topics and your upcoming lessons"
+                />
             </div>
 
             {/* Score trend chart */}

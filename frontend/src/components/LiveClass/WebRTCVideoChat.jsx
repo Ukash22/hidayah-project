@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useAuth } from '../../context/AuthContext';
+import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
 
 const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'classroom' }) => {
@@ -21,17 +22,20 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const chatEndRef = useRef(null);
     const chatPanelRef = useRef(null);
     
-    // WebSocket URL for signaling
+    // WebSocket URL for signaling — include JWT token for auth
     const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
-        // Precise conversion to wss/ws
-        let base = apiBase.startsWith('https') 
-            ? apiBase.replace('https://', 'wss://') 
-            : apiBase.replace('http://', 'ws://');
-            
-        // Ensure format: wss://domain.com/ws/signaling/room/
+        let base;
+        if (import.meta.env.DEV) {
+            base = 'ws://localhost:8000';
+        } else {
+            base = apiBase.startsWith('https')
+                ? apiBase.replace('https://', 'wss://')
+                : apiBase.replace('http://', 'ws://');
+        }
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        const finalUrl = `${cleanBase}/ws/signaling/${roomId}/`;
+        const token = getAccess() || '';
+        const finalUrl = `${cleanBase}/ws/signaling/${roomId}/${token ? `?token=${encodeURIComponent(token)}` : ''}`;
         console.log("📡 Connecting to Signaling:", finalUrl);
         return finalUrl;
     }, [roomId]);
@@ -322,69 +326,67 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
     if (!isVideoOpen) return null;
 
-    const gridClasses = layoutMode === 'gallery' 
-        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" 
-        : "flex flex-col gap-4";
+    const galleryGridCls = "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3";
+    const classroomGridCls = "flex flex-col gap-3";
+    const gridClasses = layoutMode === 'gallery' ? galleryGridCls : classroomGridCls;
 
     return (
         <div className="flex flex-col h-full bg-[#0f172a] text-white">
             
-            {/* Main Video Area */}
-            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 p-3 sm:p-4 overflow-y-auto custom-scrollbar">
                 <div className={gridClasses}>
                     
-                    {/* Local User (smaller in classroom mode — remote users get priority space) */}
-                    <div className={`relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border-2 transition-all duration-300 ${layoutMode === 'gallery' ? 'aspect-video h-auto' : 'h-32 md:h-40'} ${isScreenSharing ? 'border-emerald-500' : 'border-slate-700'}`}>
+                    {/* Local User */}
+                    <div className={`relative bg-slate-800 rounded-xl overflow-hidden shadow-xl border-2 transition-all duration-300 ${
+                        layoutMode === 'gallery' ? 'aspect-video' : 'h-28 sm:h-36'
+                    } ${isScreenSharing ? 'border-emerald-500' : 'border-slate-700'}`}>
                         <video ref={localVideoRef} autoPlay muted playsInline className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''} ${isScreenSharing ? '' : '-scale-x-100'}`} />
                         {isVideoOff && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-4">
-                                <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center text-3xl font-bold text-slate-500 border-4 border-slate-700">
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-2">
+                                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-slate-800 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-slate-500 border-4 border-slate-700">
                                     {user?.first_name?.[0] || 'U'}
                                 </div>
-                                <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Camera Off</span>
+                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Camera Off</span>
                             </div>
                         )}
-                        <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider flex items-center gap-2 border border-white/10">
-                            {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={12} className="text-red-400" />}
+                        <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
+                            {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={10} className="text-red-400" />}
                         </div>
-                        {raisedHands[user.id] && <div className="absolute top-3 right-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={16} className="text-white" /></div>}
-                        {isScreenSharing && <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded text-[11px] font-semibold uppercase">Sharing Screen</div>}
+                        {raisedHands[user.id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
+                        {isScreenSharing && <div className="absolute top-2 left-2 bg-emerald-500 px-2 py-0.5 rounded text-[10px] font-semibold uppercase">Sharing</div>}
                     </div>
 
                     {/* Remote Users */}
                     {Object.entries(remoteStreams).map(([id, data]) => (
-                        <div key={id} className={`relative bg-slate-800 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700 transition-all duration-300 ${layoutMode === 'gallery' ? 'aspect-video h-auto' : 'h-48 md:h-56'}`}>
+                        <div key={id} className={`relative bg-slate-800 rounded-xl overflow-hidden shadow-xl border-2 border-slate-700 transition-all duration-300 ${
+                            layoutMode === 'gallery' ? 'aspect-video' : 'h-40 sm:h-52'
+                        }`}>
                             <video 
                                 autoPlay playsInline 
                                 ref={el => { if (el && el.srcObject !== data.stream) el.srcObject = data.stream; }} 
                                 className="w-full h-full object-cover" 
                             />
-                            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider border border-white/10">
+                            <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider border border-white/10">
                                 {data.name}
                             </div>
-                            {raisedHands[id] && <div className="absolute top-3 right-3 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={16} className="text-white" /></div>}
+                            {raisedHands[id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
                         </div>
                     ))}
 
                     {Object.keys(remoteStreams).length === 0 && (
-                        <div className="h-48 md:h-64 rounded-2xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-6 text-center">
-                            <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mb-4 animate-pulse">
-                                <Video size={24} className="text-slate-600" />
+                        <div className="h-36 sm:h-52 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-4 text-center">
+                            <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mb-3 animate-pulse">
+                                <Video size={20} className="text-slate-600" />
                             </div>
                             <p className="font-bold uppercase tracking-widest text-xs mb-1">Waiting for participants...</p>
-                            <p className="text-[11px] text-slate-600 font-semibold uppercase tracking-tighter">
-                                Status: {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting to Server...'}
+                            <p className="text-[10px] text-slate-600 font-semibold uppercase tracking-tighter">
+                                {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting...'}
                             </p>
-                            {readyState !== ReadyState.OPEN && (
-                                <p className="text-[10px] mt-2 text-slate-700 break-all max-w-[200px]">
-                                    {socketUrl.split('/signaling/')[0]}...
-                                </p>
-                            )}
                             <button 
                                 onClick={() => window.location.reload()}
-                                className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-semibold uppercase rounded-lg transition-all"
+                                className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-semibold uppercase rounded-lg transition-all"
                             >
-                                Refresh Connection
+                                Refresh
                             </button>
                         </div>
                     )}
@@ -422,63 +424,63 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             )}
 
             {/* Premium Controls Bar */}
-            <div className="p-6 bg-slate-900/80 backdrop-blur-xl border-t border-slate-800 flex items-center justify-center gap-4">
+            <div className="p-3 sm:p-4 bg-slate-900/80 backdrop-blur-xl border-t border-slate-800 flex items-center justify-center gap-2 sm:gap-3 flex-wrap">
                 <button 
                     onClick={toggleMute} 
-                    className={`group w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all active:scale-90 ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                    className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
                     title={isMuted ? 'Unmute' : 'Mute'}
                 >
-                    {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
-                    <span className="text-[7px] font-bold mt-1 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Mute</span>
+                    {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Mute</span>
                 </button>
 
                 <button 
                     onClick={toggleVideo} 
-                    className={`group w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all active:scale-90 ${isVideoOff ? 'bg-red-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                    className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${isVideoOff ? 'bg-red-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
                     title={isVideoOff ? 'Start Video' : 'Stop Video'}
                 >
-                    {isVideoOff ? <VideoOff size={20} /> : <Video size={20} />}
-                    <span className="text-[7px] font-bold mt-1 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Video</span>
+                    {isVideoOff ? <VideoOff size={18} /> : <Video size={18} />}
+                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Video</span>
                 </button>
 
                 <button 
                     onClick={toggleScreenShare} 
-                    className={`group w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all active:scale-90 ${isScreenSharing ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                    className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${isScreenSharing ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
                     title="Share Screen"
                 >
-                    <MonitorUp size={20} />
-                    <span className="text-[7px] font-bold mt-1 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Share</span>
+                    <MonitorUp size={18} />
+                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Share</span>
                 </button>
 
-                <div className="w-px h-10 bg-slate-800 mx-2"></div>
+                <div className="w-px h-8 bg-slate-800" />
 
                 <button 
                     onClick={handleRaiseHand} 
-                    className="group w-14 h-14 rounded-2xl flex flex-col items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all active:scale-90"
+                    className="group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all active:scale-90"
                     title="Raise Hand"
                 >
-                    <Hand size={20} />
-                    <span className="text-[7px] font-bold mt-1 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Hand</span>
+                    <Hand size={18} />
+                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Hand</span>
                 </button>
 
                 <button 
                     onClick={() => setShowChat(!showChat)} 
-                    className={`group w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all active:scale-90 ${showChat ? 'bg-blue-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                    className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${showChat ? 'bg-blue-500 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
                     title="Chat"
                 >
-                    <MessageSquare size={20} />
-                    <span className="text-[7px] font-bold mt-1 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Chat</span>
+                    <MessageSquare size={18} />
+                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Chat</span>
                 </button>
 
-                <div className="w-px h-10 bg-slate-800 mx-2"></div>
+                <div className="w-px h-8 bg-slate-800" />
 
                 <button 
                     onClick={() => setIsVideoOpen(false)} 
-                    className="group w-24 h-14 rounded-2xl flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all active:scale-90 border border-red-500/20"
+                    className="group w-16 sm:w-24 h-11 sm:h-14 rounded-xl flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all active:scale-90 border border-red-500/20"
                     title="Leave Call"
                 >
-                    <PhoneOff size={20} />
-                    <span className="text-[7px] font-bold mt-1 uppercase tracking-widest">LEAVE</span>
+                    <PhoneOff size={18} />
+                    <span className="text-[7px] font-bold mt-0.5 uppercase tracking-widest">LEAVE</span>
                 </button>
             </div>
         </div>
