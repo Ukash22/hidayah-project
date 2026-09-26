@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { Excalidraw, exportToSvg, MainMenu, WelcomeScreen, Sidebar, Footer } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToSvg, MainMenu, Footer } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
 import api from '../../services/api';
+import { getAccess } from '../../services/tokenStore';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
@@ -137,16 +138,112 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
     );
 };
 
+// ─── Page Navigation Bar ────────────────────────────────────────────────
+const PageNavBar = ({ pages, currentPageIdx, onPrev, onNext, onAdd, onGoTo }) => (
+    <div className="flex items-center justify-center gap-2 bg-slate-100 border-b border-slate-200 px-3 py-1.5 select-none">
+        <button
+            onClick={onPrev}
+            disabled={currentPageIdx === 0}
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-all shadow-sm text-base"
+            title="Previous page"
+        >‹</button>
+
+        <div className="flex items-center gap-1 overflow-x-auto max-w-[60vw] md:max-w-xs scrollbar-none">
+            {pages.map((p, idx) => (
+                <button
+                    key={p.id}
+                    onClick={() => onGoTo(idx)}
+                    className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                        idx === currentPageIdx
+                            ? 'bg-emerald-500 text-white shadow-md'
+                            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
+                    }`}
+                >
+                    {idx + 1}
+                </button>
+            ))}
+        </div>
+
+        <button
+            onClick={onNext}
+            disabled={currentPageIdx === pages.length - 1}
+            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-all shadow-sm text-base"
+            title="Next page"
+        >›</button>
+
+        <div className="w-px h-5 bg-slate-200 mx-1" />
+
+        <button
+            onClick={onAdd}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 text-[11px] font-bold hover:bg-emerald-100 transition-all shadow-sm"
+            title="Add new page"
+        >
+            <span className="text-base leading-none">+</span>
+            <span className="hidden sm:inline">Page</span>
+        </button>
+
+        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">
+            {currentPageIdx + 1} / {pages.length}
+        </span>
+    </div>
+);
+
 const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const toast = useToast();
     const confirm = useConfirm();
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
-    
+
+    // ── Multi-page state ──────────────────────────────────────────────────
+    const [pages, setPages] = useState([{ id: 'page-1', name: 'Page 1', elements: [] }]);
+    const [currentPageIdx, setCurrentPageIdx] = useState(0);
+    const pagesRef = useRef(pages);
+    const currentPageIdxRef = useRef(0);
+    useEffect(() => { pagesRef.current = pages; }, [pages]);
+    useEffect(() => { currentPageIdxRef.current = currentPageIdx; }, [currentPageIdx]);
+
+    const saveCurrentPageElements = useCallback(() => {
+        if (!excalidrawAPI) return;
+        const elements = excalidrawAPI.getSceneElements();
+        const idx = currentPageIdxRef.current;
+        setPages(prev => prev.map((p, i) => i === idx ? { ...p, elements } : p));
+        pagesRef.current = pagesRef.current.map((p, i) => i === idx ? { ...p, elements } : p);
+    }, [excalidrawAPI]);
+
+    const goToPage = useCallback((idx) => {
+        if (!excalidrawAPI) return;
+        saveCurrentPageElements();
+        const target = pagesRef.current[idx];
+        if (!target) return;
+        setCurrentPageIdx(idx);
+        excalidrawAPI.updateScene({ elements: target.elements || [] });
+    }, [excalidrawAPI, saveCurrentPageElements]);
+
+    const handleAddPage = useCallback(() => {
+        if (!excalidrawAPI) return;
+        saveCurrentPageElements();
+        const newIdx = pagesRef.current.length;
+        const newPage = { id: `page-${Date.now()}`, name: `Page ${newIdx + 1}`, elements: [] };
+        setPages(prev => [...prev, newPage]);
+        pagesRef.current = [...pagesRef.current, newPage];
+        setCurrentPageIdx(newIdx);
+        excalidrawAPI.updateScene({ elements: [] });
+        toast.success(`Page ${newIdx + 1} added!`);
+    }, [excalidrawAPI, saveCurrentPageElements, toast]);
+
+    const handlePrevPage = useCallback(() => {
+        if (currentPageIdxRef.current > 0) goToPage(currentPageIdxRef.current - 1);
+    }, [goToPage]);
+
+    const handleNextPage = useCallback(() => {
+        if (currentPageIdxRef.current < pagesRef.current.length - 1) goToPage(currentPageIdxRef.current + 1);
+    }, [goToPage]);
+    // ─────────────────────────────────────────────────────────────────────
+
     const [studentThumbnails, setStudentThumbnails] = useState({});
     const [activeStudentId, setActiveStudentId] = useState(null);
     const [teacherBoardSnapshot, setTeacherBoardSnapshot] = useState(null);
-    
+
     const [isLocked, setIsLocked] = useState(false);
     const [isSlowMode, setIsSlowMode] = useState(false);
     const [studentReaction, setStudentReaction] = useState(null);
@@ -192,15 +289,23 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         }
     }, [teacherViewAPI, teacherBoardSnapshot, role]);
 
-    // WebSocket URL Calculation
+    // WebSocket URL Calculation — includes JWT for server-side auth
     const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
-        let base = apiBase.replace(/^http/, 'ws');
-        if (!base.startsWith('ws')) base = `wss://${base}`;
+        // Detect local dev and use ws:// for localhost, wss:// for production
+        let base;
+        if (import.meta.env.DEV) {
+            base = 'ws://localhost:8000';
+        } else {
+            base = apiBase.startsWith('https')
+                ? apiBase.replace('https://', 'wss://')
+                : apiBase.replace('http://', 'ws://');
+        }
         const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-        return `${cleanBase}/board/${roomId}/`;
+        const token = getAccess() || '';
+        return `${cleanBase}/ws/board/${roomId}/${token ? `?token=${encodeURIComponent(token)}` : ''}`;
     }, [roomId]);
-    
+
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
         reconnectAttempts: 50,
@@ -210,7 +315,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             interval: 20000,
             timeout: 60000,
         },
-        onOpen: () => console.log("✅ Board Connection Established"),
+        onOpen: () => console.log("✅ Board WS Connected:", socketUrl),
+        onError: (e) => console.error("❌ Board WS Error:", e),
     });
 
     // Handle WebSocket Messages
@@ -434,7 +540,22 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 </div>
             )}
 
-            <div className="flex-1 flex relative overflow-hidden">
+            <div className="flex-1 flex flex-col relative overflow-hidden">
+
+                {/* Page Navigation Bar — only on drawing tabs */}
+                {(activeTab === 'my_board') && (
+                    <PageNavBar
+                        pages={pages}
+                        currentPageIdx={currentPageIdx}
+                        onPrev={handlePrevPage}
+                        onNext={handleNextPage}
+                        onAdd={handleAddPage}
+                        onGoTo={goToPage}
+                    />
+                )}
+
+                <div className="flex-1 flex relative overflow-hidden">
+
                 {/* Floating Toolbar (Jamboard Style) */}
                 {(activeTab === 'my_board' || activeTab === 'student_view') && (
                     <div className="absolute left-1/2 bottom-4 -translate-x-1/2 md:left-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:translate-x-0 z-[1000] pointer-events-none w-auto">
@@ -636,7 +757,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
                 {showMathTools && (
                     <MathToolsPanel 
-                        excalidrawAPI={activeTab === 'student_view' ? excalidrawAPI : excalidrawAPI} 
+                        excalidrawAPI={excalidrawAPI} 
                         onClose={() => setShowMathTools(false)} 
                     />
                 )}
@@ -653,7 +774,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                         onClose={() => setShowExamPanel(false)} 
                     />
                 )}
-            </div>
+
+                </div>{/* end inner flex */}
+            </div>{/* end outer flex-col */}
         </div>
     );
 };

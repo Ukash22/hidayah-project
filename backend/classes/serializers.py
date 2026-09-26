@@ -71,3 +71,22 @@ class BatchSerializer(serializers.ModelSerializer):
             {'id': s.id, 'name': s.get_full_name(), 'email': s.email}
             for s in obj.students.all()
         ]
+
+
+class SchemeOfWorkSerializer(serializers.ModelSerializer):
+    tutor_name = serializers.CharField(source='tutor.get_full_name', read_only=True)
+    student_name = serializers.CharField(source='student.get_full_name', read_only=True, default=None)
+    subject_name = serializers.CharField(source='subject.name', read_only=True, default=None)
+    batch_name = serializers.CharField(source='batch.name', read_only=True, default=None)
+
+    class Meta:
+        from .models import SchemeOfWork
+        model = SchemeOfWork
+        fields = [
+            'id', 'tutor', 'tutor_name', 'student', 'student_name',
+            'batch', 'batch_name', 'subject', 'subject_name',
+            'week_number', 'topic', 'learning_objectives',
+            'is_completed', 'completed_at', 'tutor_notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['tutor', 'completed_at', 'created_at', 'updated_at']

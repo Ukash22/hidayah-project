@@ -144,3 +144,42 @@ class Booking(models.Model):
             self.price = tutor_rate * hours * Decimal(str(days_count)) * Decimal('4.00')
             
         super().save(*args, **kwargs)
+
+
+class SchemeOfWork(models.Model):
+    """
+    Weekly Scheme of Work / Syllabus topics managed by a tutor for a student or batch.
+    Allows tutors to check off topics when covered and gives students full visibility.
+    """
+    tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='schemes_created')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='schemes_assigned', null=True, blank=True)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='batch_schemes', null=True, blank=True)
+    subject = models.ForeignKey('programs.Subject', on_delete=models.SET_NULL, null=True, blank=True, related_name='subject_schemes')
+    
+    week_number = models.PositiveIntegerField(default=1)
+    topic = models.CharField(max_length=255)
+    learning_objectives = models.TextField(blank=True, null=True, help_text="Specific learning outcomes or subtopics")
+    
+    is_completed = models.BooleanField(default=False, db_index=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    tutor_notes = models.TextField(blank=True, null=True, help_text="Remarks on achievement or homework")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['week_number', 'created_at']
+
+    def __str__(self):
+        status = "Done" if self.is_completed else "Pending"
+        target = self.student.get_full_name() if self.student else (self.batch.name if self.batch else "General")
+        return f"Week {self.week_number}: {self.topic} ({target}) [{status}]"
+
+    def toggle_complete(self, notes=None):
+        from django.utils import timezone
+        self.is_completed = not self.is_completed
+        self.completed_at = timezone.now() if self.is_completed else None
+        if notes is not None:
+            self.tutor_notes = notes
+        self.save()
+        return self.is_completed

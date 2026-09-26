@@ -7,6 +7,7 @@ const LEVELS = [
     { value: 'JAMB', label: 'JAMB' },
     { value: 'WAEC', label: 'WAEC' },
     { value: 'NECO', label: 'NECO' },
+    { value: 'ADULT', label: 'Adult Learner' },
 ];
 
 const Field = ({ label, children }) => (

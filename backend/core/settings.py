@@ -194,12 +194,29 @@ CHANNEL_LAYERS = {
 }
 
 # Cache Configuration — uses the same Redis instance as Channels
-_redis_url = os.getenv('REDIS_URL')
-if _redis_url:
+#_redis_url = os.getenv('REDIS_URL')
+#if _redis_url:
+    #CACHES = {
+        #"default": {
+            #"BACKEND": "django.core.cache.backends.redis.RedisCache",
+            #"LOCATION": _redis_url,
+            #"KEY_PREFIX": "hidayah",
+        #}
+    #}
+#else:
+    #CACHES = {
+        #"default": {
+            #"BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        #}
+    #}
+
+# Cache Configuration — on free-tier Redis (capped at 20-30 connections), keep
+# cache in local server memory so all Redis slots remain free for WebSockets (Channels).
+if os.getenv('USE_REDIS_CACHE', 'False').lower() in ('true', '1') and os.getenv('REDIS_URL'):
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-            "LOCATION": _redis_url,
+            "LOCATION": os.getenv('REDIS_URL'),
             "KEY_PREFIX": "hidayah",
         }
     }
@@ -349,12 +366,31 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Celery — uses the same Redis instance as Channels and the cache layer
+#CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+#CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+#CELERY_ACCEPT_CONTENT = ['json']
+##CELERY_RESULT_SERIALIZER = 'json'
+#CELERY_TIMEZONE = TIME_ZONE
+
+# Celery — uses the same Redis instance as Channels and the cache layer
+# Celery — uses Redis broker; result backend disabled to save connections on free-tier Redis
 CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = None
+CELERY_TASK_IGNORE_RESULT = True
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_REDIS_MAX_CONNECTIONS = 4
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'max_connections': 4,
+    'socket_timeout': 10,
+    'socket_connect_timeout': 10,
+}
+
+
+
+
 
 # Logging — everything to stdout (Render captures and retains it).
 # The payments logger runs at DEBUG so the payment init/verify trail

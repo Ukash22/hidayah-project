@@ -16,6 +16,7 @@ const LEVEL_OPTIONS = [
     { value: 'JAMB', label: 'JAMB / University Entrance' },
     { value: 'WAEC', label: 'WAEC' },
     { value: 'NECO', label: 'NECO' },
+    { value: 'ADULT', label: 'Adult Learner' },
 ];
 
 const EXAM_TYPE_OPTIONS = [

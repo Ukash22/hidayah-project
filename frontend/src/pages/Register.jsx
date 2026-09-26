@@ -14,7 +14,7 @@ const EXAM_LEVELS = ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'];
 
 const getRateByLevel = (level) => {
     if (['JAMB', 'WAEC', 'NECO'].includes(level)) return 2500;
-    if (['SECONDARY', 'JUNIOR_WAEC'].includes(level)) return 2000;
+    if (['SECONDARY', 'JUNIOR_WAEC', 'ADULT'].includes(level)) return 2000;
     return 1500;
 };
 
