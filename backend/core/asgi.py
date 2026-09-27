@@ -11,23 +11,31 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/asgi/
 """
 
 import os
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
+
+# Initialize Django BEFORE importing any app modules (e.g. consumers, routing)
+# that touch Django models. Skipping this causes AppRegistryNotReady.
+django.setup()
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator
-from channels.security.websocket import AllowedHostsOriginValidator
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-
-# We import routing here to ensure apps are loaded
+# Safe to import routing now that Django is fully initialized
 from whiteboard import routing as whiteboard_routing
 
+django_asgi_app = get_asgi_application()
+
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
-    "websocket": AuthMiddlewareStack(
-        URLRouter(
-            whiteboard_routing.websocket_urlpatterns
+    "http": django_asgi_app,
+    "websocket": AllowedHostsOriginValidator(
+        AuthMiddlewareStack(
+            URLRouter(
+                whiteboard_routing.websocket_urlpatterns
+            )
         )
     ),
 })
