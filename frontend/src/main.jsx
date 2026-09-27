@@ -23,12 +23,12 @@ const suppress = (method) => {
 // as a relative path, which happens if VITE_API_BASE_URL is missing the protocol.
 axios.interceptors.request.use(config => {
     if (config.url && !config.url.startsWith('http')) {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
         const absoluteBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
         const cleanBaseUrl = absoluteBaseUrl.endsWith('/') ? absoluteBaseUrl.slice(0, -1) : absoluteBaseUrl;
         
         // If the URL already contains the domain name but lacks the protocol
-        if (config.url.includes('hidayah-backend-zgix.onrender.com')) {
+        if (config.url.includes('onrender.com')) {
             config.url = `https://${config.url.replace(/^\/+/, '')}`;
         } else {
             // It's a purely relative path like "/api/auth/login"

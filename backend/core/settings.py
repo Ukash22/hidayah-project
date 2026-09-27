@@ -34,11 +34,12 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,hidayah-backend1.onrender.com,.onrender.com").split(",") if host.strip()]
 if DEBUG and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("*")
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://hidayah-backend1.onrender.com',
     'https://hidayah-backend-zgix.onrender.com',
     'https://hidayah-frontend.onrender.com',
     'http://localhost:5173',
@@ -51,6 +52,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    'https://hidayah-backend1.onrender.com',
     'https://hidayah-backend-zgix.onrender.com',
     'https://hidayah-frontend.onrender.com',
     'http://localhost:5173',
@@ -335,7 +337,7 @@ PAYSTACK_MOCK_MODE = os.getenv('PAYSTACK_MOCK_MODE', 'True').lower() == 'true'
 
 # Application Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://hidayah-backend-zgix.onrender.com')
+BACKEND_URL = os.getenv('BACKEND_URL', 'https://hidayah-backend1.onrender.com')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

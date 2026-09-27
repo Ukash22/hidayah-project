@@ -7,7 +7,7 @@ const getBaseUrl = () => {
     // no SameSite/Secure cross-host edge cases on reloads.
     if (import.meta.env.DEV) return '';
 
-    let url = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
+    let url = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
 
     // Ensure URL is absolute by checking for protocol
     if (url && !url.startsWith('http')) {

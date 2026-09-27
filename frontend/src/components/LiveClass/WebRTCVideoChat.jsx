@@ -24,7 +24,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     
     // WebSocket URL for signaling — include JWT token for auth
     const socketUrl = React.useMemo(() => {
-        const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
         let base;
         if (import.meta.env.DEV) {
             base = 'ws://localhost:8000';
