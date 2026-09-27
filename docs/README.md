@@ -154,7 +154,7 @@ Variables marked **Required** have no fallback — the app will not start withou
 |---|---|---|
 | `SECRET_KEY` | **Required** | Django secret key — must be a long random string. No default; `KeyError` on startup if missing. |
 | `DEBUG` | Optional | `True` for local dev, `False` for production. Defaults to `False` if not set. |
-| `ALLOWED_HOSTS` | **Required in production** | Comma-separated hostnames. Must include your Render backend domain (e.g. `hidayah-backend-zgix.onrender.com`). Defaults to `localhost,127.0.0.1` — omitting this in production causes all requests to return 400. |
+| `ALLOWED_HOSTS` | **Required in production** | Comma-separated hostnames. Must include your Render backend domain (e.g. `hidayah-backend1.onrender.com`). Defaults to `localhost,127.0.0.1` — omitting this in production causes all requests to return 400. |
 | `DATABASE_URL` | **Required** | PostgreSQL connection string |
 | `REDIS_URL` | **Required** | Redis connection string (WebSockets, cache, and Celery broker) |
 | `CORS_EXTRA_ORIGINS` | Optional | Comma-separated extra allowed origins (e.g. a staging frontend or `http://192.168.x.x:5173` for LAN device testing) |
@@ -186,7 +186,7 @@ Variables marked **Required** have no fallback — the app will not start withou
 Before every deployment, confirm these are set in the Render dashboard under **Environment**:
 
 - [ ] `SECRET_KEY` — set and non-empty
-- [ ] `ALLOWED_HOSTS` — includes `hidayah-backend-zgix.onrender.com`
+- [ ] `ALLOWED_HOSTS` — includes `hidayah-backend1.onrender.com`
 - [ ] `DEBUG` — set to `False`
 - [ ] `DATABASE_URL` — points to the Render PostgreSQL instance
 - [ ] `REDIS_URL` — points to the Render Redis instance
@@ -209,7 +209,7 @@ Defined in `render.yaml`:
 | **hidayah-celery-beat** | Background worker | Planned: Celery Beat for nightly AI pre-generation and cache warming. Not yet deployed. |
 
 Production URLs:
-- Backend: `https://hidayah-backend-zgix.onrender.com`
+- Backend: `https://hidayah-backend1.onrender.com`
 - Frontend: `https://hidayah-frontend.onrender.com`
 
 ### Celery background worker

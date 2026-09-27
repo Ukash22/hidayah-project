@@ -291,7 +291,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     // WebSocket URL Calculation — includes JWT for server-side auth
     const socketUrl = React.useMemo(() => {
-        const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
+        const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
         // Detect local dev and use ws:// for localhost, wss:// for production
         let base;
         if (import.meta.env.DEV) {

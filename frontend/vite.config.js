@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
     define: {
       // Fallback to production URL if .env is not present
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
-        env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com'
+        env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com'
       ),
       'process.env.NODE_ENV': JSON.stringify(mode),
       'global': 'window',

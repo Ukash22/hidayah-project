@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-    let url = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend-zgix.onrender.com';
+    let url = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
     if (url && !url.startsWith('http')) url = `https://${url}`;
     return url.endsWith('/') ? url.slice(0, -1) : url;
 };
