@@ -5,7 +5,7 @@ import {
     FileText, Calendar, Filter, X
 } from 'lucide-react';
 import api, { asList, getApiError } from '../../services/api';
-import { useToast } from '../../context/ToastContext';
+import { useToast, useConfirm } from '../../context/ToastContext';
 
 export default function SchemeOfWorkView({ 
     studentId = null, 
@@ -16,6 +16,7 @@ export default function SchemeOfWorkView({
     subtitle = "Weekly curriculum roadmap and progress tracker"
 }) {
     const toast = useToast();
+    const confirm = useConfirm();
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -164,7 +165,11 @@ export default function SchemeOfWorkView({
 
     // Handle Delete
     const handleDelete = async (item) => {
-        if (!window.confirm(`Delete Week ${item.week_number}: "${item.topic}"?`)) return;
+        const ok = await confirm(`Are you sure you want to delete Week ${item.week_number}: "${item.topic}"?`, {
+            danger: true,
+            confirmLabel: 'Delete Topic'
+        });
+        if (!ok) return;
         try {
             await api.delete(`/api/classes/scheme-of-work/${item.id}/`);
             setItems(prev => prev.filter(i => i.id !== item.id));
@@ -350,7 +355,7 @@ export default function SchemeOfWorkView({
                                                 item.is_completed
                                                     ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
                                                     : isCurrentFocus
-                                                        ? 'bg-blue-500 text-white animate-pulse'
+                                                        ? 'bg-blue-500 text-white shadow-sm shadow-blue-200'
                                                         : 'border-2 border-slate-200 text-slate-300'
                                             }`}>
                                                 {item.is_completed ? <Check size={18} strokeWidth={3} /> : <Circle size={10} />}
@@ -361,24 +366,24 @@ export default function SchemeOfWorkView({
                                     {/* Topic Content Body */}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                                            <span className="text-[11px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                                                 Week {item.week_number}
                                             </span>
 
                                             {item.is_completed && (
-                                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                     <CheckCircle2 size={12} /> Completed
                                                 </span>
                                             )}
 
                                             {isCurrentFocus && (
-                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1">
                                                     <Clock size={12} /> Current Focus
                                                 </span>
                                             )}
 
                                             {item.subject_name && (
-                                                <span className="text-[10px] font-medium text-slate-400">
+                                                <span className="text-[11px] font-medium text-slate-400">
                                                     • {item.subject_name}
                                                 </span>
                                             )}
@@ -409,7 +414,7 @@ export default function SchemeOfWorkView({
                                         )}
 
                                         {item.completed_at && (
-                                            <span className="text-[10px] text-slate-400 mt-2 block">
+                                            <span className="text-[11px] text-slate-400 mt-2 block">
                                                 Achieved on {new Date(item.completed_at).toLocaleDateString(undefined, {
                                                     weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
                                                 })}

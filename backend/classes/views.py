@@ -348,6 +348,31 @@ class BookingRequestView(APIView):
             preferred_start_date=preferred_start_date,
             approved=True # AUTO-APPROVE
         )
+
+        try:
+            from accounts.models import Notification
+            student_name = request.user.get_full_name() or request.user.username
+            tutor_name = tutor_profile.user.get_full_name() or tutor_profile.user.username
+            Notification.create(
+                user=tutor_profile.user,
+                title="New Class Booking",
+                message=f"{student_name} booked sessions for {subject}.",
+                link="/tutor/requests"
+            )
+            Notification.notify_admins(
+                title="New Class Booking",
+                message=f"{student_name} booked {subject} with tutor {tutor_name}.",
+                link="/admin/classes"
+            )
+            Notification.create(
+                user=request.user,
+                title="Booking Placed",
+                message=f"Your booking for {subject} with {tutor_name} has been placed.",
+                link="/student/schedule"
+            )
+        except Exception as bne:
+            logger.warning("Failed to dispatch booking notifications: %s", bne)
+
         return Response({"message": "Booking successful and automatically approved", "id": booking.id}, status=201)
 
     def get(self, request):
@@ -385,6 +410,17 @@ class BookingApprovalView(APIView):
         if 'approve' in action:
             booking.approved = True
             booking.save()
+            try:
+                from accounts.models import Notification
+                tutor_name = request.user.get_full_name() or request.user.username
+                Notification.create(
+                    user=booking.student,
+                    title="Booking Approved",
+                    message=f"Tutor {tutor_name} approved your booking for {booking.subject}.",
+                    link="/student/schedule"
+                )
+            except Exception:
+                pass
             return Response({"message": "Booking approved. Student notified."})
         elif 'reject' in action:
             rejection_reason = (request.data.get('rejection_reason') or '').strip()

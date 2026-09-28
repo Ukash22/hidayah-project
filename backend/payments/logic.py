@@ -183,6 +183,24 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
         reference=reference
     )
 
+    # Dispatch Notifications
+    try:
+        from accounts.models import Notification
+        user_display = user.get_full_name() or user.username
+        Notification.notify_admins(
+            title="New Payment Received",
+            message=f"{user_display} completed a payment of ₦{final_amount:,.2f} (Ref: {reference}).",
+            link="/admin/payments"
+        )
+        Notification.create(
+            user=user,
+            title="Payment Confirmed",
+            message=f"Your payment of ₦{final_amount:,.2f} (Ref: {reference}) was successful.",
+            link="/student/wallet" if getattr(user, 'role', '') == 'STUDENT' else "/tutor/wallet"
+        )
+    except Exception as ne:
+        logger.warning(f"Payment notification failed for {user.username}: {ne}")
+
     # 6. Update Student Admission Status & Handle Pending Bookings
     try:
         profile = StudentProfile.objects.get(user=user)

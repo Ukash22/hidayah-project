@@ -571,6 +571,22 @@ class WithdrawalRequestView(APIView):
             account_number=account_number,
             account_name=account_name
         )
+        try:
+            from accounts.models import Notification
+            tutor_display = request.user.get_full_name() or request.user.username
+            Notification.notify_admins(
+                title="New Withdrawal Request",
+                message=f"Tutor {tutor_display} requested a withdrawal of ₦{Decimal(str(amount)):,.2f} ({bank_name}).",
+                link="/admin/payments"
+            )
+            Notification.create(
+                user=request.user,
+                title="Withdrawal Requested",
+                message=f"Your withdrawal request of ₦{Decimal(str(amount)):,.2f} has been submitted for admin approval.",
+                link="/tutor/wallet"
+            )
+        except Exception as we:
+            logger.warning("Failed to dispatch withdrawal notifications: %s", we)
         return Response(WithdrawalSerializer(withdrawal).data, status=201)
 
     def get(self, request):
@@ -598,6 +614,16 @@ class AdminWithdrawalApprovalView(APIView):
             withdrawal.status = 'REJECTED'
             withdrawal.admin_notes = reason
             withdrawal.save()
+            try:
+                from accounts.models import Notification
+                Notification.create(
+                    user=withdrawal.tutor,
+                    title="Withdrawal Request Rejected",
+                    message=f"Your withdrawal of ₦{withdrawal.amount:,.2f} was rejected. Reason: {reason}",
+                    link="/tutor/wallet"
+                )
+            except Exception as rne:
+                logger.warning("Failed to notify tutor of withdrawal rejection: %s", rne)
             logger.info("Withdrawal %s rejected by admin %s: %s", withdrawal_id, request.user.id, reason)
             return Response({"message": "Withdrawal rejected", "reason": reason})
 
@@ -618,6 +644,17 @@ class AdminWithdrawalApprovalView(APIView):
             transaction_type='WITHDRAWAL',
             description=f'Withdrawal to {withdrawal.bank_name} ({withdrawal.account_number})'
         )
+
+        try:
+            from accounts.models import Notification
+            Notification.create(
+                user=withdrawal.tutor,
+                title="Withdrawal Approved",
+                message=f"Your withdrawal request of ₦{withdrawal.amount:,.2f} to {withdrawal.bank_name} has been approved and processed.",
+                link="/tutor/wallet"
+            )
+        except Exception as ane:
+            logger.warning("Failed to notify tutor of withdrawal approval: %s", ane)
 
         return Response({"message": "Withdrawal approved and processed"})
 

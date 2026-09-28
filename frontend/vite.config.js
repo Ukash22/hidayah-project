@@ -31,14 +31,23 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vendor-react':     ['react', 'react-dom', 'react-router-dom'],
-            'vendor-icons':     ['lucide-react'],
-            'vendor-animation': ['framer-motion'],
-            'vendor-utils':     ['axios'],
+            // Core framework — loaded on every page
+            'vendor-react':       ['react', 'react-dom', 'react-router-dom'],
+            // UI & animation
+            'vendor-icons':       ['lucide-react'],
+            'vendor-animation':   ['framer-motion'],
+            // Network
+            'vendor-utils':       ['axios'],
+            // Charts — only needed in dashboard pages
+            'vendor-recharts':    ['recharts'],
+            // PDF viewer — only needed in library/materials
+            'vendor-pdfjs':       ['pdfjs-dist'],
+            // Excalidraw whiteboard — very large, isolate completely
+            'vendor-excalidraw':  ['@excalidraw/excalidraw'],
           }
         }
       },
-      chunkSizeWarningLimit: 1500,
+      chunkSizeWarningLimit: 2000,
     }
   }
 })

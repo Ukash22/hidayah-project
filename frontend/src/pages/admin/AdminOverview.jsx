@@ -40,6 +40,11 @@ export default function AdminOverview() {
     const [globalSuccess, setGlobalSuccess] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [chartsMounted, setChartsMounted] = useState(false);
+
+    useEffect(() => {
+        setChartsMounted(true);
+    }, []);
 
     const fetchAll = useCallback(async () => {
         setLoading(true);
@@ -190,24 +195,26 @@ export default function AdminOverview() {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
                 {/* Demographics Pie */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 min-w-0 overflow-hidden">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Platform Demographics</h3>
-                    <div className="h-48 w-full min-w-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
-                            <PieChart>
-                                <Pie
-                                    data={[
-                                        { name: 'Students', value: allStudents.length || 1 },
-                                        { name: 'Tutors', value: tutors.length || 1 }
-                                    ]}
-                                    cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value"
-                                >
-                                    <Cell fill="#0ea5e9" />
-                                    <Cell fill="#f59e0b" />
-                                </Pie>
-                                <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                    <div className="w-full h-48 min-w-0" style={{ width: '100%', height: 192, minWidth: 0, minHeight: 180 }}>
+                        {chartsMounted && (
+                            <ResponsiveContainer width="100%" height={192} minWidth={0} minHeight={180}>
+                                <PieChart>
+                                    <Pie
+                                        data={[
+                                            { name: 'Students', value: allStudents.length || 1 },
+                                            { name: 'Tutors', value: tutors.length || 1 }
+                                        ]}
+                                        cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value"
+                                    >
+                                        <Cell fill="#0ea5e9" />
+                                        <Cell fill="#f59e0b" />
+                                    </Pie>
+                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                     <div className="flex justify-center gap-6 mt-2">
                         <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-sky-500"></div><span className="text-xs font-bold text-slate-600">Students ({allStudents.length})</span></div>
@@ -216,37 +223,41 @@ export default function AdminOverview() {
                 </div>
 
                 {/* Global Reach Chart */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 min-w-0 overflow-hidden">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">Global Footprint (Top 5)</h3>
-                    <div className="h-48 w-full min-w-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
-                            <BarChart data={countryData} layout="vertical">
-                                <XAxis type="number" hide />
-                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} width={80} />
-                                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="w-full h-48 min-w-0" style={{ width: '100%', height: 192, minWidth: 0, minHeight: 180 }}>
+                        {chartsMounted && (
+                            <ResponsiveContainer width="100%" height={192} minWidth={0} minHeight={180}>
+                                <BarChart data={countryData} layout="vertical">
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b', fontWeight: 'bold' }} width={80} />
+                                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Bar dataKey="value" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
 
                 {/* System Activity Pipeline */}
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 min-w-0 overflow-hidden">
                     <h3 className="text-xs font-bold text-slate-500 tracking-widest uppercase mb-4">System Activity Pipeline</h3>
-                    <div className="h-48 w-full min-w-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
-                            <BarChart data={[
-                                { name: 'Admissions', count: applications.length },
-                                { name: 'Bookings', count: pendingBookings.length },
-                                { name: 'Withdrawals', count: withdrawalRequests.length },
-                                { name: 'Complaints', count: allComplaints.length }
-                            ]}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} />
-                                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                    <div className="w-full h-48 min-w-0" style={{ width: '100%', height: 192, minWidth: 0, minHeight: 180 }}>
+                        {chartsMounted && (
+                            <ResponsiveContainer width="100%" height={192} minWidth={0} minHeight={180}>
+                                <BarChart data={[
+                                    { name: 'Admissions', count: applications.length },
+                                    { name: 'Bookings', count: pendingBookings.length },
+                                    { name: 'Withdrawals', count: withdrawalRequests.length },
+                                    { name: 'Complaints', count: allComplaints.length }
+                                ]}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} />
+                                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        )}
                     </div>
                 </div>
             </div>

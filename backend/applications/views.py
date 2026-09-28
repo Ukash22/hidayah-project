@@ -20,7 +20,17 @@ class ApplicationCreateView(views.APIView):
     def post(self, request):
         serializer = TrialApplicationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            app = serializer.save()
+            try:
+                from accounts.models import Notification
+                name = f"{app.first_name} {app.last_name or ''}".strip()
+                Notification.notify_admins(
+                    title="New Trial Application",
+                    message=f"{name} applied for a trial class ({app.course_interested}).",
+                    link="/admin/applications"
+                )
+            except Exception as ne:
+                logger.warning("Failed to notify admins of trial application: %s", ne)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -111,6 +121,18 @@ class ApproveApplicationView(views.APIView):
                     join_link,
                     whiteboard_link,
                 )
+
+                if tutor_user:
+                    try:
+                        from accounts.models import Notification
+                        Notification.create(
+                            user=tutor_user,
+                            title="New Trial Class Assigned",
+                            message=f"You have been assigned a trial class with {application.first_name} ({application.course_interested}) scheduled for {formatted_time}.",
+                            link=join_link or "/tutor/schedule"
+                        )
+                    except Exception as tne:
+                        logger.warning("Failed to notify assigned tutor of trial class: %s", tne)
 
             return Response({
                 "message": "Application approved.",

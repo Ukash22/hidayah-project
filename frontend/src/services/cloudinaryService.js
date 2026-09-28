@@ -48,11 +48,19 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
             params: { folder }
         });
 
+        // Check if the backend returned an error object (e.g. missing env vars)
+        if (signatureResponse.data?.error) {
+            console.warn('[Cloudinary] Backend signature error:', signatureResponse.data.error);
+            console.warn('[Cloudinary] Fix: Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Render environment dashboard.');
+            return null;
+        }
+
         const { signature, timestamp, api_key, cloud_name } = signatureResponse.data;
 
         // 2. Validate credentials — skip upload if backend .env is not configured
         if (!cloud_name || cloud_name === 'None' || !api_key || api_key === 'None') {
             console.warn(`[Cloudinary] Credentials not configured on server. Skipping upload for folder: ${folder}`);
+            console.warn('[Cloudinary] Fix: Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Render environment dashboard.');
             return null;
         }
 
@@ -78,6 +86,10 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
             response: error.response?.data,
             config: error.config
         });
+        // Specific guidance for 401: almost always means missing/wrong credentials on the backend
+        if (error.response?.status === 401) {
+            console.error('[Cloudinary] 401 Unauthorized — your CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET on the server are missing or incorrect. Set them in the Render environment dashboard and redeploy.');
+        }
         let detail = '';
         if (error.response?.status === 413) {
             detail = ": The file is too large for Cloudinary's free tier. Please compress your video/image and try again.";
