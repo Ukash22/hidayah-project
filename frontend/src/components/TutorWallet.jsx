@@ -189,7 +189,8 @@ const TutorWallet = ({ token }) => {
                         ))}
                     </div>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
+                <div style={{ width: '100%', height: 200, minWidth: 0 }}>
+                <ResponsiveContainer width="100%" height={200} minWidth={0} minHeight={160}>
                     <BarChart data={chartData} barSize={28} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                         <XAxis dataKey="month" tick={{ fontSize: 10, fontWeight: 600, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                         <YAxis
@@ -205,6 +206,7 @@ const TutorWallet = ({ token }) => {
                         <Bar dataKey="earnings" fill="#10b981" radius={[6, 6, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
+                </div>
                 {chartData.every(d => d.earnings === 0) && (
                     <p className="text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-2">
                         No completed earnings in this period yet.

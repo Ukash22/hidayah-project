@@ -263,12 +263,36 @@ class TutorViewSet(viewsets.ModelViewSet):
                 profile.interview_link = interview_link
                 profile.save()
 
+                from accounts.models import Notification
+                formatted_time = str(interview_at)
+                try:
+                    from django.utils.dateparse import parse_datetime
+                    dt = parse_datetime(str(interview_at))
+                    if dt:
+                        formatted_time = dt.strftime('%B %d, %Y at %I:%M %p')
+                except Exception:
+                    pass
+
+                Notification.create(
+                    user=profile.user,
+                    title="Recruitment Interview Scheduled",
+                    message=f"Your recruitment interview has been scheduled for {formatted_time}. Please ensure you are prepared and click the interview link to join.",
+                    link=interview_link or "/pending-approval"
+                )
+
                 run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'INTERVIEW', '', interview_link)
                 return Response({"message": "Interview scheduled", "link": interview_link})
                 
             elif action_type == 'APPROVE':
                 profile.status = 'APPROVED'
                 profile.save()
+                from accounts.models import Notification
+                Notification.create(
+                    user=profile.user,
+                    title="Application Approved!",
+                    message="Congratulations! Your application to teach at Hidayah has been approved. You may now access your tutor portal.",
+                    link="/tutor/schedule"
+                )
                 run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'APPROVE')
                 return Response({"message": "Tutor approved"})
 
@@ -277,6 +301,16 @@ class TutorViewSet(viewsets.ModelViewSet):
                 profile.status = 'REJECTED'
                 profile.rejection_reason = reason
                 profile.save()
+                from accounts.models import Notification
+                reject_msg = "Thank you for applying. After careful review, we are unable to proceed with your application at this time."
+                if reason:
+                    reject_msg += f" Note: {reason}"
+                Notification.create(
+                    user=profile.user,
+                    title="Application Update",
+                    message=reject_msg,
+                    link="/pending-approval"
+                )
                 run_async(send_tutor_email_task, profile.user.pk, profile.pk, 'REJECT', reason)
                 return Response({"message": "Tutor rejected"})
                 
@@ -307,6 +341,17 @@ class TutorViewSet(viewsets.ModelViewSet):
         try:
             profile = serializer.save()
             logger.info("Tutor profile created for %s", profile.user.username)
+            try:
+                from accounts.models import Notification
+                applicant_name = profile.user.get_full_name() or profile.user.username
+                subjects_str = profile.subjects_to_teach or 'teaching'
+                Notification.notify_admins(
+                    title="New Tutor Application",
+                    message=f"{applicant_name} submitted a tutor application for {subjects_str}.",
+                    link="/admin/recruitment"
+                )
+            except Exception as ne:
+                logger.warning("Failed to notify admins of tutor application: %s", ne)
             return Response({"message": "Tutor application submitted successfully!"}, status=201)
         except Exception:
             logger.exception("Tutor registration failed")

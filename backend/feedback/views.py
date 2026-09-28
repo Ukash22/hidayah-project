@@ -36,9 +36,18 @@ class FileComplaintView(APIView):
         )
         
         
-        # Notify user (and admin in a real scenario, but here we focus on the filer)
         send_complaint_update_email(request.user, complaint, is_new=True)
         Notification.create(request.user, "Complaint Filed", f"Your complaint regarding {subject} has been filed successfully.")
+        try:
+            filer_name = request.user.get_full_name() or request.user.username
+            Notification.notify_admins(
+                "New Complaint Filed",
+                f"{filer_name} filed a complaint regarding '{subject}'.",
+                link="/admin/complaints"
+            )
+        except Exception as ne:
+            import logging
+            logging.getLogger(__name__).warning("Failed to notify admins of complaint: %s", ne)
         return Response({
             "message": "Complaint filed successfully",
             "complaint_id": complaint.id

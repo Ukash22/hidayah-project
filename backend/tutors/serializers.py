@@ -106,7 +106,8 @@ class TutorProfileSerializer(TutorMediaFieldsMixin, serializers.ModelSerializer)
                   'qualification', 'subjects', 'subjects_to_teach', 'languages', 'intro_video', 'short_recitation', 'availabilities',
                   'availability_days', 'availability_hours',
                   'experience_years', 'rating', 'bio', 'video_url', 'video_type', 'recitation_url', 'live_class_link', 'trial_class_link',
-                  'busy_slots', 'image', 'intro_video_url', 'commission_percentage', 'wallet_balance']
+                  'busy_slots', 'image', 'intro_video_url', 'commission_percentage', 'wallet_balance',
+                  'interview_at', 'interview_link', 'rejection_reason']
 
     def update(self, instance, validated_data):
         # Handle direct-to-cloud URL fields that might be in request.data but not in validated_data

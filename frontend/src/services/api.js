@@ -71,6 +71,23 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Helper: retry an async function up to `retries` times with a delay (ms) between attempts.
+// Used to survive transient connection resets (e.g. Render.com cold-starts).
+const retryAsync = async (fn, retries = 2, delayMs = 1000) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            return await fn();
+        } catch (err) {
+            const isNetworkError = !err.response && (err.code === 'ERR_CONNECTION_RESET' || err.code === 'ERR_NETWORK' || err.message === 'Network Error');
+            if (isNetworkError && attempt < retries) {
+                await new Promise(res => setTimeout(res, delayMs));
+            } else {
+                throw err;
+            }
+        }
+    }
+};
+
 // Response interceptor for token refresh (moved from AuthContext for consistency)
 api.interceptors.response.use(
     (response) => response,
@@ -91,7 +108,10 @@ api.interceptors.response.use(
 
             try {
                 // S4: refresh comes from the httpOnly cookie, not from storage.
-                const res = await axios.post(`${getBaseUrl()}/api/auth/refresh/`, {}, { withCredentials: true });
+                // retryAsync handles ERR_CONNECTION_RESET from Render.com cold-starts.
+                const res = await retryAsync(() =>
+                    axios.post(`${getBaseUrl()}/api/auth/refresh/`, {}, { withCredentials: true })
+                );
                 const newAccess = res.data.access;
                 setAccess(newAccess);
                 api.defaults.headers.common['Authorization'] = `Bearer ${newAccess}`;

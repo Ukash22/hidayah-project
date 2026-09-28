@@ -22,8 +22,10 @@ export default function AdminRevenueChart({ financials, chartMode, onModeChange 
                     ))}
                 </div>
             </div>
-            <div className="h-[280px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+            {/* Fixed pixel height ensures ResponsiveContainer always gets a valid size,
+                even when mounted inside a hidden tab or before layout paint completes. */}
+            <div style={{ width: '100%', height: 280 }}>
+                <ResponsiveContainer width="100%" height={280} minWidth={0} minHeight={180}>
                     <BarChart data={financials?.charts?.[chartMode] || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis
