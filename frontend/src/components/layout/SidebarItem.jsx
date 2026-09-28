@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
 
-export default function SidebarItem({ to, icon, label, badge, end = false }) {
+export default function SidebarItem({ to, icon, label, badge, end = false, onClose }) {
     return (
-        <NavLink to={to} end={end} className="block">
+        <NavLink to={to} end={end} className="block" onClick={onClose}>
             {({ isActive }) => (
                 <span className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isActive

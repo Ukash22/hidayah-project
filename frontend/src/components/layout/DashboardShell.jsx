@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -9,6 +9,12 @@ export default function DashboardShell({ navGroups, role }) {
     const [isDark, setIsDark] = useState(() => localStorage.getItem('hidayah_theme') === 'dark');
     const { logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Auto-close the mobile drawer whenever the route changes
+    useEffect(() => {
+        setSidebarOpen(false);
+    }, [location.pathname]);
 
     useEffect(() => {
         localStorage.setItem('hidayah_theme', isDark ? 'dark' : 'light');
@@ -47,21 +53,28 @@ export default function DashboardShell({ navGroups, role }) {
                 />
             </aside>
 
-            {/* Mobile overlay */}
+            {/* Mobile overlay — pointer-events-none when closed so it never blocks the content */}
             <div
-                className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] md:hidden transition-all duration-300 ${sidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                aria-hidden="true"
+                className={`fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] md:hidden transition-opacity duration-300 ${
+                    sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                }`}
                 onClick={() => setSidebarOpen(false)}
             />
 
-            {/* Mobile sidebar */}
+            {/* Mobile sidebar drawer */}
             <aside
-                className={`fixed top-0 left-0 h-full w-72 bg-slate-900 z-[201] shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] md:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                className={`fixed top-0 left-0 h-full w-72 max-w-[80vw] bg-slate-900 z-[201] shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] md:hidden ${
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                }`}
+                aria-label="Navigation drawer"
             >
                 <Sidebar
                     navGroups={navGroups}
                     role={role}
                     isDark={isDark}
                     onToggleTheme={toggleTheme}
+                    onCloseSidebar={() => setSidebarOpen(false)}
                     onLogout={() => { setSidebarOpen(false); handleLogout(); }}
                 />
             </aside>

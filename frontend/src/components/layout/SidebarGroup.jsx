@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import SidebarItem from './SidebarItem';
 
-export default function SidebarGroup({ label, items, defaultOpen = true }) {
+export default function SidebarGroup({ label, items, defaultOpen = true, onClose }) {
     const [open, setOpen] = useState(defaultOpen);
 
     return (
@@ -18,7 +18,7 @@ export default function SidebarGroup({ label, items, defaultOpen = true }) {
             )}
             {open && (
                 <div className="space-y-0.5">
-                    {items.map(item => <SidebarItem key={item.to} {...item} />)}
+                    {items.map(item => <SidebarItem key={item.to} {...item} onClose={onClose} />)}
                 </div>
             )}
         </div>
