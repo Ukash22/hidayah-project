@@ -10,133 +10,141 @@ import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
 
 const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser }) => {
-    const [showControls, setShowControls] = useState(false);
+    const [showMore, setShowMore] = useState(false);
+    const moreRef = React.useRef(null);
+
+    // Close dropdown when clicking outside
+    React.useEffect(() => {
+        const handler = (e) => {
+            if (moreRef.current && !moreRef.current.contains(e.target)) {
+                setShowMore(false);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        document.addEventListener('touchstart', handler);
+        return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); };
+    }, []);
+
+    const isTutorOrAdmin = role === 'TUTOR' || role === 'ADMIN';
 
     return (
-        <div className="w-full bg-[#1e293b] text-white flex flex-col md:flex-row items-center justify-between px-4 md:px-6 py-3 md:py-4 gap-4 shadow-xl z-[1001]">
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full md:w-auto">
-                <div className="flex items-center gap-3 self-start sm:self-auto">
-                    <span className="bg-emerald-500 w-8 h-8 rounded-lg flex items-center justify-center text-xl">
-                        ✍️
-                    </span>
-                    <div className="flex flex-col">
-                        <h1 className="text-base md:text-lg font-bold tracking-tighter">
-                            Hidayah Whiteboard
-                        </h1>
-                        <span className="text-[11px] md:text-[11px] font-semibold uppercase tracking-wide text-emerald-500">Powered by Excalidraw</span>
-                    </div>
-                </div>
+        <div className="w-full bg-[#1e293b] text-white flex items-center gap-2 px-2 sm:px-4 py-2 shadow-xl z-[1001] border-b border-slate-700/60">
 
-                <nav className="flex bg-slate-800/50 p-1 rounded-2xl border border-slate-700/50 w-full sm:w-auto">
-                    <button 
-                        onClick={() => setActiveTab('my_board')}
-                        className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all ${activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
+            {/* Board Tab Switcher */}
+            <nav className="flex bg-slate-800/70 p-0.5 rounded-xl border border-slate-700/50 flex-shrink-0">
+                <button
+                    onClick={() => setActiveTab('my_board')}
+                    className={`px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                >
+                    {role === 'STUDENT' ? 'My Board' : 'Board'}
+                </button>
+                {role === 'STUDENT' && (
+                    <button
+                        onClick={() => setActiveTab('teacher_board')}
+                        className={`px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
                     >
-                        {role === 'STUDENT' ? 'My Board' : 'Tutor Board'}
+                        Teacher
                     </button>
-                    {role === 'STUDENT' && (
-                        <button 
-                            onClick={() => setActiveTab('teacher_board')}
-                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all ${activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            Teacher's Screen
-                        </button>
-                    )}
-                    {(role === 'TUTOR' || role === 'ADMIN') && (
-                        <button 
-                            onClick={() => setActiveTab('my_class')}
-                            className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 sm:py-2.5 text-[10px] md:text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all relative ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-xl' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            Student Boards
-                            {studentCount > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[10px] border-2 border-[#1e293b]">{studentCount}</span>}
-                        </button>
-                    )}
-                </nav>
-            </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-2 md:gap-4 w-full md:w-auto relative">
-                {activeTab === 'student_view' && (
-                    <div className="flex items-center gap-2 sm:gap-3 px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20 mr-2 sm:mr-4">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="text-[11px] sm:text-[11px] font-semibold uppercase tracking-wide">Coaching: {activeStudentName}</span>
-                        <button onClick={() => setActiveTab('my_class')} className="ml-1 sm:ml-2 hover:text-white text-sm font-bold">✕</button>
-                    </div>
                 )}
+                {isTutorOrAdmin && (
+                    <button
+                        onClick={() => setActiveTab('my_class')}
+                        className={`relative px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Students
+                        {studentCount > 0 && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] border border-[#1e293b] font-bold">
+                                {studentCount}
+                            </span>
+                        )}
+                    </button>
+                )}
+            </nav>
 
-                <div className="flex gap-2 items-center w-full sm:w-auto justify-end">
-                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
-                        <button 
-                            onClick={onSelectPen}
-                            className="px-2.5 py-2 sm:px-4 sm:py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-[11px] font-semibold uppercase tracking-wide rounded-xl transition-all flex items-center gap-2 border border-slate-600"
-                        >
-                            ✏️ <span className="hidden sm:inline">Pen</span>
-                        </button>
-                    )}
+            {/* Coaching badge */}
+            {activeTab === 'student_view' && (
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[10px] font-semibold flex-shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <span className="hidden sm:inline">Coaching:</span> {activeStudentName}
+                    <button onClick={() => setActiveTab('my_class')} className="ml-0.5 hover:text-white font-bold">✕</button>
+                </div>
+            )}
 
-                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
-                        <button 
-                            onClick={onSelectLaser}
-                            className="px-2.5 py-2 sm:px-4 sm:py-2.5 bg-red-900/50 hover:bg-red-800/50 text-red-200 text-[11px] font-semibold uppercase tracking-wide rounded-xl transition-all flex items-center gap-2 border border-red-500/30"
-                        >
-                            🔦 <span className="hidden sm:inline">Laser</span>
-                        </button>
-                    )}
+            {/* Spacer */}
+            <div className="flex-1" />
 
-                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
-                        <button 
-                            onClick={onClearOwnBoard}
-                            aria-label="Clear my board"
-                            className="p-2 sm:p-3 bg-red-900/20 hover:bg-red-800/30 text-red-500 rounded-xl transition-all border border-red-500/20"
-                            title="Clear My Board"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                    )}
+            {/* Quick-access: Pen + Laser (always visible for tutor/admin on my_board) */}
+            {isTutorOrAdmin && activeTab === 'my_board' && (
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={onSelectPen} title="Pen tool" className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all text-sm">✏️</button>
+                    <button onClick={onSelectLaser} title="Laser pointer" className="p-2 bg-red-900/50 hover:bg-red-800/50 text-red-200 rounded-lg transition-all text-sm border border-red-500/20">🔦</button>
+                    <button
+                        onClick={() => onPush('overwrite')}
+                        title="Push board to students"
+                        className="flex items-center gap-1 px-2.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide rounded-lg shadow-md transition-all"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span className="hidden sm:inline">Push</span>
+                    </button>
+                </div>
+            )}
 
-                    <button onClick={onDownload} aria-label="Download board as image" className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700" title="Download">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            {/* Download (always visible) */}
+            <button onClick={onDownload} title="Download board" className="flex-shrink-0 p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all border border-slate-700">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+
+            {/* ⋯ More menu — room controls (tutor/admin only) */}
+            {isTutorOrAdmin && (
+                <div className="relative flex-shrink-0" ref={moreRef}>
+                    <button
+                        onClick={() => setShowMore(v => !v)}
+                        title="More options"
+                        className={`p-2 rounded-lg transition-all border text-slate-300 ${showMore ? 'bg-slate-600 border-slate-500' : 'bg-slate-800 hover:bg-slate-700 border-slate-700'}`}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
                     </button>
 
-                    {(role === 'TUTOR' || role === 'ADMIN') && activeTab === 'my_board' && (
-                        <>
-                            <button 
-                                onClick={() => onPush('overwrite')} 
-                                className="px-3 py-2 sm:px-5 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold uppercase tracking-wide rounded-xl shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                                <span className="hidden sm:inline">Push Board</span>
-                                <span className="sm:hidden">Push</span>
-                            </button>
-                            
-                            <div className="relative">
-                                <button onClick={() => setShowControls(!showControls)} className="p-2 sm:p-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-all border border-slate-700 ml-1 sm:ml-2">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    {showMore && (
+                        <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800 z-[1002]">
+                            {activeTab === 'my_board' && (
+                                <button
+                                    onClick={() => { onClearOwnBoard(); setShowMore(false); }}
+                                    className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm font-semibold border-b border-slate-100"
+                                >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    Clear My Board
                                 </button>
-                                {showControls && (
-                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800 z-[1002]">
-                                        <button onClick={() => { onToggleLock(); setShowControls(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-bold">
-                                            {isLocked ? 'Unlock Room' : 'Lock Room'}
-                                            {isLocked && <span className="w-2 h-2 rounded-full bg-red-500"></span>}
-                                        </button>
-                                        <button onClick={() => { onToggleSlowMode(); setShowControls(false); }} className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-bold">
-                                            {isSlowMode ? 'Disable Slow Mode' : 'Enable Slow Mode'}
-                                            {isSlowMode && <span className="w-2 h-2 rounded-full bg-orange-500"></span>}
-                                        </button>
-                                        <div className="border-t border-slate-100"></div>
-                                        <button onClick={() => { onClearBoards(); setShowControls(false); }} className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm font-bold">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                            Clear All Boards
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </>
+                            )}
+                            <button
+                                onClick={() => { onToggleLock(); setShowMore(false); }}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-semibold"
+                            >
+                                <span>{isLocked ? '🔓 Unlock Room' : '🔒 Lock Room'}</span>
+                                {isLocked && <span className="w-2 h-2 rounded-full bg-red-500" />}
+                            </button>
+                            <button
+                                onClick={() => { onToggleSlowMode(); setShowMore(false); }}
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-semibold border-t border-slate-100"
+                            >
+                                <span>{isSlowMode ? '⚡ Disable Slow Mode' : '🐢 Enable Slow Mode'}</span>
+                                {isSlowMode && <span className="w-2 h-2 rounded-full bg-orange-500" />}
+                            </button>
+                            <button
+                                onClick={() => { onClearBoards(); setShowMore(false); }}
+                                className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm font-bold border-t border-slate-200"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                Clear All Boards
+                            </button>
+                        </div>
                     )}
                 </div>
-            </div>
+            )}
         </div>
     );
 };
+
 
 // ─── Page Navigation Bar ────────────────────────────────────────────────
 const PageNavBar = ({ pages, currentPageIdx, onPrev, onNext, onAdd, onGoTo }) => (

@@ -10,14 +10,14 @@ const PORTAL_LABEL = {
     PARENT: 'Parent Portal',
 };
 
-export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogout }) {
+export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogout, onCloseSidebar }) {
     const { user } = useAuth();
 
     return (
         <div className="h-full flex flex-col">
             {/* Brand */}
             <div className="p-6 border-b border-white/5">
-                <Link to="/" className="flex items-center gap-3 group">
+                <Link to="/" className="flex items-center gap-3 group" onClick={onCloseSidebar}>
                     <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                         <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
                     </div>
@@ -50,7 +50,7 @@ export default function Sidebar({ navGroups, role, isDark, onToggleTheme, onLogo
             {/* Nav */}
             <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-4 hide-scrollbar">
                 {navGroups.map((group, i) => (
-                    <SidebarGroup key={group.label || i} {...group} />
+                    <SidebarGroup key={group.label || i} {...group} onClose={onCloseSidebar} />
                 ))}
             </nav>
 
