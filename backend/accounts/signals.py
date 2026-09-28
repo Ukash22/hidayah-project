@@ -17,3 +17,18 @@ def create_user_wallet(sender, instance, created, **kwargs):
                     'enrolled_course': 'General Studies',
                 }
             )
+        elif instance.role == 'TUTOR':
+            # Ensure every tutor user always has a TutorProfile,
+            # regardless of which code path created the user.
+            from tutors.models import TutorProfile
+            TutorProfile.objects.get_or_create(
+                user=instance,
+                defaults={
+                    'status': 'APPROVED',
+                    'subjects_to_teach': '',
+                    'availability_days': '',
+                    'availability_hours': '',
+                    'experience_years': 0,
+                    'mode': 'ONLINE',
+                }
+            )

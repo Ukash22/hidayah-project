@@ -47,6 +47,22 @@ class AdminUserManagementSerializer(serializers.ModelSerializer):
                     'enrolled_course': 'General Studies',
                 }
             )
+        elif user.role == 'TUTOR':
+            # Auto-create a TutorProfile so the tutor can log in immediately
+            # and /api/tutors/me/ returns their profile instead of 404.
+            # Status is set to APPROVED since the admin is manually adding them.
+            from tutors.models import TutorProfile
+            TutorProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'status': 'APPROVED',
+                    'subjects_to_teach': '',
+                    'availability_days': '',
+                    'availability_hours': '',
+                    'experience_years': 0,
+                    'mode': 'ONLINE',
+                }
+            )
         return user
 
     def update(self, instance, validated_data):
