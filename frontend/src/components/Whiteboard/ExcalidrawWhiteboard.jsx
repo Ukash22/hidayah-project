@@ -9,7 +9,7 @@ import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
 
-const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser }) => {
+const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser, onSelectEraser, onSelectText, currentTool = 'freedraw' }) => {
     const [showMore, setShowMore] = useState(false);
     const moreRef = React.useRef(null);
 
@@ -73,19 +73,50 @@ const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activ
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Quick-access: Pen + Laser (always visible for tutor/admin on my_board) */}
-            {isTutorOrAdmin && activeTab === 'my_board' && (
-                <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={onSelectPen} title="Pen tool" className="p-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-all text-sm">✏️</button>
-                    <button onClick={onSelectLaser} title="Laser pointer" className="p-2 bg-red-900/50 hover:bg-red-800/50 text-red-200 rounded-lg transition-all text-sm border border-red-500/20">🔦</button>
-                    <button
-                        onClick={() => onPush('overwrite')}
-                        title="Push board to students"
-                        className="flex items-center gap-1 px-2.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide rounded-lg shadow-md transition-all"
+            {/* Essential Writing Tools (Pen, Eraser, Text, Laser) — always visible on my_board */}
+            {activeTab === 'my_board' && (
+                <div className="flex items-center gap-1 flex-shrink-0 bg-slate-800/80 p-0.5 rounded-xl border border-slate-700/60">
+                    <button 
+                        onClick={onSelectPen} 
+                        title="Pen (Write freely)" 
+                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'freedraw' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
                     >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        <span className="hidden sm:inline">Push</span>
+                        <span>✏️</span>
+                        <span className="text-[10px] font-bold hidden md:inline">Pen</span>
                     </button>
+                    <button 
+                        onClick={onSelectEraser} 
+                        title="Eraser" 
+                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'eraser' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
+                    >
+                        <span>🧹</span>
+                        <span className="text-[10px] font-bold hidden md:inline">Eraser</span>
+                    </button>
+                    <button 
+                        onClick={onSelectText} 
+                        title="Text Note" 
+                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'text' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
+                    >
+                        <span>🔤</span>
+                        <span className="text-[10px] font-bold hidden md:inline">Text</span>
+                    </button>
+                    <button 
+                        onClick={onSelectLaser} 
+                        title="Laser Pointer" 
+                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'laser' ? 'bg-red-600 text-white shadow-md' : 'text-red-300 hover:bg-slate-700'}`}
+                    >
+                        <span>🔦</span>
+                    </button>
+                    {isTutorOrAdmin && (
+                        <button
+                            onClick={() => onPush('overwrite')}
+                            title="Push board to students"
+                            className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide rounded-lg shadow-md transition-all ml-1"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span className="hidden sm:inline">Push</span>
+                        </button>
+                    )}
                 </div>
             )}
 

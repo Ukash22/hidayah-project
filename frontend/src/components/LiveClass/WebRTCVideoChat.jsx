@@ -16,8 +16,10 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const [messages, setMessages] = useState([]);
     const [showChat, setShowChat] = useState(false);
     const [raisedHands, setRaisedHands] = useState({});
+    const [mediaNotice, setMediaNotice] = useState(null);
     
     const localVideoRef = useRef(null);
+    const localStreamRef = useRef(null);
     const peerConnections = useRef({});
     const chatEndRef = useRef(null);
     const chatPanelRef = useRef(null);
@@ -57,58 +59,76 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         onError: (err) => console.error("⚠️ Signaling WebSocket Error:", err),
     });
 
-    // Initialize Local Media
+    // Keep local video element synced whenever localStream changes
+    useEffect(() => {
+        if (localVideoRef.current && localStream) {
+            localVideoRef.current.srcObject = localStream;
+        }
+    }, [localStream]);
+
+    // Initialize Local Media once when call is open
     useEffect(() => {
         if (!isVideoOpen) return;
+        let isMounted = true;
         
         const initMedia = async () => {
+            let stream = null;
             try {
-                console.log("🎥 Initializing Local Media...");
-                // Try to get both video and audio
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 1280, height: 720 }, 
-                    audio: true 
+                console.log("🎥 Initializing Local Media (Audio + Video)...");
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, 
+                    audio: { echoCancellation: true, noiseSuppression: true }
                 });
-                setLocalStream(stream);
-                if (localVideoRef.current) localVideoRef.current.srcObject = stream;
             } catch (err) {
-                console.warn("⚠️ Failed to get both video and audio, trying partial media...", err.name);
+                console.warn("⚠️ Full media request unavailable (" + err.name + "), checking fallbacks...");
                 
-                // Fallback sequence
+                // Fallback 1: Try audio only (common if no webcam connected)
                 try {
-                    // Try audio only
-                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    setLocalStream(audioStream);
-                    setIsVideoOff(true);
-                } catch (audioErr) {
-                    try {
-                        // Try video only
-                        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                        setLocalStream(videoStream);
-                        setIsMuted(true);
-                    } catch (videoErr) {
-                        console.error("❌ No media devices found or permission denied.", videoErr.name);
-                        // Final fallback: Create an empty stream with dummy tracks to keep the WebRTC logic happy
-                        const dummyStream = new MediaStream();
-                        setLocalStream(dummyStream);
+                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                    if (isMounted) {
                         setIsVideoOff(true);
-                        setIsMuted(true);
-                        // alert("Media Error: No camera or microphone found. You can still join the class and use the chat.");
+                        setMediaNotice("No camera detected or accessible. Joined with audio only.");
+                    }
+                } catch (audioErr) {
+                    // Fallback 2: Try video only (common if no mic connected)
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                        if (isMounted) {
+                            setIsMuted(true);
+                            setMediaNotice("No microphone detected or accessible. Joined with camera only.");
+                        }
+                    } catch (videoErr) {
+                        console.warn("⚠️ No camera/mic accessible (" + videoErr.name + "). Joined in listen/chat mode.");
+                        // Fallback 3: Empty MediaStream so user can still receive others' streams and use chat
+                        stream = new MediaStream();
+                        if (isMounted) {
+                            setIsVideoOff(true);
+                            setIsMuted(true);
+                            setMediaNotice("No camera or mic detected. You can still watch, listen, and chat.");
+                        }
                     }
                 }
             }
+
+            if (isMounted && stream) {
+                localStreamRef.current = stream;
+                setLocalStream(stream);
+            }
         };
+
         initMedia();
 
         return () => {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
+            isMounted = false;
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(track => track.stop());
+                localStreamRef.current = null;
             }
             Object.values(peerConnections.current).forEach(pc => pc.close());
             peerConnections.current = {};
             setRemoteStreams({});
         };
-    }, [isVideoOpen, readyState]); // Re-run if readyState changes to catch late joins
+    }, [isVideoOpen]); // Note: Do NOT add readyState here; readyState changes should not destroy media streams
 
     // Heartbeat & Re-join logic
     useEffect(() => {
@@ -144,10 +164,23 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     ]
                 });
                 
-                if (localStream) {
-                    localStream.getTracks().forEach(track => {
-                        pc.addTrack(track, localStream);
+                const activeStream = localStreamRef.current || localStream;
+                const hasAudio = activeStream && activeStream.getAudioTracks().length > 0;
+                const hasVideo = activeStream && activeStream.getVideoTracks().length > 0;
+
+                if (activeStream) {
+                    activeStream.getTracks().forEach(track => {
+                        pc.addTrack(track, activeStream);
                     });
+                }
+
+                // If user has no camera or microphone, add recvonly transceivers
+                // so SDP offer/answer includes media lines to receive remote audio and video
+                if (!hasAudio) {
+                    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch (e) {}
+                }
+                if (!hasVideo) {
+                    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch (e) {}
                 }
                 
                 pc.onicecandidate = (event) => {
@@ -258,17 +291,23 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
     // Media Controls
     const toggleMute = () => {
-        if (localStream) {
-            localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
-            setIsMuted(!localStream.getAudioTracks()[0].enabled);
-        }
+        const stream = localStreamRef.current || localStream;
+        if (!stream) return;
+        const audioTracks = stream.getAudioTracks();
+        if (audioTracks.length === 0) return;
+        const nextState = !audioTracks[0].enabled;
+        audioTracks.forEach(track => { track.enabled = nextState; });
+        setIsMuted(!nextState);
     };
 
     const toggleVideo = () => {
-        if (localStream) {
-            localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
-            setIsVideoOff(!localStream.getVideoTracks()[0].enabled);
-        }
+        const stream = localStreamRef.current || localStream;
+        if (!stream) return;
+        const videoTracks = stream.getVideoTracks();
+        if (videoTracks.length === 0) return;
+        const nextState = !videoTracks[0].enabled;
+        videoTracks.forEach(track => { track.enabled = nextState; });
+        setIsVideoOff(!nextState);
     };
 
     const toggleScreenShare = async () => {
@@ -276,6 +315,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             try {
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 const screenTrack = screenStream.getVideoTracks()[0];
+                if (!screenTrack) return;
                 
                 screenTrack.onended = () => {
                     stopScreenShare();
@@ -283,14 +323,17 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
                 // Replace video track for all peers
                 Object.values(peerConnections.current).forEach(pc => {
-                    const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(screenTrack);
                 });
                 
                 if (localVideoRef.current) localVideoRef.current.srcObject = screenStream;
                 setIsScreenSharing(true);
             } catch (err) {
-                console.error("Screen sharing failed", err);
+                // User cancelling the screen-share prompt triggers NotAllowedError
+                if (err.name !== 'NotAllowedError') {
+                    console.error("Screen sharing error:", err);
+                }
             }
         } else {
             stopScreenShare();
@@ -298,12 +341,15 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     };
 
     const stopScreenShare = () => {
-        const videoTrack = localStream.getVideoTracks()[0];
+        const stream = localStreamRef.current || localStream;
+        const videoTrack = stream ? stream.getVideoTracks()[0] : null;
         Object.values(peerConnections.current).forEach(pc => {
-            const sender = pc.getSenders().find(s => s.track.kind === 'video');
-            if (sender) sender.replaceTrack(videoTrack);
+            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender) sender.replaceTrack(videoTrack || null);
         });
-        if (localVideoRef.current) localVideoRef.current.srcObject = localStream;
+        if (localVideoRef.current && stream) {
+            localVideoRef.current.srcObject = stream;
+        }
         setIsScreenSharing(false);
     };
 
@@ -334,6 +380,19 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         <div className="flex flex-col h-full bg-[#0f172a] text-white">
             
             <div className="flex-1 p-3 sm:p-4 overflow-y-auto custom-scrollbar">
+                {mediaNotice && (
+                    <div className="mb-3 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs px-3 py-2 rounded-xl flex items-center justify-between gap-2 shadow-sm">
+                        <span className="flex-1">{mediaNotice}</span>
+                        <button 
+                            type="button"
+                            onClick={() => setMediaNotice(null)} 
+                            className="text-amber-400 hover:text-white text-xs px-1 font-bold"
+                            title="Dismiss"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
                 <div className={gridClasses}>
                     
                     {/* Local User */}
