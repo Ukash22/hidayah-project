@@ -60,10 +60,7 @@ services:
     staticPublishPath: "./dist"
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: hidayah-backend
-          property: host
+        value: https://hidayah-backend1.onrender.com
     routes:
       - type: rewrite
         source: "/*"
