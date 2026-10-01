@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Video } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api, { asList } from '../../services/api';
+import api, { asList, getApiError } from '../../services/api';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { StatusBadge, getLocalTime, downloadCSV } from './adminHelpers';
@@ -39,10 +39,11 @@ export default function AdminStudents() {
             setApprovedTutors(asList(tutRes.data));
         } catch (err) {
             console.error('Students fetch failed', err);
+            toast.error(getApiError(err, 'Failed to fetch students.'));
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [toast]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -135,7 +136,7 @@ export default function AdminStudents() {
             setUserForm({ username: '', email: '', password: '', role: 'STUDENT', first_name: '', last_name: '', phone: '' });
             fetchData();
         } catch (err) {
-            toast.error('Failed: ' + JSON.stringify(err.response?.data || err.message));
+            toast.error(getApiError(err, 'Failed to create student'));
         } finally {
             setSaving(false);
         }
