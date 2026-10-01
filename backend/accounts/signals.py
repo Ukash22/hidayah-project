@@ -17,18 +17,16 @@ def create_user_wallet(sender, instance, created, **kwargs):
                     'enrolled_course': 'General Studies',
                 }
             )
-        elif instance.role == 'TUTOR':
-            # Ensure every tutor user always has a TutorProfile,
-            # regardless of which code path created the user.
-            from tutors.models import TutorProfile
-            TutorProfile.objects.get_or_create(
-                user=instance,
-                defaults={
-                    'status': 'APPROVED',
-                    'subjects_to_teach': '',
-                    'availability_days': '',
-                    'availability_hours': '',
-                    'experience_years': 0,
-                    'mode': 'ONLINE',
-                }
-            )
+        # NOTE: TUTOR profile creation is intentionally NOT handled here.
+        #
+        # Admin-created tutors: AdminUserManagementSerializer.create() calls
+        #   TutorProfile.objects.get_or_create() after User.objects.create_user(),
+        #   so the profile is always provisioned for that path.
+        #
+        # Public tutor registration: TutorRegisterSerializer.create() runs
+        #   TutorProfile.objects.create() with the applicant's real submitted data
+        #   inside a transaction.atomic() block.  If this signal also created a
+        #   profile here, the serializer's create() would hit a OneToOneField
+        #   unique constraint and roll back the entire registration as HTTP 400.
+        #
+        # Result: do nothing for TUTOR users in this signal.

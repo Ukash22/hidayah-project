@@ -64,14 +64,18 @@ class AdminStudentViewSet(generics.ListAPIView):
         # Backfill profiles for any student users missing a profile
         missing = User.objects.filter(role='STUDENT', student_profile__isnull=True)
         for u in missing:
-            StudentProfile.objects.get_or_create(
-                user=u,
-                defaults={
-                    'approval_status': 'APPROVED',
-                    'payment_status': 'UNPAID',
-                    'enrolled_course': 'General Studies',
-                }
-            )
+            try:
+                StudentProfile.objects.get_or_create(
+                    user=u,
+                    defaults={
+                        'approval_status': 'APPROVED',
+                        'payment_status': 'UNPAID',
+                        'enrolled_course': 'General Studies',
+                    }
+                )
+            except Exception as err:
+                import logging
+                logging.getLogger(__name__).warning("Error backfilling profile for user %s: %s", u.id, err)
 
         qs = _optimized_student_qs()
         status_param = self.request.query_params.get('status')

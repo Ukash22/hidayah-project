@@ -50,9 +50,14 @@ class StudentProfile(models.Model):
     # Financials
     @property
     def wallet_balance(self):
-        from payments.models import Wallet
-        wallet, _ = Wallet.objects.get_or_create(user=self.user)
-        return wallet.balance
+        try:
+            if not getattr(self, 'user_id', None):
+                return 0.00
+            from payments.models import Wallet
+            wallet, _ = Wallet.objects.get_or_create(user=self.user)
+            return wallet.balance
+        except Exception:
+            return 0.00
     hours_per_week = models.DecimalField(max_digits=5, decimal_places=2, default=1.0, help_text="Hours per class session")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Total calculated registration/first month fee")
     payment_reference = models.CharField(max_length=255, unique=True, null=True, blank=True, help_text="Unique payment reference for initial fee")
@@ -109,16 +114,27 @@ class Enrollment(models.Model):
 
     @property
     def weekly_rate(self):
-        # Use days_per_week * hours_per_week, which should be updated based on schedule in the view
-        return self.hourly_rate * self.hours_per_week * self.days_per_week
+        try:
+            rate = self.hourly_rate if self.hourly_rate is not None else 0
+            hours = self.hours_per_week if self.hours_per_week is not None else 0
+            days = self.days_per_week if self.days_per_week is not None else 0
+            return rate * hours * days
+        except Exception:
+            return 0
 
     @property
     def monthly_rate(self):
-        return self.weekly_rate * 4
+        try:
+            return self.weekly_rate * 4
+        except Exception:
+            return 0
 
     @property
     def termly_rate(self):
-        return self.monthly_rate * 3
+        try:
+            return self.monthly_rate * 3
+        except Exception:
+            return 0
 
     def __str__(self):
         return f"{self.student.user.username} - {self.subject.name} ({self.status})"

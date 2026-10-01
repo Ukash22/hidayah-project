@@ -49,14 +49,21 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         if not hasattr(obj, '_upcoming_sessions_cache'):
             from classes.models import ScheduledSession
             from django.utils import timezone
-            obj._upcoming_sessions_cache = list(
-                ScheduledSession.objects.filter(
-                    student=obj.student.user,
-                    subject=obj.subject,
-                    status='PENDING',
-                    scheduled_at__gte=timezone.now()
-                ).order_by('scheduled_at')[:5]
-            )
+            try:
+                student_user = obj.student.user if obj.student else None
+                if not student_user:
+                    obj._upcoming_sessions_cache = []
+                else:
+                    obj._upcoming_sessions_cache = list(
+                        ScheduledSession.objects.filter(
+                            student=student_user,
+                            subject=obj.subject,
+                            status='PENDING',
+                            scheduled_at__gte=timezone.now()
+                        ).order_by('scheduled_at')[:5]
+                    )
+            except Exception:
+                obj._upcoming_sessions_cache = []
         return obj._upcoming_sessions_cache
 
     def get_upcoming_sessions_count(self, obj):
@@ -64,7 +71,8 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     def get_tutor_name(self, obj):
         if obj.tutor:
-            return f"{obj.tutor.first_name} {obj.tutor.last_name}"
+            name = f"{obj.tutor.first_name} {obj.tutor.last_name}".strip()
+            return name or obj.tutor.username
         return "TBA"
 
     tutor_class_link = serializers.SerializerMethodField()
@@ -84,7 +92,7 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             'scheduled_at': s.scheduled_at,
             'meeting_link': s.meeting_link or tutor_link,
             'whiteboard_link': s.whiteboard_link or tutor_link,
-            'is_started': s.is_started
+            'is_started': getattr(s, 'is_started', False)
         } for s in sessions]
 
 class StudentProfileSerializer(serializers.ModelSerializer):
@@ -126,7 +134,10 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         if obj.admission_letter:
             from django.conf import settings
             try:
-                return f"{settings.BACKEND_URL}{obj.admission_letter.url}"
+                url = str(obj.admission_letter.url or '')
+                if url.startswith('http://') or url.startswith('https://'):
+                    return url
+                return f"{settings.BACKEND_URL}{url}"
             except Exception:
                 # Storage backend unavailable/misconfigured — degrade to no link
                 return None
@@ -135,22 +146,31 @@ class StudentProfileSerializer(serializers.ModelSerializer):
     def get_assigned_tutor_details(self, obj):
         if obj.assigned_tutor and hasattr(obj.assigned_tutor, 'tutor_profile'):
             tp = obj.assigned_tutor.tutor_profile
+            # Extract subjects as string; never pass ManyRelatedManager directly into JSON serializer
+            subjects_val = tp.subjects_to_teach
+            if not subjects_val and hasattr(tp, 'subjects'):
+                try:
+                    subjects_val = ", ".join(s.name for s in tp.subjects.all())
+                except Exception:
+                    subjects_val = ""
+            full_name = f"{obj.assigned_tutor.first_name} {obj.assigned_tutor.last_name}".strip()
             return {
                 'id': tp.id,
                 'user_id': obj.assigned_tutor.id,
-                'full_name': f"{obj.assigned_tutor.first_name} {obj.assigned_tutor.last_name}",
+                'full_name': full_name or obj.assigned_tutor.username,
                 'image': resolve_media_url(tp.image),
-                'bio': tp.bio,
+                'bio': tp.bio or "",
                 'rating': 5.0, # Placeholder
-                'subjects': tp.subjects_to_teach or tp.subjects or "",
+                'subjects': str(subjects_val or ""),
                 'live_class_link': tp.live_class_link
             }
         return None
 
     def get_preferred_tutor_details(self, obj):
         if obj.preferred_tutor and hasattr(obj.preferred_tutor, 'tutor_profile'):
+            full_name = f"{obj.preferred_tutor.first_name} {obj.preferred_tutor.last_name}".strip()
             return {
                 'id': obj.preferred_tutor.id,
-                'full_name': f"{obj.preferred_tutor.first_name} {obj.preferred_tutor.last_name}",
+                'full_name': full_name or obj.preferred_tutor.username,
             }
         return None
