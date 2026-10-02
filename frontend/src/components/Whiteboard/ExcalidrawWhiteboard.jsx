@@ -313,6 +313,22 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const thumbDebounceRef = useRef(null);
     const pendingElementsRef = useRef(null);
 
+    // Trailing-edge sync & version tracking to guarantee the last stroke is always sent and avoid duplicate renders
+    const syncTrailingTimerRef  = useRef(null);
+    const latestElementsRef     = useRef(null);
+    const lastSentVersionRef    = useRef(0);
+    const lastSentLengthRef     = useRef(0);
+    const lastAppliedVersionRef = useRef(0);
+    const lastAppliedLengthRef  = useRef(0);
+
+    // Cleanup pending timers on unmount
+    useEffect(() => {
+        return () => {
+            if (syncTrailingTimerRef.current) clearTimeout(syncTrailingTimerRef.current);
+            if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
+        };
+    }, []);
+
     // Timer logic
     useEffect(() => {
         let interval;
@@ -347,7 +363,15 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     useEffect(() => {
         if (teacherViewAPIRef.current && teacherBoardSnapshot && role === 'STUDENT') {
-            teacherViewAPIRef.current.updateScene({ elements: teacherBoardSnapshot });
+            let totalVersion = 0;
+            for (let i = 0; i < teacherBoardSnapshot.length; i++) {
+                totalVersion += (teacherBoardSnapshot[i].version || 0) + (teacherBoardSnapshot[i].versionNonce || 0);
+            }
+            if (totalVersion !== lastAppliedVersionRef.current || teacherBoardSnapshot.length !== lastAppliedLengthRef.current) {
+                lastAppliedVersionRef.current = totalVersion;
+                lastAppliedLengthRef.current = teacherBoardSnapshot.length;
+                teacherViewAPIRef.current.updateScene({ elements: teacherBoardSnapshot });
+            }
         }
     }, [teacherBoardSnapshot, role]);
 
@@ -484,29 +508,65 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         }, 1500); // 1.5 s debounce — thumbnail is low-priority
     }, []); // stable reference
 
+    const broadcastTeacherSnapshot = useCallback((elements) => {
+        if (!elements || readyStateRef.current !== ReadyState.OPEN) return;
+
+        // Fast change detection using element versions & count to skip redundant broadcasts
+        let totalVersion = 0;
+        for (let i = 0; i < elements.length; i++) {
+            totalVersion += (elements[i].version || 0) + (elements[i].versionNonce || 0);
+        }
+
+        if (totalVersion === lastSentVersionRef.current && elements.length === lastSentLengthRef.current) {
+            return;
+        }
+
+        lastSentVersionRef.current = totalVersion;
+        lastSentLengthRef.current = elements.length;
+        lastSyncTime.current = Date.now();
+
+        sendMessageRef.current?.(JSON.stringify({
+            type: 'draw',
+            is_teacher_snapshot: true,
+            snapshot: elements
+        }));
+    }, []);
+
     const handleBoardChange = useCallback((elements) => {
         const api = excalidrawAPIRef.current;
         if (!api || readyStateRef.current !== ReadyState.OPEN) return;
 
+        latestElementsRef.current = elements;
         const now = Date.now();
-        // 120 ms for tutor/normal, 5 000 ms in student slow-mode
-        const throttleMs = (roleRef.current === 'STUDENT' && isSlowModeRef.current) ? 5000 : 120;
-        if (now - lastSyncTime.current < throttleMs) return;
-        lastSyncTime.current = now;
+        // 400 ms throttle provides smooth live updates without multiplying WebSocket & render load
+        // 5 000 ms in student slow-mode
+        const throttleMs = (roleRef.current === 'STUDENT' && isSlowModeRef.current) ? 5000 : 400;
+        const elapsed = now - lastSyncTime.current;
 
         if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
-            // Broadcast full snapshot synchronously — lightweight, no SVG render
-            sendMessageRef.current?.(JSON.stringify({
-                type: 'draw',
-                is_teacher_snapshot: true,
-                snapshot: elements
-            }));
+            if (elapsed >= throttleMs) {
+                if (syncTrailingTimerRef.current) {
+                    clearTimeout(syncTrailingTimerRef.current);
+                    syncTrailingTimerRef.current = null;
+                }
+                broadcastTeacherSnapshot(elements);
+            } else {
+                // Trailing-edge guarantee: schedule send for remainder of throttle window
+                // so the final stroke made inside the cooldown window is ALWAYS sent!
+                if (!syncTrailingTimerRef.current) {
+                    const delay = Math.max(throttleMs - elapsed, 50);
+                    syncTrailingTimerRef.current = setTimeout(() => {
+                        broadcastTeacherSnapshot(latestElementsRef.current);
+                        syncTrailingTimerRef.current = null;
+                    }, delay);
+                }
+            }
         } else if (roleRef.current === 'STUDENT') {
-            // Store the elements and kick off the debounced thumbnail export
+            // Store elements and kick off the debounced thumbnail export
             pendingElementsRef.current = elements;
             scheduleThumbnailExport();
         }
-    }, [scheduleThumbnailExport]); // stable — scheduleThumbnailExport is also stable
+    }, [broadcastTeacherSnapshot, scheduleThumbnailExport]);
 
     const handleSelectPen = useCallback(() => {
         excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
