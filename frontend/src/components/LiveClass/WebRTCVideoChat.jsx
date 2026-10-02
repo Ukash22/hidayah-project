@@ -5,6 +5,8 @@ import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
 
 const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'classroom' }) => {
+    // isCallEnded = user explicitly clicked Leave; distinct from panel being hidden
+    const [isCallEnded, setIsCallEnded] = useState(false);
     const { user } = useAuth();
     
     // Media State
@@ -66,9 +68,9 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         }
     }, [localStream]);
 
-    // Initialize Local Media once when call is open
+    // Initialize Local Media once on mount — NOT gated by isVideoOpen.
+    // The component is always mounted so audio/video must start immediately.
     useEffect(() => {
-        if (!isVideoOpen) return;
         let isMounted = true;
         
         const initMedia = async () => {
@@ -128,9 +130,9 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             peerConnections.current = {};
             setRemoteStreams({});
         };
-    }, [isVideoOpen]); // Note: Do NOT add readyState here; readyState changes should not destroy media streams
+    }, []); // Run once on mount — component is always mounted
 
-    // Heartbeat & Re-join logic
+    // Heartbeat & Re-join logic — fires when WS connects and stream is ready
     useEffect(() => {
         if (readyState === ReadyState.OPEN && localStream) {
             // Ensure we are joined
@@ -140,7 +142,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
     // Handle Signaling Messages
     useEffect(() => {
-        if (!lastMessage || !isVideoOpen) return;
+        if (!lastMessage) return;   // always handle messages even when video panel hidden
         
         try {
             const data = JSON.parse(lastMessage.data);
@@ -370,7 +372,46 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         }, 5000);
     };
 
-    if (!isVideoOpen) return null;
+    // Call-ended screen — shown when user clicks "Leave"
+    const handleLeaveCall = () => {
+        // Stop all local media tracks
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current = null;
+        }
+        // Close all peer connections
+        Object.values(peerConnections.current).forEach(pc => pc.close());
+        peerConnections.current = {};
+        setRemoteStreams({});
+        setLocalStream(null);
+        setIsCallEnded(true);
+        // Notify parent (e.g. switch mobile view back to whiteboard)
+        setIsVideoOpen(false);
+    };
+
+    if (isCallEnded) {
+        return (
+            <div className="flex flex-col h-full bg-[#0f172a] items-center justify-center gap-6 text-white">
+                <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center border-2 border-red-500/30">
+                    <PhoneOff size={32} className="text-red-400" />
+                </div>
+                <div className="text-center">
+                    <h3 className="text-lg font-bold uppercase tracking-widest mb-1">You left the call</h3>
+                    <p className="text-slate-500 text-xs uppercase tracking-wide">The whiteboard session is still active</p>
+                </div>
+                <button
+                    onClick={() => { setIsCallEnded(false); setIsVideoOpen(true); }}
+                    className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-600/20"
+                >
+                    Rejoin Call
+                </button>
+            </div>
+        );
+    }
+
+    // NOTE: We no longer do `if (!isVideoOpen) return null` — the component
+    // stays mounted at all times so the WebRTC connection & audio stay live
+    // when the user switches to the whiteboard (like WhatsApp / Zoom).
 
     const galleryGridCls = "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3";
     const classroomGridCls = "flex flex-col gap-3";
@@ -534,7 +575,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 <div className="w-px h-8 bg-slate-800" />
 
                 <button 
-                    onClick={() => setIsVideoOpen(false)} 
+                    onClick={handleLeaveCall} 
                     className="group w-16 sm:w-24 h-11 sm:h-14 rounded-xl flex flex-col items-center justify-center bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white transition-all active:scale-90 border border-red-500/20"
                     title="Leave Call"
                 >

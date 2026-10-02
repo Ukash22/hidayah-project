@@ -288,11 +288,30 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [studentReaction, setStudentReaction] = useState(null);
     const lastSyncTime = useRef(0);
     const [teacherViewAPI, setTeacherViewAPI] = useState(null);
+    const teacherViewAPIRef = useRef(null);
     const [showMathTools, setShowMathTools] = useState(false);
     const [showLibrary, setShowLibrary] = useState(false);
     const [showExamPanel, setShowExamPanel] = useState(false);
     const [examTimer, setExamTimer] = useState(0);
     const [isExamActive, setIsExamActive] = useState(false);
+
+    // ── Stable refs for values used inside draw hot-path ─────────────────
+    // Using refs avoids re-creating handleBoardChange on every render,
+    // which would cause Excalidraw to re-attach onChange and shake the canvas.
+    const roleRef        = useRef(role);
+    const isSlowModeRef  = useRef(false);
+    const readyStateRef  = useRef(ReadyState.UNINSTANTIATED);
+    const excalidrawAPIRef = useRef(null);
+    const sendMessageRef = useRef(null);
+    const userNameRef    = useRef(userName);
+
+    useEffect(() => { roleRef.current = role; },        [role]);
+    useEffect(() => { isSlowModeRef.current = isSlowMode; }, [isSlowMode]);
+    useEffect(() => { userNameRef.current = userName; },  [userName]);
+
+    // Thumbnail export debounce — heavy SVG work runs off the draw hot-path
+    const thumbDebounceRef = useRef(null);
+    const pendingElementsRef = useRef(null);
 
     // Timer logic
     useEffect(() => {
@@ -323,10 +342,14 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     // Sync teacher board view for students
     useEffect(() => {
-        if (teacherViewAPI && teacherBoardSnapshot && role === 'STUDENT') {
-            teacherViewAPI.updateScene({ elements: teacherBoardSnapshot });
+        teacherViewAPIRef.current = teacherViewAPI;
+    }, [teacherViewAPI]);
+
+    useEffect(() => {
+        if (teacherViewAPIRef.current && teacherBoardSnapshot && role === 'STUDENT') {
+            teacherViewAPIRef.current.updateScene({ elements: teacherBoardSnapshot });
         }
-    }, [teacherViewAPI, teacherBoardSnapshot, role]);
+    }, [teacherBoardSnapshot, role]);
 
     // WebSocket URL Calculation — includes JWT for server-side auth
     const socketUrl = React.useMemo(() => {
@@ -358,37 +381,43 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         onError: (e) => console.error("❌ Board WS Error:", e),
     });
 
+    // Keep refs in sync with live values so the draw callback never goes stale
+    useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
+    useEffect(() => { readyStateRef.current = readyState; },   [readyState]);
+
     // Handle WebSocket Messages
+    // NOTE: excalidrawAPI is intentionally accessed via ref so this effect
+    // does NOT re-register every time the API object is replaced by Excalidraw.
     useEffect(() => {
         if (!lastMessage) return;
         try {
             const data = JSON.parse(lastMessage.data);
+            const api = excalidrawAPIRef.current;
             
             if (data.type === 'send_command' || data.type === 'command') {
                 const action = data.action || data.data?.action;
                 const payload = data.data || data;
 
-                if (action === 'push_board' && role === 'STUDENT' && excalidrawAPI) {
-                    excalidrawAPI.updateScene({ elements: payload.snapshot });
-                } else if (action === 'clear_boards' && role === 'STUDENT' && excalidrawAPI) {
-                    excalidrawAPI.updateScene({ elements: [] });
+                if (action === 'push_board' && roleRef.current === 'STUDENT' && api) {
+                    api.updateScene({ elements: payload.snapshot });
+                } else if (action === 'clear_boards' && roleRef.current === 'STUDENT' && api) {
+                    api.updateScene({ elements: [] });
                 } else if (action === 'lock_room') {
                     setIsLocked(payload.locked);
                 } else if (action === 'slow_mode') {
                     setIsSlowMode(payload.enabled);
-                } else if (action === 'reaction' && role === 'STUDENT') {
-                    // Only show if targeted to me or general
-                    if (!payload.targetId || payload.targetId === userName) {
+                } else if (action === 'reaction' && roleRef.current === 'STUDENT') {
+                    if (!payload.targetId || payload.targetId === userNameRef.current) {
                         setStudentReaction(payload.emoji);
                         setTimeout(() => setStudentReaction(null), 3000);
                     }
                 } else if (action === 'assign_exam') {
                     setExamTimer(payload.duration * 60);
                     setIsExamActive(true);
-                    if (role === 'STUDENT' && excalidrawAPI) {
-                        excalidrawAPI.updateScene({ elements: payload.snapshot });
+                    if (roleRef.current === 'STUDENT' && api) {
+                        api.updateScene({ elements: payload.snapshot });
                         toast.warning(`Exam started! You have ${payload.duration} minutes.`);
-                    } else if (role === 'TUTOR' || role === 'ADMIN') {
+                    } else if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
                         setActiveTab('my_class');
                     }
                 }
@@ -396,7 +425,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             
             if (data.type === 'send_draw' || data.type === 'draw') {
                 const payload = data.data || data;
-                if (payload.is_thumbnail && (role === 'TUTOR' || role === 'ADMIN')) {
+                if (payload.is_thumbnail && (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN')) {
                     setStudentThumbnails(prev => ({
                         ...prev,
                         [payload.clientId]: {
@@ -408,76 +437,105 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     }));
                 }
                 
-                if (payload.is_teacher_snapshot && role === 'STUDENT') {
+                if (payload.is_teacher_snapshot && roleRef.current === 'STUDENT') {
                     setTeacherBoardSnapshot(payload.snapshot);
                 }
             }
         } catch (e) { console.error("WS Message Error:", e); }
-    }, [lastMessage, excalidrawAPI, role, userName]);
+    // Only lastMessage triggers re-run; role/api read from refs to avoid re-subscribing
+    }, [lastMessage]);
 
-    // Throttled sync handler
-    const handleBoardChange = async (elements) => {
-        if (!excalidrawAPI || readyState !== ReadyState.OPEN) return;
-        
+    // ── Optimised board sync ──────────────────────────────────────────────
+    //
+    // KEY FIXES for shaking / delay:
+    //   1. useCallback with EMPTY deps — function reference never changes, so
+    //      Excalidraw never re-attaches onChange (which caused the shake).
+    //   2. All volatile values (role, readyState, isSlowMode) are read from
+    //      refs, not closures, so no stale data and no extra re-renders.
+    //   3. Tutor sync at 120 ms (was 800 ms) for near-real-time feel.
+    //   4. exportToSvg (heavy!) is moved to a 1 500 ms debounced idle task
+    //      so it never blocks a drawing stroke.
+    //
+    const scheduleThumbnailExport = useCallback(() => {
+        // Debounce: cancel any pending export and schedule a new one
+        if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
+        thumbDebounceRef.current = setTimeout(async () => {
+            const api = excalidrawAPIRef.current;
+            const elements = pendingElementsRef.current;
+            if (!api || !elements || elements.length === 0) return;
+            if (readyStateRef.current !== ReadyState.OPEN) return;
+            try {
+                const svgElement = await exportToSvg({
+                    elements,
+                    appState: api.getAppState(),
+                    files: api.getFiles()
+                });
+                if (sendMessageRef.current) {
+                    sendMessageRef.current(JSON.stringify({
+                        type: 'draw',
+                        is_thumbnail: true,
+                        clientId: userNameRef.current,
+                        name: userNameRef.current || 'Student',
+                        svg: svgElement.outerHTML,
+                        snapshot: elements
+                    }));
+                }
+            } catch (_e) { /* ignore */ }
+        }, 1500); // 1.5 s debounce — thumbnail is low-priority
+    }, []); // stable reference
+
+    const handleBoardChange = useCallback((elements) => {
+        const api = excalidrawAPIRef.current;
+        if (!api || readyStateRef.current !== ReadyState.OPEN) return;
+
         const now = Date.now();
-        const throttleTime = (role === 'STUDENT' && isSlowMode) ? 5000 : 800; // Faster sync for tutor/non-slow students
-        
-        if (now - lastSyncTime.current < throttleTime) return;
+        // 120 ms for tutor/normal, 5 000 ms in student slow-mode
+        const throttleMs = (roleRef.current === 'STUDENT' && isSlowModeRef.current) ? 5000 : 120;
+        if (now - lastSyncTime.current < throttleMs) return;
         lastSyncTime.current = now;
 
-        if (role === 'TUTOR' || role === 'ADMIN') {
-            // Broadcast full state for teacher board
-            sendMessage(JSON.stringify({
+        if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
+            // Broadcast full snapshot synchronously — lightweight, no SVG render
+            sendMessageRef.current?.(JSON.stringify({
                 type: 'draw',
                 is_teacher_snapshot: true,
                 snapshot: elements
             }));
-        } else if (role === 'STUDENT') {
-            // Send thumbnail/snapshot to teacher
-            try {
-                const svgElement = await exportToSvg({
-                    elements,
-                    appState: excalidrawAPI.getAppState(),
-                    files: excalidrawAPI.getFiles()
-                });
-                sendMessage(JSON.stringify({
-                    type: 'draw',
-                    is_thumbnail: true,
-                    clientId: userName,
-                    name: userName || 'Student',
-                    svg: svgElement.outerHTML,
-                    snapshot: elements
-                }));
-            } catch (_e) { /* ignore */ }
+        } else if (roleRef.current === 'STUDENT') {
+            // Store the elements and kick off the debounced thumbnail export
+            pendingElementsRef.current = elements;
+            scheduleThumbnailExport();
         }
-    };
+    }, [scheduleThumbnailExport]); // stable — scheduleThumbnailExport is also stable
 
-    const handleSelectPen = () => {
-        if (excalidrawAPI) {
-            excalidrawAPI.setActiveTool({ type: 'freedraw' });
-        }
-    };
+    const handleSelectPen = useCallback(() => {
+        excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
+    }, []);
 
-    const handleSelectLaser = () => {
-        if (excalidrawAPI) {
-            excalidrawAPI.setActiveTool({ type: 'laser' });
-        }
-    };
+    const handleSelectLaser = useCallback(() => {
+        excalidrawAPIRef.current?.setActiveTool({ type: 'laser' });
+    }, []);
 
-    // Auto-select Pen tool for tutors on mount
+    const handleSelectEraser = useCallback(() => {
+        excalidrawAPIRef.current?.setActiveTool({ type: 'eraser' });
+    }, []);
+
+    const handleSelectText = useCallback(() => {
+        excalidrawAPIRef.current?.setActiveTool({ type: 'text' });
+    }, []);
+
+    // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {
-        if (excalidrawAPI && (role === 'TUTOR' || role === 'ADMIN')) {
-            setTimeout(() => {
-                excalidrawAPI.updateScene({ 
-                    appState: { 
-                        currentItemStrokeWidth: 1,
-                        currentItemRoughness: 0
-                    } 
-                });
-                excalidrawAPI.setActiveTool({ type: 'freedraw' });
-            }, 800);
-        }
-    }, [excalidrawAPI, role]);
+        if (!excalidrawAPIRef.current) return;
+        if (role !== 'TUTOR' && role !== 'ADMIN') return;
+        const t = setTimeout(() => {
+            excalidrawAPIRef.current?.updateScene({
+                appState: { currentItemStrokeWidth: 1, currentItemRoughness: 0 }
+            });
+            excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
+        }, 400);
+        return () => clearTimeout(t);
+    }, [role]); // only fire when role changes (i.e. once on mount)
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -551,6 +609,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 isSlowMode={isSlowMode}
                 onSelectPen={handleSelectPen}
                 onSelectLaser={handleSelectLaser}
+                onSelectEraser={handleSelectEraser}
+                onSelectText={handleSelectText}
                 onToggleLock={() => {
                     const next = !isLocked;
                     setIsLocked(next);
@@ -595,75 +655,17 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
                 <div className="flex-1 flex relative overflow-hidden">
 
-                {/* Floating Toolbar (Jamboard Style) */}
-                {(activeTab === 'my_board' || activeTab === 'student_view') && (
-                    <div className="absolute left-1/2 bottom-4 -translate-x-1/2 md:left-4 md:bottom-auto md:top-1/2 md:-translate-y-1/2 md:translate-x-0 z-[1000] pointer-events-none w-auto">
-                        <div className="flex flex-row md:flex-col gap-1 md:gap-2 bg-white/95 backdrop-blur-2xl p-1.5 md:p-2 rounded-2xl md:rounded-3xl shadow-2xl border border-white/50 pointer-events-auto transition-all hover:scale-102 md:hover:scale-105 max-w-[95vw] overflow-x-auto md:overflow-visible">
-                            {[
-                                { id: 'selection', icon: '🖱️', label: 'Select' },
-                                { id: 'freedraw', icon: '✏️', label: 'Pen' },
-                                { id: 'eraser', icon: '🧹', label: 'Eraser' },
-                                { id: 'text', icon: '🔤', label: 'Text' },
-                                { id: 'rectangle', icon: '🟦', label: 'Square' },
-                                { id: 'ellipse', icon: '⭕', label: 'Circle' },
-                                { id: 'arrow', icon: '➡️', label: 'Arrow' },
-                                { id: 'laser', icon: '🔦', label: 'Laser' },
-                            ].map((tool) => (
-                                <button
-                                    key={tool.id}
-                                    onClick={() => excalidrawAPI?.setActiveTool({ type: tool.id })}
-                                    className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl hover:bg-emerald-50 hover:text-emerald-600 transition-all text-base md:text-lg relative group/tool"
-                                    title={tool.label}
-                                >
-                                    {tool.icon}
-                                    <span className="absolute bottom-full mb-2 md:bottom-auto md:left-full md:ml-4 px-3 py-1 bg-slate-900 text-white text-[11px] font-semibold uppercase rounded-lg opacity-0 group-hover/tool:opacity-100 pointer-events-none transition-all whitespace-nowrap z-[1001]">
-                                        {tool.label}
-                                    </span>
-                                </button>
-                            ))}
-                            <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
-                            <button
-                                onClick={() => setShowMathTools(!showMathTools)}
-                                className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showMathTools ? 'bg-indigo-100 text-indigo-600 shadow-inner' : 'hover:bg-indigo-50 hover:text-indigo-600'}`}
-                                title="Math Tools"
-                            >
-                                🧮
-                            </button>
-                            <button
-                                onClick={() => setShowLibrary(!showLibrary)}
-                                className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showLibrary ? 'bg-teal-100 text-teal-600 shadow-inner' : 'hover:bg-teal-50 hover:text-teal-600'}`}
-                                title="Library & Pages"
-                            >
-                                📚
-                            </button>
-                            {(role === 'TUTOR' || role === 'ADMIN') && (
-                                <button
-                                    onClick={() => setShowExamPanel(!showExamPanel)}
-                                    className={`w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl transition-all text-base md:text-lg relative group/tool ${showExamPanel ? 'bg-rose-100 text-rose-600 shadow-inner' : 'hover:bg-rose-50 hover:text-rose-600'}`}
-                                    title="Assign Exam"
-                                >
-                                    📝
-                                </button>
-                            )}
-                            <div className="border-l md:border-t md:border-l-0 border-slate-100 mx-1 md:my-1"></div>
-                            <button
-                                onClick={async () => {
-                                    if (await confirm('Clear board?', { confirmLabel: 'Clear', danger: true })) excalidrawAPI?.updateScene({ elements: [] });
-                                }}
-                                className="w-8 h-8 md:w-10 md:h-10 flex-shrink-0 flex items-center justify-center rounded-lg md:rounded-xl hover:bg-red-50 text-red-500 transition-all text-base md:text-lg"
-                                title="Clear All"
-                            >
-                                🗑️
-                            </button>
-                        </div>
-                    </div>
-                )}
+                {/* Floating Toolbar removed — tools available in Excalidraw's native toolbar and the header bar above */}
 
                 {/* Main Drawing Area */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
                     <Excalidraw 
                         name="hidayah_live_board"
-                        excalidrawAPI={(api) => setExcalidrawAPI(api)} 
+                        excalidrawAPI={(api) => {
+                            // Write to both state (for JSX deps) and ref (for hot-path callbacks)
+                            setExcalidrawAPI(api);
+                            excalidrawAPIRef.current = api;
+                        }} 
                         onChange={handleBoardChange}
                         viewModeEnabled={false}
                         initialData={{

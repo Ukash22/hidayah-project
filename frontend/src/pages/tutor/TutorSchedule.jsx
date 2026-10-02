@@ -271,18 +271,20 @@ export default function TutorSchedule() {
                             >Report</button>
                             <button
                                 onClick={() => {
+                                    const sId = typeof session.student === 'object' ? session.student?.id : (session.student || session.student_id);
                                     setSchemeTarget({
-                                        studentId: session.student,
-                                        subjectId: session.subject,
+                                        studentId: sId,
+                                        batchId: null,
+                                        subjectId: session.subject_id || null,
                                         title: `Scheme of Work — ${session.student_name}`,
                                         subtitle: `Curriculum tracking & topic checklist for ${session.student_name}`
                                     });
                                     setSchemeModalOpen(true);
                                 }}
-                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
+                                className="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Scheme 📋</button>
                             <button
-                                onClick={() => { setSelectedStudentForAssign(session.student_data || { id: session.student, full_name: session.student_name }); setShowAssignmentModal(true); }}
+                                onClick={() => { setSelectedStudentForAssign(session.student_data || { id: session.student || session.student_id, full_name: session.student_name }); setShowAssignmentModal(true); }}
                                 className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-6 py-4 rounded-2xl font-semibold uppercase text-[11px] tracking-wide transition-all shadow-sm whitespace-nowrap"
                             >Assign</button>
                             {session.status !== 'COMPLETED' ? (
@@ -321,11 +323,11 @@ export default function TutorSchedule() {
                 <div className="space-y-4 mb-16">
                     {batches.map(batch => (
                         <div key={batch.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg shadow-sm">
-                            <div
-                                className="flex items-center justify-between p-5 cursor-pointer"
-                                onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
-                            >
-                                <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-between p-5">
+                                <div
+                                    className="flex items-center gap-4 cursor-pointer flex-1"
+                                    onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
+                                >
                                     <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
                                         <Users size={18} className="text-emerald-600" />
                                     </div>
@@ -334,7 +336,32 @@ export default function TutorSchedule() {
                                         <p className="text-[11px] text-slate-400 font-semibold">{batch.subject_name || 'All subjects'} · {batch.student_count} student{batch.student_count !== 1 ? 's' : ''}</p>
                                     </div>
                                 </div>
-                                {expandedBatch === batch.id ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSchemeTarget({
+                                                studentId: null,
+                                                batchId: batch.id,
+                                                subjectId: batch.subject || null,
+                                                title: `Scheme of Work — ${batch.name}`,
+                                                subtitle: `Curriculum roadmap & syllabus checklist for ${batch.name}`
+                                            });
+                                            setSchemeModalOpen(true);
+                                        }}
+                                        className="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-3.5 py-2 rounded-xl font-semibold uppercase text-[10px] tracking-wide transition-all shadow-sm flex items-center gap-1.5"
+                                    >
+                                        <span>Scheme 📋</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedBatch(expandedBatch === batch.id ? null : batch.id)}
+                                        className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                                    >
+                                        {expandedBatch === batch.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    </button>
+                                </div>
                             </div>
 
                             {expandedBatch === batch.id && (
