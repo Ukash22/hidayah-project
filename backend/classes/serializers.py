@@ -74,10 +74,10 @@ class BatchSerializer(serializers.ModelSerializer):
 
 
 class SchemeOfWorkSerializer(serializers.ModelSerializer):
-    tutor_name = serializers.CharField(source='tutor.get_full_name', read_only=True)
-    student_name = serializers.CharField(source='student.get_full_name', read_only=True, default=None)
-    subject_name = serializers.CharField(source='subject.name', read_only=True, default=None)
-    batch_name = serializers.CharField(source='batch.name', read_only=True, default=None)
+    tutor_name = serializers.SerializerMethodField()
+    student_name = serializers.SerializerMethodField()
+    subject_name = serializers.SerializerMethodField()
+    batch_name = serializers.SerializerMethodField()
 
     class Meta:
         from .models import SchemeOfWork
@@ -90,3 +90,19 @@ class SchemeOfWorkSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['tutor', 'completed_at', 'created_at', 'updated_at']
+
+    def get_tutor_name(self, obj):
+        if not obj.tutor:
+            return None
+        return obj.tutor.get_full_name() or obj.tutor.username
+
+    def get_student_name(self, obj):
+        if not obj.student:
+            return None
+        return obj.student.get_full_name() or obj.student.username
+
+    def get_subject_name(self, obj):
+        return obj.subject.name if obj.subject else None
+
+    def get_batch_name(self, obj):
+        return obj.batch.name if obj.batch else None

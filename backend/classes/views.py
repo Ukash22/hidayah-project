@@ -585,14 +585,27 @@ class UserSessionListView(APIView):
             return (sched_at - timedelta(minutes=10)) <= now <= (end_at + timedelta(minutes=10))
 
         for s in regular_sessions:
+            student_full_name = s.student.get_full_name() if s.student else ''
+            student_email = s.student.email if s.student else ''
+            subject_name = s.subject.name if s.subject else (getattr(s, 'course_interested', None) or 'General')
             combined.append({
                 'id': f"reg_{s.id}",
                 'db_id': s.id,
                 'type': 'REGULAR',
-                'student_name': s.student.get_full_name(),
+                'student': s.student.id if s.student else None,
+                'student_id': s.student.id if s.student else None,
+                'student_name': student_full_name,
+                'student_email': student_email,
+                'student_data': {'id': s.student.id, 'full_name': student_full_name, 'email': student_email} if s.student else None,
+                'tutor': s.tutor.id if s.tutor else None,
+                'tutor_id': s.tutor.id if s.tutor else None,
                 'tutor_name': s.tutor.get_full_name() if s.tutor else 'Unassigned',
-                'subject': s.subject.name if s.subject else 'General',
-                'course': s.subject.name if s.subject else 'General',
+                'subject_id': s.subject.id if s.subject else None,
+                'subject': subject_name,
+                'subject_name': subject_name,
+                'course': subject_name,
+                'course_interested': subject_name,
+                'batch_id': getattr(s, 'batch_id', None),
                 'scheduled_at': s.scheduled_at,
                 'duration': s.duration,
                 'status': s.status,
@@ -773,6 +786,11 @@ class SchemeOfWorkView(APIView):
                 return Response(SchemeOfWorkSerializer(scheme).data)
             if scheme.batch and scheme.batch.students.filter(pk=user.pk).exists():
                 return Response(SchemeOfWorkSerializer(scheme).data)
+            if role == 'PARENT':
+                if scheme.student and hasattr(scheme.student, 'student_profile') and scheme.student.student_profile.parent == user:
+                    return Response(SchemeOfWorkSerializer(scheme).data)
+                if scheme.batch and scheme.batch.students.filter(student_profile__parent=user).exists():
+                    return Response(SchemeOfWorkSerializer(scheme).data)
             return Response({'error': 'Access denied'}, status=403)
 
         qs = SchemeOfWork.objects.select_related('tutor', 'student', 'batch', 'subject').all()
@@ -782,20 +800,28 @@ class SchemeOfWorkView(APIView):
         elif role == 'STUDENT':
             from django.db.models import Q
             qs = qs.filter(Q(student=user) | Q(batch__students=user)).distinct()
+        elif role == 'PARENT':
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(student__student_profile__parent=user) | 
+                Q(batch__students__student_profile__parent=user)
+            ).distinct()
         elif role != 'ADMIN' and not user.is_staff:
             return Response([], status=200)
 
         student_id = request.query_params.get('student_id')
-        if student_id:
-            qs = qs.filter(student_id=student_id)
+        if student_id and str(student_id).isdigit():
+            from django.db.models import Q
+            s_id = int(student_id)
+            qs = qs.filter(Q(student_id=s_id) | Q(batch__students__id=s_id)).distinct()
 
         batch_id = request.query_params.get('batch_id')
-        if batch_id:
-            qs = qs.filter(batch_id=batch_id)
+        if batch_id and str(batch_id).isdigit():
+            qs = qs.filter(batch_id=int(batch_id))
 
         subject_id = request.query_params.get('subject_id')
-        if subject_id:
-            qs = qs.filter(subject_id=subject_id)
+        if subject_id and str(subject_id).isdigit():
+            qs = qs.filter(subject_id=int(subject_id))
 
         serializer = SchemeOfWorkSerializer(qs, many=True)
         return Response(serializer.data)
@@ -807,10 +833,19 @@ class SchemeOfWorkView(APIView):
             return Response({'error': 'Only tutors and admins can create scheme of work items'}, status=403)
 
         from .serializers import SchemeOfWorkSerializer
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
         data = request.data.copy()
+
+        tutor_obj = user
+        if (role == 'ADMIN' or user.is_staff) and data.get('tutor'):
+            custom_tutor = User.objects.filter(id=data.get('tutor')).first()
+            if custom_tutor:
+                tutor_obj = custom_tutor
+
         serializer = SchemeOfWorkSerializer(data=data)
         if serializer.is_valid():
-            scheme = serializer.save(tutor=user if role == 'TUTOR' else serializer.validated_data.get('tutor', user))
+            scheme = serializer.save(tutor=tutor_obj)
             return Response(SchemeOfWorkSerializer(scheme).data, status=201)
         return Response(serializer.errors, status=400)
 
@@ -829,6 +864,9 @@ class SchemeOfWorkView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=400)
+
+    def patch(self, request, pk=None):
+        return self.put(request, pk)
 
     def delete(self, request, pk=None):
         user = request.user

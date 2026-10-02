@@ -16,15 +16,18 @@
 **Migration:** `backend/classes/migrations/0014_schemeofwork.py`
 **Frontend:** `frontend/src/components/SchemeOfWork/`, `TutorSchedule.jsx`, `StudentProgress.jsx`
 
-### What was added
-- New `SchemeOfWork` database model (tutor, title, description, week_number, is_completed)
-- API endpoints: GET / POST / PATCH / DELETE at `/api/classes/scheme-of-work/`
-- **Tutor side:** Green Scheme button on every session card opens a modal where tutors can:
-  - Add weekly topics
-  - Tick topics as Complete (green) or Incomplete (grey)
-  - See a progress bar showing completion percentage
-  - Delete topics
-- **Student side:** "My Scheme of Work" section on the Progress page (read-only view)
+### What was added & improved
+- New `SchemeOfWork` database model (tutor, student, batch, subject, week_number, topic, learning_objectives, is_completed, tutor_notes)
+- API endpoints: GET / POST / PUT / PATCH / DELETE at `/api/classes/scheme-of-work/`
+- Full batch-inclusive student filtering (`Q(student_id=id) | Q(batch__students__id=id)`)
+- Safe DRF Serializer with username fallbacks
+- **Tutor side:** Green Scheme button on every regular session card and study batch card opens modal:
+  - Add / edit / delete weekly topics with subject selection dropdown
+  - Interactive complete/incomplete toggle with optimistic UI updates
+  - Dynamic curriculum coverage progress bar & stats (Total, Achieved, Remaining)
+- **Student side:** "My Scheme of Work" section on the Progress page with subject tabs & search
+- **Parent side:** "Scheme of Work" section integrated into `ParentChildDetail` page for complete transparency
+- **Rich features:** Subject tabs filter, keyword search, dark mode across all components, Escape/backdrop click dismiss
 
 ---
 

@@ -5,6 +5,7 @@ import api, { asList, getApiError } from '../../services/api';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard, FetchError } from '../../components/ui';
 import { useToast } from '../../context/ToastContext';
+import SchemeOfWorkView from '../../components/SchemeOfWork/SchemeOfWorkView';
 
 function FundWalletModal({ isOpen, onClose, childName, childId, onSuccess }) {
     const toast = useToast();
@@ -262,6 +263,16 @@ export default function ParentChildDetail() {
                         </table>
                     </div>
                 )}
+            </div>
+
+            {/* Scheme of Work / Syllabus Tracking */}
+            <div className="mb-8">
+                <SchemeOfWorkView
+                    studentId={childId}
+                    isTutor={false}
+                    title={`${child?.full_name || 'Child'}'s Scheme of Work`}
+                    subtitle="Track weekly curriculum progress and syllabus topics covered by tutors"
+                />
             </div>
 
             {/* Transactions table */}
