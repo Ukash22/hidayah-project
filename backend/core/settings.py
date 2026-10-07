@@ -83,8 +83,8 @@ CORS_ALLOW_CREDENTIALS = True
 # exemption). Override via env only for unusual setups, e.g. testing from a
 # LAN IP over plain http: REFRESH_COOKIE_SECURE=False REFRESH_COOKIE_SAMESITE=Lax
 REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'hidayah_refresh')
-REFRESH_COOKIE_SECURE = os.getenv('REFRESH_COOKIE_SECURE', 'True').lower() == 'true'
-REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', 'None')
+REFRESH_COOKIE_SECURE = os.getenv('REFRESH_COOKIE_SECURE', 'False' if DEBUG else 'True').lower() == 'true'
+REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', 'Lax' if DEBUG else 'None')
 
 if DEBUG:
     # Local dev: plain HTTP, no proxy — explicit safe defaults so admin cookies work
@@ -426,7 +426,7 @@ LOGGING = {
     },
     'loggers': {
         'payments': {'level': 'DEBUG'},
-        'django.request': {'level': 'WARNING'},
+        'django.request': {'level': 'ERROR'},
     },
 }
 

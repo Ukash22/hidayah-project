@@ -187,8 +187,11 @@ class LoginView(APIView):
         description='Sets the refresh token as an httpOnly cookie; the body contains only the access token.',
     )
     def post(self, request):
-        username_or_email = request.data.get('username')
+        username_or_email = (request.data.get('username') or '').strip()
         password = request.data.get('password')
+
+        if not username_or_email or not password:
+            return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Try authenticating with username
         user = authenticate(username=username_or_email, password=password)
