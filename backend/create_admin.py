@@ -29,7 +29,7 @@ if not User.objects.filter(username=username).exists():
         role='ADMIN',
         is_staff=True,
         is_superuser=True,
-        is_active=True,
+        is_active=True,  # Safe: this is a brand-new account
     )
     print("Superuser created successfully.")
 else:
@@ -39,7 +39,10 @@ else:
     user.role = 'ADMIN'
     user.is_superuser = True
     user.is_staff = True
-    user.is_active = True
+    # NOTE: is_active is intentionally NOT set here.
+    # A deliberately disabled admin must stay disabled across deployments.
+    # Re-enable manually via Django shell or the admin UI if needed.
     user.save()
     print("Superuser updated successfully.")
+
 

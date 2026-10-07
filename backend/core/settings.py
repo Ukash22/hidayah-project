@@ -111,8 +111,13 @@ REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'hidayah_refresh')
 REFRESH_COOKIE_SECURE = os.getenv('REFRESH_COOKIE_SECURE', 'False' if DEBUG else 'True').lower() == 'true'
 REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', 'Lax' if DEBUG else 'None')
 
-# Render sits behind an HTTPS reverse proxy (forwarding header HTTP_X_FORWARDED_PROTO)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# Django session engine — use database-backed sessions so admin login persists
+# across Daphne workers. This is the default but made explicit for clarity.
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'hidayah_sessionid'  # Custom name avoids clash with other Django apps
+SESSION_COOKIE_AGE = 86400 * 7  # 7 days
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 if DEBUG:
     # Local dev: plain HTTP, no proxy — explicit safe defaults so admin cookies work
@@ -121,7 +126,12 @@ if DEBUG:
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
 else:
-    # Production: Render HTTPS cookies & security
+    # Production: Render sits behind an HTTPS reverse proxy.
+    # SECURE_PROXY_SSL_HEADER tells Django to trust X-Forwarded-Proto so it
+    # recognises requests as HTTPS. DO NOT set SECURE_SSL_REDIRECT — Render
+    # already enforces HTTPS at the edge; enabling it with Daphne/ASGI causes
+    # an infinite redirect loop because Daphne receives plain HTTP internally.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'Lax'
@@ -131,8 +141,8 @@ else:
     SECURE_HSTS_SECONDS = 31536000  # 1 year
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
-    SECURE_SSL_REDIRECT = True
-    X_FRAME_OPTIONS = 'DENY'
+    # SECURE_SSL_REDIRECT intentionally omitted — see note above
+    X_FRAME_OPTIONS = 'SAMEORIGIN'  # DENY breaks Django admin iframes
 
 # Frontend URL for payment redirects and email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173' if DEBUG else 'https://hidayah-frontend.onrender.com')
