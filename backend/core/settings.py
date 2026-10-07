@@ -230,6 +230,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "core.wsgi.application"
 ASGI_APPLICATION = "core.asgi.application"
 
+# asgiref thread-pool size for sync views (Django admin, DRF views, etc.).
+# Default is min(32, cpu_count+4) which is often too small on Render's free tier
+# (1 vCPU). Raising it prevents CancelledError when the event loop can't find
+# a free thread quickly enough to hand off a sync Django view.
+ASGI_THREADS = int(os.getenv('ASGI_THREADS', '10'))
+
 # Channels Configuration
 CHANNEL_LAYERS = {
     "default": {
@@ -286,11 +292,19 @@ DATABASES = {
             'DATABASE_URL',
             f"postgresql://{os.getenv('DB_USER', 'hidayah_user')}:{os.getenv('DB_PASSWORD', 'hidayah_pass')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'hidayah')}"
         ),
-        conn_max_age=0, # Changed from 600 to 0 to prevent stale connections on Render
+        # conn_max_age > 0 lets each ASGI worker thread reuse its DB connection.
+        # With 0, every request opens+closes a connection; the open handshake
+        # latency can push the sync thread past the async timeout (CancelledError).
+        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')),
         ssl_require=os.getenv('RENDER', 'False').lower() == 'true' or not DEBUG,
-        disable_server_side_cursors=True # Added for better compatibility with poolers
+        disable_server_side_cursors=True  # Required for PgBouncer / Render poolers
     )
 }
+DATABASES['default'].setdefault('OPTIONS', {})
+# Hard limit on how long a DB connect attempt can block the sync thread.
+# Without this, a slow DB handshake hangs the thread until the event loop
+# cancels the outer async task — producing CancelledError in the Render logs.
+DATABASES['default']['OPTIONS']['connect_timeout'] = int(os.getenv('DB_CONNECT_TIMEOUT', '10'))
 
 
 # Password validation
