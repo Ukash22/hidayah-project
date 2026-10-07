@@ -36,7 +36,12 @@ DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
 
-# Always ensure production Render domains are allowed
+# Render host environment variable injection
+render_external_hostname = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if render_external_hostname and render_external_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(render_external_hostname)
+
+# Always ensure production Render domains are allowed (.onrender.com wildcard allows all subdomains)
 for _host in ['hidayah-backend1.onrender.com', '.onrender.com']:
     if _host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_host)
@@ -45,6 +50,7 @@ if DEBUG and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("*")
 
 CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
     'https://hidayah-backend1.onrender.com',
     'https://hidayah-backend-zgix.onrender.com',
     'https://hidayah-frontend.onrender.com',
@@ -56,6 +62,25 @@ CSRF_TRUSTED_ORIGINS = [
     'capacitor://localhost',
     'http://localhost',
 ]
+
+# Add dynamic Render origins if available
+if render_external_hostname:
+    _render_origin = f"https://{render_external_hostname}"
+    if _render_origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_render_origin)
+
+render_external_url = os.getenv("RENDER_EXTERNAL_URL")
+if render_external_url:
+    _cleaned_render_url = render_external_url.rstrip('/')
+    if _cleaned_render_url not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(_cleaned_render_url)
+
+# Allow extra CSRF origins via environment variable
+if os.getenv("CSRF_TRUSTED_ORIGINS"):
+    for _csrf_origin in os.getenv("CSRF_TRUSTED_ORIGINS").split(","):
+        _csrf_origin = _csrf_origin.strip()
+        if _csrf_origin and _csrf_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_csrf_origin)
 
 CORS_ALLOWED_ORIGINS = [
     'https://hidayah-backend1.onrender.com',
@@ -86,6 +111,9 @@ REFRESH_COOKIE_NAME = os.getenv('REFRESH_COOKIE_NAME', 'hidayah_refresh')
 REFRESH_COOKIE_SECURE = os.getenv('REFRESH_COOKIE_SECURE', 'False' if DEBUG else 'True').lower() == 'true'
 REFRESH_COOKIE_SAMESITE = os.getenv('REFRESH_COOKIE_SAMESITE', 'Lax' if DEBUG else 'None')
 
+# Render sits behind an HTTPS reverse proxy (forwarding header HTTP_X_FORWARDED_PROTO)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 if DEBUG:
     # Local dev: plain HTTP, no proxy — explicit safe defaults so admin cookies work
     CSRF_COOKIE_SECURE = False
@@ -93,10 +121,11 @@ if DEBUG:
     CSRF_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SAMESITE = 'Lax'
 else:
-    # Production: Render sits behind an HTTPS proxy
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    # Production: Render HTTPS cookies & security
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_HSTS_SECONDS = 31536000  # 1 year
@@ -104,7 +133,7 @@ else:
     SECURE_HSTS_PRELOAD = True
     SECURE_SSL_REDIRECT = True
     X_FRAME_OPTIONS = 'DENY'
- 
+
 # Frontend URL for payment redirects and email links
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173' if DEBUG else 'https://hidayah-frontend.onrender.com')
 

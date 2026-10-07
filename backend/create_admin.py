@@ -26,7 +26,10 @@ if not User.objects.filter(username=username).exists():
         username=username,
         email=email,
         password=password,
-        role='ADMIN'
+        role='ADMIN',
+        is_staff=True,
+        is_superuser=True,
+        is_active=True,
     )
     print("Superuser created successfully.")
 else:
@@ -36,5 +39,7 @@ else:
     user.role = 'ADMIN'
     user.is_superuser = True
     user.is_staff = True
+    user.is_active = True
     user.save()
     print("Superuser updated successfully.")
+
