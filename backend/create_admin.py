@@ -20,8 +20,13 @@ if not password:
     print("ADMIN_PASSWORD not set - skipping admin creation/update.")
     raise SystemExit(0)
 
-if not User.objects.filter(username=username).exists():
-    print(f"Creating superuser {username}...")
+# Look for an existing admin user by username or email (case-insensitive)
+user = User.objects.filter(username__iexact=username).first()
+if not user and email:
+    user = User.objects.filter(email__iexact=email).first()
+
+if not user:
+    print(f"Creating superuser {username} ({email})...")
     User.objects.create_superuser(
         username=username,
         email=email,
@@ -29,20 +34,20 @@ if not User.objects.filter(username=username).exists():
         role='ADMIN',
         is_staff=True,
         is_superuser=True,
-        is_active=True,  # Safe: this is a brand-new account
+        is_active=True,
     )
-    print("Superuser created successfully.")
+    print(f"Superuser {username} created successfully.")
 else:
-    print(f"Superuser {username} already exists. Updating password/role...")
-    user = User.objects.get(username=username)
+    print(f"Superuser {user.username} found. Updating credentials, email, and active status...")
+    user.username = username
+    if email:
+        user.email = email
     user.set_password(password)
     user.role = 'ADMIN'
     user.is_superuser = True
     user.is_staff = True
-    # NOTE: is_active is intentionally NOT set here.
-    # A deliberately disabled admin must stay disabled across deployments.
-    # Re-enable manually via Django shell or the admin UI if needed.
+    user.is_active = True
     user.save()
-    print("Superuser updated successfully.")
+    print(f"Superuser {username} updated successfully.")
 
 

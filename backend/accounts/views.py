@@ -193,16 +193,21 @@ class LoginView(APIView):
         if not username_or_email or not password:
             return Response({'error': 'Username and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Try authenticating with username
+        # 1. Direct authentication with provided username/email
         user = authenticate(username=username_or_email, password=password)
 
-        # If that fails, try authenticating with email
-        if not user and '@' in username_or_email:
-            try:
-                user_obj = User.objects.get(email__iexact=username_or_email)
-                user = authenticate(username=user_obj.username, password=password)
-            except User.DoesNotExist:
-                pass
+        # 2. If direct auth failed (e.g. case difference on Postgres, or email used)
+        if not user:
+            candidate = None
+            if '@' in username_or_email:
+                candidate = User.objects.filter(email__iexact=username_or_email).first()
+            if not candidate:
+                candidate = User.objects.filter(username__iexact=username_or_email).first()
+
+            if candidate and candidate.check_password(password):
+                if not candidate.is_active:
+                    return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
+                user = candidate
 
         if user:
             if not user.is_active:
