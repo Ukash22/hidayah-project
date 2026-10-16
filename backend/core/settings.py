@@ -395,7 +395,11 @@ PAYSTACK_MOCK_MODE = os.getenv('PAYSTACK_MOCK_MODE', 'True').lower() == 'true'
 
 # Application Configuration
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
-BACKEND_URL = os.getenv('BACKEND_URL', 'https://hidayah-backend1.onrender.com')
+BACKEND_URL = (
+    (os.getenv('BACKEND_URL') or '').strip()
+    or (os.getenv('RENDER_EXTERNAL_URL') or '').strip()
+    or 'https://hidayah-backend1.onrender.com'
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

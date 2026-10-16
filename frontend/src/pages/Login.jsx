@@ -22,7 +22,8 @@ const Login = () => {
         setError('');
         setLoading(true);
         try {
-            const data = await login(formData.username, formData.password);
+            const username = (formData.username || '').trim();
+            const data = await login(username, formData.password);
             const userRole = (data.user?.role || '').toUpperCase();
 
             // Redirect based on role or staff status
@@ -60,7 +61,7 @@ const Login = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label htmlFor="login_username" className="block text-[11px] font-semibold uppercase tracking-wide mb-2 text-primary ml-1">Username</label>
+                            <label htmlFor="login_username" className="block text-[11px] font-semibold uppercase tracking-wide mb-2 text-primary ml-1">Username or Email</label>
                             <input
                                 type="text"
                                 name="username"
@@ -68,7 +69,10 @@ const Login = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 required
-                                placeholder="Enter your username"
+                                autoCapitalize="none"
+                                autoCorrect="off"
+                                spellCheck="false"
+                                placeholder="Enter your username or email"
                                 className="w-full px-5 py-3.5 rounded-2xl border-2 border-slate-50 bg-slate-50 focus:bg-white focus:border-primary/30 outline-none transition-all font-bold text-slate-700"
                             />
                         </div>
