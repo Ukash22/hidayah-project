@@ -22,6 +22,12 @@ services:
         value: "True"
       - key: DEBUG
         value: "False"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_EMAIL
+        value: admin@hidayah.com
+      - key: ADMIN_PASSWORD
+        value: admin1234..,,
 
   # Celery Background Worker (uncomment to enable async task processing)
   # Requires a paid Render plan (~$7/month for Starter).
