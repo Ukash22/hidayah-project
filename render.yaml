@@ -1,7 +1,7 @@
 services:
   # Backend Service
   - type: web
-    name: hidayah-backend
+    name: hidayah-backend1
     env: python
     rootDir: backend
     buildCommand: "./build.sh"
@@ -27,7 +27,7 @@ services:
       - key: ADMIN_EMAIL
         value: admin@hidayah.com
       - key: ADMIN_PASSWORD
-        value: admin1234..,,
+        value: "admin1234..,,Hidayah"
 
   # Celery Background Worker (uncomment to enable async task processing)
   # Requires a paid Render plan (~$7/month for Starter).
