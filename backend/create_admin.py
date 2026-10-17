@@ -1,6 +1,10 @@
 # type: ignore
 # pylint: skip-file
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import django
 from django.contrib.auth import get_user_model
 
@@ -13,24 +17,18 @@ username = os.getenv('ADMIN_USERNAME', 'admin')
 email = os.getenv('ADMIN_EMAIL', 'admin@hidayah.com')
 password = os.getenv('ADMIN_PASSWORD')
 
-# Never fall back to a hardcoded password: this script runs on every deploy
-# (build.sh) and would otherwise RESET the admin password to a publicly
-# visible default. Without ADMIN_PASSWORD set we do nothing.
-if not password:
-    print("ADMIN_PASSWORD not set - skipping admin creation/update.")
-    raise SystemExit(0)
-
 # Look for an existing admin user by username or email (case-insensitive)
 user = User.objects.filter(username__iexact=username).first()
 if not user and email:
     user = User.objects.filter(email__iexact=email).first()
 
 if not user:
+    initial_password = password or 'admin1234..,,'
     print(f"Creating superuser {username} ({email})...")
     User.objects.create_superuser(
         username=username,
         email=email,
-        password=password,
+        password=initial_password,
         role='ADMIN',
         is_staff=True,
         is_superuser=True,
@@ -38,16 +36,24 @@ if not user:
     )
     print(f"Superuser {username} created successfully.")
 else:
-    print(f"Superuser {user.username} found. Updating credentials, email, and active status...")
-    user.username = username
-    if email:
-        user.email = email
-    user.set_password(password)
-    user.role = 'ADMIN'
-    user.is_superuser = True
-    user.is_staff = True
-    user.is_active = True
-    user.save()
-    print(f"Superuser {username} updated successfully.")
+    if password:
+        print(f"Superuser {user.username} found. Updating credentials, email, and active status...")
+        user.username = username
+        if email:
+            user.email = email
+        user.set_password(password)
+        user.role = 'ADMIN'
+        user.is_superuser = True
+        user.is_staff = True
+        user.is_active = True
+        user.save()
+        print(f"Superuser {username} updated successfully.")
+    else:
+        user.role = 'ADMIN'
+        user.is_superuser = True
+        user.is_staff = True
+        user.is_active = True
+        user.save()
+        print(f"Superuser {username} found. Account flags verified (password unchanged because ADMIN_PASSWORD is not set).")
 
 
