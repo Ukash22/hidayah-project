@@ -286,10 +286,13 @@ DATABASES = {
             'DATABASE_URL',
             f"postgresql://{os.getenv('DB_USER', 'hidayah_user')}:{os.getenv('DB_PASSWORD', 'hidayah_pass')}@{os.getenv('DB_HOST', 'localhost')}:{os.getenv('DB_PORT', '5432')}/{os.getenv('DB_NAME', 'hidayah')}"
         ),
-        # conn_max_age > 0 lets each ASGI worker thread reuse its DB connection.
-        # With 0, every request opens+closes a connection; the open handshake
-        # latency can push the sync thread past the async timeout (CancelledError).
-        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '60')),
+        # conn_max_age: On Render's free-tier PostgreSQL, the connection limit is
+        # very low (~25 slots total). With Daphne's async worker threads each holding
+        # a persistent connection for 60s, all slots get exhausted quickly, causing
+        # FATAL: remaining connection slots are reserved for roles with the SUPERUSER attribute.
+        # Default to 0 (close after each request) so free-tier slots are never exhausted.
+        # Override with DB_CONN_MAX_AGE=30 only if you have a paid DB plan with more connections.
+        conn_max_age=int(os.getenv('DB_CONN_MAX_AGE', '0')),
         ssl_require=os.getenv('RENDER', 'False').lower() == 'true' or not DEBUG,
         disable_server_side_cursors=True  # Required for PgBouncer / Render poolers
     )
