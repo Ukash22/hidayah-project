@@ -9,7 +9,11 @@ from django.http import HttpResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 def health_check(request):
-    return HttpResponse("Backend is running properly.")
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    admin_user = User.objects.filter(username__iexact='admin').first() or User.objects.filter(role='ADMIN').first()
+    status_str = f"role={admin_user.role}, staff={admin_user.is_staff}, superuser={admin_user.is_superuser}" if admin_user else "not_found"
+    return HttpResponse(f"Backend is running properly. Admin: {status_str}")
 
 def favicon_view(request):
     return HttpResponse(status=204)
