@@ -14,11 +14,12 @@ def health_check(request):
     User = get_user_model()
     try:
         admin_user = User.objects.filter(username__iexact='admin').first() or User.objects.filter(role='ADMIN').first()
-        m_applied = MigrationRecorder.Migration.objects.filter(app='accounts', name='0006_promote_admin_user').exists()
+        m0006 = MigrationRecorder.Migration.objects.filter(app='accounts', name='0006_promote_admin_user').exists()
+        m0007 = MigrationRecorder.Migration.objects.filter(app='accounts', name='0007_reset_admin_password').exists()
         if admin_user:
-            status_str = f"id={admin_user.id}, user={admin_user.username}, email={admin_user.email}, m0006={m_applied}"
+            status_str = f"id={admin_user.id}, user={admin_user.username}, email={admin_user.email}, m0006={m0006}, m0007={m0007}"
         else:
-            status_str = f"not_found, m0006={m_applied}"
+            status_str = f"not_found, m0006={m0006}, m0007={m0007}"
     except Exception as e:
         status_str = f"error: {e}"
     return HttpResponse(f"Backend is running properly. Admin: {status_str}")
