@@ -10,10 +10,17 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 def health_check(request):
     from django.contrib.auth import get_user_model
-    User = get_user_model()
     from django.db.migrations.recorder import MigrationRecorder
-    m_applied = MigrationRecorder.Migration.objects.filter(app='accounts', name='0006_promote_admin_user').exists()
-    status_str = f"id={admin_user.id}, user={admin_user.username}, email={admin_user.email}, m0006={m_applied}" if admin_user else "not_found"
+    User = get_user_model()
+    try:
+        admin_user = User.objects.filter(username__iexact='admin').first() or User.objects.filter(role='ADMIN').first()
+        m_applied = MigrationRecorder.Migration.objects.filter(app='accounts', name='0006_promote_admin_user').exists()
+        if admin_user:
+            status_str = f"id={admin_user.id}, user={admin_user.username}, email={admin_user.email}, m0006={m_applied}"
+        else:
+            status_str = f"not_found, m0006={m_applied}"
+    except Exception as e:
+        status_str = f"error: {e}"
     return HttpResponse(f"Backend is running properly. Admin: {status_str}")
 
 def favicon_view(request):
