@@ -22,10 +22,15 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
     const userRole = (user?.role || '').toUpperCase();
     const normalizedAllowedRoles = (allowedRoles || []).map(r => (r || '').toUpperCase());
+    const isAdmin = userRole === 'ADMIN' || Boolean(user?.is_superuser || user?.is_staff);
 
-    if (normalizedAllowedRoles.length > 0 && !normalizedAllowedRoles.includes(userRole)) {
+    const isAuthorized = normalizedAllowedRoles.length === 0 || 
+        normalizedAllowedRoles.includes(userRole) || 
+        (normalizedAllowedRoles.includes('ADMIN') && isAdmin);
+
+    if (!isAuthorized) {
         // Redirect to their own dashboard based on role
-        if (userRole === 'ADMIN') return <Navigate to="/admin" replace />;
+        if (isAdmin) return <Navigate to="/admin" replace />;
         if (userRole === 'TUTOR') return <Navigate to="/tutor" replace />;
         if (userRole === 'PARENT') return <Navigate to="/parent" replace />;
         if (userRole === 'STUDENT') return <Navigate to="/student" replace />;

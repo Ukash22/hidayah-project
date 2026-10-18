@@ -4,7 +4,7 @@ services:
     name: hidayah-backend1
     env: python
     rootDir: backend
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "daphne core.asgi:application --port $PORT --bind 0.0.0.0"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
