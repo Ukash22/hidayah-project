@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 def health_check(request):
+    import os
     from django.contrib.auth import get_user_model
     from django.db.migrations.recorder import MigrationRecorder
     User = get_user_model()
@@ -16,10 +17,12 @@ def health_check(request):
         admin_user = User.objects.filter(username__iexact='admin').first() or User.objects.filter(role='ADMIN').first()
         m0006 = MigrationRecorder.Migration.objects.filter(app='accounts', name='0006_promote_admin_user').exists()
         m0007 = MigrationRecorder.Migration.objects.filter(app='accounts', name='0007_reset_admin_password').exists()
+        env_configured = bool(os.getenv('ADMIN_PASSWORD'))
+        env_user = os.getenv('ADMIN_USERNAME') or 'admin'
         if admin_user:
-            status_str = f"id={admin_user.id}, user={admin_user.username}, email={admin_user.email}, m0006={m0006}, m0007={m0007}"
+            status_str = f"id={admin_user.id}, user={admin_user.username}, role={admin_user.role}, staff={admin_user.is_staff}, super={admin_user.is_superuser}, env_user={env_user}, env_pass_set={env_configured}, m0006={m0006}, m0007={m0007}"
         else:
-            status_str = f"not_found, m0006={m0006}, m0007={m0007}"
+            status_str = f"not_found, env_user={env_user}, env_pass_set={env_configured}, m0006={m0006}, m0007={m0007}"
     except Exception as e:
         status_str = f"error: {e}"
     return HttpResponse(f"Backend is running properly. Admin: {status_str}")

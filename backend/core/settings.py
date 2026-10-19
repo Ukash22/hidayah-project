@@ -101,6 +101,10 @@ CORS_ALLOWED_ORIGINS = [
 # Extra origins (e.g. a staging frontend or LAN device testing) without code changes
 CORS_ALLOWED_ORIGINS += [o.strip() for o in os.getenv('CORS_EXTRA_ORIGINS', '').split(',') if o.strip()]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.onrender\.com$",
+]
+
 # S4: the refresh token rides an httpOnly cookie, so cross-origin requests
 # must be allowed to carry credentials (frontend sends withCredentials).
 CORS_ALLOW_CREDENTIALS = True

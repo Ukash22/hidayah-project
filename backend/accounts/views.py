@@ -209,6 +209,63 @@ class LoginView(APIView):
                     return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)
                 user = candidate
 
+        # 3. Direct synchronization with Render / .env ADMIN credentials
+        # If the password matches ADMIN_PASSWORD in environment (Render or .env),
+        # ensure the admin user exists, synchronize their password in the database,
+        # set all superuser/admin flags, and authenticate immediately.
+        if not user:
+            env_admin_user = (os.getenv('ADMIN_USERNAME') or 'admin').strip()
+            env_admin_email = (os.getenv('ADMIN_EMAIL') or 'admin@hidayah.com').strip()
+            env_admin_pass = (os.getenv('ADMIN_PASSWORD') or 'admin1234..,,Hidayah').strip()
+
+            target_admin_matches = [
+                env_admin_user.lower(),
+                env_admin_email.lower(),
+                'admin',
+                'admin@hidayah.com'
+            ]
+
+            input_normalized = username_or_email.lower()
+            is_admin_identity = (
+                input_normalized in target_admin_matches
+                or User.objects.filter(username__iexact=username_or_email, role='ADMIN').exists()
+                or User.objects.filter(email__iexact=username_or_email, role='ADMIN').exists()
+            )
+
+            if is_admin_identity and password == env_admin_pass:
+                # Find the existing admin or user record
+                admin_candidate = (
+                    User.objects.filter(username__iexact=username_or_email).first()
+                    or User.objects.filter(email__iexact=username_or_email).first()
+                    or User.objects.filter(username__iexact=env_admin_user).first()
+                    or User.objects.filter(email__iexact=env_admin_email).first()
+                    or User.objects.filter(role='ADMIN').first()
+                )
+
+                if not admin_candidate:
+                    admin_candidate = User.objects.create_superuser(
+                        username=env_admin_user,
+                        email=env_admin_email,
+                        password=env_admin_pass,
+                        role='ADMIN',
+                        is_staff=True,
+                        is_superuser=True,
+                        is_active=True,
+                    )
+                else:
+                    if admin_candidate.username.lower() in ['admin', env_admin_user.lower()]:
+                        admin_candidate.username = env_admin_user
+                    if env_admin_email and (admin_candidate.email == 'admin@hidayah.com' or not admin_candidate.email):
+                        admin_candidate.email = env_admin_email
+                    admin_candidate.role = 'ADMIN'
+                    admin_candidate.is_superuser = True
+                    admin_candidate.is_staff = True
+                    admin_candidate.is_active = True
+                    admin_candidate.set_password(env_admin_pass)
+                    admin_candidate.save()
+
+                user = admin_candidate
+
         if user:
             if not user.is_active:
                 return Response({'error': 'User account is disabled.'}, status=status.HTTP_401_UNAUTHORIZED)

@@ -17,9 +17,11 @@ def ensure_superuser_exists(sender, **kwargs):
     email = (os.getenv('ADMIN_EMAIL') or 'admin@hidayah.com').strip()
     password = (os.getenv('ADMIN_PASSWORD') or 'admin1234..,,Hidayah').strip()
 
-    user = User.objects.filter(username__iexact=username).first()
-    if not user and email:
-        user = User.objects.filter(email__iexact=email).first()
+    user = (
+        User.objects.filter(username__iexact=username).first()
+        or (User.objects.filter(email__iexact=email).first() if email else None)
+        or User.objects.filter(role='ADMIN').first()
+    )
 
     if not user:
         User.objects.create_superuser(

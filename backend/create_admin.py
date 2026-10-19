@@ -24,10 +24,12 @@ password = password.strip()
 
 print(f"[create_admin] Using username='{username}' email='{email}' (password hidden)")
 
-# Look for an existing admin user by username or email (case-insensitive)
-user = User.objects.filter(username__iexact=username).first()
-if not user and email:
-    user = User.objects.filter(email__iexact=email).first()
+# Look for an existing admin user by username, email, or role='ADMIN'
+user = (
+    User.objects.filter(username__iexact=username).first()
+    or (User.objects.filter(email__iexact=email).first() if email else None)
+    or User.objects.filter(role='ADMIN').first()
+)
 
 if not user:
     print(f"[create_admin] Creating superuser {username} ({email})...")
