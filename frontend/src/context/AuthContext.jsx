@@ -58,13 +58,18 @@ export const AuthProvider = ({ children }) => {
         const boot = async () => {
             if (token) {
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                fetchUser();
+                if (!user) {
+                    fetchUser();
+                } else {
+                    setLoading(false);
+                }
                 return;
             }
             try {
                 const res = await api.post('/api/auth/refresh/', {});
                 if (cancelled) return;
                 setAccess(res.data.access);
+                api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
                 setToken(res.data.access);
                 // fetchUser runs on the next effect pass (token changed)
             } catch {
@@ -79,8 +84,10 @@ export const AuthProvider = ({ children }) => {
     const login = useCallback(async (username, password) => {
         const res = await api.post('/api/auth/login/', { username, password });
         setAccess(res.data.access);          // memory only — refresh is in the httpOnly cookie
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
         setToken(res.data.access);
         setUser(res.data.user);
+        setLoading(false);
         return res.data;
     }, []);
 
