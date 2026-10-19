@@ -35,6 +35,7 @@ export default function NotificationsPage() {
     const portal = `/${location.pathname.split('/')[1]}`;
     const resolveLink = (link) => {
         if (!link) return null;
+        if (link.startsWith('http://') || link.startsWith('https://')) return link;
         return link.startsWith('/') ? link : `${portal}/${link}`;
     };
 
@@ -81,10 +82,21 @@ export default function NotificationsPage() {
                                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                                         {new Date(n.created_at).toLocaleString()}
                                     </span>
-                                    {resolveLink(n.link) && (
-                                        <Link to={resolveLink(n.link)} className="text-[11px] font-semibold uppercase tracking-wide text-primary hover:underline">
-                                            View →
-                                        </Link>
+                                    {n.link && (
+                                        (n.link.startsWith('http://') || n.link.startsWith('https://')) ? (
+                                            <a
+                                                href={n.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-primary hover:text-secondary bg-primary/10 px-2.5 py-1 rounded-md transition-colors"
+                                            >
+                                                Join / Open Link ↗
+                                            </a>
+                                        ) : (
+                                            <Link to={resolveLink(n.link)} className="text-[11px] font-semibold uppercase tracking-wide text-primary hover:underline">
+                                                View →
+                                            </Link>
+                                        )
                                     )}
                                 </div>
                             </div>

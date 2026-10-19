@@ -273,10 +273,14 @@ class TutorViewSet(viewsets.ModelViewSet):
                 except Exception:
                     pass
 
+                message = f"Your recruitment interview has been scheduled for {formatted_time}. Please ensure you are prepared and click the interview link to join."
+                if interview_link:
+                    message += f"\n\nInterview Link: {interview_link}"
+
                 Notification.create(
                     user=profile.user,
                     title="Recruitment Interview Scheduled",
-                    message=f"Your recruitment interview has been scheduled for {formatted_time}. Please ensure you are prepared and click the interview link to join.",
+                    message=message,
                     link=interview_link or "/pending-approval"
                 )
 

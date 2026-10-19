@@ -378,15 +378,24 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CORS configuration (Origins defined at the top of the file)
 
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "your-email@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "your-app-password")
-DEFAULT_FROM_EMAIL = f"Hidayah e-Madarasah <{EMAIL_HOST_USER}>"
-SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_HOST_USER = (os.getenv("EMAIL_HOST_USER") or "").strip()
+# Strip spaces (Google 16-character App Passwords are generated as 4x4 with spaces)
+EMAIL_HOST_PASSWORD = (os.getenv("EMAIL_HOST_PASSWORD") or "").replace(" ", "").strip()
+
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    if DEBUG:
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    else:
+        EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+else:
+    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL") or (f"Hidayah e-Madarasah <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "noreply@hidayah.com")
+SERVER_EMAIL = EMAIL_HOST_USER or "noreply@hidayah.com"
 EMAIL_TIMEOUT = 30 # seconds
 
 # Zoom API Configuration

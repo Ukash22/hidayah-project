@@ -19,14 +19,25 @@ from concurrent.futures import ThreadPoolExecutor
 logger = logging.getLogger(__name__)
 
 _executor = ThreadPoolExecutor(max_workers=4)
-_CELERY_AVAILABLE = bool(os.getenv('REDIS_URL'))
+# Celery worker is only used if USE_CELERY is explicitly True and REDIS_URL is provided.
+# On free-tier Render or when no separate celery worker is running, tasks execute in the thread pool.
+_CELERY_AVAILABLE = bool(os.getenv('REDIS_URL')) and (os.getenv('USE_CELERY', 'False').lower() in ('true', '1'))
+
+
+def _run_in_thread(task, *args, **kwargs):
+    try:
+        if hasattr(task, 'apply'):
+            task.apply(args=args, kwargs=kwargs)
+        else:
+            task(*args, **kwargs)
+    except Exception as e:
+        logger.exception("Background task execution failed: %s", e)
 
 
 def run_async(celery_task, *args, **kwargs):
     """
-    Dispatch celery_task via Celery if Redis is available, thread pool otherwise.
+    Dispatch celery_task via Celery if Celery worker is enabled, thread pool otherwise.
     All args must be JSON-serializable (use PKs, not model instances).
-    Celery tasks are also plain callables, so the thread pool path runs them directly.
     """
     if _CELERY_AVAILABLE:
         try:
@@ -34,4 +45,4 @@ def run_async(celery_task, *args, **kwargs):
             return
         except Exception as e:
             logger.warning("Celery dispatch failed, falling back to thread pool: %s", e)
-    _executor.submit(celery_task, *args, **kwargs)
+    _executor.submit(_run_in_thread, celery_task, *args, **kwargs)
