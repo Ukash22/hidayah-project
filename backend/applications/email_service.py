@@ -183,7 +183,13 @@ def send_password_reset_email(user, reset_link):
     return True
 
 def send_tutor_interview_email(user, profile, interview_link):
-    interview_time_str = profile.interview_at.strftime('%Y-%m-%d %H:%M UTC') if profile.interview_at else "Agreed time"
+    if profile.interview_at:
+        try:
+            interview_time_str = profile.interview_at.strftime('%B %d, %Y at %I:%M %p UTC')
+        except Exception:
+            interview_time_str = str(profile.interview_at)
+    else:
+        interview_time_str = "Agreed time"
     
     subject = "Interview Invitation - Hidayah International e-Madarasah"
     message = f"""
@@ -194,7 +200,7 @@ def send_tutor_interview_email(user, profile, interview_link):
     INTERVIEW DETAILS:
     - Position: Online Tutor
     - Scheduled Time: {interview_time_str}
-    - Meeting Link: {interview_link}
+    - Meeting Link: {interview_link or "Link will be shared shortly"}
     
     Please join the meeting at the scheduled time. If you have any technical issues, please reply to this email.
     
@@ -202,10 +208,11 @@ def send_tutor_interview_email(user, profile, interview_link):
     Hidayah Recruitment Team
     """
     
+    from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
     email = EmailMessage(
         subject=subject,
         body=message,
-        from_email=settings.EMAIL_HOST_USER,
+        from_email=from_email,
         to=[user.email],
     )
     email.send(fail_silently=False)

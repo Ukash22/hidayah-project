@@ -166,6 +166,37 @@ const NotificationCenter = () => {
                                                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words whitespace-pre-wrap">
                                                     {n.message}
                                                 </p>
+                                                {n.link && (
+                                                    <div className="mt-2.5 flex items-center gap-2">
+                                                        {n.link.startsWith('http') ? (
+                                                            <a
+                                                                href={n.link}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    markAsRead(n.id);
+                                                                }}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg shadow-sm hover:opacity-90 transition-opacity"
+                                                            >
+                                                                <span>Join Interview / Open Link</span>
+                                                                <span>↗</span>
+                                                            </a>
+                                                        ) : (
+                                                            <Link
+                                                                to={n.link}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    markAsRead(n.id);
+                                                                    setShowDropdown(false);
+                                                                }}
+                                                                className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:underline uppercase tracking-wider"
+                                                            >
+                                                                View Details →
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                )}
                                                 {!n.is_read && (
                                                     <div className="mt-2 flex justify-end">
                                                         <div className="w-1.5 h-1.5 bg-secondary rounded-full" />
