@@ -8,224 +8,8 @@ import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
-
-const CustomHeader = ({ activeTab, setActiveTab, role, onPush, onDownload, activeStudentName, studentCount, isLocked, isSlowMode, onToggleLock, onToggleSlowMode, onClearBoards, onClearOwnBoard, onSelectPen, onSelectLaser, onSelectEraser, onSelectText, currentTool = 'freedraw' }) => {
-    const [showMore, setShowMore] = useState(false);
-    const moreRef = React.useRef(null);
-
-    // Close dropdown when clicking outside
-    React.useEffect(() => {
-        const handler = (e) => {
-            if (moreRef.current && !moreRef.current.contains(e.target)) {
-                setShowMore(false);
-            }
-        };
-        document.addEventListener('mousedown', handler);
-        document.addEventListener('touchstart', handler);
-        return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler); };
-    }, []);
-
-    const isTutorOrAdmin = role === 'TUTOR' || role === 'ADMIN';
-
-    return (
-        <div className="w-full bg-[#1e293b] text-white flex items-center gap-2 px-2 sm:px-4 py-2 shadow-xl z-[1001] border-b border-slate-700/60">
-
-            {/* Board Tab Switcher */}
-            <nav className="flex bg-slate-800/70 p-0.5 rounded-xl border border-slate-700/50 flex-shrink-0">
-                <button
-                    onClick={() => setActiveTab('my_board')}
-                    className={`px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
-                >
-                    {role === 'STUDENT' ? 'My Board' : 'Board'}
-                </button>
-                {role === 'STUDENT' && (
-                    <button
-                        onClick={() => setActiveTab('teacher_board')}
-                        className={`px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Teacher
-                    </button>
-                )}
-                {isTutorOrAdmin && (
-                    <button
-                        onClick={() => setActiveTab('my_class')}
-                        className={`relative px-2.5 sm:px-4 py-1.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wide rounded-lg transition-all whitespace-nowrap ${activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Students
-                        {studentCount > 0 && (
-                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center text-[9px] border border-[#1e293b] font-bold">
-                                {studentCount}
-                            </span>
-                        )}
-                    </button>
-                )}
-            </nav>
-
-            {/* Coaching badge */}
-            {activeTab === 'student_view' && (
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-lg border border-emerald-500/20 text-[10px] font-semibold flex-shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="hidden sm:inline">Coaching:</span> {activeStudentName}
-                    <button onClick={() => setActiveTab('my_class')} className="ml-0.5 hover:text-white font-bold">✕</button>
-                </div>
-            )}
-
-            {/* Spacer */}
-            <div className="flex-1" />
-
-            {/* Essential Writing Tools (Pen, Eraser, Text, Laser) — always visible on my_board */}
-            {activeTab === 'my_board' && (
-                <div className="flex items-center gap-1 flex-shrink-0 bg-slate-800/80 p-0.5 rounded-xl border border-slate-700/60">
-                    <button 
-                        onClick={onSelectPen} 
-                        title="Pen (Write freely)" 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'freedraw' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
-                    >
-                        <span>✏️</span>
-                        <span className="text-[10px] font-bold hidden md:inline">Pen</span>
-                    </button>
-                    <button 
-                        onClick={onSelectEraser} 
-                        title="Eraser" 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'eraser' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
-                    >
-                        <span>🧹</span>
-                        <span className="text-[10px] font-bold hidden md:inline">Eraser</span>
-                    </button>
-                    <button 
-                        onClick={onSelectText} 
-                        title="Text Note" 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'text' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-300 hover:bg-slate-700'}`}
-                    >
-                        <span>🔤</span>
-                        <span className="text-[10px] font-bold hidden md:inline">Text</span>
-                    </button>
-                    <button 
-                        onClick={onSelectLaser} 
-                        title="Laser Pointer" 
-                        className={`p-1.5 sm:p-2 rounded-lg transition-all text-sm flex items-center gap-1 ${currentTool === 'laser' ? 'bg-red-600 text-white shadow-md' : 'text-red-300 hover:bg-slate-700'}`}
-                    >
-                        <span>🔦</span>
-                    </button>
-                    {isTutorOrAdmin && (
-                        <button
-                            onClick={() => onPush('overwrite')}
-                            title="Push board to students"
-                            className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide rounded-lg shadow-md transition-all ml-1"
-                        >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            <span className="hidden sm:inline">Push</span>
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {/* Download (always visible) */}
-            <button onClick={onDownload} title="Download board" className="flex-shrink-0 p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-all border border-slate-700">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            </button>
-
-            {/* ⋯ More menu — room controls (tutor/admin only) */}
-            {isTutorOrAdmin && (
-                <div className="relative flex-shrink-0" ref={moreRef}>
-                    <button
-                        onClick={() => setShowMore(v => !v)}
-                        title="More options"
-                        className={`p-2 rounded-lg transition-all border text-slate-300 ${showMore ? 'bg-slate-600 border-slate-500' : 'bg-slate-800 hover:bg-slate-700 border-slate-700'}`}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
-                    </button>
-
-                    {showMore && (
-                        <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden text-slate-800 z-[1002]">
-                            {activeTab === 'my_board' && (
-                                <button
-                                    onClick={() => { onClearOwnBoard(); setShowMore(false); }}
-                                    className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm font-semibold border-b border-slate-100"
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                    Clear My Board
-                                </button>
-                            )}
-                            <button
-                                onClick={() => { onToggleLock(); setShowMore(false); }}
-                                className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-semibold"
-                            >
-                                <span>{isLocked ? '🔓 Unlock Room' : '🔒 Lock Room'}</span>
-                                {isLocked && <span className="w-2 h-2 rounded-full bg-red-500" />}
-                            </button>
-                            <button
-                                onClick={() => { onToggleSlowMode(); setShowMore(false); }}
-                                className="w-full text-left px-4 py-3 hover:bg-slate-50 flex items-center justify-between text-sm font-semibold border-t border-slate-100"
-                            >
-                                <span>{isSlowMode ? '⚡ Disable Slow Mode' : '🐢 Enable Slow Mode'}</span>
-                                {isSlowMode && <span className="w-2 h-2 rounded-full bg-orange-500" />}
-                            </button>
-                            <button
-                                onClick={() => { onClearBoards(); setShowMore(false); }}
-                                className="w-full text-left px-4 py-3 hover:bg-red-50 text-red-600 flex items-center gap-2 text-sm font-bold border-t border-slate-200"
-                            >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                Clear All Boards
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-
-// ─── Page Navigation Bar ────────────────────────────────────────────────
-const PageNavBar = ({ pages, currentPageIdx, onPrev, onNext, onAdd, onGoTo }) => (
-    <div className="flex items-center justify-center gap-2 bg-slate-100 border-b border-slate-200 px-3 py-1.5 select-none">
-        <button
-            onClick={onPrev}
-            disabled={currentPageIdx === 0}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-all shadow-sm text-base"
-            title="Previous page"
-        >‹</button>
-
-        <div className="flex items-center gap-1 overflow-x-auto max-w-[60vw] md:max-w-xs scrollbar-none">
-            {pages.map((p, idx) => (
-                <button
-                    key={p.id}
-                    onClick={() => onGoTo(idx)}
-                    className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                        idx === currentPageIdx
-                            ? 'bg-emerald-500 text-white shadow-md'
-                            : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'
-                    }`}
-                >
-                    {idx + 1}
-                </button>
-            ))}
-        </div>
-
-        <button
-            onClick={onNext}
-            disabled={currentPageIdx === pages.length - 1}
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-slate-500 disabled:opacity-30 hover:bg-slate-50 hover:text-slate-800 transition-all shadow-sm text-base"
-            title="Next page"
-        >›</button>
-
-        <div className="w-px h-5 bg-slate-200 mx-1" />
-
-        <button
-            onClick={onAdd}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 text-[11px] font-bold hover:bg-emerald-100 transition-all shadow-sm"
-            title="Add new page"
-        >
-            <span className="text-base leading-none">+</span>
-            <span className="hidden sm:inline">Page</span>
-        </button>
-
-        <span className="text-[11px] text-slate-400 font-semibold hidden sm:inline">
-            {currentPageIdx + 1} / {pages.length}
-        </span>
-    </div>
-);
+import WhiteboardDrawer from './WhiteboardDrawer';
+import QuranMushaf from '../QuranMushaf';
 
 const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const toast = useToast();
@@ -568,21 +352,101 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         }
     }, [broadcastTeacherSnapshot, scheduleThumbnailExport]);
 
-    const handleSelectPen = useCallback(() => {
+    const [currentTool, setCurrentTool] = useState('freedraw');
+    const [penStrokeWidth, setPenStrokeWidth] = useState(2);
+    const [penColor, setPenColor] = useState('#1e293b');
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [showQuranMushaf, setShowQuranMushaf] = useState(false);
+
+    const handleSelectTool = useCallback((tool) => {
+        setCurrentTool(tool);
+        excalidrawAPIRef.current?.setActiveTool({ type: tool });
+    }, []);
+
+    const handleChangePenStrokeWidth = useCallback((width) => {
+        setPenStrokeWidth(width);
+        setCurrentTool('freedraw');
+        excalidrawAPIRef.current?.updateScene({
+            appState: { currentItemStrokeWidth: width, currentItemRoughness: 0 }
+        });
+        excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
+        toast.success(`Pen set to ${width === 1 ? 'Fine' : width === 2 ? 'Regular' : width === 4 ? 'Bold' : 'Heavy'}`);
+    }, [toast]);
+
+    const handleChangePenColor = useCallback((color) => {
+        setPenColor(color);
+        setCurrentTool('freedraw');
+        excalidrawAPIRef.current?.updateScene({
+            appState: { currentItemStrokeColor: color }
+        });
         excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
     }, []);
 
-    const handleSelectLaser = useCallback(() => {
-        excalidrawAPIRef.current?.setActiveTool({ type: 'laser' });
+    const handleClearOwnBoard = useCallback(async () => {
+        if (await confirm('Clear your entire board?', { confirmLabel: 'Clear', danger: true })) {
+            excalidrawAPIRef.current?.updateScene({ elements: [] });
+            toast.info('Board cleared');
+        }
+    }, [confirm, toast]);
+
+    const handleClearAllBoards = useCallback(async () => {
+        if (await confirm('Clear all students boards?', { confirmLabel: 'Clear All', danger: true })) {
+            sendMessageRef.current?.(JSON.stringify({ type: 'command', action: 'clear_boards' }));
+            toast.success('Cleared all student boards');
+        }
+    }, [confirm, toast]);
+
+    const handleToggleLock = useCallback(() => {
+        setIsLocked(prev => {
+            const next = !prev;
+            sendMessageRef.current?.(JSON.stringify({ type: 'command', action: 'lock_room', locked: next }));
+            return next;
+        });
     }, []);
 
-    const handleSelectEraser = useCallback(() => {
-        excalidrawAPIRef.current?.setActiveTool({ type: 'eraser' });
+    const handleToggleSlowMode = useCallback(() => {
+        setIsSlowMode(prev => {
+            const next = !prev;
+            sendMessageRef.current?.(JSON.stringify({ type: 'command', action: 'slow_mode', enabled: next }));
+            return next;
+        });
     }, []);
 
-    const handleSelectText = useCallback(() => {
-        excalidrawAPIRef.current?.setActiveTool({ type: 'text' });
-    }, []);
+    const handleInsertQuranAyah = useCallback(({ text, surahName, verseKey }) => {
+        const api = excalidrawAPIRef.current;
+        if (!api) return;
+        const elements = api.getSceneElements();
+        const id = "ayah-" + Math.random().toString(36).substr(2, 9);
+        const ayahText = `${text}\n\n— [${surahName || 'Surah'} : Ayah ${verseKey}]`;
+        const newElement = {
+            id,
+            type: "text",
+            x: 80,
+            y: 100,
+            width: 650,
+            height: 140,
+            text: ayahText,
+            fontSize: 28,
+            fontFamily: 1,
+            textAlign: "center",
+            verticalAlign: "middle",
+            strokeColor: "#0f172a",
+            backgroundColor: "transparent",
+            fillStyle: "hachure",
+            strokeWidth: 2,
+            strokeStyle: "solid",
+            roughness: 0,
+            opacity: 100,
+            groupIds: [],
+            version: 1,
+            versionNonce: Math.floor(Math.random() * 100000000),
+            isDeleted: false,
+            updated: Date.now(),
+        };
+        api.updateScene({ elements: [...elements, newElement] });
+        setShowQuranMushaf(false);
+        toast.success(`Ayah ${verseKey} placed on whiteboard!`);
+    }, [toast]);
 
     // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {
@@ -590,12 +454,12 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         if (role !== 'TUTOR' && role !== 'ADMIN') return;
         const t = setTimeout(() => {
             excalidrawAPIRef.current?.updateScene({
-                appState: { currentItemStrokeWidth: 1, currentItemRoughness: 0 }
+                appState: { currentItemStrokeWidth: 2, currentItemRoughness: 0 }
             });
             excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
         }, 400);
         return () => clearTimeout(t);
-    }, [role]); // only fire when role changes (i.e. once on mount)
+    }, [role]);
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -649,7 +513,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     }
 
     return (
-        <div className="w-full h-full flex flex-col bg-[#f8fafc] overflow-hidden relative">
+        <div className="w-full h-full flex flex-col bg-[#f8fafc] overflow-hidden relative font-sans">
             
             {studentReaction && (
                 <div className="absolute inset-0 pointer-events-none z-[9999] flex items-center justify-center">
@@ -657,67 +521,96 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 </div>
             )}
 
-            <CustomHeader 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                role={role} 
-                onPush={handlePush}
-                onDownload={handleDownload}
-                activeStudentName={activeStudentId ? studentThumbnails[activeStudentId]?.name : ''}
-                studentCount={Object.keys(studentThumbnails).length}
-                isLocked={isLocked}
-                isSlowMode={isSlowMode}
-                onSelectPen={handleSelectPen}
-                onSelectLaser={handleSelectLaser}
-                onSelectEraser={handleSelectEraser}
-                onSelectText={handleSelectText}
-                onToggleLock={() => {
-                    const next = !isLocked;
-                    setIsLocked(next);
-                    sendMessage(JSON.stringify({ type: 'command', action: 'lock_room', locked: next }));
-                }}
-                onToggleSlowMode={() => {
-                    const next = !isSlowMode;
-                    setIsSlowMode(next);
-                    sendMessage(JSON.stringify({ type: 'command', action: 'slow_mode', enabled: next }));
-                }}
-                onClearBoards={() => {
-                    sendMessage(JSON.stringify({ type: 'command', action: 'clear_boards' }));
-                    toast.success('Cleared all student boards');
-                }}
-                onClearOwnBoard={async () => {
-                    if (await confirm('Clear your entire board?', { confirmLabel: 'Clear', danger: true })) {
-                        excalidrawAPI?.updateScene({ elements: [] });
-                    }
-                }}
-            />
+            {/* Floating Drawer Trigger & Status Pills */}
+            <div className="absolute top-3 left-3 z-[2000] flex items-center gap-2">
+                <button
+                    onClick={() => setIsDrawerOpen(true)}
+                    className="flex items-center gap-2 bg-slate-900/90 hover:bg-slate-900 text-white px-3.5 py-2 rounded-2xl border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all hover:scale-105 active:scale-95 group"
+                    title="Open Tools Drawer"
+                >
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold uppercase tracking-wider">🛠️ Drawer</span>
+                    <span className="text-[10px] bg-slate-800 text-emerald-300 px-2 py-0.5 rounded-lg border border-slate-700 font-semibold hidden sm:inline">
+                        {currentTool === 'eraser' ? '🧹 Eraser' : currentTool === 'text' ? '🔤 Text' : currentTool === 'laser' ? '🔦 Laser' : `✏️ Pen (${penStrokeWidth === 1 ? 'Thin' : penStrokeWidth === 2 ? 'Regular' : penStrokeWidth === 4 ? 'Bold' : 'Heavy'})`}
+                    </span>
+                </button>
 
+                {activeTab === 'student_view' && (
+                    <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-emerald-500/30 text-emerald-400 text-xs font-bold shadow-lg">
+                        <span>Coaching: {activeStudentId ? studentThumbnails[activeStudentId]?.name : ''}</span>
+                        <button onClick={() => setActiveTab('my_class')} className="hover:text-white font-bold ml-1">✕</button>
+                    </div>
+                )}
+            </div>
+
+            {/* Top Right Page Counter */}
+            <div className="absolute top-3 right-3 z-[2000] flex items-center gap-2">
+                <button
+                    onClick={() => setIsDrawerOpen(true)}
+                    className="flex items-center gap-1.5 bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-slate-700/70 text-[11px] font-bold shadow-md transition-all"
+                    title="View & manage pages in Drawer"
+                >
+                    <span className="text-emerald-400">📄</span>
+                    <span>Page {currentPageIdx + 1} / {pages.length}</span>
+                </button>
+            </div>
+
+            {/* Exam Active Timer Pill */}
             {isExamActive && (
-                <div className="absolute top-16 md:top-4 left-1/2 -translate-x-1/2 z-[2000] bg-rose-600 text-white px-6 py-2 rounded-full font-bold text-lg md:text-xl shadow-2xl border-4 border-rose-400 flex items-center gap-3 animate-pulse">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2000] bg-rose-600 text-white px-5 py-1.5 rounded-full font-bold text-sm md:text-base shadow-2xl border-2 border-rose-400 flex items-center gap-2 animate-pulse">
                     <span>⏱️</span> 
                     {Math.floor(examTimer / 60).toString().padStart(2, '0')}:{(examTimer % 60).toString().padStart(2, '0')}
                 </div>
             )}
 
-            <div className="flex-1 flex flex-col relative overflow-hidden">
+            {/* Vertical Whiteboard Drawer */}
+            <WhiteboardDrawer
+                isOpen={isDrawerOpen}
+                onClose={() => setIsDrawerOpen(false)}
+                role={role}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                currentTool={currentTool}
+                onSelectTool={handleSelectTool}
+                penStrokeWidth={penStrokeWidth}
+                onChangePenStrokeWidth={handleChangePenStrokeWidth}
+                penColor={penColor}
+                onChangePenColor={handleChangePenColor}
+                onClearOwnBoard={handleClearOwnBoard}
+                onClearBoards={handleClearAllBoards}
+                onOpenExam={() => setShowExamPanel(true)}
+                onOpenQuran={() => setShowQuranMushaf(true)}
+                onOpenMathTools={() => setShowMathTools(true)}
+                onPush={handlePush}
+                onDownload={handleDownload}
+                pages={pages}
+                currentPageIdx={currentPageIdx}
+                onPrevPage={handlePrevPage}
+                onNextPage={handleNextPage}
+                onAddPage={handleAddPage}
+                onGoToPage={goToPage}
+                isLocked={isLocked}
+                onToggleLock={handleToggleLock}
+                isSlowMode={isSlowMode}
+                onToggleSlowMode={handleToggleSlowMode}
+                studentCount={Object.keys(studentThumbnails).length}
+            />
 
-                {/* Page Navigation Bar — only on drawing tabs */}
-                {(activeTab === 'my_board') && (
-                    <PageNavBar
-                        pages={pages}
-                        currentPageIdx={currentPageIdx}
-                        onPrev={handlePrevPage}
-                        onNext={handleNextPage}
-                        onAdd={handleAddPage}
-                        onGoTo={goToPage}
-                    />
-                )}
+            {/* Quran Mushaf Modal */}
+            {showQuranMushaf && (
+                <div className="fixed inset-0 z-[6000] flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+                    <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl custom-scrollbar border border-amber-900/20">
+                        <QuranMushaf 
+                            onInsertToBoard={handleInsertQuranAyah}
+                            onClose={() => setShowQuranMushaf(false)}
+                        />
+                    </div>
+                </div>
+            )}
 
-                <div className="flex-1 flex relative overflow-hidden">
+            <div className="flex-1 flex relative overflow-hidden">
 
-                {/* Floating Toolbar removed — tools available in Excalidraw's native toolbar and the header bar above */}
-
-                {/* Main Drawing Area */}
+                {/* Main Drawing Area - Clean Full Canvas */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
                     <Excalidraw 
                         name="hidayah_live_board"
@@ -877,8 +770,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 )}
 
                 </div>{/* end inner flex */}
-            </div>{/* end outer flex-col */}
-        </div>
+            </div>
     );
 };
 

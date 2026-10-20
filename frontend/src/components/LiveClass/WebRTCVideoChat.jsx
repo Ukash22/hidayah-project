@@ -192,11 +192,18 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 };
                 
                 pc.ontrack = (event) => {
-                    console.log(`🎬 Received Track from ${peerName}`);
-                    setRemoteStreams(prev => ({
-                        ...prev,
-                        [id]: { stream: event.streams[0], name: peerName }
-                    }));
+                    console.log(`🎬 Received Track from ${peerName}:`, event.track.kind);
+                    const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+                    setRemoteStreams(prev => {
+                        const existing = prev[id]?.stream;
+                        if (existing) {
+                            if (!existing.getTracks().find(t => t.id === event.track.id)) {
+                                existing.addTrack(event.track);
+                            }
+                            return { ...prev, [id]: { ...prev[id], stream: existing, name: peerName } };
+                        }
+                        return { ...prev, [id]: { stream: incomingStream, name: peerName } };
+                    });
                 };
                 
                 pc.oniceconnectionstatechange = () => {
@@ -223,19 +230,25 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     return;
                 }
 
+                const isPolite = String(user.id) > String(peerId);
+
                 if (type === 'peer_join') {
                     const pc = await getPeerConnection(peerId, name);
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
-                    sendMessage(JSON.stringify({ type: 'offer', peerId: user.id, targetId: peerId, name: user.first_name, sdp: pc.localDescription }));
+                    sendMessage(JSON.stringify({ type: 'offer', peerId: user.id, targetId: peerId, name: user.first_name, role: user.role, sdp: pc.localDescription }));
                 } 
                 else if (type === 'offer' && String(data.targetId) === String(user.id)) {
                     const pc = await getPeerConnection(peerId, name);
                     
-                    // Handle Collision (Perfect Negotiation light)
+                    // Handle Collision with Polite Peer pattern
                     if (pc.signalingState !== 'stable') {
-                        console.warn(`⚠️ PC for ${name} in state ${pc.signalingState}, ignoring offer.`);
-                        return;
+                        if (!isPolite) {
+                            console.warn(`⚠️ Impolite peer ignoring offer from ${name}`);
+                            return;
+                        }
+                        console.log(`🤝 Polite peer rolling back to accept offer from ${name}`);
+                        await pc.setLocalDescription({ type: 'rollback' });
                     }
 
                     await pc.setRemoteDescription(new RTCSessionDescription(sdp));
@@ -456,22 +469,71 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         {isScreenSharing && <div className="absolute top-2 left-2 bg-emerald-500 px-2 py-0.5 rounded text-[10px] font-semibold uppercase">Sharing</div>}
                     </div>
 
-                    {/* Remote Users */}
-                    {Object.entries(remoteStreams).map(([id, data]) => (
-                        <div key={id} className={`relative bg-slate-800 rounded-xl overflow-hidden shadow-xl border-2 border-slate-700 transition-all duration-300 ${
-                            layoutMode === 'gallery' ? 'aspect-video' : 'h-40 sm:h-52'
-                        }`}>
-                            <video 
-                                autoPlay playsInline 
-                                ref={el => { if (el && el.srcObject !== data.stream) el.srcObject = data.stream; }} 
-                                className="w-full h-full object-cover" 
-                            />
-                            <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider border border-white/10">
-                                {data.name}
+                    {/* Remote Users (Zoom Style) */}
+                    {Object.entries(remoteStreams).map(([id, data]) => {
+                        const hasVideo = data.stream && data.stream.getVideoTracks().some(t => t.enabled && t.readyState !== 'ended');
+
+                        return (
+                            <div key={id} className={`relative bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 transition-all duration-300 group ${
+                                layoutMode === 'gallery' ? 'aspect-video' : 'h-44 sm:h-56'
+                            }`}>
+                                {/* Guaranteed Audio Playback Element */}
+                                <audio 
+                                    autoPlay 
+                                    playsInline
+                                    ref={el => {
+                                        if (el && data.stream && el.srcObject !== data.stream) {
+                                            el.srcObject = data.stream;
+                                            el.play().catch(e => console.warn("Audio play prevented:", e));
+                                        }
+                                    }}
+                                />
+
+                                {/* Video Feed */}
+                                {hasVideo ? (
+                                    <video 
+                                        autoPlay 
+                                        playsInline 
+                                        ref={el => { 
+                                            if (el && el.srcObject !== data.stream) {
+                                                el.srcObject = data.stream;
+                                                el.play().catch(e => console.warn("Video play prevented:", e));
+                                            }
+                                        }} 
+                                        className="w-full h-full object-cover" 
+                                    />
+                                ) : (
+                                    /* Zoom-style Camera Off Avatar with Pulse */
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-2 select-none">
+                                        <div className="relative">
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-emerald-400 border-2 border-emerald-500/40 shadow-inner">
+                                                {data.name?.[0]?.toUpperCase() || 'P'}
+                                            </div>
+                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-[10px]">
+                                                🎙️
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-300">{data.name}</span>
+                                        <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">
+                                            Connected (Audio Live)
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Bottom Name Pill */}
+                                <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 flex items-center gap-1.5 shadow-md">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    <span>{data.name || 'Participant'}</span>
+                                </div>
+
+                                {raisedHands[id] && (
+                                    <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white">
+                                        <Hand size={14} className="text-white" />
+                                    </div>
+                                )}
                             </div>
-                            {raisedHands[id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
-                        </div>
-                    ))}
+                        );
+                    })}
 
                     {Object.keys(remoteStreams).length === 0 && (
                         <div className="h-36 sm:h-52 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-4 text-center">
