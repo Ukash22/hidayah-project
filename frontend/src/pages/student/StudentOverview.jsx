@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api, { asList, getApiError } from '../../services/api';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard as IconLayoutDashboard, Download as IconDownload, Plus as IconPlus,
     CheckCircle2 as IconCheckCircle2, ShieldCheck as IconShieldCheck, X as IconX,
@@ -25,7 +24,7 @@ export default function StudentOverview() {
     const [profile, setProfile] = useState(null);
     const [classes, setClasses] = useState([]);
     const [bookings, setBookings] = useState([]);
-    const [examAssignments, setExamAssignments] = useState([]);
+    const [_examAssignments, setExamAssignments] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);

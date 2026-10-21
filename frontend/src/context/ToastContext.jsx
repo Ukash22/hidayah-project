@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import ToastStack from '../components/ui/Toast';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 

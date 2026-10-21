@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { CheckCircle2, ArrowRight, X } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
@@ -12,11 +12,6 @@ import RegisterStep3 from './register/RegisterStep3';
 
 const EXAM_LEVELS = ['JAMB', 'WAEC', 'NECO', 'JUNIOR_WAEC'];
 
-const getRateByLevel = (level) => {
-    if (['JAMB', 'WAEC', 'NECO'].includes(level)) return 2500;
-    if (['SECONDARY', 'JUNIOR_WAEC', 'ADULT'].includes(level)) return 2000;
-    return 1500;
-};
 
 const calculateAge = (dob) => {
     if (!dob) return 20;
@@ -234,21 +229,8 @@ export default function Register() {
             const daysPerWeek = validSchedule.length || 1;
             const hoursPerSession = parseFloat(learning.hoursPerSession) || 1;
             const totalWeeklyHours = daysPerWeek * hoursPerSession;
-
             const selectedSubjects = Object.keys(subjectEnrollments);
-            const numSubjects = selectedSubjects.length || 1;
-            const hoursPerSubject = totalWeeklyHours / numSubjects;
-            const baseRate = getRateByLevel(learning.level);
-            let totalToPay = 0;
-            selectedSubjects.forEach(subject => {
-                const tutorId = subjectEnrollments[subject];
-                let rate = baseRate;
-                if (tutorId) {
-                    const tutor = (tutorsBySubject[subject] || []).find(t => t.id === tutorId);
-                    if (tutor?.hourly_rate) rate = parseFloat(tutor.hourly_rate);
-                }
-                totalToPay += rate * hoursPerSubject * 4;
-            });
+
 
             const payload = {
                 username: account.username.trim().toLowerCase(),

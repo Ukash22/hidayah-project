@@ -4,6 +4,96 @@ import { useAuth } from '../context/AuthContext';
 import NotificationCenter from './NotificationCenter';
 
 /**
+ * SidebarContent — Extracted as a top-level component to prevent
+ * re-creation on every render (fixes react-hooks/static-components lint error).
+ */
+const SidebarContent = ({
+    t, role, user, navItems, activeTab, onTabChange, onCloseSidebar,
+    isDark, toggleTheme, onLogout,
+}) => (
+    <div className="h-full flex flex-col">
+        {/* Brand */}
+        <div className={`p-6 border-b ${t.divider}`}>
+            <Link to="/" className="flex items-center gap-3 group">
+                <div className={`w-10 h-10 ${t.accent} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
+                    <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
+                </div>
+                <div>
+                    <p className="font-bold text-white tracking-tight leading-none">HIDAYAH</p>
+                    <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
+                        {role === 'TUTOR' ? 'Tutor Portal' : role === 'ADMIN' ? 'Admin Portal' : 'Student Portal'}
+                    </p>
+                </div>
+            </Link>
+        </div>
+
+        {/* User Profile */}
+        <div className={`px-4 py-4 border-b ${t.divider}`}>
+            <div className={`flex items-center gap-3 p-3 rounded-2xl ${t.userBg}`}>
+                <div className={`w-10 h-10 ${t.avatar} rounded-xl flex items-center justify-center font-bold shadow-lg flex-shrink-0 text-sm`}>
+                    {user?.first_name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
+                </div>
+                <div className="overflow-hidden">
+                    <p className="text-white font-bold text-sm truncate leading-none">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide mt-0.5 truncate">{user?.username}</p>
+                </div>
+            </div>
+        </div>
+
+        {/* Nav Items */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 hide-scrollbar">
+            {navItems.map(item => (
+                <button
+                    key={item.id}
+                    onClick={() => { onTabChange(item.id); onCloseSidebar(); }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${activeTab === item.id ? t.navActive : t.navHover}`}
+                >
+                    <span className="text-lg leading-none">{item.icon}</span>
+                    <span className="flex-1 text-left">{item.label}</span>
+                    {item.badge > 0 && (
+                        <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-[9px] font-bold flex items-center justify-center ${activeTab === item.id ? 'bg-white/20 text-white' : `${t.accent}/20 ${t.accentText}`}`}>
+                            {item.badge}
+                        </span>
+                    )}
+                </button>
+            ))}
+        </nav>
+
+        {/* Footer */}
+        <div className={`p-4 border-t ${t.divider} space-y-2`}>
+            {/* Theme Toggle */}
+            <button
+                onClick={toggleTheme}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.themeBtn}`}
+            >
+                <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
+                <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+                <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-primary' : 'bg-slate-600'}`}>
+                    <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
+                </div>
+            </button>
+
+            <div className="flex items-center justify-between px-2 py-1">
+                <NotificationCenter />
+                <span className="text-slate-600 text-[11px] font-semibold uppercase tracking-wide">Alerts</span>
+            </div>
+            <Link
+                to="/"
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.homeHover}`}
+            >
+                <span>🏠</span><span>Home Page</span>
+            </Link>
+            <button
+                onClick={onLogout}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.logoutHover}`}
+            >
+                <span>🚪</span><span>Logout</span>
+            </button>
+        </div>
+    </div>
+);
+
+/**
  * DashboardLayout — Reusable layout for Tutor & Student dashboards
  * Supports white/blue (default) and dark theme via localStorage.
  */
@@ -76,94 +166,17 @@ const DashboardLayout = ({
         navigate('/');
     };
 
-    const SidebarContent = () => (
-        <div className="h-full flex flex-col">
-            {/* Brand */}
-            <div className={`p-6 border-b ${t.divider}`}>
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className={`w-10 h-10 ${t.accent} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform`}>
-                        <img src="/logo.png" alt="H" className="w-7 h-7 object-contain brightness-110" />
-                    </div>
-                    <div>
-                        <p className="font-bold text-white tracking-tight leading-none">HIDAYAH</p>
-                        <p className={`text-[10px] font-bold uppercase tracking-[0.15em] ${t.accentText} opacity-80`}>
-                            {role === 'TUTOR' ? 'Tutor Portal' : role === 'ADMIN' ? 'Admin Portal' : 'Student Portal'}
-                        </p>
-                    </div>
-                </Link>
-            </div>
-
-            {/* User Profile */}
-            <div className={`px-4 py-4 border-b ${t.divider}`}>
-                <div className={`flex items-center gap-3 p-3 rounded-2xl ${t.userBg}`}>
-                    <div className={`w-10 h-10 ${t.avatar} rounded-xl flex items-center justify-center font-bold shadow-lg flex-shrink-0 text-sm`}>
-                        {user?.first_name?.[0]?.toUpperCase() || user?.username?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="overflow-hidden">
-                        <p className="text-white font-bold text-sm truncate leading-none">{user?.first_name} {user?.last_name}</p>
-                        <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide mt-0.5 truncate">{user?.username}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Nav Items */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 hide-scrollbar">
-                {navItems.map(item => (
-                    <button
-                        key={item.id}
-                        onClick={() => { onTabChange(item.id); setSidebarOpen(false); }}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${activeTab === item.id ? t.navActive : t.navHover}`}
-                    >
-                        <span className="text-lg leading-none">{item.icon}</span>
-                        <span className="flex-1 text-left">{item.label}</span>
-                        {item.badge > 0 && (
-                            <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-[9px] font-bold flex items-center justify-center ${activeTab === item.id ? 'bg-white/20 text-white' : `${t.accent}/20 ${t.accentText}`}`}>
-                                {item.badge}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </nav>
-
-            {/* Footer */}
-            <div className={`p-4 border-t ${t.divider} space-y-2`}>
-                {/* Theme Toggle */}
-                <button
-                    onClick={toggleTheme}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.themeBtn}`}
-                >
-                    <span className="text-lg">{isDark ? '☀️' : '🌙'}</span>
-                    <span className="flex-1 text-left">{isDark ? 'Light Mode' : 'Dark Mode'}</span>
-                    <div className={`w-10 h-5 rounded-full transition-all relative ${isDark ? 'bg-primary' : 'bg-slate-600'}`}>
-                        <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${isDark ? 'left-5' : 'left-0.5'}`} />
-                    </div>
-                </button>
-
-                <div className="flex items-center justify-between px-2 py-1">
-                    <NotificationCenter />
-                    <span className="text-slate-600 text-[11px] font-semibold uppercase tracking-wide">Alerts</span>
-                </div>
-                <Link
-                    to="/"
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.homeHover}`}
-                >
-                    <span>🏠</span><span>Home Page</span>
-                </Link>
-                <button
-                    onClick={handleLogout}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold transition-all ${t.logoutHover}`}
-                >
-                    <span>🚪</span><span>Logout</span>
-                </button>
-            </div>
-        </div>
-    );
+    const sidebarProps = {
+        t, role, user, navItems, activeTab, onTabChange,
+        onCloseSidebar: () => setSidebarOpen(false),
+        isDark, toggleTheme, onLogout: handleLogout,
+    };
 
     return (
         <div className={`min-h-screen ${t.mainBg} flex font-sans transition-colors duration-300`}>
             {/* Desktop Sidebar */}
             <aside className={`hidden md:flex w-64 ${t.sidebar} flex-col fixed h-full z-40 shadow-[20px_0_60px_rgba(0,0,0,0.15)]`}>
-                <SidebarContent />
+                <SidebarContent {...sidebarProps} />
             </aside>
 
             {/* Mobile Overlay */}
@@ -176,7 +189,7 @@ const DashboardLayout = ({
             <aside
                 className={`fixed top-0 left-0 h-full w-72 bg-slate-900 z-[201] shadow-[20px_0_60px_rgba(0,0,0,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] md:hidden ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
-                <SidebarContent />
+                <SidebarContent {...sidebarProps} />
             </aside>
 
             {/* Main Content */}

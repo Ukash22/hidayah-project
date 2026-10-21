@@ -12,7 +12,7 @@ const PendingApproval = () => {
         if (!token) return;
         api.get('/api/tutors/me/')
             .then(res => setTutorProfile(res.data))
-            .catch(() => {});
+            .catch(() => { });
     }, [token]);
 
     const isInterviewScheduled = tutorProfile?.status === 'INTERVIEW_SCHEDULED';
@@ -29,7 +29,7 @@ const PendingApproval = () => {
             <div className="container pt-32 pb-20 text-center">
                 <div className="max-w-2xl mx-auto bg-white rounded-card-lg shadow-3xl p-12 border border-slate-100 animate-in fade-in zoom-in duration-700 relative overflow-hidden">
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 blur-[100px] rounded-full"></div>
-                    
+
                     <div className="w-24 h-24 bg-primary/5 rounded-card flex items-center justify-center mx-auto mb-8 text-4xl border border-primary/10 shadow-inner">
                         {isInterviewScheduled ? '🎯' : '⏳'}
                     </div>

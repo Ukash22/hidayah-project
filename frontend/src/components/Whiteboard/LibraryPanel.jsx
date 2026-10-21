@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Files, Palette, Library, Image as ImageIcon, FileText, FileUp, X, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 

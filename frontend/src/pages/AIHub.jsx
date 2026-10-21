@@ -122,8 +122,6 @@ const AIHub = () => {
         }
     };
 
-    const activeQuestions = view === 'my-sets' && reviewSet ? reviewSet.questions : generated;
-
     // Wallet gate
     if (!profileLoading && profile && profile.wallet_balance < 1000) {
         return (

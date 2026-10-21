@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Bell } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { EmptyState } from './ui';
 
 const NotificationCenter = () => {
@@ -56,6 +56,7 @@ const NotificationCenter = () => {
     }, []);
 
     useEffect(() => {
+         
         fetchNotifications();
         // Poll for new notifications every 60 seconds
         const interval = setInterval(fetchNotifications, 60000);

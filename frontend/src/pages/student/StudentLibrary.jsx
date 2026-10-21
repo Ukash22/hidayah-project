@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api, { asList } from '../../services/api';
-import { motion } from 'framer-motion';
 import { Search as IconSearch, Download as IconDownload, FileText as IconFileText, ExternalLink as IconExternalLink, PlayCircle as IconPlayCircle, Music as IconMusic, BookOpen as IconBookOpen, Link as IconLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../../components/layout';

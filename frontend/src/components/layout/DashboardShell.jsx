@@ -13,6 +13,7 @@ export default function DashboardShell({ navGroups, role }) {
 
     // Auto-close the mobile drawer whenever the route changes
     useEffect(() => {
+         
         setSidebarOpen(false);
     }, [location.pathname]);
 

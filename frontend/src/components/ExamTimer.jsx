@@ -6,6 +6,8 @@ export default function ExamTimer({ initialSeconds, isFinished, onTimeUp }) {
     useEffect(() => { onTimeUpRef.current = onTimeUp; }, [onTimeUp]);
 
     useEffect(() => {
+        // Sync external initialSeconds changes into state
+         
         if (initialSeconds > 0) setTimeLeft(initialSeconds);
     }, [initialSeconds]);
 

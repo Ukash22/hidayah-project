@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api, { getApiError } from '../services/api';
 import { useToast } from '../context/ToastContext';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ComplaintModal = ({ isOpen, onClose, filedAgainstId, filedAgainstName, token }) => {

@@ -96,7 +96,7 @@ const TutorRegister = () => {
         try {
             const saved = localStorage.getItem(DRAFT_KEY);
             if (saved) return JSON.parse(saved);
-        } catch {}
+        } catch (_e) { /* ignore */ }
         return null;
     };
 
@@ -118,8 +118,8 @@ const TutorRegister = () => {
 
     // Persist draft on every formData change (exclude passwords)
     useEffect(() => {
-        const { password, confirmPassword, ...safe } = formData;
-        try { localStorage.setItem(DRAFT_KEY, JSON.stringify(safe)); } catch {}
+        const { password: _p, confirmPassword: _cp, ...safe } = formData;
+        try { localStorage.setItem(DRAFT_KEY, JSON.stringify(safe)); } catch (_e) { /* ignore */ }
     }, [formData]);
 
     const handleChange = (e) => {
@@ -222,7 +222,7 @@ const TutorRegister = () => {
                 credentials_url: uploadedUrls.credentials
             });
 
-            try { localStorage.removeItem(DRAFT_KEY); } catch {}
+            try { localStorage.removeItem(DRAFT_KEY); } catch (_e) { /* ignore */ }
             setSuccess(true);
         } catch (err) {
             setError(err.response?.data?.detail || getApiError(err, 'Registration failed'));
@@ -291,7 +291,7 @@ const TutorRegister = () => {
                             <button
                                 type="button"
                                 onClick={() => {
-                                    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+                                    try { localStorage.removeItem(DRAFT_KEY); } catch (_e) { /* ignore */ }
                                     setFormData(DEFAULT_FORM);
                                     setDraftRestored(false);
                                 }}

@@ -1,4 +1,4 @@
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, MonitorCheck } from 'lucide-react';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 
-const QuranMushaf = () => {
+const QuranMushaf = ({ onInsertToBoard, onClose }) => {
     const [surahs, setSurahs] = useState([]);
     const [selectedSurah, setSelectedSurah] = useState(1);
     
@@ -195,14 +195,23 @@ const QuranMushaf = () => {
     };
 
     return (
-        <div className="bg-[#fdfbf7] rounded-card-lg p-5 md:p-8 border border-amber-900/10 mb-12 shadow-sm">
+        <div className="bg-[#fdfbf7] rounded-card-lg p-5 md:p-8 border border-amber-900/10 mb-12 shadow-sm relative">
+            {onClose && (
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-amber-900/10 hover:bg-amber-900/20 text-amber-950 flex items-center justify-center font-bold text-sm transition-all"
+                    title="Close Mushaf"
+                >
+                    ✕
+                </button>
+            )}
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8 border-b border-amber-900/10 pb-6">
                 <div>
                     <h3 className="text-2xl font-display text-amber-950 flex items-center gap-2">
                         <span className="text-3xl">📖</span> Quran Mushaf
                     </h3>
                     <p className="text-amber-700 text-[11px] font-semibold uppercase tracking-wide mt-1 opacity-70">
-                        Click any verse to listen exactly
+                        Click any verse to listen exactly {onInsertToBoard && '• Click "+ Board" to insert into canvas'}
                     </p>
                 </div>
 
@@ -349,6 +358,26 @@ const QuranMushaf = () => {
                                             style={{ direction: 'ltr' }}
                                             dangerouslySetInnerHTML={{ __html: v.translations[0].text }}
                                         />
+                                    )}
+
+                                    {onInsertToBoard && (
+                                        <div className="mt-2.5 flex justify-center" style={{ direction: 'ltr' }}>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onInsertToBoard({
+                                                        text: v.text_uthmani,
+                                                        surahName: surahs.find(s => s.id === selectedSurah)?.name_simple || '',
+                                                        verseKey: v.verse_key
+                                                    });
+                                                }}
+                                                className="px-3 py-1 bg-amber-700/10 hover:bg-amber-700 text-amber-900 hover:text-white rounded-lg text-[11px] font-bold border border-amber-900/20 transition-all flex items-center gap-1.5 shadow-sm"
+                                            >
+                                                <span>➕</span>
+                                                <span>Insert Ayah {v.verse_key} to Board</span>
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             ))}
