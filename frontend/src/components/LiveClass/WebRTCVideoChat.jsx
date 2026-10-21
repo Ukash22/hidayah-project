@@ -23,9 +23,14 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
     const peerConnections = useRef({});
+    const iceCandidateQueue = useRef({});
     const chatEndRef = useRef(null);
     const chatPanelRef = useRef(null);
     
+    // Stable user id and name
+    const myId = user?.id ? String(user.id) : (user?.email || 'anon_' + roomId);
+    const myName = user?.first_name || (user?.email ? user.email.split('@')[0] : 'Participant');
+
     // WebSocket URL for signaling — include JWT token for auth
     const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
@@ -46,8 +51,8 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
 
     const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl, {
         shouldReconnect: () => true,
-        reconnectAttempts: 20,
-        reconnectInterval: 3000,
+        reconnectAttempts: 30,
+        reconnectInterval: 2500,
         heartbeat: {
             message: JSON.stringify({ type: 'ping' }),
             interval: 15000,
@@ -55,11 +60,25 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         },
         onOpen: () => {
             console.log("✅ Signaling WebSocket Connected to:", socketUrl);
-            // We'll send the join message once we have the local stream to avoid race conditions
         },
         onClose: () => console.log("❌ Signaling WebSocket Disconnected"),
         onError: (err) => console.error("⚠️ Signaling WebSocket Error:", err),
     });
+
+    // Auto-unlock audio on first user interaction in case browser autoplay blocks sound
+    useEffect(() => {
+        const unlockAudio = () => {
+            document.querySelectorAll('audio').forEach(el => {
+                el.play().catch(() => {});
+            });
+        };
+        window.addEventListener('click', unlockAudio, { once: true });
+        window.addEventListener('touchstart', unlockAudio, { once: true });
+        return () => {
+            window.removeEventListener('click', unlockAudio);
+            window.removeEventListener('touchstart', unlockAudio);
+        };
+    }, []);
 
     // Keep local video element synced whenever localStream changes
     useEffect(() => {
@@ -79,7 +98,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 console.log("🎥 Initializing Local Media (Audio + Video)...");
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, 
-                    audio: { echoCancellation: true, noiseSuppression: true }
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
                 });
             } catch (err) {
                 console.warn("⚠️ Full media request unavailable (" + err.name + "), checking fallbacks...");
@@ -89,7 +108,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                     if (isMounted) {
                         setIsVideoOff(true);
-                        setMediaNotice("No camera detected or accessible. Joined with audio only.");
+                        setMediaNotice("No camera detected. Joined with audio only.");
                     }
                 } catch (_audioErr) {
                     // Fallback 2: Try video only (common if no mic connected)
@@ -97,7 +116,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                         if (isMounted) {
                             setIsMuted(true);
-                            setMediaNotice("No microphone detected or accessible. Joined with camera only.");
+                            setMediaNotice("No microphone detected. Joined with camera only.");
                         }
                     } catch (videoErr) {
                         console.warn("⚠️ No camera/mic accessible (" + videoErr.name + "). Joined in listen/chat mode.");
@@ -128,31 +147,70 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             }
             Object.values(peerConnections.current).forEach(pc => pc.close());
             peerConnections.current = {};
+            iceCandidateQueue.current = {};
             setRemoteStreams({});
         };
     }, []); // Run once on mount — component is always mounted
 
-    // Heartbeat & Re-join logic — fires when WS connects and stream is ready
+    // Heartbeat & Peer discovery: announce presence when stream is ready, and retry until remote peer is found
     useEffect(() => {
-        if (readyState === ReadyState.OPEN && localStream) {
-            // Ensure we are joined
-            sendMessage(JSON.stringify({ type: 'peer_join', peerId: user.id, name: user.first_name || 'User' }));
-        }
-    }, [readyState, localStream]);
+        if (readyState !== ReadyState.OPEN || !localStream) return;
+
+        // Send initial join
+        sendMessage(JSON.stringify({ type: 'peer_join', peerId: myId, name: myName }));
+
+        // Repeat presence every 10 seconds if no peers connected yet so late arrivals connect automatically
+        const interval = setInterval(() => {
+            if (Object.keys(peerConnections.current).length === 0) {
+                sendMessage(JSON.stringify({ type: 'peer_join', peerId: myId, name: myName }));
+            }
+        }, 10000);
+
+        return () => clearInterval(interval);
+    }, [readyState, localStream, myId, myName, sendMessage]);
 
     // Handle Signaling Messages
     useEffect(() => {
-        if (!lastMessage) return;   // always handle messages even when video panel hidden
+        if (!lastMessage) return;
         
         try {
             const data = JSON.parse(lastMessage.data);
             const { type, peerId, name, sdp, candidate, message } = data;
             
             // Ignore our own messages
-            if (String(peerId) === String(user.id)) return;
+            if (String(peerId) === String(myId)) return;
             if (type === 'pong') return;
 
             console.log(`📡 Received Signal: ${type} from ${name || peerId}`);
+
+            const addOrQueueIceCandidate = async (id, candidateData) => {
+                const pc = peerConnections.current[id];
+                if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+                    } catch (err) {
+                        console.warn(`⚠️ Error adding ICE candidate for ${id}:`, err);
+                    }
+                } else {
+                    if (!iceCandidateQueue.current[id]) iceCandidateQueue.current[id] = [];
+                    iceCandidateQueue.current[id].push(candidateData);
+                }
+            };
+
+            const flushIceCandidateQueue = async (id, pc) => {
+                const queued = iceCandidateQueue.current[id];
+                if (queued && queued.length > 0) {
+                    console.log(`🧊 Flushing ${queued.length} queued ICE candidates for ${id}`);
+                    for (const cand of queued) {
+                        try {
+                            await pc.addIceCandidate(new RTCIceCandidate(cand));
+                        } catch (err) {
+                            console.warn(`⚠️ Error adding queued ICE candidate for ${id}:`, err);
+                        }
+                    }
+                    delete iceCandidateQueue.current[id];
+                }
+            };
 
             const getPeerConnection = async (id, peerName) => {
                 if (peerConnections.current[id]) return peerConnections.current[id];
@@ -163,6 +221,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
                         { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun.services.mozilla.com' },
                     ]
                 });
                 
@@ -187,28 +246,36 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 
                 pc.onicecandidate = (event) => {
                     if (event.candidate) {
-                        sendMessage(JSON.stringify({ type: 'ice_candidate', peerId: user.id, targetId: id, candidate: event.candidate }));
+                        sendMessage(JSON.stringify({ type: 'ice_candidate', peerId: myId, targetId: id, candidate: event.candidate }));
                     }
                 };
                 
                 pc.ontrack = (event) => {
                     console.log(`🎬 Received Track from ${peerName}:`, event.track.kind);
                     const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
+                    
+                    // Attach track state listeners so muted/unmuted updates immediately
+                    event.track.onmute = () => setRemoteStreams(prev => ({ ...prev }));
+                    event.track.onunmute = () => setRemoteStreams(prev => ({ ...prev }));
+                    event.track.onended = () => setRemoteStreams(prev => ({ ...prev }));
+
                     setRemoteStreams(prev => {
                         const existing = prev[id]?.stream;
                         if (existing) {
                             if (!existing.getTracks().find(t => t.id === event.track.id)) {
                                 existing.addTrack(event.track);
                             }
-                            return { ...prev, [id]: { ...prev[id], stream: existing, name: peerName } };
+                            return { ...prev, [id]: { ...prev[id], stream: existing, name: peerName, _v: (prev[id]?._v || 0) + 1 } };
                         }
-                        return { ...prev, [id]: { stream: incomingStream, name: peerName } };
+                        return { ...prev, [id]: { stream: incomingStream, name: peerName, _v: 1 } };
                     });
                 };
                 
-                pc.oniceconnectionstatechange = () => {
-                    console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
-                    if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+                pc.onconnectionstatechange = () => {
+                    console.log(`📡 Peer connection state for ${peerName}: ${pc.connectionState}`);
+                    if (pc.connectionState === 'connected') {
+                        console.log(`🎉 Peer connection ESTABLISHED with ${peerName}`);
+                    } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
                         setRemoteStreams(prev => {
                             const newStreams = { ...prev };
                             delete newStreams[id];
@@ -216,6 +283,21 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         });
                         pc.close();
                         delete peerConnections.current[id];
+                        delete iceCandidateQueue.current[id];
+                    }
+                };
+
+                pc.oniceconnectionstatechange = () => {
+                    console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
+                    if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+                        setRemoteStreams(prev => {
+                            const newStreams = { ...prev };
+                            delete newStreams[id];
+                            return newStreams;
+                        });
+                        pc.close();
+                        delete peerConnections.current[id];
+                        delete iceCandidateQueue.current[id];
                     }
                 };
 
@@ -224,21 +306,27 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             };
 
             const handleSignal = async () => {
-                // We MUST have localStream to respond to offers/joins properly
                 if (!localStream) {
                     console.warn("⏳ Signal received but localStream not ready. Ignoring for now.");
                     return;
                 }
 
-                const isPolite = String(user.id) > String(peerId);
+                const isPolite = String(myId) > String(peerId);
 
                 if (type === 'peer_join') {
                     const pc = await getPeerConnection(peerId, name);
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
-                    sendMessage(JSON.stringify({ type: 'offer', peerId: user.id, targetId: peerId, name: user.first_name, role: user.role, sdp: pc.localDescription }));
+                    sendMessage(JSON.stringify({ 
+                        type: 'offer', 
+                        peerId: myId, 
+                        targetId: peerId, 
+                        name: myName, 
+                        role: user?.role, 
+                        sdp: pc.localDescription 
+                    }));
                 } 
-                else if (type === 'offer' && String(data.targetId) === String(user.id)) {
+                else if (type === 'offer' && String(data.targetId) === String(myId)) {
                     const pc = await getPeerConnection(peerId, name);
                     
                     // Handle Collision with Polite Peer pattern
@@ -252,23 +340,31 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     }
 
                     await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                    await flushIceCandidateQueue(peerId, pc);
+
                     const answer = await pc.createAnswer();
                     await pc.setLocalDescription(answer);
-                    sendMessage(JSON.stringify({ type: 'answer', peerId: user.id, targetId: peerId, sdp: pc.localDescription }));
+                    sendMessage(JSON.stringify({ 
+                        type: 'answer', 
+                        peerId: myId, 
+                        targetId: peerId, 
+                        name: myName,
+                        sdp: pc.localDescription 
+                    }));
                 } 
-                else if (type === 'answer' && String(data.targetId) === String(user.id)) {
+                else if (type === 'answer' && String(data.targetId) === String(myId)) {
                     const pc = peerConnections.current[peerId];
                     if (pc) {
                         if (pc.signalingState === 'have-local-offer') {
                             await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                            await flushIceCandidateQueue(peerId, pc);
                         } else {
                             console.warn(`⚠️ Ignoring answer from ${peerId} because state is ${pc.signalingState}`);
                         }
                     }
                 } 
-                else if (type === 'ice_candidate' && String(data.targetId) === String(user.id)) {
-                    const pc = peerConnections.current[peerId];
-                    if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                else if (type === 'ice_candidate' && String(data.targetId) === String(myId)) {
+                    await addOrQueueIceCandidate(peerId, candidate);
                 }
                 else if (type === 'chat') {
                     setMessages(prev => [...prev, { name, text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }]);
@@ -285,7 +381,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         } catch (e) {
             console.error("Signaling Error", e);
         }
-    }, [lastMessage, isVideoOpen, localStream, user.id, user.first_name, sendMessage]);
+    }, [lastMessage, isVideoOpen, localStream, myId, myName, user?.role, sendMessage]);
 
     // Auto-scroll chat
     useEffect(() => {
@@ -372,16 +468,16 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         e.preventDefault();
         const val = e.target.chatInput.value.trim();
         if (!val) return;
-        sendMessage(JSON.stringify({ type: 'chat', peerId: user.id, name: user.first_name || 'User', message: val }));
+        sendMessage(JSON.stringify({ type: 'chat', peerId: myId, name: myName, message: val }));
         setMessages(prev => [...prev, { name: 'You', text: val, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }]);
         e.target.reset();
     };
 
     const handleRaiseHand = () => {
-        sendMessage(JSON.stringify({ type: 'raise_hand', peerId: user.id }));
-        setRaisedHands(prev => ({ ...prev, [user.id]: true }));
+        sendMessage(JSON.stringify({ type: 'raise_hand', peerId: myId }));
+        setRaisedHands(prev => ({ ...prev, [myId]: true }));
         setTimeout(() => {
-            setRaisedHands(prev => { const next = {...prev}; delete next[user.id]; return next; });
+            setRaisedHands(prev => { const next = {...prev}; delete next[myId]; return next; });
         }, 5000);
     };
 

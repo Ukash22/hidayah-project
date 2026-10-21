@@ -114,7 +114,7 @@ export default function FAQ() {
                 <div className="mt-14 text-center">
                     <p className="text-slate-500 mb-4 text-sm">Still have questions?</p>
                     <a
-                        href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || '2348000000000'}?text=Hello%20Hidayah%2C%20I%20have%20a%20question%20about%20enrolment`}
+                        href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER || '2347062566616'}?text=Hello%20Hidayah%2C%20I%20have%20a%20question%20about%20enrolment`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-2 bg-[#25d366] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-[#25d366]/20 hover:scale-105 active:scale-95 transition-all"

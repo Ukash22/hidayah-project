@@ -52,7 +52,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-xl font-display font-semibold text-text mb-3">9. Contact</h2>
-            <p>For questions about these terms, contact us at <a href="mailto:support@hidayah.ng" className="text-primary hover:underline">support@hidayah.ng</a>.</p>
+            <p>For questions about these terms, contact us at <a href="mailto:hidayah.support@gmail.com" className="text-primary hover:underline">hidayah.support@gmail.com</a>.</p>
           </section>
         </div>
 

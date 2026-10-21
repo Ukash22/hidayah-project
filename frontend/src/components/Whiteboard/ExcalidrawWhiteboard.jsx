@@ -7,7 +7,6 @@ import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
-import WhiteboardDrawer from './WhiteboardDrawer';
 import QuranMushaf from '../QuranMushaf';
 
 const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
@@ -356,7 +355,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [currentTool, setCurrentTool] = useState('freedraw');
     const [penStrokeWidth, setPenStrokeWidth] = useState(2);
     const [penColor, setPenColor] = useState('#1e293b');
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [showQuranMushaf, setShowQuranMushaf] = useState(false);
 
     const handleSelectTool = useCallback((tool) => {
@@ -513,8 +511,10 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         );
     }
 
+    const isTutorOrAdmin = role === 'TUTOR' || role === 'ADMIN';
+
     return (
-        <div className="w-full h-full flex flex-col bg-[#f8fafc] overflow-hidden relative font-sans">
+        <div className="w-full h-full flex flex-col bg-[#0f172a] overflow-hidden relative font-sans">
             
             {studentReaction && (
                 <div className="absolute inset-0 pointer-events-none z-[9999] flex items-center justify-center">
@@ -522,80 +522,143 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 </div>
             )}
 
-            {/* Floating Drawer Trigger & Status Pills */}
-            <div className="absolute top-3 left-3 z-[2000] flex items-center gap-2">
-                <button
-                    onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-2 bg-slate-900/90 hover:bg-slate-900 text-white px-3.5 py-2 rounded-2xl border border-slate-700/80 shadow-2xl backdrop-blur-md transition-all hover:scale-105 active:scale-95 group"
-                    title="Open Tools Drawer"
-                >
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-xs font-bold uppercase tracking-wider">🛠️ Drawer</span>
-                    <span className="text-[10px] bg-slate-800 text-emerald-300 px-2 py-0.5 rounded-lg border border-slate-700 font-semibold hidden sm:inline">
-                        {currentTool === 'eraser' ? '🧹 Eraser' : currentTool === 'text' ? '🔤 Text' : currentTool === 'laser' ? '🔦 Laser' : `✏️ Pen (${penStrokeWidth === 1 ? 'Thin' : penStrokeWidth === 2 ? 'Regular' : penStrokeWidth === 4 ? 'Bold' : 'Heavy'})`}
-                    </span>
-                </button>
+            {/* ── Top Header: Board Switcher & Quick Controls ────────────────── */}
+            <header className="flex-shrink-0 h-11 md:h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-2 sm:px-4 z-30 gap-2 select-none">
+                
+                {/* Left: Board Switch Tabs */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {role === 'STUDENT' ? (
+                        <div className="flex bg-slate-800/90 p-0.5 rounded-xl border border-slate-700/80">
+                            <button
+                                onClick={() => setActiveTab('my_board')}
+                                className={`px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+                                    activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'
+                                }`}
+                            >
+                                ✏️ My Board
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('teacher_board')}
+                                className={`px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+                                    activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'
+                                }`}
+                            >
+                                👨‍🏫 Teacher Board
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex bg-slate-800/90 p-0.5 rounded-xl border border-slate-700/80">
+                            <button
+                                onClick={() => setActiveTab('my_board')}
+                                className={`px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+                                    activeTab === 'my_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'
+                                }`}
+                            >
+                                👨‍🏫 Teacher Board
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('my_class')}
+                                className={`relative px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+                                    activeTab === 'my_class' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'
+                                }`}
+                            >
+                                👥 Students
+                                {Object.keys(studentThumbnails).length > 0 && (
+                                    <span className="ml-1.5 px-1.5 py-0.2 bg-emerald-500 text-white rounded-full text-[9px] font-bold">
+                                        {Object.keys(studentThumbnails).length}
+                                    </span>
+                                )}
+                            </button>
+                        </div>
+                    )}
 
-                {activeTab === 'student_view' && (
-                    <div className="flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-emerald-500/30 text-emerald-400 text-xs font-bold shadow-lg">
-                        <span>Coaching: {activeStudentId ? studentThumbnails[activeStudentId]?.name : ''}</span>
-                        <button onClick={() => setActiveTab('my_class')} className="hover:text-white font-bold ml-1">✕</button>
-                    </div>
-                )}
-            </div>
-
-            {/* Top Right Page Counter */}
-            <div className="absolute top-3 right-3 z-[2000] flex items-center gap-2">
-                <button
-                    onClick={() => setIsDrawerOpen(true)}
-                    className="flex items-center gap-1.5 bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white px-3 py-1.5 rounded-xl border border-slate-700/70 text-[11px] font-bold shadow-md transition-all"
-                    title="View & manage pages in Drawer"
-                >
-                    <span className="text-emerald-400">📄</span>
-                    <span>Page {currentPageIdx + 1} / {pages.length}</span>
-                </button>
-            </div>
-
-            {/* Exam Active Timer Pill */}
-            {isExamActive && (
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[2000] bg-rose-600 text-white px-5 py-1.5 rounded-full font-bold text-sm md:text-base shadow-2xl border-2 border-rose-400 flex items-center gap-2 animate-pulse">
-                    <span>⏱️</span> 
-                    {Math.floor(examTimer / 60).toString().padStart(2, '0')}:{(examTimer % 60).toString().padStart(2, '0')}
+                    {activeTab === 'student_view' && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/40 text-[11px] font-bold">
+                            <span>👁️ Coaching: {activeStudentId ? studentThumbnails[activeStudentId]?.name : 'Student'}</span>
+                            <button 
+                                onClick={() => setActiveTab('my_class')}
+                                className="hover:text-white font-bold ml-1 text-xs"
+                                title="Return to student list"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
 
-            {/* Vertical Whiteboard Drawer */}
-            <WhiteboardDrawer
-                isOpen={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-                role={role}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                currentTool={currentTool}
-                onSelectTool={handleSelectTool}
-                penStrokeWidth={penStrokeWidth}
-                onChangePenStrokeWidth={handleChangePenStrokeWidth}
-                penColor={penColor}
-                onChangePenColor={handleChangePenColor}
-                onClearOwnBoard={handleClearOwnBoard}
-                onClearBoards={handleClearAllBoards}
-                onOpenExam={() => setShowExamPanel(true)}
-                onOpenQuran={() => setShowQuranMushaf(true)}
-                onOpenMathTools={() => setShowMathTools(true)}
-                onPush={handlePush}
-                onDownload={handleDownload}
-                pages={pages}
-                currentPageIdx={currentPageIdx}
-                onPrevPage={handlePrevPage}
-                onNextPage={handleNextPage}
-                onAddPage={handleAddPage}
-                onGoToPage={goToPage}
-                isLocked={isLocked}
-                onToggleLock={handleToggleLock}
-                isSlowMode={isSlowMode}
-                onToggleSlowMode={handleToggleSlowMode}
-                studentCount={Object.keys(studentThumbnails).length}
-            />
+                {/* Center: Exam countdown / Board state indicator */}
+                <div className="flex items-center gap-2">
+                    {isExamActive && (
+                        <div className="flex items-center gap-1.5 bg-rose-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md border border-rose-400 animate-pulse">
+                            <span>⏱️ Exam:</span>
+                            <span>{Math.floor(examTimer / 60).toString().padStart(2, '0')}:{(examTimer % 60).toString().padStart(2, '0')}</span>
+                        </div>
+                    )}
+
+                    {activeTab === 'teacher_board' && role === 'STUDENT' && (
+                        <div className="text-[11px] text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-lg hidden sm:block">
+                            👨‍🏫 Teacher's Live Board (Live Synchronized)
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Tutor Controls & Connection Status */}
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                    {isTutorOrAdmin && activeTab === 'my_board' && (
+                        <>
+                            <button
+                                onClick={() => handlePush('overwrite')}
+                                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] sm:text-xs font-bold shadow transition-all"
+                                title="Push your board to all students"
+                            >
+                                <span>🚀</span>
+                                <span className="hidden md:inline">Push to All</span>
+                            </button>
+
+                            <button
+                                onClick={handleToggleLock}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${
+                                    isLocked 
+                                        ? 'bg-amber-600 text-white border-amber-500' 
+                                        : 'bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+                                }`}
+                                title="Lock or unlock student drawing"
+                            >
+                                <span>{isLocked ? '🔓' : '🔒'}</span>
+                                <span className="hidden md:inline">{isLocked ? 'Unlock' : 'Lock'}</span>
+                            </button>
+
+                            <button
+                                onClick={handleToggleSlowMode}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${
+                                    isSlowMode 
+                                        ? 'bg-indigo-600 text-white border-indigo-500' 
+                                        : 'bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+                                }`}
+                                title="Toggle slow sync mode for students"
+                            >
+                                <span>⏱️</span>
+                                <span className="hidden lg:inline">{isSlowMode ? 'Slow: ON' : 'Slow'}</span>
+                            </button>
+
+                            <button
+                                onClick={handleClearAllBoards}
+                                className="flex items-center gap-1 px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 rounded-lg text-[10px] sm:text-xs font-bold transition-all"
+                                title="Clear all students boards"
+                            >
+                                <span>🗑️</span>
+                                <span className="hidden xl:inline">Clear All</span>
+                            </button>
+                        </>
+                    )}
+
+                    {/* Sync Status Indicator */}
+                    <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-2 py-1 bg-slate-800/70 rounded-lg border border-slate-700/60">
+                        <span className={`w-2 h-2 rounded-full ${readyState === ReadyState.OPEN ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                        <span className="hidden sm:inline">{readyState === ReadyState.OPEN ? 'Live' : 'Connecting'}</span>
+                    </div>
+                </div>
+            </header>
 
             {/* Quran Mushaf Modal */}
             {showQuranMushaf && (
@@ -609,7 +672,223 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 </div>
             )}
 
+            {/* ── Main Workspace: Vertical Left Toolbar + Clean Writing Canvas ─ */}
             <div className="flex-1 flex relative overflow-hidden">
+
+                {/* Left-Hand Side Vertical Toolbar */}
+                {(activeTab === 'my_board' || activeTab === 'student_view') && (
+                    <aside className="w-13 sm:w-14 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-2 px-1 gap-1.5 z-20 overflow-y-auto custom-scrollbar flex-shrink-0 text-white select-none">
+                        
+                        {/* 1. Pen Tool */}
+                        <button
+                            onClick={() => handleSelectTool('freedraw')}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
+                                currentTool === 'freedraw' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Pen Tool (Draw Freely)"
+                        >
+                            ✏️
+                        </button>
+
+                        {/* Pen Thickness Selector (1, 2, 4) */}
+                        <div className="flex flex-col gap-0.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 w-10 items-center">
+                            {[1, 2, 4].map(w => (
+                                <button
+                                    key={w}
+                                    onClick={() => handleChangePenStrokeWidth(w)}
+                                    className={`w-8 py-0.5 text-[9px] font-bold rounded transition-all ${
+                                        penStrokeWidth === w ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
+                                    }`}
+                                    title={`Pen Thickness: ${w === 1 ? 'Fine (1px)' : w === 2 ? 'Regular (2px)' : 'Bold (4px)'}`}
+                                >
+                                    {w === 1 ? 'Fine' : w === 2 ? 'Reg' : 'Bold'}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Pen Color Selector Dots */}
+                        <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-800/80 rounded-xl border border-slate-700/80">
+                            {[
+                                { color: '#0f172a', name: 'Dark' },
+                                { color: '#dc2626', name: 'Red' },
+                                { color: '#2563eb', name: 'Blue' },
+                                { color: '#16a34a', name: 'Green' },
+                                { color: '#d97706', name: 'Amber' },
+                                { color: '#9333ea', name: 'Purple' }
+                            ].map(c => (
+                                <button
+                                    key={c.color}
+                                    onClick={() => handleChangePenColor(c.color)}
+                                    style={{ backgroundColor: c.color }}
+                                    className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                                        penColor === c.color ? 'ring-2 ring-emerald-400 scale-125' : 'hover:scale-110 opacity-80 hover:opacity-100 border border-slate-600'
+                                    }`}
+                                    title={`Color: ${c.name}`}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="w-8 h-px bg-slate-800 my-0.5" />
+
+                        {/* 2. Eraser */}
+                        <button
+                            onClick={() => handleSelectTool('eraser')}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
+                                currentTool === 'eraser' ? 'bg-emerald-600 text-white shadow-lg ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Eraser Tool"
+                        >
+                            🧹
+                        </button>
+
+                        {/* 3. Text */}
+                        <button
+                            onClick={() => handleSelectTool('text')}
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
+                                currentTool === 'text' ? 'bg-emerald-600 text-white shadow-lg ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Text Tool"
+                        >
+                            🔤
+                        </button>
+
+                        {/* 4. Shapes */}
+                        <button
+                            onClick={() => handleSelectTool('rectangle')}
+                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+                                currentTool === 'rectangle' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Rectangle Shape"
+                        >
+                            ▢
+                        </button>
+                        <button
+                            onClick={() => handleSelectTool('ellipse')}
+                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+                                currentTool === 'ellipse' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Circle / Ellipse Shape"
+                        >
+                            ○
+                        </button>
+                        <button
+                            onClick={() => handleSelectTool('arrow')}
+                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+                                currentTool === 'arrow' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Arrow Tool"
+                        >
+                            ↗
+                        </button>
+                        <button
+                            onClick={() => handleSelectTool('line')}
+                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+                                currentTool === 'line' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Line Tool"
+                        >
+                            —
+                        </button>
+
+                        {/* 5. Laser Pointer */}
+                        <button
+                            onClick={() => handleSelectTool('laser')}
+                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
+                                currentTool === 'laser' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                            }`}
+                            title="Laser Pointer"
+                        >
+                            🔦
+                        </button>
+
+                        <div className="w-8 h-px bg-slate-800 my-0.5" />
+
+                        {/* 6. Quran Mushaf Ayah */}
+                        <button
+                            onClick={() => setShowQuranMushaf(true)}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/30 transition-all"
+                            title="Insert Quran Ayah"
+                        >
+                            📖
+                        </button>
+
+                        {/* 7. Math Tools */}
+                        <button
+                            onClick={() => setShowMathTools(true)}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-cyan-500/10 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-500/30 transition-all"
+                            title="Math & Geometry Tools"
+                        >
+                            📐
+                        </button>
+
+                        {/* 8. Exam Panel (Tutor / Admin) */}
+                        {isTutorOrAdmin && (
+                            <button
+                                onClick={() => setShowExamPanel(true)}
+                                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-purple-500/10 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 transition-all"
+                                title="Assign Live Exam"
+                            >
+                                📝
+                            </button>
+                        )}
+
+                        <div className="w-8 h-px bg-slate-800 my-0.5" />
+
+                        {/* 9. Clear Board */}
+                        <button
+                            onClick={handleClearOwnBoard}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
+                            title="Clear My Board"
+                        >
+                            🗑️
+                        </button>
+
+                        {/* 10. Download SVG */}
+                        <button
+                            onClick={handleDownload}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
+                            title="Download Whiteboard (SVG)"
+                        >
+                            💾
+                        </button>
+
+                        <div className="w-8 h-px bg-slate-800 my-0.5" />
+
+                        {/* 11. Multi-Page Navigation */}
+                        <div className="flex flex-col items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/80 w-11">
+                            <span className="text-[8px] font-bold text-slate-400">PAGE</span>
+                            <div className="text-[10px] font-bold text-emerald-400">
+                                {currentPageIdx + 1}/{pages.length}
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={handlePrevPage}
+                                    disabled={currentPageIdx === 0}
+                                    className="w-4 h-5 rounded bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 text-[9px] flex items-center justify-center font-bold"
+                                    title="Previous Page"
+                                >
+                                    ◀
+                                </button>
+                                <button
+                                    onClick={handleNextPage}
+                                    disabled={currentPageIdx >= pages.length - 1}
+                                    className="w-4 h-5 rounded bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 text-[9px] flex items-center justify-center font-bold"
+                                    title="Next Page"
+                                >
+                                    ▶
+                                </button>
+                            </div>
+                            <button
+                                onClick={handleAddPage}
+                                className="w-8 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold transition-all mt-0.5"
+                                title="Add New Blank Page"
+                            >
+                                +
+                            </button>
+                        </div>
+
+                    </aside>
+                )}
 
                 {/* Main Drawing Area - Clean Full Canvas */}
                 <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>

@@ -47,7 +47,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-xl font-display font-semibold text-text mb-3">8. Contact</h2>
-            <p>For privacy questions or data requests, contact us at <a href="mailto:privacy@hidayah.ng" className="text-primary hover:underline">privacy@hidayah.ng</a>.</p>
+            <p>For privacy questions or data requests, contact us at <a href="mailto:hidayah.support@gmail.com" className="text-primary hover:underline">hidayah.support@gmail.com</a>.</p>
           </section>
         </div>
 

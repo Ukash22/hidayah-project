@@ -10,7 +10,7 @@ import Testimonials from '../components/Testimonials'
 import FAQ from '../components/FAQ'
 import TrialForm from '../components/TrialForm'
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '2348000000000'
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '2347062566616'
 const WHATSAPP_MESSAGE = 'Hello%20Hidayah%2C%20I%27d%20like%20to%20learn%20more%20about%20your%20tutoring%20programmes'
 
 const WhatsAppFloat = () => (
@@ -65,7 +65,7 @@ const Home = () => {
                         <div>
                             <h4 className="font-bold mb-4">Connect</h4>
                             <ul className="space-y-2 text-white/70">
-                                <li>Email: info@hidayahinternational.com</li>
+                                <li>Email: <a href="mailto:hidayah.support@gmail.com" className="hover:text-white">hidayah.support@gmail.com</a></li>
                                 <li>Social: @hidayahinternational</li>
                                 <li>
                                     <a
