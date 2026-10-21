@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-// eslint-disable-next-line no-unused-vars
+ 
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Clock as IconClock, ChevronLeft as IconChevronLeft, ChevronRight as IconChevronRight, Calculator as IconCalculator, 

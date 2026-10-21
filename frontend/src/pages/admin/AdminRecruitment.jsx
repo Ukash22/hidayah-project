@@ -40,8 +40,6 @@ export default function AdminRecruitment() {
         reason: '',
     });
 
-    // In-modal document/media previewer
-    const [previewDoc, setPreviewDoc] = useState(null);
 
     const fetchTutorApps = useCallback(async () => {
         try {

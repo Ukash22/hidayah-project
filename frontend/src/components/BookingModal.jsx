@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { X, Calendar } from 'lucide-react';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -36,6 +35,7 @@ export default function BookingModal({
     const rate = parseFloat(tutor.hourly_rate || 0);
     const hours = parseFloat(bookingData.hours_per_session || 0);
     const monthlyTotal = rate * hours * selectedDays * 4;
+    const [minDate] = useState(() => new Date(Date.now() + 86400000).toISOString().split('T')[0]);
 
     return (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4">
@@ -144,7 +144,7 @@ export default function BookingModal({
                                     <input
                                         type="date"
                                         className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-[11px] font-semibold text-white uppercase outline-none focus:border-emerald-500 transition-all"
-                                        min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+                                        min={minDate}
                                         onChange={e => onUpdateField(tutor.id, 'preferred_start_date', e.target.value)}
                                         value={bookingData.preferred_start_date}
                                     />

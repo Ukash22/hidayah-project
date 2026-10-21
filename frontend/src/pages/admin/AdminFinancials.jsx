@@ -8,7 +8,7 @@ const AdminRevenueChart = lazy(() => import('../../components/AdminRevenueChart'
 export default function AdminFinancials() {
     const [financials, setFinancials] = useState(null);
     const [transactions, setTransactions] = useState([]);
-    const [subjects, setSubjects] = useState([]);
+    const [_subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
     const [analyticsChartMode, setAnalyticsChartMode] = useState('monthly');

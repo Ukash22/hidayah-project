@@ -133,7 +133,6 @@ function TxRow({ t }) {
 
 export default function ParentChildDetail() {
     const { childId } = useParams();
-    const toast = useToast();
     const [child, setChild] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);

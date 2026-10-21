@@ -6,7 +6,7 @@ import { uploadMultipleToCloudinary } from '../../services/cloudinaryService';
 import { SkeletonCard } from '../../components/ui';
 
 export default function TutorMedia() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const [tutorProfile, setTutorProfile] = useState(null);
     const [mediaFiles, setMediaFiles] = useState({ intro_video: null, short_recitation: null });
     const [uploading, setUploading] = useState(false);

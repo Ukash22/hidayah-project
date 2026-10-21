@@ -11,7 +11,7 @@ const ComplaintModal = lazy(() => import('../../components/ComplaintModal'));
 const SchemeOfWorkModal = lazy(() => import('../../components/SchemeOfWork/SchemeOfWorkModal'));
 
 export default function TutorSchedule() {
-    const { token, user } = useAuth();
+    const { token } = useAuth();
     const navigate = useNavigate();
     const toast = useToast();
     const confirm = useConfirm();

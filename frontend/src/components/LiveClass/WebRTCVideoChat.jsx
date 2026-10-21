@@ -91,7 +91,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         setIsVideoOff(true);
                         setMediaNotice("No camera detected or accessible. Joined with audio only.");
                     }
-                } catch (audioErr) {
+                } catch (_audioErr) {
                     // Fallback 2: Try video only (common if no mic connected)
                     try {
                         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -179,10 +179,10 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                 // If user has no camera or microphone, add recvonly transceivers
                 // so SDP offer/answer includes media lines to receive remote audio and video
                 if (!hasAudio) {
-                    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch (e) {}
+                    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
                 }
                 if (!hasVideo) {
-                    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch (e) {}
+                    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
                 }
                 
                 pc.onicecandidate = (event) => {

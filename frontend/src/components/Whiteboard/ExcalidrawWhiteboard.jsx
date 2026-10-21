@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg, MainMenu, Footer } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
-import api from '../../services/api';
 import { getAccess } from '../../services/tokenStore';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
@@ -121,6 +120,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 setExamTimer(prev => prev - 1);
             }, 1000);
         } else if (examTimer === 0 && isExamActive) {
+             
             setIsExamActive(false);
             if (role === 'STUDENT') toast.warning('Exam time is up! Please stop writing.');
         }
@@ -211,6 +211,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 } else if (action === 'clear_boards' && roleRef.current === 'STUDENT' && api) {
                     api.updateScene({ elements: [] });
                 } else if (action === 'lock_room') {
+                     
                     setIsLocked(payload.locked);
                 } else if (action === 'slow_mode') {
                     setIsSlowMode(payload.enabled);

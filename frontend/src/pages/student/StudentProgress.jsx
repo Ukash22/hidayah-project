@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { TrendingUp, BookOpen, CheckCircle, Clock, XCircle, BarChart2 } from 'lucide-react';
-import api, { asList, getApiError } from '../../services/api';
+import api, { asList } from '../../services/api';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard, FetchError } from '../../components/ui';
 import SchemeOfWorkView from '../../components/SchemeOfWork/SchemeOfWorkView';

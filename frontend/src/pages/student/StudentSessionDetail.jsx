@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, ExternalLink, Layout, ChevronLeft, Wifi, WifiOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { PageHeader } from '../../components/layout';
 
@@ -11,7 +11,6 @@ const STATUS_MAP = {
 
 export default function StudentSessionDetail() {
     const { state: cls } = useLocation();
-    const { id } = useParams();
     const navigate = useNavigate();
 
     if (!cls) {
