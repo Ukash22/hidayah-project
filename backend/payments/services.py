@@ -9,10 +9,6 @@ from programs.models import Subject
 import logging
 from .logic import get_commission_rate
 from classes.scheduler import generate_recurring_sessions
-from core.utils.whatsapp_service import (
-    notify_payment_confirmed,
-    notify_tutor_new_booking,
-)
 
 logger = logging.getLogger(__name__)
 

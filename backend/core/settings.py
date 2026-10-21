@@ -548,17 +548,4 @@ WHATSAPP_NUMBER = os.getenv('WHATSAPP_NUMBER', '2347062566616')
 # Support / contact email shown in footer, Terms, Privacy pages.
 SUPPORT_EMAIL = os.getenv('SUPPORT_EMAIL', 'hidayah.support@gmail.com')
 
-# Twilio WhatsApp Configuration
-TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
-TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
-TWILIO_WHATSAPP_NUMBER = os.getenv('TWILIO_WHATSAPP_NUMBER', '')
-
-# Twilio Content Template SIDs (pre-approved WhatsApp templates).
-# Create these at: https://console.twilio.com/us1/develop/sms/content-template-builder
-# Set each env var to the HX... SID once created. Until then, the service
-# falls back to free-form messages (works within the 24-hour customer service window).
-TWILIO_TEMPLATE_PAYMENT_CONFIRMED  = os.getenv('TWILIO_TEMPLATE_PAYMENT_CONFIRMED',  None)
-TWILIO_TEMPLATE_BOOKING_APPROVED   = os.getenv('TWILIO_TEMPLATE_BOOKING_APPROVED',   None)
-TWILIO_TEMPLATE_SESSION_REMINDER   = os.getenv('TWILIO_TEMPLATE_SESSION_REMINDER',   None)
-TWILIO_TEMPLATE_TUTOR_NEW_BOOKING  = os.getenv('TWILIO_TEMPLATE_TUTOR_NEW_BOOKING',  None)
-TWILIO_TEMPLATE_WALLET_TOPUP       = os.getenv('TWILIO_TEMPLATE_WALLET_TOPUP',       None)
+
