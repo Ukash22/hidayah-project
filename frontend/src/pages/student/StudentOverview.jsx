@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api, { asList, getApiError } from '../../services/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard as IconLayoutDashboard, Download as IconDownload, Plus as IconPlus,
     CheckCircle2 as IconCheckCircle2, ShieldCheck as IconShieldCheck, X as IconX,

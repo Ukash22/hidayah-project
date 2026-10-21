@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { getAccess } from '../services/tokenStore';
 import api from '../services/api';
 import { Bell } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { EmptyState } from './ui';
 
 const NotificationCenter = () => {

@@ -1,4 +1,4 @@
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X as IconX } from 'lucide-react';
 
 const getYouTubeId = (url) => {
