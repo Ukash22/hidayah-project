@@ -9,6 +9,10 @@ from programs.models import Subject
 import logging
 from .logic import get_commission_rate
 from classes.scheduler import generate_recurring_sessions
+from core.utils.whatsapp_service import (
+    notify_payment_confirmed,
+    notify_tutor_new_booking,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -166,6 +170,31 @@ def process_payment(booking):
     if profile.payment_status != 'PAID':
         profile.payment_status = 'PAID'
         profile.save()
-    
+
+    # 7. WhatsApp notifications (non-blocking — errors are logged, not raised)
+    try:
+        student_phone = getattr(booking.student, 'phone_number', None) or getattr(profile, 'phone_number', None)
+        tutor_phone   = getattr(booking.tutor, 'phone_number', None)
+        student_name  = booking.student.get_full_name() or booking.student.email
+        tutor_name    = booking.tutor.get_full_name() or booking.tutor.email
+        amount_str    = f"₦{booking.price:,.0f}"
+
+        if student_phone:
+            notify_payment_confirmed(
+                to_phone=student_phone,
+                student_name=student_name,
+                subject=booking.subject,
+                amount=amount_str,
+            )
+        if tutor_phone:
+            notify_tutor_new_booking(
+                to_phone=tutor_phone,
+                tutor_name=tutor_name,
+                student_name=student_name,
+                subject=booking.subject,
+            )
+    except Exception as wa_err:
+        logger.warning(f"WhatsApp notification skipped for booking {booking.id}: {wa_err}")
+
     logger.info(f"Successfully processed payment for booking {booking.id}. Enrollment created and sessions generated.")
     return True

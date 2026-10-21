@@ -42,3 +42,4 @@ channels
 channels-redis
 celery[redis]
 drf-spectacular
+twilio

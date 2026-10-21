@@ -1,8 +1,109 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useAuth } from '../../context/AuthContext';
 import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
+
+const RemoteVideoTile = ({ id, data, layoutMode, raisedHand }) => {
+    const videoRef = useRef(null);
+    const audioRef = useRef(null);
+    const [hasActiveVideo, setHasActiveVideo] = useState(false);
+
+    useEffect(() => {
+        const stream = data?.stream;
+        if (!stream) {
+            setHasActiveVideo(false);
+            return;
+        }
+
+        if (videoRef.current && videoRef.current.srcObject !== stream) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(e => console.warn("Remote video play prevented:", e));
+        }
+
+        if (audioRef.current && audioRef.current.srcObject !== stream) {
+            audioRef.current.srcObject = stream;
+            audioRef.current.play().catch(e => console.warn("Remote audio play prevented:", e));
+        }
+
+        const updateStatus = () => {
+            const vTracks = stream.getVideoTracks();
+            const live = vTracks.some(t => t.readyState === 'live' && t.enabled && !t.muted);
+            setHasActiveVideo(live);
+        };
+
+        updateStatus();
+
+        const vTracks = stream.getVideoTracks();
+        vTracks.forEach(t => {
+            t.addEventListener('unmute', updateStatus);
+            t.addEventListener('mute', updateStatus);
+            t.addEventListener('ended', updateStatus);
+        });
+
+        return () => {
+            vTracks.forEach(t => {
+                t.removeEventListener('unmute', updateStatus);
+                t.removeEventListener('mute', updateStatus);
+                t.removeEventListener('ended', updateStatus);
+            });
+        };
+    }, [data?.stream, data?._v]);
+
+    return (
+        <div className={`relative bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 transition-all duration-300 group ${
+            layoutMode === 'gallery' ? 'aspect-video' : 'h-44 sm:h-56'
+        }`}>
+            {/* Audio Playback: Unmuted audio element */}
+            <audio 
+                ref={audioRef}
+                autoPlay 
+                playsInline
+            />
+
+            {/* Video Feed: Muted so autoplay is NEVER blocked by browser policies */}
+            <video 
+                ref={videoRef}
+                autoPlay 
+                muted
+                playsInline 
+                onPlaying={() => setHasActiveVideo(true)}
+                onLoadedData={() => setHasActiveVideo(true)}
+                className={`w-full h-full object-cover transition-opacity duration-300 ${hasActiveVideo ? 'opacity-100' : 'opacity-0'}`}
+            />
+
+            {/* Camera Off Avatar — shown when video frames are not live */}
+            {!hasActiveVideo && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-2 select-none">
+                    <div className="relative">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-emerald-400 border-2 border-emerald-500/40 shadow-inner">
+                            {data.name?.[0]?.toUpperCase() || 'P'}
+                        </div>
+                        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-[10px]">
+                            🎙️
+                        </span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-300">{data.name}</span>
+                    <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">
+                        Connected · Audio Live
+                    </span>
+                </div>
+            )}
+
+            {/* Bottom Name Pill */}
+            <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 flex items-center gap-1.5 shadow-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{data.name || 'Participant'}</span>
+            </div>
+
+            {raisedHand && (
+                <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white">
+                    <Hand size={14} className="text-white" />
+                </div>
+            )}
+        </div>
+    );
+};
 
 const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'classroom' }) => {
     // isCallEnded = user explicitly clicked Leave; distinct from panel being hidden
@@ -26,10 +127,22 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const iceCandidateQueue = useRef({});
     const chatEndRef = useRef(null);
     const chatPanelRef = useRef(null);
+    // Ref to hold sendMessage so it can be called from stable callbacks without stale closures
+    const sendMessageRef = useRef(null);
+    // Queue for signals that arrive before localStream is ready
+    const pendingSignals = useRef([]);
+    // Ref so peer-discovery interval can read latest myId/myName without re-creating
+    const myIdRef = useRef(null);
+    const myNameRef = useRef(null);
+    // Per-peer video element refs so we can imperatively re-attach streams
+    const remoteVideoRefs = useRef({});
     
     // Stable user id and name
     const myId = user?.id ? String(user.id) : (user?.email || 'anon_' + roomId);
     const myName = user?.first_name || (user?.email ? user.email.split('@')[0] : 'Participant');
+    // Keep refs in sync
+    myIdRef.current = myId;
+    myNameRef.current = myName;
 
     // WebSocket URL for signaling — include JWT token for auth
     const socketUrl = React.useMemo(() => {
@@ -64,6 +177,9 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         onClose: () => console.log("❌ Signaling WebSocket Disconnected"),
         onError: (err) => console.error("⚠️ Signaling WebSocket Error:", err),
     });
+
+    // Keep sendMessage accessible from stable refs / callbacks
+    useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
 
     // Auto-unlock audio on first user interaction in case browser autoplay blocks sound
     useEffect(() => {
@@ -156,232 +272,288 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     useEffect(() => {
         if (readyState !== ReadyState.OPEN || !localStream) return;
 
-        // Send initial join
-        sendMessage(JSON.stringify({ type: 'peer_join', peerId: myId, name: myName }));
+        // Send initial join — use ref so interval closure is always stable
+        const joinMsg = () => JSON.stringify({ type: 'peer_join', peerId: myIdRef.current, name: myNameRef.current });
+        sendMessageRef.current?.(joinMsg());
+
+        // Flush any signals that arrived before localStream was ready
+        if (pendingSignals.current.length > 0) {
+            console.log(`🔁 Replaying ${pendingSignals.current.length} queued signal(s)`);
+            // We trigger a synthetic lastMessage re-process by dispatching queued signals
+            // The cleanest approach: process them via the same handler path
+            const queued = [...pendingSignals.current];
+            pendingSignals.current = [];
+            queued.forEach(signal => processSignal(signal));
+        }
 
         // Repeat presence every 10 seconds if no peers connected yet so late arrivals connect automatically
         const interval = setInterval(() => {
             if (Object.keys(peerConnections.current).length === 0) {
-                sendMessage(JSON.stringify({ type: 'peer_join', peerId: myId, name: myName }));
+                sendMessageRef.current?.(joinMsg());
             }
         }, 10000);
 
         return () => clearInterval(interval);
-    }, [readyState, localStream, myId, myName, sendMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [readyState, localStream]);
+
+    // ── Core signaling logic (extracted so it can be called from the pending-queue replayer)
+    const processSignal = useCallback(async (data) => {
+        const { type, peerId, name, sdp, candidate, message } = data;
+
+        // Ignore our own messages
+        if (String(peerId) === String(myIdRef.current)) return;
+        if (type === 'pong' || type === 'ping') return;
+
+        // If local media is not yet ready, queue the signal and replay later
+        if (!localStreamRef.current) {
+            if (type === 'peer_join' || type === 'offer') {
+                console.warn(`⏳ Queuing ${type} from ${name || peerId} — localStream not ready yet`);
+                pendingSignals.current.push(data);
+            }
+            return;
+        }
+
+        const _myId = myIdRef.current;
+        const _myName = myNameRef.current;
+
+        console.log(`📡 Received Signal: ${type} from ${name || peerId}`);
+
+        const addOrQueueIceCandidate = async (id, candidateData) => {
+            const pc = peerConnections.current[id];
+            if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+                } catch (err) {
+                    console.warn(`⚠️ Error adding ICE candidate for ${id}:`, err);
+                }
+            } else {
+                if (!iceCandidateQueue.current[id]) iceCandidateQueue.current[id] = [];
+                iceCandidateQueue.current[id].push(candidateData);
+            }
+        };
+
+        const flushIceCandidateQueue = async (id, pc) => {
+            const queued = iceCandidateQueue.current[id];
+            if (queued && queued.length > 0) {
+                console.log(`🧊 Flushing ${queued.length} queued ICE candidates for ${id}`);
+                for (const cand of queued) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(cand));
+                    } catch (err) {
+                        console.warn(`⚠️ Error adding queued ICE candidate for ${id}:`, err);
+                    }
+                }
+                delete iceCandidateQueue.current[id];
+            }
+        };
+
+        const getPeerConnection = async (id, peerName) => {
+            if (peerConnections.current[id]) return peerConnections.current[id];
+            
+            console.log(`🧊 Creating PeerConnection for ${peerName} (${id})`);
+            const pc = new RTCPeerConnection({
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun.services.mozilla.com' },
+                    {
+                        urls: 'turn:openrelay.metered.ca:80',
+                        username: 'openrelay',
+                        credential: 'openrelay'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443',
+                        username: 'openrelay',
+                        credential: 'openrelay'
+                    },
+                    {
+                        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+                        username: 'openrelay',
+                        credential: 'openrelay'
+                    }
+                ]
+            });
+            
+            const activeStream = localStreamRef.current;
+            const hasAudio = activeStream && activeStream.getAudioTracks().length > 0;
+            const hasVideo = activeStream && activeStream.getVideoTracks().length > 0;
+
+            if (activeStream && activeStream.getTracks().length > 0) {
+                activeStream.getTracks().forEach(track => {
+                    pc.addTrack(track, activeStream);
+                });
+            }
+
+            // If user has no camera or microphone, add recvonly transceivers
+            // so SDP offer/answer includes media lines to receive remote audio and video
+            if (!hasAudio) {
+                try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
+            }
+            if (!hasVideo) {
+                try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
+            }
+            
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    sendMessageRef.current?.(JSON.stringify({ type: 'ice_candidate', peerId: _myId, targetId: id, candidate: event.candidate }));
+                }
+            };
+            
+            pc.ontrack = (event) => {
+                console.log(`🎬 Received Track from ${peerName}:`, event.track.kind, 'readyState:', event.track.readyState);
+                
+                const triggerUpdate = () => {
+                    setRemoteStreams(prev => {
+                        if (!prev[id]) return prev;
+                        return {
+                            ...prev,
+                            [id]: {
+                                ...prev[id],
+                                _v: (prev[id]._v || 0) + 1
+                            }
+                        };
+                    });
+                };
+
+                event.track.onmute   = triggerUpdate;
+                event.track.onunmute = triggerUpdate;
+                event.track.onended  = triggerUpdate;
+
+                setRemoteStreams(prev => {
+                    const prevEntry = prev[id];
+                    let stream = prevEntry?.stream;
+
+                    if (!stream) {
+                        stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream();
+                    }
+
+                    if (!stream.getTracks().some(t => t.id === event.track.id)) {
+                        stream.addTrack(event.track);
+                    }
+
+                    return {
+                        ...prev,
+                        [id]: {
+                            stream,
+                            name: peerName || prevEntry?.name || 'Participant',
+                            _v: (prevEntry?._v || 0) + 1
+                        }
+                    };
+                });
+            };
+            
+            pc.onconnectionstatechange = () => {
+                console.log(`📡 Peer connection state for ${peerName}: ${pc.connectionState}`);
+                if (pc.connectionState === 'connected') {
+                    console.log(`🎉 Peer connection ESTABLISHED with ${peerName}`);
+                } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+                    setRemoteStreams(prev => { const s = { ...prev }; delete s[id]; return s; });
+                    pc.close();
+                    delete peerConnections.current[id];
+                    delete iceCandidateQueue.current[id];
+                    delete remoteVideoRefs.current[id];
+                }
+            };
+
+            pc.oniceconnectionstatechange = () => {
+                console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
+                if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
+                    setRemoteStreams(prev => { const s = { ...prev }; delete s[id]; return s; });
+                    pc.close();
+                    delete peerConnections.current[id];
+                    delete iceCandidateQueue.current[id];
+                    delete remoteVideoRefs.current[id];
+                }
+            };
+
+            peerConnections.current[id] = pc;
+            return pc;
+        };
+
+        const isPolite = String(_myId) > String(peerId);
+
+        if (type === 'peer_join') {
+            const pc = await getPeerConnection(peerId, name);
+            // Only create an offer if the connection is in a state that allows it
+            if (pc.signalingState !== 'stable' && pc.signalingState !== 'closed') {
+                console.warn(`⚠️ Skipping offer — signalingState is ${pc.signalingState}`);
+                return;
+            }
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            sendMessageRef.current?.(JSON.stringify({ 
+                type: 'offer', 
+                peerId: _myId, 
+                targetId: peerId, 
+                name: _myName, 
+                sdp: pc.localDescription 
+            }));
+        } 
+        else if (type === 'offer' && String(data.targetId) === String(_myId)) {
+            const pc = await getPeerConnection(peerId, name);
+            
+            // Perfect-negotiation: polite peer rolls back on collision
+            if (pc.signalingState !== 'stable') {
+                if (!isPolite) {
+                    console.warn(`⚠️ Impolite peer ignoring offer from ${name}`);
+                    return;
+                }
+                console.log(`🤝 Polite peer rolling back to accept offer from ${name}`);
+                await pc.setLocalDescription({ type: 'rollback' });
+            }
+
+            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            await flushIceCandidateQueue(peerId, pc);
+
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            sendMessageRef.current?.(JSON.stringify({ 
+                type: 'answer', 
+                peerId: _myId, 
+                targetId: peerId, 
+                name: _myName,
+                sdp: pc.localDescription 
+            }));
+        } 
+        else if (type === 'answer' && String(data.targetId) === String(_myId)) {
+            const pc = peerConnections.current[peerId];
+            if (pc) {
+                if (pc.signalingState === 'have-local-offer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+                    await flushIceCandidateQueue(peerId, pc);
+                } else {
+                    console.warn(`⚠️ Ignoring answer from ${peerId} — signalingState is ${pc.signalingState}`);
+                }
+            }
+        } 
+        else if (type === 'ice_candidate' && String(data.targetId) === String(_myId)) {
+            await addOrQueueIceCandidate(peerId, candidate);
+        }
+        else if (type === 'chat') {
+            setMessages(prev => [...prev, { name, text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }]);
+            setShowChat(true);
+        }
+        else if (type === 'raise_hand') {
+            setRaisedHands(prev => ({ ...prev, [peerId]: true }));
+            setTimeout(() => {
+                setRaisedHands(prev => { const next = {...prev}; delete next[peerId]; return next; });
+            }, 5000);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Handle Signaling Messages
     useEffect(() => {
         if (!lastMessage) return;
-        
         try {
             const data = JSON.parse(lastMessage.data);
-            const { type, peerId, name, sdp, candidate, message } = data;
-            
-            // Ignore our own messages
-            if (String(peerId) === String(myId)) return;
-            if (type === 'pong') return;
-
-            console.log(`📡 Received Signal: ${type} from ${name || peerId}`);
-
-            const addOrQueueIceCandidate = async (id, candidateData) => {
-                const pc = peerConnections.current[id];
-                if (pc && pc.remoteDescription && pc.remoteDescription.type) {
-                    try {
-                        await pc.addIceCandidate(new RTCIceCandidate(candidateData));
-                    } catch (err) {
-                        console.warn(`⚠️ Error adding ICE candidate for ${id}:`, err);
-                    }
-                } else {
-                    if (!iceCandidateQueue.current[id]) iceCandidateQueue.current[id] = [];
-                    iceCandidateQueue.current[id].push(candidateData);
-                }
-            };
-
-            const flushIceCandidateQueue = async (id, pc) => {
-                const queued = iceCandidateQueue.current[id];
-                if (queued && queued.length > 0) {
-                    console.log(`🧊 Flushing ${queued.length} queued ICE candidates for ${id}`);
-                    for (const cand of queued) {
-                        try {
-                            await pc.addIceCandidate(new RTCIceCandidate(cand));
-                        } catch (err) {
-                            console.warn(`⚠️ Error adding queued ICE candidate for ${id}:`, err);
-                        }
-                    }
-                    delete iceCandidateQueue.current[id];
-                }
-            };
-
-            const getPeerConnection = async (id, peerName) => {
-                if (peerConnections.current[id]) return peerConnections.current[id];
-                
-                console.log(`🧊 Creating PeerConnection for ${peerName} (${id})`);
-                const pc = new RTCPeerConnection({
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun.services.mozilla.com' },
-                    ]
-                });
-                
-                const activeStream = localStreamRef.current || localStream;
-                const hasAudio = activeStream && activeStream.getAudioTracks().length > 0;
-                const hasVideo = activeStream && activeStream.getVideoTracks().length > 0;
-
-                if (activeStream) {
-                    activeStream.getTracks().forEach(track => {
-                        pc.addTrack(track, activeStream);
-                    });
-                }
-
-                // If user has no camera or microphone, add recvonly transceivers
-                // so SDP offer/answer includes media lines to receive remote audio and video
-                if (!hasAudio) {
-                    try { pc.addTransceiver('audio', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
-                }
-                if (!hasVideo) {
-                    try { pc.addTransceiver('video', { direction: 'recvonly' }); } catch (_e) { /* no-op */ }
-                }
-                
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        sendMessage(JSON.stringify({ type: 'ice_candidate', peerId: myId, targetId: id, candidate: event.candidate }));
-                    }
-                };
-                
-                pc.ontrack = (event) => {
-                    console.log(`🎬 Received Track from ${peerName}:`, event.track.kind);
-                    const incomingStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
-                    
-                    // Attach track state listeners so muted/unmuted updates immediately
-                    event.track.onmute = () => setRemoteStreams(prev => ({ ...prev }));
-                    event.track.onunmute = () => setRemoteStreams(prev => ({ ...prev }));
-                    event.track.onended = () => setRemoteStreams(prev => ({ ...prev }));
-
-                    setRemoteStreams(prev => {
-                        const existing = prev[id]?.stream;
-                        if (existing) {
-                            if (!existing.getTracks().find(t => t.id === event.track.id)) {
-                                existing.addTrack(event.track);
-                            }
-                            return { ...prev, [id]: { ...prev[id], stream: existing, name: peerName, _v: (prev[id]?._v || 0) + 1 } };
-                        }
-                        return { ...prev, [id]: { stream: incomingStream, name: peerName, _v: 1 } };
-                    });
-                };
-                
-                pc.onconnectionstatechange = () => {
-                    console.log(`📡 Peer connection state for ${peerName}: ${pc.connectionState}`);
-                    if (pc.connectionState === 'connected') {
-                        console.log(`🎉 Peer connection ESTABLISHED with ${peerName}`);
-                    } else if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-                        setRemoteStreams(prev => {
-                            const newStreams = { ...prev };
-                            delete newStreams[id];
-                            return newStreams;
-                        });
-                        pc.close();
-                        delete peerConnections.current[id];
-                        delete iceCandidateQueue.current[id];
-                    }
-                };
-
-                pc.oniceconnectionstatechange = () => {
-                    console.log(`🧊 ICE State for ${peerName}: ${pc.iceConnectionState}`);
-                    if (pc.iceConnectionState === 'failed' || pc.iceConnectionState === 'closed') {
-                        setRemoteStreams(prev => {
-                            const newStreams = { ...prev };
-                            delete newStreams[id];
-                            return newStreams;
-                        });
-                        pc.close();
-                        delete peerConnections.current[id];
-                        delete iceCandidateQueue.current[id];
-                    }
-                };
-
-                peerConnections.current[id] = pc;
-                return pc;
-            };
-
-            const handleSignal = async () => {
-                if (!localStream) {
-                    console.warn("⏳ Signal received but localStream not ready. Ignoring for now.");
-                    return;
-                }
-
-                const isPolite = String(myId) > String(peerId);
-
-                if (type === 'peer_join') {
-                    const pc = await getPeerConnection(peerId, name);
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    sendMessage(JSON.stringify({ 
-                        type: 'offer', 
-                        peerId: myId, 
-                        targetId: peerId, 
-                        name: myName, 
-                        role: user?.role, 
-                        sdp: pc.localDescription 
-                    }));
-                } 
-                else if (type === 'offer' && String(data.targetId) === String(myId)) {
-                    const pc = await getPeerConnection(peerId, name);
-                    
-                    // Handle Collision with Polite Peer pattern
-                    if (pc.signalingState !== 'stable') {
-                        if (!isPolite) {
-                            console.warn(`⚠️ Impolite peer ignoring offer from ${name}`);
-                            return;
-                        }
-                        console.log(`🤝 Polite peer rolling back to accept offer from ${name}`);
-                        await pc.setLocalDescription({ type: 'rollback' });
-                    }
-
-                    await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-                    await flushIceCandidateQueue(peerId, pc);
-
-                    const answer = await pc.createAnswer();
-                    await pc.setLocalDescription(answer);
-                    sendMessage(JSON.stringify({ 
-                        type: 'answer', 
-                        peerId: myId, 
-                        targetId: peerId, 
-                        name: myName,
-                        sdp: pc.localDescription 
-                    }));
-                } 
-                else if (type === 'answer' && String(data.targetId) === String(myId)) {
-                    const pc = peerConnections.current[peerId];
-                    if (pc) {
-                        if (pc.signalingState === 'have-local-offer') {
-                            await pc.setRemoteDescription(new RTCSessionDescription(sdp));
-                            await flushIceCandidateQueue(peerId, pc);
-                        } else {
-                            console.warn(`⚠️ Ignoring answer from ${peerId} because state is ${pc.signalingState}`);
-                        }
-                    }
-                } 
-                else if (type === 'ice_candidate' && String(data.targetId) === String(myId)) {
-                    await addOrQueueIceCandidate(peerId, candidate);
-                }
-                else if (type === 'chat') {
-                    setMessages(prev => [...prev, { name, text: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }]);
-                    setShowChat(true);
-                }
-                else if (type === 'raise_hand') {
-                    setRaisedHands(prev => ({ ...prev, [peerId]: true }));
-                    setTimeout(() => {
-                        setRaisedHands(prev => { const next = {...prev}; delete next[peerId]; return next; });
-                    }, 5000);
-                }
-            };
-            handleSignal();
+            processSignal(data);
         } catch (e) {
-            console.error("Signaling Error", e);
+            console.error("Signaling parse error", e);
         }
-    }, [lastMessage, isVideoOpen, localStream, myId, myName, user?.role, sendMessage]);
+    }, [lastMessage, processSignal]);
 
     // Auto-scroll chat
     useEffect(() => {
@@ -566,70 +738,15 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     </div>
 
                     {/* Remote Users (Zoom Style) */}
-                    {Object.entries(remoteStreams).map(([id, data]) => {
-                        const hasVideo = data.stream && data.stream.getVideoTracks().some(t => t.enabled && t.readyState !== 'ended');
-
-                        return (
-                            <div key={id} className={`relative bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 transition-all duration-300 group ${
-                                layoutMode === 'gallery' ? 'aspect-video' : 'h-44 sm:h-56'
-                            }`}>
-                                {/* Guaranteed Audio Playback Element */}
-                                <audio 
-                                    autoPlay 
-                                    playsInline
-                                    ref={el => {
-                                        if (el && data.stream && el.srcObject !== data.stream) {
-                                            el.srcObject = data.stream;
-                                            el.play().catch(e => console.warn("Audio play prevented:", e));
-                                        }
-                                    }}
-                                />
-
-                                {/* Video Feed */}
-                                {hasVideo ? (
-                                    <video 
-                                        autoPlay 
-                                        playsInline 
-                                        ref={el => { 
-                                            if (el && el.srcObject !== data.stream) {
-                                                el.srcObject = data.stream;
-                                                el.play().catch(e => console.warn("Video play prevented:", e));
-                                            }
-                                        }} 
-                                        className="w-full h-full object-cover" 
-                                    />
-                                ) : (
-                                    /* Zoom-style Camera Off Avatar with Pulse */
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-2 select-none">
-                                        <div className="relative">
-                                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-emerald-400 border-2 border-emerald-500/40 shadow-inner">
-                                                {data.name?.[0]?.toUpperCase() || 'P'}
-                                            </div>
-                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-[10px]">
-                                                🎙️
-                                            </span>
-                                        </div>
-                                        <span className="text-xs font-bold text-slate-300">{data.name}</span>
-                                        <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">
-                                            Connected (Audio Live)
-                                        </span>
-                                    </div>
-                                )}
-
-                                {/* Bottom Name Pill */}
-                                <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 flex items-center gap-1.5 shadow-md">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                    <span>{data.name || 'Participant'}</span>
-                                </div>
-
-                                {raisedHands[id] && (
-                                    <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white">
-                                        <Hand size={14} className="text-white" />
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                    {Object.entries(remoteStreams).map(([id, data]) => (
+                        <RemoteVideoTile 
+                            key={id} 
+                            id={id} 
+                            data={data} 
+                            layoutMode={layoutMode} 
+                            raisedHand={raisedHands[id]} 
+                        />
+                    ))}
 
                     {Object.keys(remoteStreams).length === 0 && (
                         <div className="h-36 sm:h-52 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-4 text-center">

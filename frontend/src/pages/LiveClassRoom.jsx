@@ -97,63 +97,19 @@ const LiveClassRoom = () => {
         </div>
       </header>
 
-      {/* ── DESKTOP layout: side-by-side ──────────────────────────────── */}
-      <div className="hidden md:flex flex-1 overflow-hidden">
+      {/* ── Main Workspace: Whiteboard + Video (Single Unified Mount) ──── */}
+      <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Whiteboard — hidden in gallery mode */}
-        <div className={`relative transition-all duration-500 bg-[#f8fafc] ${
-          layoutMode === 'gallery' ? 'hidden' : 'flex-1'
-        }`}>
-          <ExcalidrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
-        </div>
-
-        {/* Video sidebar — ALWAYS mounted, visibility controlled by width/CSS
-            This keeps the WebRTC peer connection alive when switching to board */}
-        <div className={`flex flex-col bg-slate-900 transition-all duration-500 relative ${
-          layoutMode === 'gallery'
-            ? 'flex-1'
-            : isVideoOpen
-              ? 'w-[380px] xl:w-[420px] border-l border-slate-800'
-              : 'w-0 overflow-hidden'
-        }`}>
-          {/* NOTE: isVideoOpen prop is always true here so the component stays
-              mounted and the WebRTC stream is never destroyed */}
-          <WebRTCVideoChat
-            roomId={roomId}
-            isVideoOpen={true}
-            setIsVideoOpen={setIsVideoOpen}
-            layoutMode={layoutMode}
-          />
-
-          {/* Collapse/expand handle */}
-          {layoutMode === 'classroom' && (
-            <button
-              onClick={() => setIsVideoOpen(v => !v)}
-              className="absolute top-1/2 -translate-y-1/2 -left-4 w-4 h-12 bg-slate-800 border border-slate-700 rounded-l-xl text-slate-400 hover:text-white transition-all z-[3000] flex items-center justify-center text-xs"
-              title={isVideoOpen ? 'Hide video panel' : 'Show video panel'}
-            >
-              {isVideoOpen ? '❯' : '❮'}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── MOBILE layout: tab-based full-screen ──────────────────────── */}
-      {/*
-        Both views are always rendered (display:block / display:none).
-        This keeps the WebRTCVideoChat component alive so audio/video
-        continues while the user is on the whiteboard — just like Zoom.
-      */}
-      <div className="flex md:hidden flex-1 overflow-hidden relative">
-
-        {/* Whiteboard — shown when mobileView === 'whiteboard' */}
-        <div className={`absolute inset-0 bg-[#f8fafc] overflow-hidden transition-opacity duration-300 ${
-          mobileView === 'whiteboard' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+        {/* Whiteboard Container — Single Mount */}
+        <div className={`relative transition-all duration-300 bg-[#f8fafc] ${
+          layoutMode === 'gallery' ? 'md:hidden' : 'md:flex-1'
+        } ${
+          mobileView === 'whiteboard' ? 'flex-1 z-10' : 'hidden md:flex'
         }`}>
           <ExcalidrawWhiteboard roomId={roomId} role={user?.role} userName={user?.first_name} />
 
-          {/* Floating "Live Call Active" pill — visible while on the board */}
-          <div className="absolute bottom-4 right-4 z-[2000] flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700 shadow-2xl">
+          {/* Floating "Live Call Active" pill on mobile while on whiteboard tab */}
+          <div className="md:hidden absolute bottom-4 right-4 z-[2000] flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700 shadow-2xl">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Call Active</span>
             <button
@@ -165,17 +121,35 @@ const LiveClassRoom = () => {
           </div>
         </div>
 
-        {/* Video — always mounted, shown when mobileView === 'video'
-            Keeping it mounted preserves the RTCPeerConnection and audio */}
-        <div className={`absolute inset-0 bg-slate-900 overflow-hidden transition-opacity duration-300 ${
-          mobileView === 'video' ? 'opacity-100 z-10 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'
+        {/* Video Sidebar / Gallery — Single Mount (WebRTC connection stays alive across all tab/layout modes) */}
+        <div className={`flex flex-col bg-slate-900 transition-all duration-300 relative ${
+          layoutMode === 'gallery'
+            ? 'md:flex-1'
+            : isVideoOpen
+              ? 'md:w-[380px] md:xl:w-[420px] md:border-l md:border-slate-800'
+              : 'md:w-0 md:overflow-hidden'
+        } ${
+          mobileView === 'video'
+            ? 'flex-1 z-20'
+            : 'hidden md:flex'
         }`}>
           <WebRTCVideoChat
             roomId={roomId}
-            isVideoOpen={true}
-            setIsVideoOpen={() => setMobileView('whiteboard')}
-            layoutMode="classroom"
+            isVideoOpen={isVideoOpen}
+            setIsVideoOpen={setIsVideoOpen}
+            layoutMode={layoutMode}
           />
+
+          {/* Desktop collapse/expand handle */}
+          {layoutMode === 'classroom' && (
+            <button
+              onClick={() => setIsVideoOpen(v => !v)}
+              className="hidden md:flex absolute top-1/2 -translate-y-1/2 -left-4 w-4 h-12 bg-slate-800 border border-slate-700 rounded-l-xl text-slate-400 hover:text-white transition-all z-[3000] items-center justify-center text-xs"
+              title={isVideoOpen ? 'Hide video panel' : 'Show video panel'}
+            >
+              {isVideoOpen ? '❯' : '❮'}
+            </button>
+          )}
         </div>
       </div>
     </div>
