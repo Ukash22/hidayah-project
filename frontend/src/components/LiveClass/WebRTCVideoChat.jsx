@@ -137,8 +137,9 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     // Per-peer video element refs so we can imperatively re-attach streams
     const remoteVideoRefs = useRef({});
     
-    // Stable user id and name
-    const myId = user?.id ? String(user.id) : (user?.email || 'anon_' + roomId);
+    // Stable user id and name — use a per-tab session instanceId so testing with the same account across 2 tabs connects seamlessly
+    const [instanceId] = useState(() => Math.random().toString(36).substring(2, 9));
+    const myId = user?.id ? `${user.id}_${instanceId}` : `anon_${roomId}_${instanceId}`;
     const myName = user?.first_name || (user?.email ? user.email.split('@')[0] : 'Participant');
     // Keep refs in sync
     myIdRef.current = myId;
@@ -210,40 +211,77 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         
         const initMedia = async () => {
             let stream = null;
+
+            // Step 1: Detect available hardware devices first
+            let hasVideoDevice = true;
+            let hasAudioDevice = true;
             try {
-                console.log("🎥 Initializing Local Media (Audio + Video)...");
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, 
-                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                });
-            } catch (err) {
-                console.warn("⚠️ Full media request unavailable (" + err.name + "), checking fallbacks...");
-                
-                // Fallback 1: Try audio only (common if no webcam connected)
+                if (navigator.mediaDevices?.enumerateDevices) {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    hasVideoDevice = devices.some(d => d.kind === 'videoinput');
+                    hasAudioDevice = devices.some(d => d.kind === 'audioinput');
+                    console.log(`🔍 Hardware check: video=${hasVideoDevice}, audio=${hasAudioDevice}`);
+                }
+            } catch (e) {
+                console.warn("Could not enumerate devices:", e);
+            }
+
+            // Step 2: If both devices exist, attempt audio + video
+            if (hasVideoDevice && hasAudioDevice) {
+                try {
+                    console.log("🎥 Initializing Local Media (Audio + Video)...");
+                    stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
+                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                    });
+                } catch (err) {
+                    console.warn("⚠️ Ideal media request unavailable (" + err.name + "), trying unconstrained audio + video...");
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    } catch (basicErr) {
+                        console.warn("⚠️ Dual media request failed (" + basicErr.name + "), checking single device fallbacks...");
+                    }
+                }
+            }
+
+            // Step 3: Fallback — Video only if stream not yet acquired
+            if (!stream && hasVideoDevice) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    if (isMounted) {
+                        setIsMuted(true);
+                        setMediaNotice("No microphone detected. Joined with camera only.");
+                    }
+                } catch (videoErr) {
+                    console.warn("⚠️ Video-only request failed:", videoErr.name);
+                }
+            }
+
+            // Step 4: Fallback — Audio only if stream not yet acquired
+            if (!stream && hasAudioDevice) {
                 try {
                     stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                     if (isMounted) {
                         setIsVideoOff(true);
-                        setMediaNotice("No camera detected. Joined with audio only.");
+                        setMediaNotice(
+                            hasVideoDevice 
+                                ? "Camera unavailable (in use by another application or permissions needed). Joined with audio only." 
+                                : "No camera detected on this device. Joined with audio only."
+                        );
                     }
-                } catch (_audioErr) {
-                    // Fallback 2: Try video only (common if no mic connected)
-                    try {
-                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                        if (isMounted) {
-                            setIsMuted(true);
-                            setMediaNotice("No microphone detected. Joined with camera only.");
-                        }
-                    } catch (videoErr) {
-                        console.warn("⚠️ No camera/mic accessible (" + videoErr.name + "). Joined in listen/chat mode.");
-                        // Fallback 3: Empty MediaStream so user can still receive others' streams and use chat
-                        stream = new MediaStream();
-                        if (isMounted) {
-                            setIsVideoOff(true);
-                            setIsMuted(true);
-                            setMediaNotice("No camera or mic detected. You can still watch, listen, and chat.");
-                        }
-                    }
+                } catch (audioErr) {
+                    console.warn("⚠️ Audio-only request failed:", audioErr.name);
+                }
+            }
+
+            // Step 5: Fallback — Neither available or accessible -> empty MediaStream for listen/view mode
+            if (!stream) {
+                console.warn("⚠️ No camera/mic accessible. Joined in listen/chat mode.");
+                stream = new MediaStream();
+                if (isMounted) {
+                    setIsVideoOff(true);
+                    setIsMuted(true);
+                    setMediaNotice("No camera or microphone detected. You can still watch, listen, and participate in chat.");
                 }
             }
 
@@ -572,25 +610,115 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [showChat]);
 
-    // Media Controls
-    const toggleMute = () => {
+    // Media Controls with on-demand hardware activation
+    const toggleMute = async () => {
         const stream = localStreamRef.current || localStream;
-        if (!stream) return;
-        const audioTracks = stream.getAudioTracks();
-        if (audioTracks.length === 0) return;
-        const nextState = !audioTracks[0].enabled;
-        audioTracks.forEach(track => { track.enabled = nextState; });
-        setIsMuted(!nextState);
+        const audioTracks = stream ? stream.getAudioTracks() : [];
+
+        if (audioTracks.length > 0) {
+            const nextState = !audioTracks[0].enabled;
+            audioTracks.forEach(track => { track.enabled = nextState; });
+            setIsMuted(!nextState);
+        } else {
+            // No audio track initially — try activating microphone now
+            try {
+                console.log("🎙️ Activating microphone on user request...");
+                const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const newTrack = micStream.getAudioTracks()[0];
+                if (!newTrack) return;
+
+                const activeStream = localStreamRef.current || new MediaStream();
+                activeStream.addTrack(newTrack);
+                localStreamRef.current = activeStream;
+                setLocalStream(activeStream);
+                setIsMuted(false);
+                setMediaNotice(null);
+
+                Object.entries(peerConnections.current).forEach(([pId, pc]) => {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+                    if (sender) {
+                        sender.replaceTrack(newTrack);
+                    } else {
+                        pc.addTrack(newTrack, activeStream);
+                        pc.createOffer().then(offer => {
+                            pc.setLocalDescription(offer);
+                            sendMessageRef.current?.(JSON.stringify({
+                                type: 'offer',
+                                peerId: myIdRef.current,
+                                targetId: pId,
+                                name: myNameRef.current,
+                                sdp: pc.localDescription
+                            }));
+                        }).catch(e => console.warn("Renegotiation failed:", e));
+                    }
+                });
+            } catch (err) {
+                console.warn("⚠️ Could not activate microphone:", err);
+                setMediaNotice(err.name === 'NotFoundError'
+                    ? "No microphone found. Please connect an audio input device."
+                    : "Microphone access failed (" + err.name + ")."
+                );
+            }
+        }
     };
 
-    const toggleVideo = () => {
+    const toggleVideo = async () => {
         const stream = localStreamRef.current || localStream;
-        if (!stream) return;
-        const videoTracks = stream.getVideoTracks();
-        if (videoTracks.length === 0) return;
-        const nextState = !videoTracks[0].enabled;
-        videoTracks.forEach(track => { track.enabled = nextState; });
-        setIsVideoOff(!nextState);
+        const videoTracks = stream ? stream.getVideoTracks() : [];
+
+        if (videoTracks.length > 0) {
+            const nextState = !videoTracks[0].enabled;
+            videoTracks.forEach(track => { track.enabled = nextState; });
+            setIsVideoOff(!nextState);
+        } else {
+            // No video track initially — try activating camera now
+            try {
+                console.log("🎥 Activating camera on user request...");
+                const camStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } } 
+                }).catch(() => navigator.mediaDevices.getUserMedia({ video: true }));
+
+                const newTrack = camStream.getVideoTracks()[0];
+                if (!newTrack) return;
+
+                const activeStream = localStreamRef.current || new MediaStream();
+                activeStream.addTrack(newTrack);
+                localStreamRef.current = activeStream;
+                setLocalStream(activeStream);
+                setIsVideoOff(false);
+                setMediaNotice(null);
+
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = activeStream;
+                }
+
+                // Add or replace video track in all active peer connections
+                Object.entries(peerConnections.current).forEach(([pId, pc]) => {
+                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(newTrack);
+                    } else {
+                        pc.addTrack(newTrack, activeStream);
+                        pc.createOffer().then(offer => {
+                            pc.setLocalDescription(offer);
+                            sendMessageRef.current?.(JSON.stringify({
+                                type: 'offer',
+                                peerId: myIdRef.current,
+                                targetId: pId,
+                                name: myNameRef.current,
+                                sdp: pc.localDescription
+                            }));
+                        }).catch(e => console.warn("Renegotiation failed:", e));
+                    }
+                });
+            } catch (err) {
+                console.warn("⚠️ Could not activate camera:", err);
+                setMediaNotice(err.name === 'NotFoundError' 
+                    ? "No camera found on this device. Connect a webcam and try again." 
+                    : "Camera access failed (" + err.name + "). Check permissions or close other apps using the camera."
+                );
+            }
+        }
     };
 
     const toggleScreenShare = async () => {
@@ -733,7 +861,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
                             {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={10} className="text-red-400" />}
                         </div>
-                        {raisedHands[user.id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
+                        {user?.id && raisedHands[user.id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
                         {isScreenSharing && <div className="absolute top-2 left-2 bg-emerald-500 px-2 py-0.5 rounded text-[10px] font-semibold uppercase">Sharing</div>}
                     </div>
 
@@ -751,18 +879,16 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                     {Object.keys(remoteStreams).length === 0 && (
                         <div className="h-36 sm:h-52 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-4 text-center">
                             <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mb-3 animate-pulse">
-                                <Video size={20} className="text-slate-600" />
+                                <Video size={20} className="text-slate-500" />
                             </div>
-                            <p className="font-bold uppercase tracking-widest text-xs mb-1">Waiting for participants...</p>
-                            <p className="text-[10px] text-slate-600 font-semibold uppercase tracking-tighter">
-                                {readyState === ReadyState.OPEN ? 'Connected' : 'Connecting...'}
+                            <p className="font-bold uppercase tracking-widest text-xs mb-1">Waiting for other participants...</p>
+                            <p className="text-[10px] text-slate-500 max-w-xs mb-2">
+                                Video chat is peer-to-peer. Open this class in another tab or have a student join to see their video feed.
                             </p>
-                            <button 
-                                onClick={() => window.location.reload()}
-                                className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-semibold uppercase rounded-lg transition-all"
-                            >
-                                Refresh
-                            </button>
+                            <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                {readyState === ReadyState.OPEN ? 'Signaling Ready (Connected)' : 'Connecting...'}
+                            </p>
                         </div>
                     )}
                 </div>
