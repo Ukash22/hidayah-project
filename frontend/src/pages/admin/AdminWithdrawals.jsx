@@ -126,6 +126,7 @@ export default function AdminWithdrawals() {
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Date</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tutor</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Amount</th>
+                                <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Bank Details</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Frequency</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Status</th>
                                 <th className="py-3 px-4 text-[11px] font-semibold text-slate-500 uppercase tracking-wide text-center">Actions</th>
@@ -133,7 +134,7 @@ export default function AdminWithdrawals() {
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {withdrawals.length === 0 ? (
-                                <tr><td colSpan="6" className="p-12 text-center text-slate-500 italic">No withdrawal requests found.</td></tr>
+                                <tr><td colSpan="7" className="p-12 text-center text-slate-500 italic">No withdrawal requests found.</td></tr>
                             ) : withdrawals.map(w => (
                                 <tr key={w.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                     <td className="py-3 px-4">
@@ -144,6 +145,17 @@ export default function AdminWithdrawals() {
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="text-[11px] font-bold text-primary">₦{parseFloat(w.amount).toLocaleString()}</div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                        {w.bank_name ? (
+                                            <div className="flex flex-col gap-0.5">
+                                                <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200">{w.bank_name}</span>
+                                                <span className="text-[10px] text-slate-500 font-mono">{w.account_number}</span>
+                                                <span className="text-[9px] text-slate-400 italic">{w.account_name}</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] text-amber-500 font-medium italic">No bank info</span>
+                                        )}
                                     </td>
                                     <td className="py-3 px-4">
                                         <div className="text-[11px] text-slate-500 uppercase font-semibold">{w.withdrawal_frequency}</div>

@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap&font-display=swap');
 @import "tailwindcss";
+@import "./components/Whiteboard/whiteboard.css";
 
 /* Dark mode is class-scoped: DashboardShell adds .dark on its root, so
    dark: variants only ever apply inside the portal shells. */

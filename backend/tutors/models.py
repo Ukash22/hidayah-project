@@ -61,7 +61,12 @@ class TutorProfile(models.Model):
         wallet, _ = Wallet.objects.get_or_create(user=self.user)
         return wallet.balance
     commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Custom commission % (Override global/subject defaults)")
-    
+
+    # Bank Details (for withdrawal transfers)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    account_number = models.CharField(max_length=20, blank=True, null=True)
+    account_name = models.CharField(max_length=150, blank=True, null=True)
+
     # Privacy & Contact (Admin Only)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     personal_gmail = models.EmailField(blank=True, null=True)

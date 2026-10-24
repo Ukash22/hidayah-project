@@ -38,16 +38,16 @@ def get_commission_rate(session):
     return PlatformSettings.get_settings().default_commission_percentage
 
 @transaction.atomic
-def process_session_completion(session_id):
+def process_session_completion(session_id, actual_duration_minutes=None):
     """
-    Automated logic to:
-    1. Debit student wallet
-    2. Calculate dynamic commission
-    3. Credit tutor wallet
-    4. Record transactions
+    When tutor marks class done:
+    1. Debit student wallet immediately.
+    2. Record commission snapshot on the session.
+    3. Set payout_status to PENDING_REVIEW (admin must approve before tutor is credited).
     """
+    from django.utils import timezone as tz
     session = ScheduledSession.objects.select_for_update().get(pk=session_id)
-    
+
     if session.status == 'COMPLETED' and session.payout_status == 'RELEASED':
         return {"success": False, "message": "Payout already processed."}
 
@@ -55,6 +55,9 @@ def process_session_completion(session_id):
     if fee <= 0:
         session.status = 'COMPLETED'
         session.payout_status = 'NONE'
+        if actual_duration_minutes:
+            session.actual_duration_minutes = actual_duration_minutes
+        session.completed_at = tz.now()
         session.save()
         return {"success": True, "message": "Session completed (Free)."}
 
@@ -63,15 +66,8 @@ def process_session_completion(session_id):
     commission = (fee * rate) / Decimal("100.00")
     net_payout = fee - commission
 
-    # 2. Debit Student Wallet
+    # 2. Debit Student Wallet immediately
     student_wallet, _ = Wallet.objects.get_or_create(user=session.student)
-    if student_wallet.balance < fee:
-        # We allow it for now or error? 
-        # Requirement check: "Should we allow a student's wallet to go negative?"
-        # Let's log it but allow for now to prevent blocking classes, 
-        # or we could raise an error if the policy is strict.
-        pass
-
     student_wallet.balance -= fee
     student_wallet.save()
 
@@ -83,7 +79,56 @@ def process_session_completion(session_id):
         reference=f"DEBIT-SESS-{session.id}"
     )
 
-    # 3. Credit Tutor Wallet
+    # 3. Record financial snapshot & mark PENDING_REVIEW (tutor credited after admin review)
+    session.status = 'COMPLETED'
+    session.commission_amount = commission
+    session.admin_percentage_at_completion = rate
+    session.payout_status = 'PENDING_REVIEW'
+    if actual_duration_minutes:
+        session.actual_duration_minutes = actual_duration_minutes
+    session.completed_at = tz.now()
+    session.save()
+
+    # Notify admin
+    try:
+        from accounts.models import Notification
+        tutor_name = session.tutor.get_full_name() or session.tutor.username
+        subject_name = session.subject.name if session.subject else 'General'
+        duration_str = f"{actual_duration_minutes} min" if actual_duration_minutes else f"{session.duration} min (scheduled)"
+        Notification.notify_admins(
+            title="Class Completed — Payout Pending Review",
+            message=f"{tutor_name} completed a {subject_name} class ({duration_str}). Fee: ₦{fee:,.2f} | Net to tutor: ₦{net_payout:,.2f}. Please review and release.",
+            link="/admin/payouts"
+        )
+    except Exception as ne:
+        logger.warning(f"Completion notification failed: {ne}")
+
+    return {
+        "success": True,
+        "fee": float(fee),
+        "commission": float(commission),
+        "net_payout": float(net_payout),
+        "student_balance": float(student_wallet.balance),
+        "payout_status": "PENDING_REVIEW",
+        "message": "Session completed. Payout is pending admin review."
+    }
+
+
+@transaction.atomic
+def release_session_payout(session_id, admin_user):
+    """
+    Admin-triggered: Credit tutor wallet after reviewing completed session.
+    """
+    session = ScheduledSession.objects.select_for_update().get(pk=session_id)
+
+    if session.payout_status != 'PENDING_REVIEW':
+        return {"success": False, "message": f"Cannot release — payout status is '{session.payout_status}'."}
+
+    fee = session.fee_amount or Decimal("0.00")
+    commission = session.commission_amount or Decimal("0.00")
+    net_payout = fee - commission
+
+    # Credit Tutor Wallet
     tutor_wallet, _ = Wallet.objects.get_or_create(user=session.tutor)
     tutor_wallet.balance += net_payout
     tutor_wallet.save()
@@ -92,26 +137,28 @@ def process_session_completion(session_id):
         user=session.tutor,
         amount=net_payout,
         transaction_type='SESSION_PAYOUT',
-        description=f"Class payout: {session.subject.name if session.subject else 'General'} with {session.student.get_full_name()} (Fee: ₦{fee}, Comm: ₦{commission})",
+        description=f"Released payout: {session.subject.name if session.subject else 'General'} with {session.student.get_full_name()} (Fee: ₦{fee}, Comm: ₦{commission})",
         reference=f"PAYOUT-SESS-{session.id}"
     )
 
-    # 4. Record Internal Commission (Optional: track system revenue)
-    # We can create a transaction for the system user or just log it in the session.
-    
-    # 5. Update Session
-    session.status = 'COMPLETED'
-    session.commission_amount = commission
-    session.admin_percentage_at_completion = rate
     session.payout_status = 'RELEASED'
     session.save()
 
+    # Notify tutor
+    try:
+        from accounts.models import Notification
+        Notification.create(
+            user=session.tutor,
+            title="Payout Released 💰",
+            message=f"₦{net_payout:,.2f} has been credited to your wallet for the {session.subject.name if session.subject else 'General'} class.",
+            link="/tutor/wallet"
+        )
+    except Exception as ne:
+        logger.warning(f"Payout release notification failed: {ne}")
+
     return {
         "success": True,
-        "fee": float(fee),
-        "commission": float(commission),
         "net_payout": float(net_payout),
-        "student_balance": float(student_wallet.balance),
         "tutor_balance": float(tutor_wallet.balance)
     }
 

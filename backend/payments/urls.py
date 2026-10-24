@@ -20,7 +20,10 @@ from .views import (
     AdminFinancialStatsView,
     TutorFinancialsView,
     AdminPlatformSettingsView,
-    ProcessWalletPaymentView
+    ProcessWalletPaymentView,
+    AdminPendingPayoutsView,
+    AdminReleasePayoutView,
+    TutorBankDetailsView,
 )
 
 urlpatterns = [
@@ -30,17 +33,20 @@ urlpatterns = [
     path('status/', PaymentStatusView.as_view(), name='payment-status'),
     path('pricing/', PricingTiersView.as_view(), name='pricing-tiers'),
     path('wallet/transactions/', StudentWalletTransactionView.as_view(), name='student_transactions'),
-    
-    # Admin Financials
+
+    # Booking Payments
     path('booking/initiate/<int:booking_id>/', InitiateBookingPaymentView.as_view(), name='initiate_booking_payment'),
     path('booking/verify/<str:reference>/', VerifyBookingPaymentView.as_view(), name='verify_booking_payment'),
     path('booking/wallet-pay/<int:booking_id>/', ProcessWalletPaymentView.as_view(), name='booking_wallet_pay'),
-    path('admin/financials/', AdminFinancialStatsView.as_view(), name='admin-financials'),
+
+    # Tutor Financials & Bank Details
     path('tutor/wallet/', TutorWalletView.as_view(), name='tutor_wallet'),
     path('tutor/financials/', TutorFinancialsView.as_view(), name='tutor-financials'),
     path('tutor/withdrawal/', WithdrawalRequestView.as_view(), name='tutor_withdrawal'),
-    
-    # Admin Financials
+    path('tutor/bank-details/', TutorBankDetailsView.as_view(), name='tutor_bank_details'),
+
+    # Admin Financials & Payouts
+    path('admin/financials/', AdminFinancialStatsView.as_view(), name='admin-financials'),
     path('admin/wallet-action/', AdminWalletActionView.as_view(), name='admin_wallet_action'),
     path('admin/transactions/', AdminTransactionListView.as_view(), name='admin_transaction_list'),
     path('admin/withdrawal/approve/<int:withdrawal_id>/', AdminWithdrawalApprovalView.as_view(), name='admin_withdrawal_approve'),
@@ -49,4 +55,6 @@ urlpatterns = [
     path('admin/analytics/<str:analytics_type>/', AdminPaymentAnalyticsView.as_view(), name='admin_payment_analytics_typed'),
     path('admin/stats/', AdminFinancialStatsView.as_view(), name='admin_stats'),
     path('admin/settings/', AdminPlatformSettingsView.as_view(), name='admin_platform_settings'),
+    path('admin/pending-payouts/', AdminPendingPayoutsView.as_view(), name='admin_pending_payouts'),
+    path('admin/release-payout/<int:session_id>/', AdminReleasePayoutView.as_view(), name='admin_release_payout'),
 ]

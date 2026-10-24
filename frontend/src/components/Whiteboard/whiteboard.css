@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Hidayah Whiteboard: Clean Left-Side Vertical Toolbar
+   ========================================================================== */
+
+/* 1. Position the App-toolbar vertically at the FAR LEFT edge of the whiteboard */
+.hidayah-whiteboard .excalidraw .App-toolbar {
+  position: absolute !important;
+  left: 0px !important;
+  top: 50% !important;
+  bottom: auto !important;
+  right: auto !important;
+  transform: translateY(-50%) !important;
+  margin: 0 !important;
+  z-index: 100 !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+/* 2. Stack the toolbar items vertically inside the Island and Stack container */
+.hidayah-whiteboard .excalidraw .App-toolbar .Island,
+.hidayah-whiteboard .excalidraw .App-toolbar .Stack,
+.hidayah-whiteboard .excalidraw .App-toolbar .Stack_direction_row {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 6px 4px !important;
+}
+
+.hidayah-whiteboard .excalidraw .App-toolbar .Island {
+  border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Vertical divider between tool groups */
+.hidayah-whiteboard .excalidraw .App-toolbar .App-toolbar__divider {
+  width: 22px !important;
+  height: 1px !important;
+  background-color: #e2e8f0 !important;
+  margin: 4px 0 !important;
+}
+
+/* Ensure tool icon button sizes look uniform in the vertical column */
+.hidayah-whiteboard .excalidraw .App-toolbar .ToolIcon,
+.hidayah-whiteboard .excalidraw .App-toolbar .ToolIcon_type_radio,
+.hidayah-whiteboard .excalidraw .App-toolbar .ToolIcon_type_button,
+.hidayah-whiteboard .excalidraw .App-toolbar .App-toolbar__extra-tools-trigger {
+  width: 36px !important;
+  height: 36px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 10px !important;
+}
+
+/* 3. Hide Arrow and Line tools (Keep Draw/Pencil tool) */
+/* Excalidraw uses <label> elements with title attributes for toolbar tools */
+.hidayah-whiteboard .excalidraw .App-toolbar label[title*="Arrow"],
+.hidayah-whiteboard .excalidraw .App-toolbar label[title*="Line"],
+.hidayah-whiteboard .excalidraw [data-testid="toolbar-arrow"],
+.hidayah-whiteboard .excalidraw [data-testid="toolbar-line"] {
+  display: none !important;
+}
+
+/* 4. Completely remove Undo & Redo buttons from the whiteboard */
+.hidayah-whiteboard .excalidraw .undo-redo-buttons,
+.hidayah-whiteboard .excalidraw .undo-button-container,
+.hidayah-whiteboard .excalidraw .redo-button-container,
+.hidayah-whiteboard .excalidraw [data-testid="undo-button"],
+.hidayah-whiteboard .excalidraw [data-testid="redo-button"],
+.hidayah-whiteboard .excalidraw button[aria-label*="Undo" i],
+.hidayah-whiteboard .excalidraw button[aria-label*="Redo" i],
+.hidayah-whiteboard .excalidraw button[title*="Undo" i],
+.hidayah-whiteboard .excalidraw button[title*="Redo" i],
+.hidayah-whiteboard .excalidraw [aria-keyshortcuts="Ctrl+Z"],
+.hidayah-whiteboard .excalidraw [aria-keyshortcuts="Ctrl+Y"],
+.hidayah-whiteboard .excalidraw [aria-keyshortcuts="Cmd+Z"],
+.hidayah-whiteboard .excalidraw [aria-keyshortcuts="Cmd+Y"] {
+  display: none !important;
+}
+
+/* 5. Hide Hint text below toolbar */
+.hidayah-whiteboard .excalidraw .HintViewer {
+  display: none !important;
+}
+
+/* 6. Remove all other floating tools/widgets from the whiteboard canvas */
+/* Top-left hamburger main menu */
+.hidayah-whiteboard .excalidraw .dropdown-menu-button.main-menu-trigger,
+.hidayah-whiteboard .excalidraw .main-menu-trigger {
+  display: none !important;
+}
+
+/* Top-right Library button */
+.hidayah-whiteboard .excalidraw .layer-ui__wrapper__top-right,
+.hidayah-whiteboard .excalidraw .sidebar-trigger__label-element {
+  display: none !important;
+}
+
+/* Bottom-left zoom & canvas action controls */
+.hidayah-whiteboard .excalidraw .layer-ui__wrapper__footer-left,
+.hidayah-whiteboard .excalidraw .zoom-actions {
+  display: none !important;
+}
+
+/* Bottom-right help button */
+.hidayah-whiteboard .excalidraw .layer-ui__wrapper__footer-right,
+.hidayah-whiteboard .excalidraw .help-icon {
+  display: none !important;
+}

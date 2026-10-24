@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useWebSocket, { ReadyState } from 'react-use-websocket';
-import { Excalidraw, exportToSvg, MainMenu, Footer } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToSvg } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
+import "./whiteboard.css";
 import { getAccess } from '../../services/tokenStore';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
 import QuranMushaf from '../QuranMushaf';
+import WhiteboardMediaHub from './WhiteboardMediaHub';
+import ScientificCalculator from './ScientificCalculator';
 
 const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const toast = useToast();
@@ -74,8 +77,17 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [showMathTools, setShowMathTools] = useState(false);
     const [showLibrary, setShowLibrary] = useState(false);
     const [showExamPanel, setShowExamPanel] = useState(false);
+    const [showMediaHub, setShowMediaHub] = useState(false);
+    const [incomingMediaCommand, setIncomingMediaCommand] = useState(null);
     const [examTimer, setExamTimer] = useState(0);
     const [isExamActive, setIsExamActive] = useState(false);
+    // New feature states
+    const [showQuranMushaf, setShowQuranMushaf] = useState(false);
+    const [showCalculator, setShowCalculator] = useState(false);
+    // Pen size: 1=fine, 2=normal, 4=broad, 8=calligraphy
+    const [penSize, setPenSize] = useState(2);
+    // Student exam question display
+    const [examQuestion, setExamQuestion] = useState(null);
 
     // ── Stable refs for values used inside draw hot-path ─────────────────
     // Using refs avoids re-creating handleBoardChange on every render,
@@ -124,7 +136,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             if (role === 'STUDENT') toast.warning('Exam time is up! Please stop writing.');
         }
         return () => clearInterval(interval);
-    }, [isExamActive, examTimer, role]);
+    }, [isExamActive, examTimer, role, toast]);
 
     const handleAssignExam = (elements, duration) => {
         sendMessage(JSON.stringify({ 
@@ -228,6 +240,22 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     } else if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
                         setActiveTab('my_class');
                     }
+                } else if (action === 'whiteboard_media_sync') {
+                    setIncomingMediaCommand({
+                        action: 'whiteboard_media_sync',
+                        media: payload.media,
+                        senderName: payload.senderName,
+                        senderRole: payload.senderRole
+                    });
+                    setShowMediaHub(true);
+                } else if (action === 'whiteboard_media_close') {
+                    setIncomingMediaCommand({
+                        action: 'whiteboard_media_close',
+                        senderName: payload.senderName
+                    });
+                    if (roleRef.current === 'STUDENT') {
+                        setShowMediaHub(false);
+                    }
                 }
             }
             
@@ -251,7 +279,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             }
         } catch (e) { console.error("WS Message Error:", e); }
     // Only lastMessage triggers re-run; role/api read from refs to avoid re-subscribing
-    }, [lastMessage]);
+    }, [lastMessage, toast]);
 
     // ── Optimised board sync ──────────────────────────────────────────────
     //
@@ -352,35 +380,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         }
     }, [broadcastTeacherSnapshot, scheduleThumbnailExport]);
 
-    const [currentTool, setCurrentTool] = useState('freedraw');
-    const [penStrokeWidth, setPenStrokeWidth] = useState(2);
-    const [penColor, setPenColor] = useState('#1e293b');
-    const [showQuranMushaf, setShowQuranMushaf] = useState(false);
-
-    const handleSelectTool = useCallback((tool) => {
-        setCurrentTool(tool);
-        excalidrawAPIRef.current?.setActiveTool({ type: tool });
-    }, []);
-
-    const handleChangePenStrokeWidth = useCallback((width) => {
-        setPenStrokeWidth(width);
-        setCurrentTool('freedraw');
-        excalidrawAPIRef.current?.updateScene({
-            appState: { currentItemStrokeWidth: width, currentItemRoughness: 0 }
-        });
-        excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
-        toast.success(`Pen set to ${width === 1 ? 'Fine' : width === 2 ? 'Regular' : width === 4 ? 'Bold' : 'Heavy'}`);
-    }, [toast]);
-
-    const handleChangePenColor = useCallback((color) => {
-        setPenColor(color);
-        setCurrentTool('freedraw');
-        excalidrawAPIRef.current?.updateScene({
-            appState: { currentItemStrokeColor: color }
-        });
-        excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
-    }, []);
-
     const handleClearOwnBoard = useCallback(async () => {
         if (await confirm('Clear your entire board?', { confirmLabel: 'Clear', danger: true })) {
             excalidrawAPIRef.current?.updateScene({ elements: [] });
@@ -447,6 +446,78 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         toast.success(`Ayah ${verseKey} placed on whiteboard!`);
     }, [toast]);
 
+    const handleInsertElementFromMediaHub = useCallback((item) => {
+        const api = excalidrawAPIRef.current;
+        if (!api) return;
+
+        if (item.type === 'image' && item.url) {
+            const fileId = "file-" + Math.random().toString(36).substr(2, 9);
+            api.addFiles([{
+                id: fileId,
+                dataURL: item.url,
+                mimeType: item.mimeType || 'image/png',
+                created: Date.now(),
+                lastRetrieved: Date.now(),
+            }]);
+
+            const imgElement = {
+                type: "image",
+                x: 140 + Math.random() * 40,
+                y: 120 + Math.random() * 40,
+                width: 540,
+                height: 400,
+                fileId: fileId,
+                scale: [1, 1],
+                isDeleted: false,
+                fillStyle: "hachure",
+                strokeWidth: 1,
+                strokeStyle: "solid",
+                roughness: 0,
+                opacity: 100,
+                groupIds: [],
+                strokeColor: "#000000",
+                backgroundColor: "transparent",
+                version: 1,
+                versionNonce: Math.floor(Math.random() * 1000000),
+                id: "img-" + Math.random().toString(36).substr(2, 9),
+            };
+            const elements = api.getSceneElements();
+            api.updateScene({ elements: [...elements, imgElement] });
+            toast.success(`Inserted ${item.title || 'document page'} onto canvas!`);
+        } else if (item.type === 'text' && item.text) {
+            const textElement = {
+                id: "text-" + Math.random().toString(36).substr(2, 9),
+                type: "text",
+                x: 140 + Math.random() * 40,
+                y: 140 + Math.random() * 40,
+                width: Math.min(650, Math.max(280, item.text.length * 8)),
+                height: 140,
+                text: item.text,
+                fontSize: 18,
+                fontFamily: 1,
+                textAlign: "left",
+                verticalAlign: "top",
+                strokeColor: "#1e293b",
+                backgroundColor: "transparent",
+                fillStyle: "hachure",
+                strokeWidth: 1,
+                strokeStyle: "solid",
+                roughness: 0,
+                opacity: 100,
+                groupIds: [],
+                version: 1,
+                versionNonce: Math.floor(Math.random() * 100000000),
+                isDeleted: false,
+                boundElements: null,
+                updated: Date.now(),
+                link: null,
+            };
+            const elements = api.getSceneElements();
+            api.updateScene({ elements: [...elements, textElement] });
+            toast.success('Inserted note onto canvas!');
+        }
+    }, [toast]);
+
     // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {
         if (!excalidrawAPIRef.current) return;
@@ -455,10 +526,48 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             excalidrawAPIRef.current?.updateScene({
                 appState: { currentItemStrokeWidth: 2, currentItemRoughness: 0 }
             });
-            excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
+            excalidrawAPIRef.current?.setActiveTool({ type: 'selection' });
         }, 400);
         return () => clearTimeout(t);
     }, [role]);
+
+    // Apply pen size changes to Excalidraw stroke width
+    useEffect(() => {
+        if (!excalidrawAPIRef.current) return;
+        excalidrawAPIRef.current.updateScene({
+            appState: { currentItemStrokeWidth: penSize }
+        });
+    }, [penSize]);
+
+    // Anchor Excalidraw toolbar to left edge using DOM manipulation
+    useEffect(() => {
+        const fixToolbar = () => {
+            const tb = document.querySelector('.excalidraw .App-toolbar');
+            if (tb) {
+                let p = tb.parentElement;
+                while (p && !p.classList.contains('excalidraw') && !p.classList.contains('layer-ui__wrapper')) {
+                    p.style.setProperty('position', 'absolute', 'important');
+                    p.style.setProperty('left', '0px', 'important');
+
+                    p.style.setProperty('right', 'auto', 'important');
+                    p.style.setProperty('top', '50%', 'important');
+                    p.style.setProperty('bottom', 'auto', 'important');
+                    p.style.setProperty('transform', 'translateY(-50%)', 'important');
+                    p.style.setProperty('margin', '0', 'important');
+                    p.style.setProperty('width', 'auto', 'important');
+                    p = p.parentElement;
+                }
+                tb.style.setProperty('position', 'relative', 'important');
+                tb.style.setProperty('left', '0px', 'important');
+                tb.style.setProperty('right', 'auto', 'important');
+                tb.style.setProperty('top', '0px', 'important');
+                tb.style.setProperty('transform', 'none', 'important');
+                tb.style.setProperty('margin', '0', 'important');
+            }
+        };
+        const interval = setInterval(fixToolbar, 50);
+        return () => clearInterval(interval);
+    }, []);
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -515,6 +624,124 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
     return (
         <div className="w-full h-full flex flex-col bg-[#0f172a] overflow-hidden relative font-sans">
+            <style>{`
+                /* Dock toolbar vertically on the FAR LEFT edge */
+                .excalidraw .App-toolbar,
+                .excalidraw .App-toolbar-container,
+                .excalidraw .shapes-section,
+                .App-toolbar {
+                    position: absolute !important;
+                    left: 0px !important;
+                    right: auto !important;
+                    top: 50% !important;
+                    bottom: auto !important;
+                    transform: translateY(-50%) !important;
+                    margin: 0 !important;
+                    z-index: 100 !important;
+                    width: auto !important;
+                }
+
+                .excalidraw .App-toolbar {
+                    position: relative !important;
+                    left: 0 !important;
+                    top: 0 !important;
+                    transform: none !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                }
+
+                .excalidraw .App-toolbar .Island,
+                .excalidraw .App-toolbar .Stack,
+                .excalidraw .App-toolbar .Stack_direction_row {
+                    display: flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    gap: 3px !important;
+                    padding: 6px 4px !important;
+                }
+
+                .excalidraw .App-toolbar .Island {
+                    border-radius: 16px !important;
+                    background: rgba(255, 255, 255, 0.98) !important;
+                    backdrop-filter: blur(12px) !important;
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
+                }
+
+                .excalidraw .App-toolbar .App-toolbar__divider {
+                    width: 22px !important;
+                    height: 1px !important;
+                    background-color: #e2e8f0 !important;
+                    margin: 3px 0 !important;
+                }
+
+                .excalidraw .App-toolbar .ToolIcon,
+                .excalidraw .App-toolbar .ToolIcon_type_radio,
+                .excalidraw .App-toolbar .ToolIcon_type_button,
+                .excalidraw .App-toolbar .App-toolbar__extra-tools-trigger {
+                    width: 36px !important;
+                    height: 36px !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    border-radius: 10px !important;
+                }
+
+                /* Hide Arrow and Line tools (Keep Draw/Pencil) */
+                .excalidraw [data-testid="toolbar-arrow"],
+                .excalidraw [data-testid="toolbar-line"],
+                .excalidraw label:has(input[value="arrow"]),
+                .excalidraw label:has(input[value="line"]),
+                .excalidraw label[title*="Arrow" i],
+                .excalidraw label[title*="Line" i] {
+                    display: none !important;
+                }
+
+                /* Hide Undo & Redo buttons completely */
+                .excalidraw .undo-redo-buttons,
+                .excalidraw .undo-button-container,
+                .excalidraw .redo-button-container,
+                .excalidraw [data-testid="undo-button"],
+                .excalidraw [data-testid="redo-button"],
+                .excalidraw button[aria-label*="Undo" i],
+                .excalidraw button[aria-label*="Redo" i],
+                .excalidraw button[title*="Undo" i],
+                .excalidraw button[title*="Redo" i],
+                .excalidraw [aria-keyshortcuts="Ctrl+Z"],
+                .excalidraw [aria-keyshortcuts="Ctrl+Y"],
+                .excalidraw [aria-keyshortcuts="Cmd+Z"],
+                .excalidraw [aria-keyshortcuts="Cmd+Y"],
+                .excalidraw .ToolIcon:has([title*="Undo" i]),
+                .excalidraw .ToolIcon:has([title*="Redo" i]) {
+                    display: none !important;
+                }
+
+                /* Hide Hint text */
+                .excalidraw .HintViewer {
+                    display: none !important;
+                }
+
+                /* Hide hamburger menu, library button, help button, zoom buttons, bottom bar */
+                .excalidraw .dropdown-menu-button.main-menu-trigger,
+                .excalidraw .main-menu-trigger,
+                .excalidraw .layer-ui__wrapper__top-right,
+                .excalidraw .sidebar-trigger__label-element,
+                .excalidraw .layer-ui__wrapper__footer-left,
+                .excalidraw .zoom-actions,
+                .excalidraw .layer-ui__wrapper__footer-right,
+                .excalidraw .help-icon,
+                .excalidraw .App-bottom-bar,
+                .excalidraw .layer-ui__wrapper__footer-center,
+                .excalidraw footer.App-toolbar {
+                    display: none !important;
+                }
+
+                /* Dropdown menu for more tools opens to the right of the vertical toolbar */
+                .excalidraw .App-toolbar__extra-tools-dropdown {
+                    left: 52px !important;
+                    top: auto !important;
+                }
+            `}</style>
             
             {studentReaction && (
                 <div className="absolute inset-0 pointer-events-none z-[9999] flex items-center justify-center">
@@ -652,6 +879,92 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                         </>
                     )}
 
+                    {/* Multi-Page Navigation in header */}
+                    <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800/90 rounded-lg border border-slate-700/80 text-[10px]">
+                        <span className="font-bold text-slate-400">P{currentPageIdx + 1}/{pages.length}</span>
+                        <button onClick={handlePrevPage} disabled={currentPageIdx === 0} className="px-1 text-slate-300 hover:text-white disabled:opacity-30 font-bold" title="Previous Page">◀</button>
+                        <button onClick={handleNextPage} disabled={currentPageIdx >= pages.length - 1} className="px-1 text-slate-300 hover:text-white disabled:opacity-30 font-bold" title="Next Page">▶</button>
+                        <button onClick={handleAddPage} className="px-1.5 py-0.2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold" title="New Page">+</button>
+                    </div>
+
+                    {/* Quick Hub Buttons */}
+                    <button
+                        onClick={() => setShowQuranMushaf(true)}
+                        className="px-2 py-1 bg-amber-600/80 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition-all"
+                        title="Insert Quran Ayah"
+                    >
+                        📖 Quran
+                    </button>
+
+                    <button
+                        onClick={() => setShowMediaHub(prev => !prev)}
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                            showMediaHub ? 'bg-blue-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                        title="Class Media & Document Hub"
+                    >
+                        📂 Media
+                    </button>
+
+                    {/* Exam Button - visible to all */}
+                    <button
+                        onClick={() => setShowExamPanel(prev => !prev)}
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                            showExamPanel ? 'bg-rose-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                        title={isTutorOrAdmin ? 'Assign Exam' : 'View Exam'}
+                    >
+                        📝 {isTutorOrAdmin ? 'Exam' : 'My Exam'}
+                    </button>
+
+                    {/* Scientific Calculator */}
+                    <button
+                        onClick={() => setShowCalculator(prev => !prev)}
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                            showCalculator ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                        }`}
+                        title="Scientific Calculator"
+                    >
+                        🧮 Calc
+                    </button>
+
+                    {/* Pen Size Selector */}
+                    <div className="flex items-center gap-0.5 bg-slate-800/90 rounded-lg border border-slate-700 p-0.5" title="Pen thickness">
+                        {[
+                            { size: 1, label: '·', title: 'Fine (1px)' },
+                            { size: 2, label: '–', title: 'Normal (2px)' },
+                            { size: 4, label: '━', title: 'Broad (4px)' },
+                            { size: 8, label: '▬', title: 'Calligraphy (8px)' },
+                        ].map(p => (
+                            <button
+                                key={p.size}
+                                onClick={() => setPenSize(p.size)}
+                                className={`px-1.5 py-0.5 rounded text-sm transition-all font-bold ${
+                                    penSize === p.size ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                                }`}
+                                title={p.title}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <button
+                        onClick={handleClearOwnBoard}
+                        className="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-lg text-xs transition-all"
+                        title="Clear My Board"
+                    >
+                        🗑️
+                    </button>
+
+                    <button
+                        onClick={handleDownload}
+                        className="p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white rounded-lg text-xs transition-all"
+                        title="Download Whiteboard (SVG)"
+                    >
+                        💾
+                    </button>
+
                     {/* Sync Status Indicator */}
                     <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 px-2 py-1 bg-slate-800/70 rounded-lg border border-slate-700/60">
                         <span className={`w-2 h-2 rounded-full ${readyState === ReadyState.OPEN ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
@@ -672,226 +985,16 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 </div>
             )}
 
-            {/* ── Main Workspace: Vertical Left Toolbar + Clean Writing Canvas ─ */}
+            {/* Scientific Calculator Popup */}
+            {showCalculator && (
+                <ScientificCalculator onClose={() => setShowCalculator(false)} />
+            )}
+
+            {/* ── Main Workspace: Full Canvas for Maximum Writing Space ─ */}
             <div className="flex-1 flex relative overflow-hidden">
 
-                {/* Left-Hand Side Vertical Toolbar */}
-                {(activeTab === 'my_board' || activeTab === 'student_view') && (
-                    <aside className="w-13 sm:w-14 bg-slate-900 border-r border-slate-800 flex flex-col items-center py-2 px-1 gap-1.5 z-20 overflow-y-auto custom-scrollbar flex-shrink-0 text-white select-none">
-                        
-                        {/* 1. Pen Tool */}
-                        <button
-                            onClick={() => handleSelectTool('freedraw')}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
-                                currentTool === 'freedraw' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Pen Tool (Draw Freely)"
-                        >
-                            ✏️
-                        </button>
-
-                        {/* Pen Thickness Selector (1, 2, 4) */}
-                        <div className="flex flex-col gap-0.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 w-10 items-center">
-                            {[1, 2, 4].map(w => (
-                                <button
-                                    key={w}
-                                    onClick={() => handleChangePenStrokeWidth(w)}
-                                    className={`w-8 py-0.5 text-[9px] font-bold rounded transition-all ${
-                                        penStrokeWidth === w ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-white'
-                                    }`}
-                                    title={`Pen Thickness: ${w === 1 ? 'Fine (1px)' : w === 2 ? 'Regular (2px)' : 'Bold (4px)'}`}
-                                >
-                                    {w === 1 ? 'Fine' : w === 2 ? 'Reg' : 'Bold'}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Pen Color Selector Dots */}
-                        <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-800/80 rounded-xl border border-slate-700/80">
-                            {[
-                                { color: '#0f172a', name: 'Dark' },
-                                { color: '#dc2626', name: 'Red' },
-                                { color: '#2563eb', name: 'Blue' },
-                                { color: '#16a34a', name: 'Green' },
-                                { color: '#d97706', name: 'Amber' },
-                                { color: '#9333ea', name: 'Purple' }
-                            ].map(c => (
-                                <button
-                                    key={c.color}
-                                    onClick={() => handleChangePenColor(c.color)}
-                                    style={{ backgroundColor: c.color }}
-                                    className={`w-3.5 h-3.5 rounded-full transition-transform ${
-                                        penColor === c.color ? 'ring-2 ring-emerald-400 scale-125' : 'hover:scale-110 opacity-80 hover:opacity-100 border border-slate-600'
-                                    }`}
-                                    title={`Color: ${c.name}`}
-                                />
-                            ))}
-                        </div>
-
-                        <div className="w-8 h-px bg-slate-800 my-0.5" />
-
-                        {/* 2. Eraser */}
-                        <button
-                            onClick={() => handleSelectTool('eraser')}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
-                                currentTool === 'eraser' ? 'bg-emerald-600 text-white shadow-lg ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Eraser Tool"
-                        >
-                            🧹
-                        </button>
-
-                        {/* 3. Text */}
-                        <button
-                            onClick={() => handleSelectTool('text')}
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all ${
-                                currentTool === 'text' ? 'bg-emerald-600 text-white shadow-lg ring-2 ring-emerald-400' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Text Tool"
-                        >
-                            🔤
-                        </button>
-
-                        {/* 4. Shapes */}
-                        <button
-                            onClick={() => handleSelectTool('rectangle')}
-                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                                currentTool === 'rectangle' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Rectangle Shape"
-                        >
-                            ▢
-                        </button>
-                        <button
-                            onClick={() => handleSelectTool('ellipse')}
-                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                                currentTool === 'ellipse' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Circle / Ellipse Shape"
-                        >
-                            ○
-                        </button>
-                        <button
-                            onClick={() => handleSelectTool('arrow')}
-                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                                currentTool === 'arrow' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Arrow Tool"
-                        >
-                            ↗
-                        </button>
-                        <button
-                            onClick={() => handleSelectTool('line')}
-                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                                currentTool === 'line' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Line Tool"
-                        >
-                            —
-                        </button>
-
-                        {/* 5. Laser Pointer */}
-                        <button
-                            onClick={() => handleSelectTool('laser')}
-                            className={`w-10 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
-                                currentTool === 'laser' ? 'bg-rose-600 text-white shadow-md' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                            }`}
-                            title="Laser Pointer"
-                        >
-                            🔦
-                        </button>
-
-                        <div className="w-8 h-px bg-slate-800 my-0.5" />
-
-                        {/* 6. Quran Mushaf Ayah */}
-                        <button
-                            onClick={() => setShowQuranMushaf(true)}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-amber-500/10 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/30 transition-all"
-                            title="Insert Quran Ayah"
-                        >
-                            📖
-                        </button>
-
-                        {/* 7. Math Tools */}
-                        <button
-                            onClick={() => setShowMathTools(true)}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-cyan-500/10 hover:bg-cyan-500 text-cyan-300 hover:text-white border border-cyan-500/30 transition-all"
-                            title="Math & Geometry Tools"
-                        >
-                            📐
-                        </button>
-
-                        {/* 8. Exam Panel (Tutor / Admin) */}
-                        {isTutorOrAdmin && (
-                            <button
-                                onClick={() => setShowExamPanel(true)}
-                                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-purple-500/10 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/30 transition-all"
-                                title="Assign Live Exam"
-                            >
-                                📝
-                            </button>
-                        )}
-
-                        <div className="w-8 h-px bg-slate-800 my-0.5" />
-
-                        {/* 9. Clear Board */}
-                        <button
-                            onClick={handleClearOwnBoard}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
-                            title="Clear My Board"
-                        >
-                            🗑️
-                        </button>
-
-                        {/* 10. Download SVG */}
-                        <button
-                            onClick={handleDownload}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all"
-                            title="Download Whiteboard (SVG)"
-                        >
-                            💾
-                        </button>
-
-                        <div className="w-8 h-px bg-slate-800 my-0.5" />
-
-                        {/* 11. Multi-Page Navigation */}
-                        <div className="flex flex-col items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/80 w-11">
-                            <span className="text-[8px] font-bold text-slate-400">PAGE</span>
-                            <div className="text-[10px] font-bold text-emerald-400">
-                                {currentPageIdx + 1}/{pages.length}
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <button
-                                    onClick={handlePrevPage}
-                                    disabled={currentPageIdx === 0}
-                                    className="w-4 h-5 rounded bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 text-[9px] flex items-center justify-center font-bold"
-                                    title="Previous Page"
-                                >
-                                    ◀
-                                </button>
-                                <button
-                                    onClick={handleNextPage}
-                                    disabled={currentPageIdx >= pages.length - 1}
-                                    className="w-4 h-5 rounded bg-slate-700 text-slate-300 hover:text-white disabled:opacity-30 text-[9px] flex items-center justify-center font-bold"
-                                    title="Next Page"
-                                >
-                                    ▶
-                                </button>
-                            </div>
-                            <button
-                                onClick={handleAddPage}
-                                className="w-8 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold transition-all mt-0.5"
-                                title="Add New Blank Page"
-                            >
-                                +
-                            </button>
-                        </div>
-
-                    </aside>
-                )}
-
                 {/* Main Drawing Area - Clean Full Canvas */}
-                <div className={`flex-1 relative ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
+                <div className={`flex-1 relative hidayah-whiteboard ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
                     <Excalidraw 
                         name="hidayah_live_board"
                         excalidrawAPI={(api) => {
@@ -913,7 +1016,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 theme: "light",
                                 zenModeEnabled: false,
                                 gridModeEnabled: false,
-                                openSidebar: null
                             }
                         }}
                         UIOptions={{
@@ -922,31 +1024,20 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 clearCanvas: true,
                                 export: false,
                                 loadScene: false,
-                                saveAsImage: false,
+                                saveAsImage: true,
                                 theme: true,
                             },
+                            tools: {
+                                arrow: false,
+                                line: false,
+                            },
                         }}
-                    >
-                        <MainMenu>
-                            <MainMenu.DefaultItems.ClearCanvas />
-                            <MainMenu.DefaultItems.SaveAsImage />
-                            <MainMenu.DefaultItems.ChangeCanvasBackground />
-                            <MainMenu.DefaultItems.ToggleSidebar />
-                            <MainMenu.DefaultItems.GridMode />
-                            <MainMenu.DefaultItems.ZenMode />
-                            <MainMenu.DefaultItems.Help />
-                        </MainMenu>
-                        <Footer>
-                            <div style={{ padding: '0 10px', fontSize: '10px', color: '#666', fontWeight: 'bold' }}>
-                                ROOM: {roomId} | {role} MODE
-                            </div>
-                        </Footer>
-                    </Excalidraw>
+                    />
                 </div>
 
                 {/* Teacher Board Viewer for Students */}
                 {role === 'STUDENT' && activeTab === 'teacher_board' && (
-                    <div className="flex-1 relative">
+                    <div className="flex-1 relative hidayah-whiteboard">
                         <Excalidraw 
                             excalidrawAPI={(api) => setTeacherViewAPI(api)}
                             initialData={{ 
@@ -966,7 +1057,12 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                     loadScene: false,
                                     saveAsImage: false,
                                     theme: true,
-                                }
+                                },
+                                tools: {
+                                    arrow: false,
+                                    line: false,
+                                    freedraw: false,
+                                },
                             }}
                         />
                         <div className="absolute top-4 left-4 bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg z-50">
@@ -1047,6 +1143,20 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                         onAssignExam={handleAssignExam}
                         onClose={() => setShowExamPanel(false)} 
                     />
+                )}
+
+                {/* Media & Document Hub Split Pane / Side Dock */}
+                {showMediaHub && (
+                    <div className="w-full md:w-[480px] lg:w-[580px] xl:w-[680px] flex-shrink-0 h-full border-l border-slate-800 shadow-2xl relative z-30 flex flex-col animate-in slide-in-from-right duration-200">
+                        <WhiteboardMediaHub 
+                            role={role}
+                            userName={userName}
+                            sendMessage={sendMessage}
+                            incomingMediaCommand={incomingMediaCommand}
+                            onInsertElementToBoard={handleInsertElementFromMediaHub}
+                            onClose={() => setShowMediaHub(false)}
+                        />
+                    </div>
                 )}
 
                 </div>{/* end inner flex */}

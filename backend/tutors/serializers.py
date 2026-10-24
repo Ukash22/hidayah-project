@@ -243,6 +243,8 @@ class TutorRegisterSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
+        import json
+        from decimal import Decimal
         from django.db import transaction
         data = self.initial_data
         files = self.context.get('files') or {}
@@ -254,6 +256,34 @@ class TutorRegisterSerializer(serializers.Serializer):
                 v = data.get(key_camel)
             return v if v is not None else default
 
+        raw_age = _get('age')
+        try:
+            age_val = int(raw_age) if raw_age not in (None, '') else None
+        except (ValueError, TypeError):
+            age_val = None
+
+        raw_exp = _get('experience_years', 'experienceYears', 0)
+        try:
+            exp_val = int(float(raw_exp)) if raw_exp not in (None, '') else 0
+        except (ValueError, TypeError):
+            exp_val = 0
+
+        raw_rate = _get('hourly_rate', 'hourlyRate', 1500.00)
+        try:
+            rate_val = Decimal(str(raw_rate))
+        except Exception:
+            rate_val = Decimal('1500.00')
+
+        phone_val = _get('phone_number', 'phone', '')
+        slots = data.get('availabilitySlots', []) or []
+        if isinstance(slots, str):
+            try:
+                slots = json.loads(slots)
+            except Exception:
+                slots = []
+
+        derived_days = ", ".join(sorted({s.get('day', '').strip() for s in slots if isinstance(s, dict) and s.get('day')}))
+
         with transaction.atomic():
             user = User.objects.create_user(
                 username=validated_data['username'],
@@ -262,40 +292,49 @@ class TutorRegisterSerializer(serializers.Serializer):
                 first_name=_get('first_name', 'firstName', ''),
                 last_name=_get('last_name', 'lastName', ''),
                 role='TUTOR',
+                phone=phone_val,
                 gender=data.get('gender'),
                 country=data.get('country'),
             )
 
-            slots = data.get('availabilitySlots', []) or []
-            derived_days = ", ".join(sorted({s.get('day', '').strip() for s in slots if s.get('day')}))
-
             raw_has_online = _get('has_online_exp', 'hasOnlineExp')
+            is_online = str(raw_has_online).lower() in ('true', '1', 'yes')
+
+            # Flexible file lookup supporting both camelCase and snake_case keys
+            img = data.get('image_url') or files.get('image') or files.get('image_file')
+            vid = data.get('intro_video_url') or files.get('intro_video') or files.get('introVideo') or files.get('video')
+            rec = data.get('short_recitation_url') or files.get('short_recitation') or files.get('shortRecitation') or files.get('recitation')
+            cv_f = data.get('cv_url') or files.get('cv_resume') or files.get('cv')
+            cred_f = data.get('credentials_url') or files.get('credentials')
+
             profile = TutorProfile.objects.create(
                 user=user,
-                age=data.get('age'),
-                address=data.get('address'),
-                phone_number=_get('phone_number', 'phone'),
-                experience_years=_get('experience_years', 'experienceYears', 0),
+                age=age_val,
+                address=data.get('address', ''),
+                phone_number=phone_val,
+                experience_years=exp_val,
                 subjects_to_teach=data.get('subjects_to_teach') or 'Not specified',
                 languages=data.get('languages', 'English'),
-                has_online_exp=raw_has_online in ('true', True),
+                has_online_exp=is_online,
                 device_type=_get('device_type', 'deviceType', 'COMPUTER'),
-                network_type=_get('network_type', 'networkType'),
+                network_type=_get('network_type', 'networkType', ''),
                 availability_days=data.get('availability_days') or derived_days or 'Flexible',
                 availability_hours=data.get('availability_hours') or 'Contact for details',
-                hourly_rate=_get('hourly_rate', 'hourlyRate', 1500.00),
-                # Direct-to-cloud URLs take precedence over multipart files
-                image=data.get('image_url') or files.get('image'),
-                intro_video=data.get('intro_video_url') or files.get('intro_video'),
-                short_recitation=data.get('short_recitation_url') or files.get('short_recitation'),
-                cv_resume=data.get('cv_url') or files.get('cv_resume'),
-                credentials=data.get('credentials_url') or files.get('credentials'),
+                hourly_rate=rate_val,
+                image=img,
+                intro_video=vid,
+                intro_video_url=data.get('intro_video_url') if isinstance(data.get('intro_video_url'), str) else None,
+                short_recitation=rec,
+                cv_resume=cv_f,
+                credentials=cred_f,
             )
 
             for slot in slots:
-                day = slot.get('day', '').strip().upper()
-                start = slot.get('startTime')
-                end = slot.get('endTime')
+                if not isinstance(slot, dict):
+                    continue
+                day = str(slot.get('day', '')).strip().upper()
+                start = slot.get('startTime') or slot.get('start_time')
+                end = slot.get('endTime') or slot.get('end_time')
                 if day and start and end:
                     TutorAvailability.objects.create(
                         tutor=profile, day=day, start_time=start, end_time=end)

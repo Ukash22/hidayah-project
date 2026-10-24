@@ -501,36 +501,42 @@ class AdminBookingRequestView(APIView):
              
         return Response({"error": "Invalid action or no update provided"}, status=400)
 class SessionCompleteView(APIView):
-    """Tutor: Mark a session as COMPLETED and trigger automated commission/payout logic"""
+    """Tutor: Mark a session as COMPLETED and queue it for admin payout review"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, session_id):
         from payments.logic import process_session_completion
-        
+
         try:
-            # Re-fetch ensure tutor is owner
             session = get_object_or_404(ScheduledSession, pk=session_id)
             if not request.user.is_staff and session.tutor != request.user:
                 return Response({"error": "Unauthorized"}, status=403)
-            
-            # Use centralized logic
-            result = process_session_completion(session_id)
-            
+
+            actual_duration = request.data.get('actual_duration_minutes')
+            if actual_duration:
+                try:
+                    actual_duration = int(actual_duration)
+                except (ValueError, TypeError):
+                    actual_duration = None
+
+            result = process_session_completion(session_id, actual_duration_minutes=actual_duration)
+
             if not result.get("success", False):
-                return Response({"error": result.get("message", "Payout failed")}, status=400)
-            
+                return Response({"error": result.get("message", "Completion failed")}, status=400)
+
             return Response({
-                "message": "Session completed successfully",
-                "fee": result["fee"],
-                "commission": result["commission"],
-                "net_payout": result["net_payout"],
+                "message": result.get("message", "Session completed. Payout pending admin review."),
+                "fee": result.get("fee"),
+                "commission": result.get("commission"),
+                "net_payout": result.get("net_payout"),
                 "student_balance": result.get("student_balance"),
-                "tutor_balance": result.get("tutor_balance")
+                "payout_status": result.get("payout_status", "PENDING_REVIEW"),
             })
-            
+
         except Exception:
-            logger.exception("Unhandled server error")
+            logger.exception("Unhandled server error in SessionCompleteView")
             return Response({"error": "Something went wrong. Please try again."}, status=500)
+
 class UserSessionListView(APIView):
     """
     Unified view for Student and Tutor to see their scheduled classes (regular & trial).

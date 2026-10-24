@@ -43,10 +43,11 @@ class TutorViewSet(viewsets.ModelViewSet):
             timestamp = int(time.time())
             folder = request.query_params.get('folder', 'tutor_media')
             
-            if not hasattr(settings, 'CLOUDINARY_STORAGE') or not settings.CLOUDINARY_STORAGE.get('API_SECRET'):
+            if not hasattr(settings, 'CLOUDINARY_STORAGE') or not settings.CLOUDINARY_STORAGE or not settings.CLOUDINARY_STORAGE.get('API_SECRET'):
                 return Response({
-                    "error": "Cloudinary is not configured on the server. Please check environment variables (CLOUDINARY_API_SECRET)."
-                }, status=500)
+                    "configured": False,
+                    "error": "Cloudinary is not configured on the server. Direct uploads will fallback to local storage."
+                }, status=200)
             
             params = {
                 'timestamp': timestamp,

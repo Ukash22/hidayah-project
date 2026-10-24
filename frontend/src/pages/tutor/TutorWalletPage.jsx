@@ -11,15 +11,13 @@ export default function TutorWalletPage() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
-    const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
-
     const fetchData = useCallback(() => {
         if (!token) return;
         api.get(`/api/payments/tutor/financials/`)
             .then(res => { setFinancials(res.data); setLoadError(false); })
             .catch(err => { console.error('Financials fetch failed', err); setLoadError(true); })
             .finally(() => setLoading(false));
-    }, [token, getAuthHeader]);
+    }, [token]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -63,6 +61,50 @@ export default function TutorWalletPage() {
                     <p className="text-[11px] font-semibold text-indigo-400 uppercase mt-1 italic">Delivered classes</p>
                 </div>
             </div>
+
+            {/* Pending Admin Review Section */}
+            {financials?.pending_payouts?.length > 0 && (
+                <div className="mb-10 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200 dark:border-amber-900/40 rounded-card-lg p-6 shadow-sm">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-amber-200/60 dark:border-amber-900/40">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-amber-500/30">
+                                ⏳
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-amber-900 dark:text-amber-200">
+                                    ₦{parseFloat(financials.pending_payouts_total || 0).toLocaleString()} Pending Admin Release
+                                </h3>
+                                <p className="text-xs text-amber-700 dark:text-amber-400">
+                                    {financials.pending_payouts.length} completed session{financials.pending_payouts.length > 1 ? 's' : ''} currently under administrative duration review before wallet crediting.
+                                </p>
+                            </div>
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 self-start md:self-auto">
+                            Awaiting Admin Review
+                        </span>
+                    </div>
+
+                    <div className="mt-4 divide-y divide-amber-100 dark:divide-amber-900/20">
+                        {financials.pending_payouts.map(s => (
+                            <div key={s.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                <div>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200">{s.student_name}</span>
+                                    <span className="text-slate-400 mx-2">·</span>
+                                    <span className="text-primary font-semibold">{s.subject_name}</span>
+                                    <span className="text-slate-400 mx-2">·</span>
+                                    <span className="text-slate-500 font-medium">
+                                        {s.actual_duration_minutes ? `${s.actual_duration_minutes}m actual` : `${s.scheduled_duration_minutes || 60}m scheduled`}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-3 font-semibold">
+                                    <span className="text-slate-500">Gross: ₦{parseFloat(s.fee_amount).toLocaleString()}</span>
+                                    <span className="text-emerald-600 font-bold">Net: ₦{parseFloat(s.net_amount).toLocaleString()}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <TutorWallet token={token} />
         </>

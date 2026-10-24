@@ -3,6 +3,7 @@ import api from '../services/api';
 import WithdrawalModal from './WithdrawalModal';
 import { useToast } from '../context/ToastContext';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { Building2, CreditCard, CheckCircle2, AlertTriangle, Edit2, Check } from 'lucide-react';
 
 const TutorWallet = ({ token }) => {
     const toast = useToast();
@@ -11,6 +12,12 @@ const TutorWallet = ({ token }) => {
     const [loading, setLoading] = useState(true);
     const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
     const [period, setPeriod] = useState(6);
+
+    // Bank Details State
+    const [bankDetails, setBankDetails] = useState({ bank_name: '', account_number: '', account_name: '' });
+    const [editingBank, setEditingBank] = useState(false);
+    const [bankForm, setBankForm] = useState({ bank_name: '', account_number: '', account_name: '' });
+    const [savingBank, setSavingBank] = useState(false);
 
     const chartData = useMemo(() => {
         const earnings = transactions.filter(
@@ -43,11 +50,48 @@ const TutorWallet = ({ token }) => {
         }
     }, [token]);
 
+    const fetchBankDetails = React.useCallback(async () => {
+        try {
+            const res = await api.get('/api/payments/tutor/bank-details/');
+            if (res.data) {
+                const data = {
+                    bank_name: res.data.bank_name || '',
+                    account_number: res.data.account_number || '',
+                    account_name: res.data.account_name || '',
+                };
+                setBankDetails(data);
+                setBankForm(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch tutor bank details', err);
+        }
+    }, []);
+
     useEffect(() => {
         if (token) {
             fetchData();
+            fetchBankDetails();
         }
-    }, [token, fetchData]);
+    }, [token, fetchData, fetchBankDetails]);
+
+    const handleSaveBankDetails = async (e) => {
+        e.preventDefault();
+        if (!bankForm.bank_name?.trim() || !bankForm.account_number?.trim() || !bankForm.account_name?.trim()) {
+            toast.error('Please provide complete bank details.');
+            return;
+        }
+        setSavingBank(true);
+        try {
+            const res = await api.patch('/api/payments/tutor/bank-details/', bankForm);
+            setBankDetails(res.data);
+            setEditingBank(false);
+            toast.success('Bank details updated successfully!');
+        } catch (err) {
+            toast.error('Failed to save bank details: ' + (err.response?.data?.error || err.message));
+        } finally {
+            setSavingBank(false);
+        }
+    };
 
     const handleDownloadReceipt = async (t) => {
         try {
@@ -171,6 +215,151 @@ const TutorWallet = ({ token }) => {
                     </div>
                     <p className="text-[11px] font-semibold uppercase text-primary tracking-wide bg-primary/10 inline-block px-3 py-1.5 rounded-lg border border-primary/10 mt-6 self-start">Active Rate</p>
                 </div>
+            </div>
+
+            {/* Bank Transfer Details Section */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-card-lg p-6 md:p-8 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 border border-emerald-500/20">
+                            <Building2 size={24} />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Bank Transfer Account</h3>
+                                {bankDetails.bank_name ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                                        <CheckCircle2 size={11} /> Saved & Verified
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">
+                                        <AlertTriangle size={11} /> Action Required
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">Admin sends your approved withdrawal payouts to this Nigerian bank account.</p>
+                        </div>
+                    </div>
+                    {!editingBank && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setBankForm(bankDetails);
+                                setEditingBank(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all self-start sm:self-auto"
+                        >
+                            <Edit2 size={13} /> {bankDetails.bank_name ? 'Edit Details' : 'Add Bank Account'}
+                        </button>
+                    )}
+                </div>
+
+                {editingBank ? (
+                    <form onSubmit={handleSaveBankDetails} className="mt-6 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Bank Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. GTBank, Zenith, Access"
+                                    value={bankForm.bank_name}
+                                    onChange={(e) => setBankForm({ ...bankForm, bank_name: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-semibold outline-none focus:border-emerald-500 transition-all"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Account Number (10 digits)</label>
+                                <input
+                                    type="text"
+                                    maxLength="10"
+                                    placeholder="0123456789"
+                                    value={bankForm.account_number}
+                                    onChange={(e) => setBankForm({ ...bankForm, account_number: e.target.value.replace(/\D/g, '') })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-mono font-semibold outline-none focus:border-emerald-500 transition-all"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 ml-1">Account Holder Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="Full Name as on Bank Account"
+                                    value={bankForm.account_name}
+                                    onChange={(e) => setBankForm({ ...bankForm, account_name: e.target.value })}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-semibold outline-none focus:border-emerald-500 transition-all"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 justify-end pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setEditingBank(false)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={savingBank}
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition-all"
+                            >
+                                {savingBank ? (
+                                    <><div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving…</>
+                                ) : (
+                                    <><Check size={14} /> Save Bank Details</>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <div className="mt-6">
+                        {bankDetails.bank_name ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Bank Name</span>
+                                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <Building2 size={14} className="text-emerald-500" /> {bankDetails.bank_name}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Account Number</span>
+                                    <span className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                                        <CreditCard size={14} className="text-primary" /> {bankDetails.account_number}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">Account Holder</span>
+                                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        {bankDetails.account_name}
+                                    </span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-6 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl">⚠️</span>
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-800 dark:text-amber-300">No bank account configured</p>
+                                        <p className="text-[11px] text-amber-600 dark:text-amber-400">Please provide your bank details so the administration can disburse your class payouts.</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setBankForm(bankDetails);
+                                        setEditingBank(true);
+                                    }}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-600 hover:bg-amber-700 text-white shadow transition-all shrink-0"
+                                >
+                                    Add Account Now
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Earnings Chart */}

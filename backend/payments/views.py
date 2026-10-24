@@ -550,6 +550,26 @@ class WithdrawalRequestView(APIView):
         
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
         
+        # Fall back to saved TutorProfile bank details if not supplied
+        tutor_profile = getattr(request.user, 'tutor_profile', None)
+        if tutor_profile:
+            bank_name = bank_name or tutor_profile.bank_name
+            account_number = account_number or tutor_profile.account_number
+            account_name = account_name or tutor_profile.account_name
+            # If tutor provided new bank details in request and profile is empty, persist to profile
+            updated_profile_fields = []
+            if bank_name and not tutor_profile.bank_name:
+                tutor_profile.bank_name = bank_name
+                updated_profile_fields.append('bank_name')
+            if account_number and not tutor_profile.account_number:
+                tutor_profile.account_number = account_number
+                updated_profile_fields.append('account_number')
+            if account_name and not tutor_profile.account_name:
+                tutor_profile.account_name = account_name
+                updated_profile_fields.append('account_name')
+            if updated_profile_fields:
+                tutor_profile.save(update_fields=updated_profile_fields)
+        
         if not amount or float(amount) <= 0:
             return Response({"error": "Invalid amount"}, status=400)
             
@@ -839,6 +859,30 @@ class TutorFinancialsView(APIView):
                 "net": float(s.fee_amount - s.commission_amount)
             })
 
+        # Pending session payouts awaiting admin release
+        pending_sessions = sessions.filter(
+            status='COMPLETED', payout_status='PENDING_REVIEW'
+        ).select_related('student', 'subject').order_by('-completed_at', '-scheduled_at')
+        
+        pending_payouts_data = []
+        pending_payouts_total = Decimal('0')
+        for s in pending_sessions:
+            net = (s.fee_amount or Decimal('0')) - (s.commission_amount or Decimal('0'))
+            pending_payouts_total += net
+            pending_payouts_data.append({
+                "id": s.id,
+                "scheduled_at": s.scheduled_at,
+                "completed_at": s.completed_at,
+                "actual_duration_minutes": s.actual_duration_minutes,
+                "scheduled_duration_minutes": s.duration_minutes,
+                "student_name": s.student.get_full_name() if s.student else "Student",
+                "subject_name": s.subject.name if s.subject else "General",
+                "fee_amount": float(s.fee_amount or 0),
+                "commission_amount": float(s.commission_amount or 0),
+                "net_amount": float(net),
+                "payout_status": s.payout_status,
+            })
+
         from .models import Wallet
         wallet, _ = Wallet.objects.get_or_create(user=request.user)
 
@@ -849,6 +893,8 @@ class TutorFinancialsView(APIView):
             "gross_earnings": float(stats['gross_earnings'] or 0),
             "net_earnings": float(stats['net_earnings'] or 0),
             "total_commission": float(stats['total_commission'] or 0),
+            "pending_payouts_total": float(pending_payouts_total),
+            "pending_payouts": pending_payouts_data,
             "history": history_data
         })
 
@@ -978,3 +1024,103 @@ class AdminPlatformSettingsView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminPendingPayoutsView(APIView):
+    """Admin: List all sessions awaiting payout release, with full duration & financial details."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from classes.models import ScheduledSession
+        sessions = (
+            ScheduledSession.objects
+            .filter(payout_status='PENDING_REVIEW')
+            .select_related('tutor', 'tutor__tutor_profile', 'student', 'subject')
+            .order_by('-completed_at')
+        )
+
+        data = []
+        for s in sessions:
+            tutor_profile = getattr(s.tutor, 'tutor_profile', None)
+            data.append({
+                "session_id": s.id,
+                "tutor_id": s.tutor.id,
+                "tutor_name": s.tutor.get_full_name() or s.tutor.username,
+                "tutor_email": s.tutor.email,
+                "tutor_bank_name": getattr(tutor_profile, 'bank_name', None),
+                "tutor_account_number": getattr(tutor_profile, 'account_number', None),
+                "tutor_account_name": getattr(tutor_profile, 'account_name', None),
+                "student_name": s.student.get_full_name() or s.student.username,
+                "subject": s.subject.name if s.subject else "General",
+                "scheduled_at": s.scheduled_at,
+                "completed_at": s.completed_at,
+                "scheduled_duration_minutes": s.duration,
+                "actual_duration_minutes": s.actual_duration_minutes,
+                "fee_amount": float(s.fee_amount),
+                "commission_amount": float(s.commission_amount),
+                "commission_rate": float(s.admin_percentage_at_completion),
+                "net_payout": float(s.fee_amount - s.commission_amount),
+                "payout_status": s.payout_status,
+            })
+
+        return Response({"count": len(data), "sessions": data})
+
+
+class AdminReleasePayoutView(APIView):
+    """Admin: Release a specific session payout to the tutor's wallet."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, session_id):
+        from .logic import release_session_payout
+        try:
+            result = release_session_payout(session_id, admin_user=request.user)
+            if not result.get("success"):
+                return Response({"error": result.get("message")}, status=400)
+            return Response({
+                "message": f"Payout of ₦{result['net_payout']:,.2f} released to tutor wallet.",
+                "net_payout": result["net_payout"],
+                "tutor_balance": result["tutor_balance"],
+            })
+        except Exception as e:
+            logger.exception("Payout release failed for session %s: %s", session_id, e)
+            return Response({"error": "Payout release failed. Please try again."}, status=500)
+
+
+class TutorBankDetailsView(APIView):
+    """Tutor: Get or update their bank details for withdrawal transfers."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = getattr(request.user, 'tutor_profile', None)
+        if not profile:
+            return Response({"bank_name": None, "account_number": None, "account_name": None})
+        return Response({
+            "bank_name": profile.bank_name,
+            "account_number": profile.account_number,
+            "account_name": profile.account_name,
+        })
+
+    def patch(self, request):
+        profile = getattr(request.user, 'tutor_profile', None)
+        if not profile:
+            return Response({"error": "Tutor profile not found."}, status=404)
+
+        bank_name = request.data.get('bank_name', '').strip()
+        account_number = request.data.get('account_number', '').strip()
+        account_name = request.data.get('account_name', '').strip()
+
+        if not bank_name or not account_number or not account_name:
+            return Response({"error": "All bank detail fields are required."}, status=400)
+
+        profile.bank_name = bank_name
+        profile.account_number = account_number
+        profile.account_name = account_name
+        profile.save(update_fields=['bank_name', 'account_number', 'account_name'])
+
+        return Response({
+            "message": "Bank details saved successfully.",
+            "bank_name": profile.bank_name,
+            "account_number": profile.account_number,
+            "account_name": profile.account_name,
+        })
+

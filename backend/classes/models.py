@@ -15,7 +15,7 @@ class ScheduledSession(models.Model):
 
     PAYOUT_STATUS_CHOICES = (
         ('NONE', 'Not Applicable'),
-        ('PENDING', 'Pending Release'),
+        ('PENDING_REVIEW', 'Pending Admin Review'),
         ('RELEASED', 'Released to Tutor'),
     )
     
@@ -40,7 +40,9 @@ class ScheduledSession(models.Model):
     whiteboard_link = models.URLField(blank=True, null=True)
     completion_notes = models.TextField(blank=True, null=True)
     is_started = models.BooleanField(default=False)
-    
+    actual_duration_minutes = models.IntegerField(null=True, blank=True, help_text="Actual class duration in minutes, recorded when tutor ends session")
+    completed_at = models.DateTimeField(null=True, blank=True, help_text="Timestamp when tutor marked class as done")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

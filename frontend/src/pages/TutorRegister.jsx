@@ -207,20 +207,61 @@ const TutorRegister = () => {
             });
             
             setLoading('Finalizing Application...');
-            await api.post('/api/tutors/register/', {
-                ...formData,
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                experience_years: formData.experienceYears,
-                subjects_to_teach: formData.subjects.join(', '),
-                availability_hours: formData.availabilitySlots.map(s => `${s.day}: ${s.startTime} - ${s.endTime}`).join(', '),
-                availabilitySlots: formData.availabilitySlots,
-                image_url: uploadedUrls.image,
-                intro_video_url: uploadedUrls.introVideo,
-                short_recitation_url: uploadedUrls.shortRecitation,
-                cv_url: uploadedUrls.cv,
-                credentials_url: uploadedUrls.credentials
-            });
+            
+            // Check if any file needs to be sent directly as multipart
+            const hasLocalFiles = Object.entries(files).some(([k, f]) => f && !uploadedUrls[k]);
+
+            if (hasLocalFiles) {
+                const multiForm = new FormData();
+                Object.entries(formData).forEach(([k, v]) => {
+                    if (k === 'subjects') {
+                        multiForm.append('subjects_to_teach', Array.isArray(v) ? v.join(', ') : v);
+                    } else if (k === 'availabilitySlots') {
+                        multiForm.append('availabilitySlots', JSON.stringify(v));
+                        multiForm.append('availability_hours', Array.isArray(v) ? v.map(s => `${s.day}: ${s.startTime} - ${s.endTime}`).join(', ') : '');
+                    } else if (v !== undefined && v !== null) {
+                        multiForm.append(k, v);
+                    }
+                });
+                multiForm.append('first_name', formData.firstName || '');
+                multiForm.append('last_name', formData.lastName || '');
+                multiForm.append('phone_number', formData.phone || '');
+                multiForm.append('experience_years', formData.experienceYears || '0');
+
+                // Cloudinary URLs if available
+                if (uploadedUrls.image) multiForm.append('image_url', uploadedUrls.image);
+                if (uploadedUrls.introVideo) multiForm.append('intro_video_url', uploadedUrls.introVideo);
+                if (uploadedUrls.shortRecitation) multiForm.append('short_recitation_url', uploadedUrls.shortRecitation);
+                if (uploadedUrls.cv) multiForm.append('cv_url', uploadedUrls.cv);
+                if (uploadedUrls.credentials) multiForm.append('credentials_url', uploadedUrls.credentials);
+
+                // Direct file attachments for files not on Cloudinary
+                if (files.image && !uploadedUrls.image) multiForm.append('image', files.image);
+                if (files.introVideo && !uploadedUrls.introVideo) multiForm.append('intro_video', files.introVideo);
+                if (files.shortRecitation && !uploadedUrls.shortRecitation) multiForm.append('short_recitation', files.shortRecitation);
+                if (files.cv && !uploadedUrls.cv) multiForm.append('cv_resume', files.cv);
+                if (files.credentials && !uploadedUrls.credentials) multiForm.append('credentials', files.credentials);
+
+                await api.post('/api/tutors/register/', multiForm, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await api.post('/api/tutors/register/', {
+                    ...formData,
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                    phone_number: formData.phone,
+                    experience_years: formData.experienceYears,
+                    subjects_to_teach: formData.subjects.join(', '),
+                    availability_hours: formData.availabilitySlots.map(s => `${s.day}: ${s.startTime} - ${s.endTime}`).join(', '),
+                    availabilitySlots: formData.availabilitySlots,
+                    image_url: uploadedUrls.image,
+                    intro_video_url: uploadedUrls.introVideo,
+                    short_recitation_url: uploadedUrls.shortRecitation,
+                    cv_url: uploadedUrls.cv,
+                    credentials_url: uploadedUrls.credentials
+                });
+            }
 
             try { localStorage.removeItem(DRAFT_KEY); } catch (_e) { /* ignore */ }
             setSuccess(true);

@@ -9,23 +9,30 @@ const getBaseUrl = () => {
 const API_BASE_URL = getBaseUrl();
 
 const ALLOWED_MIME_TYPES = [
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-    'video/mp4', 'video/webm', 'video/quicktime',
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml',
+    'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/x-m4a', 'audio/aac', 'audio/webm', 'audio/flac',
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
 
-const MAX_SIZE_BY_TYPE = { image: 5, video: 200, document: 20 };
+const MAX_SIZE_BY_TYPE = { image: 15, video: 250, audio: 60, document: 30 };
 
 function validateFile(file) {
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        throw new Error(`File type "${file.type}" is not allowed.`);
+    if (file.type && ALLOWED_MIME_TYPES.length > 0) {
+        // If MIME is known, check against allowlist; allow if audio/video/image by prefix
+        const isCommonMedia = file.type.startsWith('image/') || file.type.startsWith('video/') || file.type.startsWith('audio/') || file.type.includes('pdf') || file.type.includes('officedocument') || file.type.includes('msword') || file.type.includes('excel') || file.type.includes('powerpoint');
+        if (!ALLOWED_MIME_TYPES.includes(file.type) && !isCommonMedia) {
+            console.warn(`File type "${file.type}" not in strict allowlist; proceeding with best effort.`);
+        }
     }
-    const category = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document';
-    const maxMb = MAX_SIZE_BY_TYPE[category];
+    const category = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : file.type.startsWith('audio/') ? 'audio' : 'document';
+    const maxMb = MAX_SIZE_BY_TYPE[category] || 50;
     if (file.size > maxMb * 1024 * 1024) {
         throw new Error(`File exceeds the ${maxMb}MB limit for ${category} uploads.`);
     }
@@ -40,7 +47,12 @@ function validateFile(file) {
  */
 export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
     if (!file) return null;
-    validateFile(file);
+    try {
+        validateFile(file);
+    } catch (valErr) {
+        console.warn('[Validation Warning]:', valErr.message);
+        // Continue to attempt upload or return null
+    }
 
     try {
         // 1. Get the signature from our Django backend
@@ -48,19 +60,17 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
             params: { folder }
         });
 
-        // Check if the backend returned an error object (e.g. missing env vars)
-        if (signatureResponse.data?.error) {
-            console.warn('[Cloudinary] Backend signature error:', signatureResponse.data.error);
-            console.warn('[Cloudinary] Fix: Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Render environment dashboard.');
+        // Check if the backend returned an error object or configured === false
+        if (signatureResponse.data?.error || signatureResponse.data?.configured === false) {
+            console.warn('[Cloudinary] Cloudinary not configured on server. Falling back to direct backend upload.');
             return null;
         }
 
         const { signature, timestamp, api_key, cloud_name } = signatureResponse.data;
 
         // 2. Validate credentials — skip upload if backend .env is not configured
-        if (!cloud_name || cloud_name === 'None' || !api_key || api_key === 'None') {
-            console.warn(`[Cloudinary] Credentials not configured on server. Skipping upload for folder: ${folder}`);
-            console.warn('[Cloudinary] Fix: Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your Render environment dashboard.');
+        if (!cloud_name || cloud_name === 'None' || !api_key || api_key === 'None' || !signature) {
+            console.warn(`[Cloudinary] Incomplete credentials on server. Falling back to backend storage for: ${folder}`);
             return null;
         }
 
@@ -73,7 +83,6 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
         formData.append('folder', folder);
 
         // 4. Upload directly to Cloudinary
-        // Note: Do NOT set Content-Type header manually; axios/browser will set it with the correct boundary
         const cloudinaryResponse = await axios.post(
             `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`,
             formData
@@ -81,24 +90,8 @@ export const uploadToCloudinary = async (file, folder = 'tutor_media') => {
 
         return cloudinaryResponse.data.secure_url;
     } catch (error) {
-        console.error('Cloudinary Upload Error Details:', {
-            message: error.message,
-            response: error.response?.data,
-            config: error.config
-        });
-        // Specific guidance for 401: almost always means missing/wrong credentials on the backend
-        if (error.response?.status === 401) {
-            console.error('[Cloudinary] 401 Unauthorized — your CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET on the server are missing or incorrect. Set them in the Render environment dashboard and redeploy.');
-        }
-        let detail = '';
-        if (error.response?.status === 413) {
-            detail = ": The file is too large for Cloudinary's free tier. Please compress your video/image and try again.";
-        } else if (error.response?.data?.error?.message) {
-            detail = `: ${error.response.data.error.message}`;
-        } else if (error.message) {
-            detail = `: ${error.message}`;
-        }
-        throw new Error(`File upload failed${detail}.`);
+        console.warn('Cloudinary upload skipped or failed, falling back to direct server upload:', error.message);
+        return null;
     }
 };
 

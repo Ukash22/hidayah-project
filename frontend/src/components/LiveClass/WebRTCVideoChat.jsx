@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
 
-const RemoteVideoTile = ({ id, data, layoutMode, raisedHand }) => {
+const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, raisedHand }) => {
     const videoRef = useRef(null);
     const audioRef = useRef(null);
     const [hasActiveVideo, setHasActiveVideo] = useState(false);
@@ -50,18 +50,85 @@ const RemoteVideoTile = ({ id, data, layoutMode, raisedHand }) => {
         };
     }, [data?.stream, data?._v]);
 
-    return (
-        <div className={`relative bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 transition-all duration-300 group ${
-            layoutMode === 'gallery' ? 'aspect-video' : 'h-44 sm:h-56'
-        }`}>
-            {/* Audio Playback: Unmuted audio element */}
-            <audio 
-                ref={audioRef}
-                autoPlay 
-                playsInline
-            />
+    const isHost = data?.isHost || data?.role === 'TUTOR' || data?.role === 'ADMIN';
 
-            {/* Video Feed: Muted so autoplay is NEVER blocked by browser policies */}
+    if (isStage) {
+        return (
+            <div className="relative w-full h-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 group">
+                <audio ref={audioRef} autoPlay playsInline />
+                <video 
+                    ref={videoRef}
+                    autoPlay 
+                    muted
+                    playsInline 
+                    onPlaying={() => setHasActiveVideo(true)}
+                    onLoadedData={() => setHasActiveVideo(true)}
+                    className={`w-full h-full object-contain md:object-cover transition-opacity duration-300 ${hasActiveVideo ? 'opacity-100' : 'opacity-0'}`}
+                />
+
+                {!hasActiveVideo && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-3 select-none">
+                        <div className="relative">
+                            <div className="w-20 h-20 sm:w-28 sm:h-28 bg-emerald-600/20 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-emerald-400 border-4 border-emerald-500/40 shadow-2xl">
+                                {data.name?.[0]?.toUpperCase() || 'P'}
+                            </div>
+                            <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xs">
+                                🎙️
+                            </span>
+                        </div>
+                        <span className="text-base font-bold text-white font-display">{data.name}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+                            {isHost ? '★ Host Speaker · Audio Live' : 'Participant · Audio Live'}
+                        </span>
+                    </div>
+                )}
+
+                {/* Host Crown / Spotlight Badge */}
+                {isHost && (
+                    <div className="absolute top-3 left-3 bg-amber-500/90 text-amber-950 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg border border-amber-400 backdrop-blur-md">
+                        <span>👑</span>
+                        <span>HOST / TUTOR</span>
+                    </div>
+                )}
+
+                {/* Bottom Name Pill */}
+                <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/10 flex items-center gap-2 shadow-xl">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{data.name || 'Participant'}</span>
+                    {isPinned && <span className="text-[9px] text-indigo-400 font-bold ml-1 bg-indigo-500/20 px-1.5 py-0.5 rounded">Pinned</span>}
+                </div>
+
+                {/* Pin / Switch Action Button */}
+                {onPin && (
+                    <button
+                        onClick={onPin}
+                        className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide border border-white/20 transition-all opacity-0 group-hover:opacity-100 shadow-lg flex items-center gap-1.5"
+                        title={isPinned ? 'Unpin from stage' : 'Pin to stage'}
+                    >
+                        <span>📌</span>
+                        <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+                    </button>
+                )}
+
+                {raisedHand && (
+                    <div className="absolute top-3 right-16 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white">
+                        <Hand size={16} className="text-white" />
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Small Thumbnail Tile (Zoom Filmstrip Mode)
+    return (
+        <div 
+            onClick={onPin}
+            className={`relative bg-slate-900 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 group cursor-pointer w-32 sm:w-40 h-20 sm:h-24 flex-shrink-0 ${
+                isPinned ? 'border-indigo-500 ring-2 ring-indigo-500/40' : 'border-slate-700/80 hover:border-emerald-400'
+            }`}
+            title="Click to pin onto big screen"
+        >
+            <audio ref={audioRef} autoPlay playsInline />
             <video 
                 ref={videoRef}
                 autoPlay 
@@ -72,33 +139,35 @@ const RemoteVideoTile = ({ id, data, layoutMode, raisedHand }) => {
                 className={`w-full h-full object-cover transition-opacity duration-300 ${hasActiveVideo ? 'opacity-100' : 'opacity-0'}`}
             />
 
-            {/* Camera Off Avatar — shown when video frames are not live */}
             {!hasActiveVideo && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-2 select-none">
-                    <div className="relative">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-600/20 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-emerald-400 border-2 border-emerald-500/40 shadow-inner">
-                            {data.name?.[0]?.toUpperCase() || 'P'}
-                        </div>
-                        <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-[10px]">
-                            🎙️
-                        </span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-1 select-none">
+                    <div className="w-8 h-8 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-500/40">
+                        {data.name?.[0]?.toUpperCase() || 'P'}
                     </div>
-                    <span className="text-xs font-bold text-slate-300">{data.name}</span>
-                    <span className="text-[9px] uppercase tracking-wider font-semibold text-slate-500 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700">
-                        Connected · Audio Live
-                    </span>
+                    <span className="text-[9px] font-bold text-slate-400 truncate max-w-[90px]">{data.name}</span>
                 </div>
             )}
 
-            {/* Bottom Name Pill */}
-            <div className="absolute bottom-2 left-2 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-white/10 flex items-center gap-1.5 shadow-md">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{data.name || 'Participant'}</span>
+            {isHost && (
+                <div className="absolute top-1 left-1 bg-amber-500 text-amber-950 px-1 py-0.2 rounded text-[8px] font-bold uppercase tracking-tighter">
+                    HOST
+                </div>
+            )}
+
+            <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase truncate max-w-[85px] border border-white/10">
+                {data.name || 'Participant'}
+            </div>
+
+            {/* Hover Pin Indicator */}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-md shadow">
+                    📌 Spotlight
+                </span>
             </div>
 
             {raisedHand && (
-                <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white">
-                    <Hand size={14} className="text-white" />
+                <div className="absolute top-1 right-1 bg-yellow-500 p-1 rounded-full shadow animate-bounce border border-white">
+                    <Hand size={10} className="text-white" />
                 </div>
             )}
         </div>
