@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
 
-const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, raisedHand }) => {
+const RemoteVideoTile = ({ id: _id, data, isStage = false, isPinned = false, isSpeaking = false, onPin, raisedHand }) => {
     const videoRef = useRef(null);
     const audioRef = useRef(null);
     const [hasActiveVideo, setHasActiveVideo] = useState(false);
@@ -54,7 +54,9 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
 
     if (isStage) {
         return (
-            <div className="relative w-full h-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border-2 border-slate-700/80 group">
+            <div className={`relative w-full h-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border-2 transition-all duration-300 group ${
+                isSpeaking ? 'ring-4 ring-emerald-500 border-emerald-400 shadow-emerald-500/30' : 'border-slate-700/80'
+            }`}>
                 <audio ref={audioRef} autoPlay playsInline />
                 <video 
                     ref={videoRef}
@@ -70,31 +72,39 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-3 select-none">
                         <div className="relative">
                             <div className="w-20 h-20 sm:w-28 sm:h-28 bg-emerald-600/20 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-emerald-400 border-4 border-emerald-500/40 shadow-2xl">
-                                {data.name?.[0]?.toUpperCase() || 'P'}
+                                {data?.name?.[0]?.toUpperCase() || 'P'}
                             </div>
                             <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xs">
                                 🎙️
                             </span>
                         </div>
-                        <span className="text-base font-bold text-white font-display">{data.name}</span>
+                        <span className="text-base font-bold text-white font-display">{data?.name}</span>
                         <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
                             {isHost ? '★ Host Speaker · Audio Live' : 'Participant · Audio Live'}
                         </span>
                     </div>
                 )}
 
+                {/* Speaking Live Indicator Badge */}
+                {isSpeaking && (
+                    <div className="absolute top-3 left-3 bg-emerald-500/90 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg border border-emerald-400 backdrop-blur-md animate-pulse z-10">
+                        <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                        <span>Speaking</span>
+                    </div>
+                )}
+
                 {/* Host Crown / Spotlight Badge */}
-                {isHost && (
-                    <div className="absolute top-3 left-3 bg-amber-500/90 text-amber-950 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg border border-amber-400 backdrop-blur-md">
+                {isHost && !isSpeaking && (
+                    <div className="absolute top-3 left-3 bg-amber-500/90 text-amber-950 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg border border-amber-400 backdrop-blur-md z-10">
                         <span>👑</span>
                         <span>HOST / TUTOR</span>
                     </div>
                 )}
 
                 {/* Bottom Name Pill */}
-                <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/10 flex items-center gap-2 shadow-xl">
+                <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/10 flex items-center gap-2 shadow-xl z-10">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>{data.name || 'Participant'}</span>
+                    <span>{data?.name || 'Participant'}</span>
                     {isPinned && <span className="text-[9px] text-indigo-400 font-bold ml-1 bg-indigo-500/20 px-1.5 py-0.5 rounded">Pinned</span>}
                 </div>
 
@@ -102,7 +112,7 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
                 {onPin && (
                     <button
                         onClick={onPin}
-                        className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide border border-white/20 transition-all opacity-0 group-hover:opacity-100 shadow-lg flex items-center gap-1.5"
+                        className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide border border-white/20 transition-all opacity-0 group-hover:opacity-100 shadow-lg flex items-center gap-1.5 z-10"
                         title={isPinned ? 'Unpin from stage' : 'Pin to stage'}
                     >
                         <span>📌</span>
@@ -111,7 +121,7 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
                 )}
 
                 {raisedHand && (
-                    <div className="absolute top-3 right-16 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white">
+                    <div className="absolute top-3 right-16 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white z-10">
                         <Hand size={16} className="text-white" />
                     </div>
                 )}
@@ -123,16 +133,20 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
     return (
         <div 
             onClick={onPin}
-            className={`relative bg-slate-900 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 group cursor-pointer w-32 sm:w-40 h-20 sm:h-24 flex-shrink-0 ${
-                isPinned ? 'border-indigo-500 ring-2 ring-indigo-500/40' : 'border-slate-700/80 hover:border-emerald-400'
+            className={`relative bg-slate-900 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 group cursor-pointer w-28 sm:w-36 h-20 sm:h-24 flex-shrink-0 ${
+                isSpeaking 
+                    ? 'ring-2 sm:ring-4 ring-emerald-400 border-emerald-400 shadow-md shadow-emerald-500/40' 
+                    : isPinned 
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/40' 
+                        : 'border-slate-700/80 hover:border-emerald-400'
             }`}
-            title="Click to pin onto big screen"
+            title="Click to spotlight on big screen"
         >
             <audio ref={audioRef} autoPlay playsInline />
             <video 
-                ref={videoRef}
+                ref={videoRef} 
                 autoPlay 
-                muted
+                muted 
                 playsInline 
                 onPlaying={() => setHasActiveVideo(true)}
                 onLoadedData={() => setHasActiveVideo(true)}
@@ -142,9 +156,9 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
             {!hasActiveVideo && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-1 select-none">
                     <div className="w-8 h-8 rounded-full bg-emerald-600/20 text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-500/40">
-                        {data.name?.[0]?.toUpperCase() || 'P'}
+                        {data?.name?.[0]?.toUpperCase() || 'P'}
                     </div>
-                    <span className="text-[9px] font-bold text-slate-400 truncate max-w-[90px]">{data.name}</span>
+                    <span className="text-[9px] font-bold text-slate-400 truncate max-w-[80px]">{data?.name}</span>
                 </div>
             )}
 
@@ -154,8 +168,8 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
                 </div>
             )}
 
-            <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase truncate max-w-[85px] border border-white/10">
-                {data.name || 'Participant'}
+            <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase truncate max-w-[80px] border border-white/10 flex items-center gap-1">
+                <span>{data?.name || 'Participant'}</span>
             </div>
 
             {/* Hover Pin Indicator */}
@@ -174,7 +188,143 @@ const RemoteVideoTile = ({ id, data, isStage = false, isPinned = false, onPin, r
     );
 };
 
-const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'classroom' }) => {
+const LocalVideoTile = ({
+    user,
+    localStream,
+    isVideoOff,
+    isMuted,
+    isScreenSharing,
+    isStage = false,
+    isPinned = false,
+    isSpeaking = false,
+    onPin,
+    raisedHand
+}) => {
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        if (videoRef.current && localStream) {
+            videoRef.current.srcObject = localStream;
+        }
+    }, [localStream, isVideoOff, isStage]);
+
+    if (isStage) {
+        return (
+            <div className={`relative w-full h-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border-2 transition-all duration-300 group ${
+                isSpeaking ? 'ring-4 ring-emerald-500 border-emerald-400 shadow-emerald-500/30' : isScreenSharing ? 'border-emerald-500' : 'border-slate-700/80'
+            }`}>
+                <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    muted 
+                    playsInline 
+                    className={`w-full h-full object-contain md:object-cover ${isVideoOff ? 'hidden' : ''} ${isScreenSharing ? '' : '-scale-x-100'}`} 
+                />
+                {isVideoOff && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 gap-3 select-none">
+                        <div className="relative">
+                            <div className="w-20 h-20 sm:w-28 sm:h-28 bg-slate-800 rounded-full flex items-center justify-center text-3xl sm:text-4xl font-bold text-slate-400 border-4 border-slate-700 shadow-2xl">
+                                {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xs">
+                                {isMuted ? '🔇' : '🎙️'}
+                            </span>
+                        </div>
+                        <span className="text-base font-bold text-white font-display">{user?.first_name || 'You'} (Me)</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+                            Camera Off
+                        </span>
+                    </div>
+                )}
+
+                {/* Speaking Live Indicator Badge */}
+                {isSpeaking && (
+                    <div className="absolute top-3 left-3 bg-emerald-500/90 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg border border-emerald-400 backdrop-blur-md animate-pulse z-10">
+                        <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                        <span>Speaking (You)</span>
+                    </div>
+                )}
+
+                {isScreenSharing && (
+                    <div className="absolute top-3 left-3 bg-emerald-600 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-lg z-10">
+                        <span>🖥️ Sharing Screen</span>
+                    </div>
+                )}
+
+                <div className="absolute bottom-3 left-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/10 flex items-center gap-2 shadow-xl z-10">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{user?.first_name || 'You'} (Me)</span>
+                    {isMuted && <MicOff size={12} className="text-red-400" />}
+                    {isPinned && <span className="text-[9px] text-indigo-400 font-bold ml-1 bg-indigo-500/20 px-1.5 py-0.5 rounded">Pinned</span>}
+                </div>
+
+                {onPin && (
+                    <button
+                        onClick={onPin}
+                        className="absolute top-3 right-3 bg-black/70 hover:bg-black text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wide border border-white/20 transition-all opacity-0 group-hover:opacity-100 shadow-lg flex items-center gap-1.5 z-10"
+                        title={isPinned ? 'Unpin' : 'Pin to stage'}
+                    >
+                        <span>📌</span>
+                        <span>{isPinned ? 'Unpin' : 'Pin'}</span>
+                    </button>
+                )}
+
+                {raisedHand && (
+                    <div className="absolute top-3 right-16 bg-yellow-500 p-2 rounded-full shadow-lg animate-bounce border-2 border-white z-10">
+                        <Hand size={16} className="text-white" />
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Small Thumbnail (Filmstrip mode)
+    return (
+        <div 
+            onClick={onPin}
+            className={`relative bg-slate-900 rounded-xl overflow-hidden shadow-lg border-2 transition-all duration-300 group cursor-pointer w-28 sm:w-36 h-20 sm:h-24 flex-shrink-0 ${
+                isSpeaking 
+                    ? 'ring-2 sm:ring-4 ring-emerald-400 border-emerald-400 shadow-md shadow-emerald-500/40' 
+                    : isPinned 
+                        ? 'border-indigo-500 ring-2 ring-indigo-500/40' 
+                        : 'border-slate-700/80 hover:border-emerald-400'
+            }`}
+            title="Click to spotlight self"
+        >
+            <video 
+                ref={videoRef} 
+                autoPlay 
+                muted 
+                playsInline 
+                className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''} ${isScreenSharing ? '' : '-scale-x-100'}`} 
+            />
+            {isVideoOff && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-1 select-none">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 font-bold flex items-center justify-center text-xs border border-slate-700">
+                        {user?.first_name?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-500">Camera Off</span>
+                </div>
+            )}
+            <div className="absolute bottom-1 left-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase truncate max-w-[80px] border border-white/10 flex items-center gap-1">
+                <span>You</span>
+                {isMuted && <MicOff size={8} className="text-red-400" />}
+            </div>
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-[10px] font-bold text-white bg-indigo-600 px-2 py-0.5 rounded-md shadow">
+                    📌 Spotlight
+                </span>
+            </div>
+            {raisedHand && (
+                <div className="absolute top-1 right-1 bg-yellow-500 p-1 rounded-full shadow animate-bounce border border-white">
+                    <Hand size={10} className="text-white" />
+                </div>
+            )}
+        </div>
+    );
+};
+
+const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, layoutMode: _layoutMode = 'classroom' }) => {
     // isCallEnded = user explicitly clicked Leave; distinct from panel being hidden
     const [isCallEnded, setIsCallEnded] = useState(false);
     const { user } = useAuth();
@@ -189,6 +339,16 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     const [showChat, setShowChat] = useState(false);
     const [raisedHands, setRaisedHands] = useState({});
     const [mediaNotice, setMediaNotice] = useState(null);
+
+    // Active Speaker & Zoom Video states
+    const [speakingLevels, setSpeakingLevels] = useState({});
+    const [activeSpeakerId, setActiveSpeakerId] = useState(null);
+    const [pinnedPeerId, setPinnedPeerId] = useState(null);
+    const [zoomViewMode, setZoomViewMode] = useState('speaker'); // 'speaker' | 'gallery'
+
+    const audioContextRef = useRef(null);
+    const audioNodesRef = useRef({});
+    const lastSpeakerSwitchRef = useRef(0);
     
     const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
@@ -374,6 +534,99 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
             setRemoteStreams({});
         };
     }, []); // Run once on mount — component is always mounted
+
+    // Real-Time Audio Activity Monitor for Active Speaker Detection (Zoom behaviour)
+    useEffect(() => {
+        let timerId;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+
+        if (!audioContextRef.current) {
+            audioContextRef.current = new AudioCtx();
+        }
+        const ctx = audioContextRef.current;
+        if (ctx.state === 'suspended') {
+            ctx.resume().catch(() => {});
+        }
+
+        const allSources = {
+            ...remoteStreams,
+            ...(localStream ? { local: { stream: localStream } } : {})
+        };
+
+        // Disconnect nodes that are no longer active
+        Object.keys(audioNodesRef.current).forEach(id => {
+            if (!allSources[id]?.stream) {
+                try {
+                    audioNodesRef.current[id].source?.disconnect();
+                } catch (_e) {
+                    /* ignore disconnect error */
+                }
+                delete audioNodesRef.current[id];
+            }
+        });
+
+        // Add new nodes
+        Object.entries(allSources).forEach(([id, data]) => {
+            const stream = data?.stream;
+            if (stream && stream.getAudioTracks().length > 0 && !audioNodesRef.current[id]) {
+                try {
+                    const source = ctx.createMediaStreamSource(stream);
+                    const analyser = ctx.createAnalyser();
+                    analyser.fftSize = 128;
+                    analyser.smoothingTimeConstant = 0.4;
+                    source.connect(analyser);
+                    audioNodesRef.current[id] = { source, analyser };
+                } catch (e) {
+                    console.warn("Audio analyser connect failed for", id, e);
+                }
+            }
+        });
+
+        const sampleAudio = () => {
+            const levels = {};
+            let maxVol = 0;
+            let loudestId = null;
+            const buffer = new Uint8Array(64);
+
+            Object.entries(audioNodesRef.current).forEach(([id, node]) => {
+                try {
+                    node.analyser.getByteFrequencyData(buffer);
+                    let sum = 0;
+                    for (let i = 0; i < buffer.length; i++) sum += buffer[i];
+                    const avg = sum / buffer.length;
+                    levels[id] = avg;
+
+                    // Speech threshold
+                    if (avg > 14 && avg > maxVol) {
+                        maxVol = avg;
+                        loudestId = id;
+                    }
+                } catch (_e) {
+                    /* ignore sample error */
+                }
+            });
+
+            setSpeakingLevels(levels);
+
+            const now = Date.now();
+            if (loudestId && loudestId !== activeSpeakerId) {
+                // Minimum dwell time of 750ms so switching is smooth and natural
+                if (now - lastSpeakerSwitchRef.current > 750) {
+                    setActiveSpeakerId(loudestId);
+                    lastSpeakerSwitchRef.current = now;
+                }
+            }
+
+            timerId = setTimeout(sampleAudio, 150);
+        };
+
+        sampleAudio();
+
+        return () => {
+            if (timerId) clearTimeout(timerId);
+        };
+    }, [remoteStreams, localStream, activeSpeakerId]);
 
     // Heartbeat & Peer discovery: announce presence when stream is ready, and retry until remote peer is found
     useEffect(() => {
@@ -891,17 +1144,60 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
     // stays mounted at all times so the WebRTC connection & audio stay live
     // when the user switches to the whiteboard (like WhatsApp / Zoom).
 
-    const galleryGridCls = "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 p-3";
-    const classroomGridCls = "flex flex-col gap-3";
-    const gridClasses = layoutMode === 'gallery' ? galleryGridCls : classroomGridCls;
+    const remoteKeys = Object.keys(remoteStreams);
+    const totalParticipants = 1 + remoteKeys.length;
+
+    // Zoom Active Speaker determination:
+    // Pinned user takes precedence, then active speaker, then first remote user, then local user
+    const effectiveStageId = pinnedPeerId 
+        || (activeSpeakerId && (activeSpeakerId === 'local' || remoteStreams[activeSpeakerId]) ? activeSpeakerId : null)
+        || (remoteKeys.length > 0 ? remoteKeys[0] : 'local');
 
     return (
-        <div className="flex flex-col h-full bg-[#0f172a] text-white">
+        <div className="flex flex-col h-full bg-[#0f172a] text-white overflow-hidden">
             
-            <div className="flex-1 p-3 sm:p-4 overflow-y-auto custom-scrollbar">
+            {/* Top Toolbar: View switcher (Speaker / Gallery) & Participant info */}
+            <div className="flex-shrink-0 h-10 px-3 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-2 z-20">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span>👥</span>
+                        <span>{totalParticipants}</span>
+                    </span>
+
+                    {pinnedPeerId && (
+                        <div className="flex items-center gap-1.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-lg text-[9px] font-bold truncate">
+                            <span>📌 Pinned</span>
+                            <button 
+                                onClick={() => setPinnedPeerId(null)}
+                                className="text-white hover:text-red-400 ml-1 font-bold text-xs"
+                                title="Unpin (Return to active speaker)"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* View Mode Toggle: Speaker View vs Gallery View */}
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setZoomViewMode(m => m === 'speaker' ? 'gallery' : 'speaker')}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                            zoomViewMode === 'speaker'
+                                ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+                                : 'bg-slate-800 text-slate-300 hover:text-white border-slate-700'
+                        }`}
+                        title="Toggle Zoom Speaker / Gallery View"
+                    >
+                        {zoomViewMode === 'speaker' ? '👤 Speaker View' : '🔲 Gallery View'}
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 p-2 sm:p-3 overflow-hidden flex flex-col relative min-h-0">
                 {mediaNotice && (
-                    <div className="mb-3 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs px-3 py-2 rounded-xl flex items-center justify-between gap-2 shadow-sm">
-                        <span className="flex-1">{mediaNotice}</span>
+                    <div className="mb-2 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs px-3 py-2 rounded-xl flex items-center justify-between gap-2 shadow-sm flex-shrink-0">
+                        <span className="flex-1 text-[11px]">{mediaNotice}</span>
                         <button 
                             type="button"
                             onClick={() => setMediaNotice(null)} 
@@ -912,55 +1208,108 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen, setIsVideoOpen, layoutMode = 'cl
                         </button>
                     </div>
                 )}
-                <div className={gridClasses}>
-                    
-                    {/* Local User */}
-                    <div className={`relative bg-slate-800 rounded-xl overflow-hidden shadow-xl border-2 transition-all duration-300 ${
-                        layoutMode === 'gallery' ? 'aspect-video' : 'h-28 sm:h-36'
-                    } ${isScreenSharing ? 'border-emerald-500' : 'border-slate-700'}`}>
-                        <video ref={localVideoRef} autoPlay muted playsInline className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''} ${isScreenSharing ? '' : '-scale-x-100'}`} />
-                        {isVideoOff && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 gap-2">
-                                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-slate-800 rounded-full flex items-center justify-center text-2xl sm:text-3xl font-bold text-slate-500 border-4 border-slate-700">
-                                    {user?.first_name?.[0] || 'U'}
-                                </div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Camera Off</span>
+
+                {/* ── ZOOM SPEAKER VIEW: Active Speaker is full screen, the rest are in a small filmstrip ── */}
+                {zoomViewMode === 'speaker' ? (
+                    <div className="flex-1 flex flex-col min-h-0 overflow-hidden gap-2">
+                        {/* Filmstrip: Small screen thumbnails for all other participants */}
+                        {totalParticipants > 1 && (
+                            <div className="flex-shrink-0 h-22 sm:h-26 flex items-center gap-2 overflow-x-auto custom-scrollbar px-1 py-1 bg-slate-950/40 rounded-2xl border border-slate-800/80">
+                                {/* Local user thumbnail if not on stage */}
+                                {effectiveStageId !== 'local' && (
+                                    <LocalVideoTile
+                                        user={user}
+                                        localStream={localStream}
+                                        isVideoOff={isVideoOff}
+                                        isMuted={isMuted}
+                                        isScreenSharing={isScreenSharing}
+                                        isStage={false}
+                                        isPinned={pinnedPeerId === 'local'}
+                                        isSpeaking={speakingLevels['local'] > 14}
+                                        onPin={() => setPinnedPeerId(pinnedPeerId === 'local' ? null : 'local')}
+                                        raisedHand={user?.id && raisedHands[user.id]}
+                                    />
+                                )}
+
+                                {/* Remote users thumbnails if not on stage */}
+                                {Object.entries(remoteStreams).map(([id, data]) => {
+                                    if (id === effectiveStageId) return null;
+                                    return (
+                                        <RemoteVideoTile
+                                            key={id}
+                                            id={id}
+                                            data={data}
+                                            isStage={false}
+                                            isPinned={pinnedPeerId === id}
+                                            isSpeaking={speakingLevels[id] > 14}
+                                            onPin={() => setPinnedPeerId(pinnedPeerId === id ? null : id)}
+                                            raisedHand={raisedHands[id]}
+                                        />
+                                    );
+                                })}
                             </div>
                         )}
-                        <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
-                            {user?.first_name || 'You'} (Me) {isMuted && <MicOff size={10} className="text-red-400" />}
+
+                        {/* Full Screen Stage for Active Speaker */}
+                        <div className="flex-1 min-h-0 relative rounded-2xl overflow-hidden bg-slate-950 shadow-2xl border border-slate-800">
+                            {effectiveStageId === 'local' ? (
+                                <LocalVideoTile
+                                    user={user}
+                                    localStream={localStream}
+                                    isVideoOff={isVideoOff}
+                                    isMuted={isMuted}
+                                    isScreenSharing={isScreenSharing}
+                                    isStage={true}
+                                    isPinned={pinnedPeerId === 'local'}
+                                    isSpeaking={speakingLevels['local'] > 14}
+                                    onPin={() => setPinnedPeerId(null)}
+                                    raisedHand={user?.id && raisedHands[user.id]}
+                                />
+                            ) : (
+                                <RemoteVideoTile
+                                    key={effectiveStageId}
+                                    id={effectiveStageId}
+                                    data={remoteStreams[effectiveStageId]}
+                                    isStage={true}
+                                    isPinned={pinnedPeerId === effectiveStageId}
+                                    isSpeaking={speakingLevels[effectiveStageId] > 14}
+                                    onPin={() => setPinnedPeerId(null)}
+                                    raisedHand={raisedHands[effectiveStageId]}
+                                />
+                            )}
                         </div>
-                        {user?.id && raisedHands[user.id] && <div className="absolute top-2 right-2 bg-yellow-500 p-1.5 rounded-full shadow-lg animate-bounce border-2 border-white"><Hand size={12} className="text-white" /></div>}
-                        {isScreenSharing && <div className="absolute top-2 left-2 bg-emerald-500 px-2 py-0.5 rounded text-[10px] font-semibold uppercase">Sharing</div>}
                     </div>
-
-                    {/* Remote Users (Zoom Style) */}
-                    {Object.entries(remoteStreams).map(([id, data]) => (
-                        <RemoteVideoTile 
-                            key={id} 
-                            id={id} 
-                            data={data} 
-                            layoutMode={layoutMode} 
-                            raisedHand={raisedHands[id]} 
-                        />
-                    ))}
-
-                    {Object.keys(remoteStreams).length === 0 && (
-                        <div className="h-36 sm:h-52 rounded-xl border-2 border-dashed border-slate-700 flex flex-col items-center justify-center text-slate-500 bg-slate-900/50 p-4 text-center">
-                            <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center mb-3 animate-pulse">
-                                <Video size={20} className="text-slate-500" />
-                            </div>
-                            <p className="font-bold uppercase tracking-widest text-xs mb-1">Waiting for other participants...</p>
-                            <p className="text-[10px] text-slate-500 max-w-xs mb-2">
-                                Video chat is peer-to-peer. Open this class in another tab or have a student join to see their video feed.
-                            </p>
-                            <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                                {readyState === ReadyState.OPEN ? 'Signaling Ready (Connected)' : 'Connecting...'}
-                            </p>
+                ) : (
+                    /* ── GALLERY GRID VIEW: Equal size grid ── */
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                            <LocalVideoTile
+                                user={user}
+                                localStream={localStream}
+                                isVideoOff={isVideoOff}
+                                isMuted={isMuted}
+                                isScreenSharing={isScreenSharing}
+                                isStage={false}
+                                isPinned={pinnedPeerId === 'local'}
+                                isSpeaking={speakingLevels['local'] > 14}
+                                onPin={() => setPinnedPeerId(pinnedPeerId === 'local' ? null : 'local')}
+                                raisedHand={user?.id && raisedHands[user.id]}
+                            />
+                            {Object.entries(remoteStreams).map(([id, data]) => (
+                                <RemoteVideoTile
+                                    key={id}
+                                    id={id}
+                                    data={data}
+                                    isStage={false}
+                                    isPinned={pinnedPeerId === id}
+                                    isSpeaking={speakingLevels[id] > 14}
+                                    onPin={() => setPinnedPeerId(pinnedPeerId === id ? null : id)}
+                                    raisedHand={raisedHands[id]}
+                                />
+                            ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Chat Drawer Overlay */}

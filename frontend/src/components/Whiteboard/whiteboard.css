@@ -2,16 +2,16 @@
    Hidayah Whiteboard: Clean Left-Side Vertical Toolbar
    ========================================================================== */
 
-/* 1. Position the App-toolbar vertically at the FAR LEFT edge of the whiteboard */
+/* 1. Position the App-toolbar vertically at the LEFT edge of the whiteboard below the quick tools */
 .hidayah-whiteboard .excalidraw .App-toolbar {
   position: absolute !important;
-  left: 0px !important;
-  top: 50% !important;
-  bottom: auto !important;
+  left: 8px !important;
+  top: auto !important;
+  bottom: 16px !important;
   right: auto !important;
-  transform: translateY(-50%) !important;
+  transform: none !important;
   margin: 0 !important;
-  z-index: 100 !important;
+  z-index: 35 !important;
   pointer-events: auto !important;
   display: flex !important;
   flex-direction: column !important;

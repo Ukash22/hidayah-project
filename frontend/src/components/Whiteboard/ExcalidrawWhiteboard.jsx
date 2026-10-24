@@ -88,6 +88,32 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [penSize, setPenSize] = useState(2);
     // Student exam question display
     const [examQuestion, setExamQuestion] = useState(null);
+    // Vertical Left-Hand Toolbar states
+    const [showPagesMenu, setShowPagesMenu] = useState(false);
+    const [isLeftToolbarOpen, setIsLeftToolbarOpen] = useState(true);
+    const [activeTool, setActiveTool] = useState('freedraw');
+
+    const handleActivateHand = useCallback(() => {
+        if (excalidrawAPI) {
+            excalidrawAPI.setActiveTool({ type: 'hand' });
+            setActiveTool('hand');
+            toast.info('Hand tool active (pan canvas)');
+        }
+    }, [excalidrawAPI, toast]);
+
+    const handleActivatePen = useCallback(() => {
+        if (excalidrawAPI) {
+            excalidrawAPI.setActiveTool({ type: 'freedraw' });
+            setActiveTool('freedraw');
+        }
+    }, [excalidrawAPI]);
+
+    const handleActivateSelection = useCallback(() => {
+        if (excalidrawAPI) {
+            excalidrawAPI.setActiveTool({ type: 'selection' });
+            setActiveTool('selection');
+        }
+    }, [excalidrawAPI]);
 
     // ── Stable refs for values used inside draw hot-path ─────────────────
     // Using refs avoids re-creating handleBoardChange on every render,
@@ -879,54 +905,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                         </>
                     )}
 
-                    {/* Multi-Page Navigation in header */}
-                    <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-800/90 rounded-lg border border-slate-700/80 text-[10px]">
-                        <span className="font-bold text-slate-400">P{currentPageIdx + 1}/{pages.length}</span>
-                        <button onClick={handlePrevPage} disabled={currentPageIdx === 0} className="px-1 text-slate-300 hover:text-white disabled:opacity-30 font-bold" title="Previous Page">◀</button>
-                        <button onClick={handleNextPage} disabled={currentPageIdx >= pages.length - 1} className="px-1 text-slate-300 hover:text-white disabled:opacity-30 font-bold" title="Next Page">▶</button>
-                        <button onClick={handleAddPage} className="px-1.5 py-0.2 bg-emerald-600 hover:bg-emerald-500 text-white rounded font-bold" title="New Page">+</button>
-                    </div>
 
-                    {/* Quick Hub Buttons */}
-                    <button
-                        onClick={() => setShowQuranMushaf(true)}
-                        className="px-2 py-1 bg-amber-600/80 hover:bg-amber-500 text-white rounded-lg text-xs font-bold transition-all"
-                        title="Insert Quran Ayah"
-                    >
-                        📖 Quran
-                    </button>
-
-                    <button
-                        onClick={() => setShowMediaHub(prev => !prev)}
-                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
-                            showMediaHub ? 'bg-blue-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
-                        }`}
-                        title="Class Media & Document Hub"
-                    >
-                        📂 Media
-                    </button>
-
-                    {/* Exam Button - visible to all */}
-                    <button
-                        onClick={() => setShowExamPanel(prev => !prev)}
-                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
-                            showExamPanel ? 'bg-rose-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
-                        }`}
-                        title={isTutorOrAdmin ? 'Assign Exam' : 'View Exam'}
-                    >
-                        📝 {isTutorOrAdmin ? 'Exam' : 'My Exam'}
-                    </button>
-
-                    {/* Scientific Calculator */}
-                    <button
-                        onClick={() => setShowCalculator(prev => !prev)}
-                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
-                            showCalculator ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
-                        }`}
-                        title="Scientific Calculator"
-                    >
-                        🧮 Calc
-                    </button>
 
                     {/* Pen Size Selector */}
                     <div className="flex items-center gap-0.5 bg-slate-800/90 rounded-lg border border-slate-700 p-0.5" title="Pen thickness">
@@ -995,6 +974,207 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
                 {/* Main Drawing Area - Clean Full Canvas */}
                 <div className={`flex-1 relative hidayah-whiteboard ${(activeTab === 'my_board' || activeTab === 'student_view') ? 'block' : 'hidden'}`}>
+                    
+                    {/* ── Left-Hand Vertical Side Toolbar: Pages, Quran, Media, Exams, Calculator, Hand & Tools ── */}
+                    <div className="absolute left-2.5 top-3 z-40 flex flex-col items-center select-none">
+                        {/* Main Tools Column */}
+                        <div className={`flex flex-col items-center gap-1.5 p-1.5 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 rounded-2xl shadow-2xl transition-all duration-300 ${
+                            isLeftToolbarOpen ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-95 pointer-events-none hidden'
+                        }`}>
+                            {/* 1. Pages Button & Flyout */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowPagesMenu(prev => !prev)}
+                                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                        showPagesMenu ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                    }`}
+                                    title={`Pages (Current: ${currentPageIdx + 1}/${pages.length})`}
+                                >
+                                    <span className="text-sm">📄</span>
+                                    <span className="text-[8px] font-bold tracking-tighter leading-none mt-0.5 text-emerald-400">
+                                        P{currentPageIdx + 1}/{pages.length}
+                                    </span>
+                                </button>
+
+                                {/* Pages Flyout Popover */}
+                                {showPagesMenu && (
+                                    <div className="absolute left-12 top-0 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-2xl p-3 shadow-2xl z-50 w-56 flex flex-col gap-2.5 animate-in slide-in-from-left-2">
+                                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-sm">📄</span>
+                                                <span className="text-xs font-bold text-white uppercase tracking-wider">Class Pages ({pages.length})</span>
+                                            </div>
+                                            <button onClick={() => setShowPagesMenu(false)} className="text-slate-400 hover:text-white text-xs font-bold px-1">✕</button>
+                                        </div>
+
+                                        {/* Prev / Next controls */}
+                                        <div className="flex items-center justify-between gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+                                            <button
+                                                onClick={handlePrevPage}
+                                                disabled={currentPageIdx === 0}
+                                                className="flex-1 py-1 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                                                title="Previous Page"
+                                            >
+                                                ◀ Prev
+                                            </button>
+                                            <span className="text-xs font-bold text-emerald-400 px-1">
+                                                {currentPageIdx + 1} / {pages.length}
+                                            </span>
+                                            <button
+                                                onClick={handleNextPage}
+                                                disabled={currentPageIdx >= pages.length - 1}
+                                                className="flex-1 py-1 px-2 rounded-lg text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                                                title="Next Page"
+                                            >
+                                                Next ▶
+                                            </button>
+                                        </div>
+
+                                        {/* Add New Page Button */}
+                                        <button
+                                            onClick={() => {
+                                                handleAddPage();
+                                                setShowPagesMenu(false);
+                                            }}
+                                            className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+                                        >
+                                            <span className="text-sm font-bold">+</span>
+                                            <span>Add New Page</span>
+                                        </button>
+
+                                        {/* Page list */}
+                                        <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                                            {pages.map((p, idx) => (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => {
+                                                        goToPage(idx);
+                                                        setShowPagesMenu(false);
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                                        currentPageIdx === idx
+                                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                                                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                                    }`}
+                                                >
+                                                    <span>{p.name || `Page ${idx + 1}`}</span>
+                                                    {currentPageIdx === idx && <span className="text-[10px] text-emerald-400 font-bold">Active</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 2. Quran Mushaf */}
+                            <button
+                                onClick={() => setShowQuranMushaf(true)}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 transition-all shadow-sm"
+                                title="Open Quran Mushaf (Insert Ayah)"
+                            >
+                                <span className="text-base">📖</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Quran</span>
+                            </button>
+
+                            {/* 3. Media Hub */}
+                            <button
+                                onClick={() => setShowMediaHub(prev => !prev)}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    showMediaHub 
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Media & Document Hub (PDFs, Images, Media)"
+                            >
+                                <span className="text-base">📂</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Media</span>
+                            </button>
+
+                            {/* 4. My Exam / Exam */}
+                            <button
+                                onClick={() => setShowExamPanel(prev => !prev)}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    showExamPanel 
+                                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30 ring-2 ring-rose-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title={isTutorOrAdmin ? 'Assign Exam Paper' : 'My Exam Paper'}
+                            >
+                                <span className="text-base">📝</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">
+                                    {isTutorOrAdmin ? 'Exam' : 'MyExam'}
+                                </span>
+                            </button>
+
+                            {/* 5. Scientific Calculator */}
+                            <button
+                                onClick={() => setShowCalculator(prev => !prev)}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    showCalculator 
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Scientific Calculator"
+                            >
+                                <span className="text-base">🧮</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Calc</span>
+                            </button>
+
+                            <div className="w-6 h-px bg-slate-700/80 my-0.5" />
+
+                            {/* 6. Hand Tool (Pan Mode) */}
+                            <button
+                                onClick={handleActivateHand}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    activeTool === 'hand' 
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Hand Tool (Pan / Move Canvas)"
+                            >
+                                <span className="text-base">✋</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Hand</span>
+                            </button>
+
+                            {/* 7. Pen Tool (Free Draw) */}
+                            <button
+                                onClick={handleActivatePen}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    activeTool === 'freedraw' 
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Pen Tool (Draw)"
+                            >
+                                <span className="text-base">✏️</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Pen</span>
+                            </button>
+
+                            {/* 8. Selection Tool */}
+                            <button
+                                onClick={handleActivateSelection}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    activeTool === 'selection' 
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Select / Move Elements"
+                            >
+                                <span className="text-base">↖️</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Select</span>
+                            </button>
+                        </div>
+
+                        {/* Mobile collapse / expand toggle tab */}
+                        <button
+                            onClick={() => setIsLeftToolbarOpen(prev => !prev)}
+                            className="mt-1 w-6 h-6 rounded-full bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white text-[10px] flex items-center justify-center shadow-md border border-slate-700/80 transition-all"
+                            title={isLeftToolbarOpen ? 'Collapse Tools' : 'Expand Tools'}
+                        >
+                            {isLeftToolbarOpen ? '❮' : '❯'}
+                        </button>
+                    </div>
+
                     <Excalidraw 
                         name="hidayah_live_board"
                         excalidrawAPI={(api) => {
