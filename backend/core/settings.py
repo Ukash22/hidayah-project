@@ -242,11 +242,18 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+            "capacity": 1500,       # max queued messages per channel (default 100)
+            "expiry": 120,          # seconds before a queued message expires (default 60)
         },
     } if os.getenv('REDIS_URL') else {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     },
 }
+
+# Allow large media payloads (base64-encoded video/PDFs) through Django
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800   # 50 MB
+
 
 # Cache Configuration — uses the same Redis instance as Channels
 #_redis_url = os.getenv('REDIS_URL')

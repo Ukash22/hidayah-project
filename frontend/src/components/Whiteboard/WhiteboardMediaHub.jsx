@@ -3,23 +3,47 @@ import {
     FileText, Video, FileSpreadsheet, Presentation, Image as ImageIcon, 
     Upload, Play, Pause, ChevronLeft, ChevronRight, Maximize2, Minimize2, 
     X, Share2, Layers, ZoomIn, ZoomOut,
-    Volume2, VolumeX, Send
+    Volume2, VolumeX, Send, Music
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up PDF.js worker
+// Set up PDF.js worker with safe unpkg CDN fallback
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
     try {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.min.mjs',
-            import.meta.url
-        ).toString();
-    } catch (_e) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '5.7.284'}/build/pdf.worker.min.mjs`;
+    } catch (_e) {
+        // safe fallback
     }
 }
+
+// Client-side image downscaler to prevent huge Base64 WebSocket payloads
+const compressImageFile = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = () => resolve(e.target.result);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+    });
+};
 
 /**
  * WhiteboardMediaHub
@@ -82,18 +106,22 @@ const WhiteboardMediaHub = ({
     // Broadcast media state to other participants
     const broadcastMediaState = useCallback((overrideData = {}) => {
         if (!sendMessage || !isSharingLive) return;
+        // Build the merged payload but strip rawData (ArrayBuffer) —
+        // it cannot be JSON.stringify'd; peers receive rawDataBase64 instead.
+        const merged = {
+            ...(activeMedia || {}),
+            pdfPage,
+            currentSheetIdx,
+            currentSlideIdx,
+            isVideoPlaying,
+            videoCurrentTime,
+            ...overrideData
+        };
+        delete merged.rawData; // never send ArrayBuffer over WebSocket
         const payload = {
             type: 'command',
             action: 'whiteboard_media_sync',
-            media: {
-                ...(activeMedia || {}),
-                pdfPage,
-                currentSheetIdx,
-                currentSlideIdx,
-                isVideoPlaying,
-                videoCurrentTime,
-                ...overrideData
-            },
+            media: merged,
             senderName: userName || 'Participant',
             senderRole: role,
             timestamp: Date.now()
@@ -108,13 +136,28 @@ const WhiteboardMediaHub = ({
 
         if (action === 'whiteboard_media_sync' && media) {
             console.log(`📡 Whiteboard Media Sync received from ${senderName} (${senderRole}):`, media.type, media.name);
+
+            // Peers receive rawDataBase64 instead of rawData (ArrayBuffer).
+            // Decode it back so that the Excel / Word parsers work identically.
+            const enriched = { ...media };
+            if (enriched.rawDataBase64 && !enriched.rawData) {
+                try {
+                    const binaryStr = atob(enriched.rawDataBase64);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+                    enriched.rawData = bytes.buffer;
+                } catch (e) {
+                    console.warn('Failed to decode rawDataBase64:', e);
+                }
+            }
+
             setActiveMedia(prev => {
                 // If it's a new media file
-                if (!prev || prev.id !== media.id) {
-                    return media;
+                if (!prev || prev.id !== enriched.id) {
+                    return enriched;
                 }
                 // Same media file with updated state
-                return { ...prev, ...media };
+                return { ...prev, ...enriched };
             });
 
             if (media.type === 'pdf' && media.pdfPage) {
@@ -336,20 +379,28 @@ const WhiteboardMediaHub = ({
         try {
             const id = 'media_' + Date.now();
 
-            // VIDEO
+            // VIDEO — read as base64 so it can be broadcast over WebSocket
             if (['mp4', 'webm', 'ogg', 'mov', 'mkv'].includes(ext)) {
-                const url = URL.createObjectURL(file);
-                const mediaObj = {
-                    id,
-                    type: 'video',
-                    name: fileName,
-                    url: url,
-                    isVideoPlaying: false,
-                    videoCurrentTime: 0
+                setLoadingMessage(`Reading ${fileName} into memory...`);
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => {
+                    const dataUrl = loadEvent.target.result;
+                    const mediaObj = {
+                        id,
+                        type: 'video',
+                        name: fileName,
+                        url: dataUrl,
+                        isVideoPlaying: false,
+                        videoCurrentTime: 0
+                    };
+                    setActiveMedia(mediaObj);
+                    setShowUploadModal(false);
+                    setLoading(false);
+                    broadcastMediaState(mediaObj);
                 };
-                setActiveMedia(mediaObj);
-                setShowUploadModal(false);
-                broadcastMediaState(mediaObj);
+                reader.onerror = () => { alert('Failed to read video file.'); setLoading(false); };
+                reader.readAsDataURL(file);
+                return; // loading is finalised inside the reader callback
             }
             // PDF
             else if (ext === 'pdf') {
@@ -369,32 +420,41 @@ const WhiteboardMediaHub = ({
                 };
                 reader.readAsDataURL(file);
             }
-            // EXCEL
+            // EXCEL — ArrayBuffer is not JSON-serializable; convert to base64
             else if (['xlsx', 'xls', 'csv'].includes(ext)) {
                 const buffer = await file.arrayBuffer();
+                const base64 = btoa(
+                    new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), '')
+                );
                 const mediaObj = {
                     id,
                     type: 'excel',
                     name: fileName,
-                    rawData: buffer,
+                    rawData: buffer,        // local parser uses this
+                    rawDataBase64: base64,  // peers receive this
                     currentSheetIdx: 0
                 };
                 setActiveMedia(mediaObj);
                 setShowUploadModal(false);
-                broadcastMediaState(mediaObj);
+                // Only broadcast serializable fields
+                broadcastMediaState({ ...mediaObj, rawData: undefined });
             }
-            // WORD
+            // WORD — same base64 approach
             else if (['docx', 'doc'].includes(ext)) {
                 const buffer = await file.arrayBuffer();
+                const base64 = btoa(
+                    new Uint8Array(buffer).reduce((d, b) => d + String.fromCharCode(b), '')
+                );
                 const mediaObj = {
                     id,
                     type: 'word',
                     name: fileName,
-                    rawData: buffer
+                    rawData: buffer,
+                    rawDataBase64: base64
                 };
                 setActiveMedia(mediaObj);
                 setShowUploadModal(false);
-                broadcastMediaState(mediaObj);
+                broadcastMediaState({ ...mediaObj, rawData: undefined });
             }
             // POWERPOINT
             else if (['pptx', 'ppt'].includes(ext)) {
@@ -415,22 +475,19 @@ const WhiteboardMediaHub = ({
                 setShowUploadModal(false);
                 broadcastMediaState(mediaObj);
             }
-            // IMAGE
+            // IMAGE — compress first to avoid huge WS payloads
             else if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif'].includes(ext)) {
-                const reader = new FileReader();
-                reader.onload = (loadEvent) => {
-                    const dataUrl = loadEvent.target.result;
-                    const mediaObj = {
-                        id,
-                        type: 'image',
-                        name: fileName,
-                        url: dataUrl
-                    };
-                    setActiveMedia(mediaObj);
-                    setShowUploadModal(false);
-                    broadcastMediaState(mediaObj);
+                setLoadingMessage(`Compressing ${fileName}...`);
+                const dataUrl = await compressImageFile(file, 1200, 0.82);
+                const mediaObj = {
+                    id,
+                    type: 'image',
+                    name: fileName,
+                    url: dataUrl
                 };
-                reader.readAsDataURL(file);
+                setActiveMedia(mediaObj);
+                setShowUploadModal(false);
+                broadcastMediaState(mediaObj);
             } else {
                 alert(`File format .${ext} is not yet supported. Please choose PDF, Video, Word, Excel, PowerPoint, or Image.`);
             }

@@ -441,69 +441,49 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, la
         const initMedia = async () => {
             let stream = null;
 
-            // Step 1: Detect available hardware devices first
-            let hasVideoDevice = true;
-            let hasAudioDevice = true;
+            // Direct dual media request: ensures browser prompts for both Camera and Mic
             try {
-                if (navigator.mediaDevices?.enumerateDevices) {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    hasVideoDevice = devices.some(d => d.kind === 'videoinput');
-                    hasAudioDevice = devices.some(d => d.kind === 'audioinput');
-                    console.log(`🔍 Hardware check: video=${hasVideoDevice}, audio=${hasAudioDevice}`);
-                }
-            } catch (e) {
-                console.warn("Could not enumerate devices:", e);
-            }
-
-            // Step 2: If both devices exist, attempt audio + video
-            if (hasVideoDevice && hasAudioDevice) {
+                console.log("🎥 Initializing Local Media (Audio + Video)...");
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
+                    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+                });
+            } catch (idealErr) {
+                console.warn("⚠️ Ideal media request unavailable (" + idealErr.name + "), trying unconstrained dual media...");
                 try {
-                    console.log("🎥 Initializing Local Media (Audio + Video)...");
-                    stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { width: { ideal: 1280 }, height: { ideal: 720 } }, 
-                        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-                    });
-                } catch (err) {
-                    console.warn("⚠️ Ideal media request unavailable (" + err.name + "), trying unconstrained audio + video...");
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                } catch (dualErr) {
+                    console.warn("⚠️ Dual media request failed (" + dualErr.name + "), falling back to individual devices...");
+                    
+                    // Fallback 1: Audio only
                     try {
-                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                    } catch (basicErr) {
-                        console.warn("⚠️ Dual media request failed (" + basicErr.name + "), checking single device fallbacks...");
+                        stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                        if (isMounted) {
+                            setIsVideoOff(true);
+                            setMediaNotice(
+                                dualErr.name === 'NotFoundError'
+                                    ? "No camera detected on this device. Joined with microphone only."
+                                    : "Camera access unavailable (" + dualErr.name + "). Joined with microphone only."
+                            );
+                        }
+                    } catch (audioErr) {
+                        console.warn("⚠️ Audio-only request failed:", audioErr.name);
+                        
+                        // Fallback 2: Video only
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                            if (isMounted) {
+                                setIsMuted(true);
+                                setMediaNotice("No microphone detected. Joined with camera only.");
+                            }
+                        } catch (videoErr) {
+                            console.warn("⚠️ Video-only request failed:", videoErr.name);
+                        }
                     }
                 }
             }
 
-            // Step 3: Fallback — Video only if stream not yet acquired
-            if (!stream && hasVideoDevice) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    if (isMounted) {
-                        setIsMuted(true);
-                        setMediaNotice("No microphone detected. Joined with camera only.");
-                    }
-                } catch (videoErr) {
-                    console.warn("⚠️ Video-only request failed:", videoErr.name);
-                }
-            }
-
-            // Step 4: Fallback — Audio only if stream not yet acquired
-            if (!stream && hasAudioDevice) {
-                try {
-                    stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    if (isMounted) {
-                        setIsVideoOff(true);
-                        setMediaNotice(
-                            hasVideoDevice 
-                                ? "Camera unavailable (in use by another application or permissions needed). Joined with audio only." 
-                                : "No camera detected on this device. Joined with audio only."
-                        );
-                    }
-                } catch (audioErr) {
-                    console.warn("⚠️ Audio-only request failed:", audioErr.name);
-                }
-            }
-
-            // Step 5: Fallback — Neither available or accessible -> empty MediaStream for listen/view mode
+            // Fallback 3: Neither available -> listen/chat mode
             if (!stream) {
                 console.warn("⚠️ No camera/mic accessible. Joined in listen/chat mode.");
                 stream = new MediaStream();
