@@ -90,28 +90,21 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const [examQuestion, setExamQuestion] = useState(null);
     // Vertical Left-Hand Toolbar states
     const [showPagesMenu, setShowPagesMenu] = useState(false);
+    const [showPenSizeMenu, setShowPenSizeMenu] = useState(false);
     const [isLeftToolbarOpen, setIsLeftToolbarOpen] = useState(true);
     const [activeTool, setActiveTool] = useState('freedraw');
 
-    const handleActivateHand = useCallback(() => {
+    const handleActivateEraser = useCallback(() => {
         if (excalidrawAPI) {
-            excalidrawAPI.setActiveTool({ type: 'hand' });
-            setActiveTool('hand');
-            toast.info('Hand tool active (pan canvas)');
+            excalidrawAPI.setActiveTool({ type: 'eraser' });
+            setActiveTool('eraser');
         }
-    }, [excalidrawAPI, toast]);
+    }, [excalidrawAPI]);
 
     const handleActivatePen = useCallback(() => {
         if (excalidrawAPI) {
             excalidrawAPI.setActiveTool({ type: 'freedraw' });
             setActiveTool('freedraw');
-        }
-    }, [excalidrawAPI]);
-
-    const handleActivateSelection = useCallback(() => {
-        if (excalidrawAPI) {
-            excalidrawAPI.setActiveTool({ type: 'selection' });
-            setActiveTool('selection');
         }
     }, [excalidrawAPI]);
 
@@ -550,12 +543,13 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         if (role !== 'TUTOR' && role !== 'ADMIN') return;
         const t = setTimeout(() => {
             excalidrawAPIRef.current?.updateScene({
-                appState: { currentItemStrokeWidth: 2, currentItemRoughness: 0 }
+                appState: { currentItemStrokeWidth: penSize, currentItemRoughness: 0 }
             });
-            excalidrawAPIRef.current?.setActiveTool({ type: 'selection' });
+            excalidrawAPIRef.current?.setActiveTool({ type: 'freedraw' });
+            setActiveTool('freedraw');
         }, 400);
         return () => clearTimeout(t);
-    }, [role]);
+    }, [role, penSize]);
 
     // Apply pen size changes to Excalidraw stroke width
     useEffect(() => {
@@ -565,35 +559,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         });
     }, [penSize]);
 
-    // Anchor Excalidraw toolbar to left edge using DOM manipulation
-    useEffect(() => {
-        const fixToolbar = () => {
-            const tb = document.querySelector('.excalidraw .App-toolbar');
-            if (tb) {
-                let p = tb.parentElement;
-                while (p && !p.classList.contains('excalidraw') && !p.classList.contains('layer-ui__wrapper')) {
-                    p.style.setProperty('position', 'absolute', 'important');
-                    p.style.setProperty('left', '0px', 'important');
-
-                    p.style.setProperty('right', 'auto', 'important');
-                    p.style.setProperty('top', '50%', 'important');
-                    p.style.setProperty('bottom', 'auto', 'important');
-                    p.style.setProperty('transform', 'translateY(-50%)', 'important');
-                    p.style.setProperty('margin', '0', 'important');
-                    p.style.setProperty('width', 'auto', 'important');
-                    p = p.parentElement;
-                }
-                tb.style.setProperty('position', 'relative', 'important');
-                tb.style.setProperty('left', '0px', 'important');
-                tb.style.setProperty('right', 'auto', 'important');
-                tb.style.setProperty('top', '0px', 'important');
-                tb.style.setProperty('transform', 'none', 'important');
-                tb.style.setProperty('margin', '0', 'important');
-            }
-        };
-        const interval = setInterval(fixToolbar, 50);
-        return () => clearInterval(interval);
-    }, []);
 
     const handlePush = (mode) => {
         if (excalidrawAPI) {
@@ -652,74 +617,15 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         <div className="w-full h-full flex flex-col bg-[#0f172a] overflow-hidden relative font-sans">
             <style>{`
                 /* Dock toolbar vertically on the FAR LEFT edge */
+                /* Completely hide Excalidraw default toolbar (Selection, Rectangle, Diamond, etc.) */
                 .excalidraw .App-toolbar,
                 .excalidraw .App-toolbar-container,
                 .excalidraw .shapes-section,
-                .App-toolbar {
-                    position: absolute !important;
-                    left: 0px !important;
-                    right: auto !important;
-                    top: 50% !important;
-                    bottom: auto !important;
-                    transform: translateY(-50%) !important;
-                    margin: 0 !important;
-                    z-index: 100 !important;
-                    width: auto !important;
-                }
-
-                .excalidraw .App-toolbar {
-                    position: relative !important;
-                    left: 0 !important;
-                    top: 0 !important;
-                    transform: none !important;
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                }
-
-                .excalidraw .App-toolbar .Island,
-                .excalidraw .App-toolbar .Stack,
-                .excalidraw .App-toolbar .Stack_direction_row {
-                    display: flex !important;
-                    flex-direction: column !important;
-                    align-items: center !important;
-                    gap: 3px !important;
-                    padding: 6px 4px !important;
-                }
-
-                .excalidraw .App-toolbar .Island {
-                    border-radius: 16px !important;
-                    background: rgba(255, 255, 255, 0.98) !important;
-                    backdrop-filter: blur(12px) !important;
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
-                }
-
-                .excalidraw .App-toolbar .App-toolbar__divider {
-                    width: 22px !important;
-                    height: 1px !important;
-                    background-color: #e2e8f0 !important;
-                    margin: 3px 0 !important;
-                }
-
-                .excalidraw .App-toolbar .ToolIcon,
-                .excalidraw .App-toolbar .ToolIcon_type_radio,
-                .excalidraw .App-toolbar .ToolIcon_type_button,
-                .excalidraw .App-toolbar .App-toolbar__extra-tools-trigger {
-                    width: 36px !important;
-                    height: 36px !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    border-radius: 10px !important;
-                }
-
-                /* Hide Arrow and Line tools (Keep Draw/Pencil) */
-                .excalidraw [data-testid="toolbar-arrow"],
-                .excalidraw [data-testid="toolbar-line"],
-                .excalidraw label:has(input[value="arrow"]),
-                .excalidraw label:has(input[value="line"]),
-                .excalidraw label[title*="Arrow" i],
-                .excalidraw label[title*="Line" i] {
+                .excalidraw .layer-ui__wrapper__top-center,
+                .excalidraw .App-toolbar__extra-tools-dropdown,
+                .App-toolbar,
+                .shapes-section,
+                .App-toolbar-container {
                     display: none !important;
                 }
 
@@ -860,15 +766,6 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     {isTutorOrAdmin && activeTab === 'my_board' && (
                         <>
                             <button
-                                onClick={() => handlePush('overwrite')}
-                                className="flex items-center gap-1 px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-[10px] sm:text-xs font-bold shadow transition-all"
-                                title="Push your board to all students"
-                            >
-                                <span>🚀</span>
-                                <span className="hidden md:inline">Push to All</span>
-                            </button>
-
-                            <button
                                 onClick={handleToggleLock}
                                 className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition-all border ${
                                     isLocked 
@@ -893,48 +790,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 <span>⏱️</span>
                                 <span className="hidden lg:inline">{isSlowMode ? 'Slow: ON' : 'Slow'}</span>
                             </button>
-
-                            <button
-                                onClick={handleClearAllBoards}
-                                className="flex items-center gap-1 px-2 py-1 bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/60 rounded-lg text-[10px] sm:text-xs font-bold transition-all"
-                                title="Clear all students boards"
-                            >
-                                <span>🗑️</span>
-                                <span className="hidden xl:inline">Clear All</span>
-                            </button>
                         </>
                     )}
-
-
-
-                    {/* Pen Size Selector */}
-                    <div className="flex items-center gap-0.5 bg-slate-800/90 rounded-lg border border-slate-700 p-0.5" title="Pen thickness">
-                        {[
-                            { size: 1, label: '·', title: 'Fine (1px)' },
-                            { size: 2, label: '–', title: 'Normal (2px)' },
-                            { size: 4, label: '━', title: 'Broad (4px)' },
-                            { size: 8, label: '▬', title: 'Calligraphy (8px)' },
-                        ].map(p => (
-                            <button
-                                key={p.size}
-                                onClick={() => setPenSize(p.size)}
-                                className={`px-1.5 py-0.5 rounded text-sm transition-all font-bold ${
-                                    penSize === p.size ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
-                                }`}
-                                title={p.title}
-                            >
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
-
-                    <button
-                        onClick={handleClearOwnBoard}
-                        className="p-1.5 text-rose-400 hover:bg-rose-950/60 rounded-lg text-xs transition-all"
-                        title="Clear My Board"
-                    >
-                        🗑️
-                    </button>
 
                     <button
                         onClick={handleDownload}
@@ -1076,6 +933,20 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Quran</span>
                             </button>
 
+                            {/* 3. Eraser Tool */}
+                            <button
+                                onClick={handleActivateEraser}
+                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                    activeTool === 'eraser' 
+                                        ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400' 
+                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                }`}
+                                title="Eraser Tool"
+                            >
+                                <span className="text-base">🧽</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Eraser</span>
+                            </button>
+
                             {/* 3. Media Hub */}
                             <button
                                 onClick={() => setShowMediaHub(prev => !prev)}
@@ -1122,21 +993,7 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
                             <div className="w-6 h-px bg-slate-700/80 my-0.5" />
 
-                            {/* 6. Hand Tool (Pan Mode) */}
-                            <button
-                                onClick={handleActivateHand}
-                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
-                                    activeTool === 'hand' 
-                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
-                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                                }`}
-                                title="Hand Tool (Pan / Move Canvas)"
-                            >
-                                <span className="text-base">✋</span>
-                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Hand</span>
-                            </button>
-
-                            {/* 7. Pen Tool (Free Draw) */}
+                            {/* 6. Pen Tool (Free Draw) */}
                             <button
                                 onClick={handleActivatePen}
                                 className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
@@ -1150,19 +1007,90 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                 <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Pen</span>
                             </button>
 
-                            {/* 8. Selection Tool */}
+                            {/* 7. Pen Size Selector */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setShowPenSizeMenu(prev => !prev)}
+                                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
+                                        showPenSizeMenu 
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400' 
+                                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
+                                    }`}
+                                    title={`Pen Size (${penSize}px)`}
+                                >
+                                    <span className="text-sm">📏</span>
+                                    <span className="text-[7px] font-bold tracking-tighter leading-none mt-0.5 text-indigo-300">
+                                        {penSize}px
+                                    </span>
+                                </button>
+
+                                {showPenSizeMenu && (
+                                    <div className="absolute left-12 top-0 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-2xl p-2.5 shadow-2xl z-50 flex flex-col gap-1.5 w-36 animate-in slide-in-from-left-2">
+                                        <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-0.5">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pen Size</span>
+                                            <button onClick={() => setShowPenSizeMenu(false)} className="text-slate-400 hover:text-white text-xs">✕</button>
+                                        </div>
+                                        {[
+                                            { size: 1, label: '· Fine (1px)' },
+                                            { size: 2, label: '– Normal (2px)' },
+                                            { size: 4, label: '━ Broad (4px)' },
+                                            { size: 8, label: '▬ Heavy (8px)' },
+                                        ].map(p => (
+                                            <button
+                                                key={p.size}
+                                                onClick={() => {
+                                                    setPenSize(p.size);
+                                                    setShowPenSizeMenu(false);
+                                                }}
+                                                className={`px-2 py-1.5 rounded-lg text-xs font-semibold text-left transition-all ${
+                                                    penSize === p.size
+                                                        ? 'bg-indigo-600 text-white shadow-sm'
+                                                        : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                                                }`}
+                                            >
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* 8. Clear My Board (Cleaner) */}
                             <button
-                                onClick={handleActivateSelection}
-                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
-                                    activeTool === 'selection' 
-                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' 
-                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                                }`}
-                                title="Select / Move Elements"
+                                onClick={handleClearOwnBoard}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-rose-950/40 hover:bg-rose-600 text-rose-400 hover:text-white border border-rose-800/40 transition-all shadow-sm"
+                                title="Clear My Board (Cleaner)"
                             >
-                                <span className="text-base">↖️</span>
-                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Select</span>
+                                <span className="text-base">🗑️</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Cleaner</span>
                             </button>
+
+                            {/* 9. Tutor Controls: Push All & Clear All */}
+                            {isTutorOrAdmin && activeTab === 'my_board' && (
+                                <>
+                                    <div className="w-6 h-px bg-slate-700/80 my-0.5" />
+
+                                    {/* Push to All Students */}
+                                    <button
+                                        onClick={() => handlePush('overwrite')}
+                                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all shadow-sm"
+                                        title="Push your board to all students"
+                                    >
+                                        <span className="text-base">🚀</span>
+                                        <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Push All</span>
+                                    </button>
+
+                                    {/* Clear All Students' Boards */}
+                                    <button
+                                        onClick={handleClearAllBoards}
+                                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-rose-900/30 hover:bg-rose-700 text-rose-300 hover:text-white border border-rose-700/40 transition-all shadow-sm"
+                                        title="Clear all students boards"
+                                    >
+                                        <span className="text-base">⚠️</span>
+                                        <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Clear All</span>
+                                    </button>
+                                </>
+                            )}
                         </div>
 
                         {/* Mobile collapse / expand toggle tab */}
