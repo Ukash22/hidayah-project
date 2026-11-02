@@ -39,28 +39,32 @@ export default function TutorWalletPage() {
             <title>Wallet — Hidayah</title>
             <PageHeader title="My Wallet" description="Earnings, commissions, and withdrawal history." />
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-card border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
-                    <span className="text-[11px] uppercase font-semibold tracking-wide text-slate-500">Gross Earnings</span>
-                    <div className="text-xl font-bold text-slate-900 dark:text-slate-100">₦{parseFloat(financials?.gross_earnings || 0).toLocaleString()}</div>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase mt-1 italic">Before commission</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div className="bg-gradient-to-br from-primary to-indigo-900 border border-blue-500/30 rounded-card-lg p-6 md:p-8 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-all">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-3xl -mr-16 -mt-16 rounded-full group-hover:bg-white/20 transition-all"></div>
+                    <div className="relative z-10">
+                        <h3 className="text-[11px] font-semibold text-white/70 uppercase tracking-wide mb-2 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-white rounded-full"></span>
+                            Available Balance
+                        </h3>
+                        <p className="text-3xl md:text-5xl font-bold text-white tracking-tight">₦{parseFloat(financials?.wallet_balance || 0).toLocaleString()}</p>
+                        <p className="text-[11px] font-semibold text-white/50 uppercase mt-3 italic">Your withdrawable earnings</p>
+                    </div>
                 </div>
-                <div className="bg-primary-soft p-6 rounded-card border border-blue-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] uppercase font-semibold tracking-wide text-primary">Net Taken</span>
-                    <div className="text-xl font-bold text-blue-700">₦{parseFloat(financials?.net_earnings || 0).toLocaleString()}</div>
-                    <p className="text-[11px] font-semibold text-blue-400 uppercase mt-1 italic">Your actual share</p>
-                </div>
-                <div className="bg-amber-50 p-6 rounded-card border border-amber-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] uppercase font-semibold tracking-wide text-amber-600">Commission</span>
-                    <div className="text-xl font-bold text-amber-700">₦{parseFloat(financials?.total_commission || 0).toLocaleString()}</div>
-                    <p className="text-[11px] font-semibold text-amber-400 uppercase mt-1 italic">Platform support fee</p>
-                </div>
-                <div className="bg-indigo-50 p-6 rounded-card border border-indigo-100 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] uppercase font-semibold tracking-wide text-indigo-600">Completed</span>
-                    <div className="text-xl font-bold text-indigo-700">{financials?.completed_classes || 0} / {financials?.total_classes || 0}</div>
-                    <p className="text-[11px] font-semibold text-indigo-400 uppercase mt-1 italic">Delivered classes</p>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-slate-900 p-6 rounded-card border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+                        <span className="text-[11px] uppercase font-semibold tracking-wide text-slate-500">Completed</span>
+                        <div className="text-xl font-bold text-slate-900 dark:text-slate-100">{financials?.completed_classes || 0} / {financials?.total_classes || 0}</div>
+                        <p className="text-[11px] font-semibold text-slate-500 uppercase mt-1 italic">Delivered classes</p>
+                    </div>
+                    <div className="bg-amber-50 p-6 rounded-card border border-amber-100 flex flex-col gap-1 shadow-sm">
+                        <span className="text-[11px] uppercase font-semibold tracking-wide text-amber-600">Pending Review</span>
+                        <div className="text-xl font-bold text-amber-700">₦{parseFloat(financials?.pending_payouts_total || 0).toLocaleString()}</div>
+                        <p className="text-[11px] font-semibold text-amber-400 uppercase mt-1 italic">Awaiting admin release</p>
+                    </div>
                 </div>
             </div>
+
 
             {/* Pending Admin Review Section */}
             {financials?.pending_payouts?.length > 0 && (

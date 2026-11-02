@@ -69,50 +69,102 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
     };
 
     const handleFileUpload = (e) => {
-        const file = e.target.files[0];
+        const file = e.target.files?.[0];
         if (!file || !excalidrawAPI) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.info('For interactive PDFs, Word, Videos, and Audio, please use the Media Hub (📂) on the toolbar!');
+            e.target.value = '';
+            return;
+        }
 
         const reader = new FileReader();
         reader.onload = async (event) => {
             const dataURL = event.target.result;
-            
-            // Generate random file id
             const fileId = "file-" + Math.random().toString(36).substr(2, 9);
             
             excalidrawAPI.addFiles([{
                 id: fileId,
                 dataURL: dataURL,
-                mimeType: file.type,
+                mimeType: file.type || 'image/png',
                 created: Date.now(),
                 lastRetrieved: Date.now(),
             }]);
 
-            const imgElement = {
-                type: "image",
-                x: 200,
-                y: 200,
-                width: 400,
-                height: 300,
-                fileId: fileId,
-                scale: [1, 1],
-                isDeleted: false,
-                fillStyle: "hachure",
-                strokeWidth: 1,
-                strokeStyle: "solid",
-                roughness: 1,
-                opacity: 100,
-                groupIds: [],
-                strokeColor: "#000000",
-                backgroundColor: "transparent",
-                version: 1,
-                versionNonce: Math.floor(Math.random() * 1000000),
-                id: "img-" + Math.random().toString(36).substr(2, 9),
-            };
+            const img = new Image();
+            img.onload = () => {
+                const maxW = 450;
+                const maxH = 350;
+                let w = img.naturalWidth || 400;
+                let h = img.naturalHeight || 300;
+                const ratio = (w / (h || 1)) || 1;
+                if (w > maxW) {
+                    w = maxW;
+                    h = Math.round(w / ratio);
+                }
+                if (h > maxH) {
+                    h = maxH;
+                    w = Math.round(h * ratio);
+                }
 
-            const elements = excalidrawAPI.getSceneElements();
-            excalidrawAPI.updateScene({ elements: [...elements, imgElement] });
+                const imgElement = {
+                    type: "image",
+                    x: 200,
+                    y: 200,
+                    width: w,
+                    height: h,
+                    fileId: fileId,
+                    status: "saved",
+                    scale: [1, 1],
+                    crop: null,
+                    isDeleted: false,
+                    fillStyle: "hachure",
+                    strokeWidth: 1,
+                    strokeStyle: "solid",
+                    roughness: 0,
+                    opacity: 100,
+                    groupIds: [],
+                    strokeColor: "#000000",
+                    backgroundColor: "transparent",
+                    version: 1,
+                    versionNonce: Math.floor(Math.random() * 1000000),
+                    id: "img-" + Math.random().toString(36).substr(2, 9),
+                    updated: Date.now(),
+                };
+
+                const elements = excalidrawAPI.getSceneElements();
+                excalidrawAPI.updateScene({ elements: [...elements, imgElement] });
+                toast.success('Image placed on whiteboard!');
+            };
+            img.onerror = () => {
+                const imgElement = {
+                    type: "image",
+                    x: 200,
+                    y: 200,
+                    width: 400,
+                    height: 300,
+                    fileId: fileId,
+                    scale: [1, 1],
+                    isDeleted: false,
+                    fillStyle: "hachure",
+                    strokeWidth: 1,
+                    strokeStyle: "solid",
+                    roughness: 0,
+                    opacity: 100,
+                    groupIds: [],
+                    strokeColor: "#000000",
+                    backgroundColor: "transparent",
+                    version: 1,
+                    versionNonce: Math.floor(Math.random() * 1000000),
+                    id: "img-" + Math.random().toString(36).substr(2, 9),
+                };
+                const elements = excalidrawAPI.getSceneElements();
+                excalidrawAPI.updateScene({ elements: [...elements, imgElement] });
+            };
+            img.src = dataURL;
         };
         reader.readAsDataURL(file);
+        e.target.value = '';
     };
 
     const tabs = [
