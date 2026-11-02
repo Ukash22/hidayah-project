@@ -501,7 +501,7 @@ class AdminBookingRequestView(APIView):
              
         return Response({"error": "Invalid action or no update provided"}, status=400)
 class SessionCompleteView(APIView):
-    """Tutor: Mark a session as COMPLETED and queue it for admin payout review"""
+    """Tutor: Mark a session as COMPLETED with actual minutes taken and queue it for admin verification"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, session_id):
@@ -510,25 +510,34 @@ class SessionCompleteView(APIView):
         try:
             session = get_object_or_404(ScheduledSession, pk=session_id)
             if not request.user.is_staff and session.tutor != request.user:
-                return Response({"error": "Unauthorized"}, status=403)
+                return Response({"error": "Unauthorized — Only the assigned tutor can finish this class."}, status=403)
 
             actual_duration = request.data.get('actual_duration_minutes')
+            completion_notes = request.data.get('completion_notes', '').strip()
+
             if actual_duration:
                 try:
                     actual_duration = int(actual_duration)
+                    if actual_duration <= 0 or actual_duration > 360:
+                        return Response({"error": "Duration must be between 1 and 360 minutes"}, status=400)
                 except (ValueError, TypeError):
                     actual_duration = None
 
-            result = process_session_completion(session_id, actual_duration_minutes=actual_duration)
+            result = process_session_completion(
+                session_id,
+                actual_duration_minutes=actual_duration,
+                completion_notes=completion_notes
+            )
 
             if not result.get("success", False):
                 return Response({"error": result.get("message", "Completion failed")}, status=400)
 
             return Response({
-                "message": result.get("message", "Session completed. Payout pending admin review."),
+                "message": result.get("message", "Class finished. Payout pending admin verification."),
                 "fee": result.get("fee"),
                 "commission": result.get("commission"),
                 "net_payout": result.get("net_payout"),
+                "actual_duration_minutes": result.get("actual_duration_minutes"),
                 "student_balance": result.get("student_balance"),
                 "payout_status": result.get("payout_status", "PENDING_REVIEW"),
             })
@@ -536,6 +545,53 @@ class SessionCompleteView(APIView):
         except Exception:
             logger.exception("Unhandled server error in SessionCompleteView")
             return Response({"error": "Something went wrong. Please try again."}, status=500)
+
+
+class ToggleAutoRenewView(APIView):
+    """Student: Toggle monthly auto-renewal for a booking / class schedule"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, booking_id):
+        from .models import Booking
+        from students.models import Enrollment
+
+        booking = get_object_or_404(Booking, id=booking_id)
+        if booking.student != request.user and not request.user.is_staff:
+            return Response({"error": "Unauthorized"}, status=403)
+
+        # Toggle auto-renew
+        booking.auto_renew = not booking.auto_renew
+        booking.save()
+
+        # Keep matching enrollment auto_renew in sync
+        try:
+            profile = getattr(booking.student, 'student_profile', None)
+            if profile:
+                enrollments = Enrollment.objects.filter(student=profile, tutor=booking.tutor)
+                for enr in enrollments:
+                    enr.auto_renew = booking.auto_renew
+                    enr.save()
+        except Exception as e:
+            logger.warning(f"Failed to sync enrollment auto_renew: {e}")
+
+        status_msg = "enabled" if booking.auto_renew else "disabled"
+        return Response({
+            "success": True,
+            "auto_renew": booking.auto_renew,
+            "message": f"Monthly auto-renewal is now {status_msg} for {booking.subject}.",
+            "booking": BookingSerializer(booking).data
+        })
+
+
+class TriggerAutoRenewView(APIView):
+    """Student or Admin: Process due monthly auto-renewals"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, booking_id=None):
+        from payments.logic import check_and_process_auto_renewal
+        user = request.user
+        results = check_and_process_auto_renewal(user, booking_id=booking_id)
+        return Response({"success": True, "results": results})
 
 class UserSessionListView(APIView):
     """

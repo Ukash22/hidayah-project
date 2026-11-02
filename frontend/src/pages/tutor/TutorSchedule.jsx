@@ -65,6 +65,12 @@ export default function TutorSchedule() {
     const [assigning, setAssigning] = useState(false);
     const [assignments, setAssignments] = useState([]);
 
+    // Finish Session Modal State
+    const [completeModalSession, setCompleteModalSession] = useState(null);
+    const [actualMinutesInput, setActualMinutesInput] = useState(60);
+    const [completionNotesInput, setCompletionNotesInput] = useState('');
+    const [isSubmittingComplete, setIsSubmittingComplete] = useState(false);
+
     const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
 
     const fetchData = useCallback(async () => {
@@ -109,17 +115,30 @@ export default function TutorSchedule() {
         navigate(`/live/${sessionId}`);
     }, [getAuthHeader, navigate]);
 
-    const handleComplete = useCallback(async (session) => {
-        const sessionId = session.db_id || session.id;
-        if (!await confirm('Mark this session as COMPLETED? Commission will be deducted and net amount credited to your wallet.', { confirmLabel: 'Mark Complete' })) return;
+    const handleComplete = useCallback((session) => {
+        setCompleteModalSession(session);
+        setActualMinutesInput(session.duration || 60);
+        setCompletionNotesInput('');
+    }, []);
+
+    const handleConfirmComplete = async () => {
+        if (!completeModalSession) return;
+        const sessionId = completeModalSession.db_id || completeModalSession.id;
+        setIsSubmittingComplete(true);
         try {
-            const res = await api.post(`/api/classes/session/${sessionId}/complete/`, {});
-            toast.success(`Session completed! Net payout: ₦${res.data.net_payout}`);
+            const res = await api.post(`/api/classes/session/${sessionId}/complete/`, {
+                actual_duration_minutes: actualMinutesInput,
+                completion_notes: completionNotesInput
+            });
+            toast.success(res.data.message || `Class finished! ${actualMinutesInput} minutes recorded for admin verification.`);
+            setCompleteModalSession(null);
             fetchData();
         } catch (err) {
             toast.error('Failed to complete session: ' + (getApiError(err, 'Error')));
+        } finally {
+            setIsSubmittingComplete(false);
         }
-    }, [getAuthHeader, fetchData, confirm, toast]);
+    };
 
     const handleAssignItem = async (type, id, studentId) => {
         if (assigning) return;
@@ -515,6 +534,88 @@ export default function TutorSchedule() {
                             <button onClick={() => setShowAssignmentModal(false)} className="w-full bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.3em] text-xs shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all">
                                 Done →
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Finish Class Session Modal */}
+            {completeModalSession && (
+                <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 flex items-center justify-center">
+                                <CheckCircle size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Finish Class Session</h3>
+                                <p className="text-xs text-slate-500">Record minutes taught for admin verification & wallet payout</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
+                                <p className="font-bold text-slate-800 dark:text-slate-200">{completeModalSession.subject?.name || completeModalSession.subject || 'Class'}</p>
+                                <p className="text-slate-500 mt-0.5">Student: {completeModalSession.student_name || completeModalSession.student?.get_full_name || 'Assigned Student'}</p>
+                                <p className="text-slate-400 mt-0.5 text-[10px]">Scheduled duration: {completeModalSession.duration || 60} mins</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                    Actual Minutes Taken:
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="360"
+                                        value={actualMinutesInput}
+                                        onChange={(e) => setActualMinutesInput(Math.max(1, parseInt(e.target.value) || 1))}
+                                        className="w-24 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center font-bold text-base outline-none focus:border-emerald-500"
+                                    />
+                                    <span className="text-xs text-slate-500 font-medium">minutes</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">
+                                    Notes / Topics Covered:
+                                </label>
+                                <textarea
+                                    rows="3"
+                                    value={completionNotesInput}
+                                    onChange={(e) => setCompletionNotesInput(e.target.value)}
+                                    placeholder="e.g. Covered Surah Al-Mulk ayat 1-10, tajweed practice..."
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs outline-none focus:border-emerald-500 resize-none"
+                                />
+                            </div>
+
+                            <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/40 p-3 rounded-xl text-[11px] text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                                ℹ️ <strong>Platform Verification:</strong> Once submitted, Admin verifies the minutes taken. The platform calculates your hourly rate, gives the platform share, and funds your tutor wallet.
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setCompleteModalSession(null)}
+                                    disabled={isSubmittingComplete}
+                                    className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 font-bold text-xs uppercase transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmComplete}
+                                    disabled={isSubmittingComplete}
+                                    className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2"
+                                >
+                                    {isSubmittingComplete ? (
+                                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                        <CheckCircle size={14} />
+                                    )}
+                                    Submit & Finish
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

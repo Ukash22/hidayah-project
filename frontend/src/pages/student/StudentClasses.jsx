@@ -7,7 +7,7 @@ import { useToast } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
 import { SkeletonCard, FetchError } from '../../components/ui';
 import ClassCard from '../../components/ClassCard';
-import { Users } from 'lucide-react';
+import { Users, RefreshCw } from 'lucide-react';
 
 export default function StudentClasses() {
     const { token } = useAuth();
@@ -17,6 +17,8 @@ export default function StudentClasses() {
     const [classes, setClasses] = useState([]);
     const [profile, setProfile] = useState(null);
     const [batches, setBatches] = useState([]);
+    const [bookings, setBookings] = useState([]);
+    const [togglingRenew, setTogglingRenew] = useState({});
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState(false);
 
@@ -26,12 +28,14 @@ export default function StudentClasses() {
         if (!token) return;
         setLoadError(false);
         try {
-            const [classRes, profRes] = await Promise.all([
+            const [classRes, profRes, bookRes] = await Promise.all([
                 api.get(`/api/classes/sessions/`),
                 api.get(`/api/students/me/`),
+                api.get(`/api/classes/booking/request/`).catch(() => ({ data: [] })),
             ]);
             setClasses(Array.isArray(classRes.data) ? classRes.data : (classRes.data.results || classRes.data.classes || []));
             setProfile(profRes.data);
+            setBookings(Array.isArray(bookRes.data) ? bookRes.data : (bookRes.data.results || []));
             api.get('/api/classes/batches/').then(r => setBatches(asList(r.data))).catch(() => {});
         } catch (err) {
             console.error('Classes fetch failed', err);
@@ -42,6 +46,19 @@ export default function StudentClasses() {
     }, [token, getAuthHeader]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
+
+    const handleToggleAutoRenew = async (bookingId) => {
+        setTogglingRenew(p => ({ ...p, [bookingId]: true }));
+        try {
+            const res = await api.post(`/api/classes/booking/${bookingId}/toggle-auto-renew/`);
+            toast.success(res.data.message || 'Auto-renewal setting updated!');
+            setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, auto_renew: res.data.auto_renew } : b));
+        } catch (err) {
+            toast.error('Failed to update auto-renewal.');
+        } finally {
+            setTogglingRenew(p => ({ ...p, [bookingId]: false }));
+        }
+    };
 
     const handleJoinClass = useCallback(async (cls) => {
         const sessionId = cls.db_id || cls.id;
@@ -92,6 +109,63 @@ export default function StudentClasses() {
                                     <span className="font-semibold text-slate-600 dark:text-slate-400">Tutor:</span> {batch.tutor_name}
                                 </div>
                                 <div className="text-[11px] text-slate-400 mt-1">{batch.student_count} member{batch.student_count !== 1 ? 's' : ''} in this group</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Monthly Auto-Renewal Settings Card */}
+            {bookings.filter(b => b.paid).length > 0 && (
+                <div className="mb-8 bg-gradient-to-br from-emerald-950/20 via-slate-900 to-slate-900 border border-emerald-500/20 rounded-3xl p-6 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                                <RefreshCw size={18} />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                    Monthly Class Auto-Renewal
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Seamless Learning</span>
+                                </h3>
+                                <p className="text-xs text-slate-400">Keep your classes active next month automatically without re-booking</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-3">
+                        {bookings.filter(b => b.paid).map(b => (
+                            <div key={b.id} className="bg-slate-850/80 rounded-2xl p-4 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                                <div>
+                                    <p className="font-bold text-white text-sm">{b.subject}</p>
+                                    <p className="text-xs text-slate-400">with {b.tutor_name || 'Assigned Tutor'} · ₦{parseFloat(b.price || 0).toLocaleString()} / month</p>
+                                    <p className="text-[11px] text-emerald-400/90 mt-1 flex items-center gap-1.5">
+                                        {b.auto_renew ? (
+                                            <>
+                                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                                <span>Auto-renew is ON. Platform will auto-renew next month from your wallet.</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="w-2 h-2 rounded-full bg-slate-500" />
+                                                <span className="text-slate-400">Auto-renew is OFF. Turn ON to lock in your tutor's slot for next month.</span>
+                                            </>
+                                        )}
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => handleToggleAutoRenew(b.id)}
+                                    disabled={!!togglingRenew[b.id]}
+                                    className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wide transition-all flex items-center gap-2 ${
+                                        b.auto_renew
+                                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20'
+                                            : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+                                    }`}
+                                >
+                                    <RefreshCw size={13} className={togglingRenew[b.id] ? 'animate-spin' : ''} />
+                                    <span>{b.auto_renew ? 'Auto-Renew: ON' : 'Enable Auto-Renew'}</span>
+                                </button>
                             </div>
                         ))}
                     </div>

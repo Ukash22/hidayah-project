@@ -379,28 +379,52 @@ const WhiteboardMediaHub = ({
         try {
             const id = 'media_' + Date.now();
 
-            // VIDEO — read as base64 so it can be broadcast over WebSocket
+            // VIDEO — Use object URL for instantaneous, memory-efficient local playback; only sync metadata/small clips over WS
             if (['mp4', 'webm', 'ogg', 'mov', 'mkv'].includes(ext)) {
-                setLoadingMessage(`Reading ${fileName} into memory...`);
-                const reader = new FileReader();
-                reader.onload = (loadEvent) => {
-                    const dataUrl = loadEvent.target.result;
+                setLoadingMessage(`Loading ${fileName}...`);
+                const objectUrl = URL.createObjectURL(file);
+                const isSmallVideo = file.size <= 2 * 1024 * 1024; // 2MB limit for WS sync
+
+                if (isSmallVideo) {
+                    const reader = new FileReader();
+                    reader.onload = (loadEvent) => {
+                        const dataUrl = loadEvent.target.result;
+                        const mediaObj = {
+                            id,
+                            type: 'video',
+                            name: fileName,
+                            url: dataUrl,
+                            isVideoPlaying: false,
+                            videoCurrentTime: 0
+                        };
+                        setActiveMedia(mediaObj);
+                        setShowUploadModal(false);
+                        setLoading(false);
+                        broadcastMediaState(mediaObj);
+                    };
+                    reader.onerror = () => {
+                        setActiveMedia({ id, type: 'video', name: fileName, url: objectUrl, isVideoPlaying: false, videoCurrentTime: 0 });
+                        setShowUploadModal(false);
+                        setLoading(false);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
                     const mediaObj = {
                         id,
                         type: 'video',
                         name: fileName,
-                        url: dataUrl,
+                        url: objectUrl,
+                        isLocalFile: true,
                         isVideoPlaying: false,
                         videoCurrentTime: 0
                     };
                     setActiveMedia(mediaObj);
                     setShowUploadModal(false);
                     setLoading(false);
-                    broadcastMediaState(mediaObj);
-                };
-                reader.onerror = () => { alert('Failed to read video file.'); setLoading(false); };
-                reader.readAsDataURL(file);
-                return; // loading is finalised inside the reader callback
+                    // Broadcast metadata notice (without 50MB payload that closes WebSocket)
+                    broadcastMediaState({ id, type: 'video', name: fileName, url: '', isLocalFile: true });
+                }
+                return;
             }
             // PDF
             else if (ext === 'pdf') {

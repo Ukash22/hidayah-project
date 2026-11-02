@@ -198,11 +198,21 @@ export default function AdminPendingPayouts() {
                                         <BookOpen size={16} className="text-indigo-600" />
                                     </div>
                                     <div>
-                                        <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">{session.subject}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">{session.subject}</p>
+                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                                                Rate: {fmt(session.tutor_hourly_rate)}/hr
+                                            </span>
+                                        </div>
                                         <div className="flex flex-wrap gap-3 mt-1 text-[11px] text-slate-500">
                                             <span className="flex items-center gap-1"><User size={10} className="text-indigo-400" /> <strong className="text-slate-700 dark:text-slate-300">{session.tutor_name}</strong> (Tutor)</span>
                                             <span className="flex items-center gap-1"><User size={10} className="text-emerald-400" /> {session.student_name} (Student)</span>
                                         </div>
+                                        {session.completion_notes && (
+                                            <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1.5 bg-slate-50 dark:bg-slate-800/60 p-2 rounded-lg border border-slate-100 dark:border-slate-800 italic">
+                                                📝 "{session.completion_notes}"
+                                            </p>
+                                        )}
                                         <p className="text-[10px] text-slate-400 mt-1">Completed: {fmtDate(session.completed_at)}</p>
                                     </div>
                                 </div>
@@ -212,19 +222,19 @@ export default function AdminPendingPayouts() {
                             {/* Financial Breakdown + Bank Details */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-0 divide-x divide-slate-50 dark:divide-slate-800">
                                 <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Session Fee</span>
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Class Fee</span>
                                     <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{fmt(session.fee_amount)}</span>
-                                    <span className="text-[9px] text-slate-400">debited from student</span>
+                                    <span className="text-[9px] text-slate-400">held in platform escrow</span>
                                 </div>
-                                <div className="p-4 flex flex-col gap-1">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-500">Commission</span>
+                                <div className="p-4 flex flex-col gap-1 bg-amber-50/30 dark:bg-amber-900/10">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-amber-600">Platform Share</span>
                                     <span className="text-sm font-bold text-amber-600">{fmt(session.commission_amount)}</span>
-                                    <span className="text-[9px] text-amber-400">{session.commission_rate}% platform fee</span>
+                                    <span className="text-[9px] text-amber-500">{session.commission_rate}% stays in platform</span>
                                 </div>
                                 <div className="p-4 flex flex-col gap-1 bg-emerald-50/50 dark:bg-emerald-900/10">
-                                    <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600">Net to Tutor</span>
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600">Tutor Wallet Fund</span>
                                     <span className="text-base font-bold text-emerald-700">{fmt(session.net_payout)}</span>
-                                    <span className="text-[9px] text-emerald-500">after commission</span>
+                                    <span className="text-[9px] text-emerald-500">to be credited on verify</span>
                                 </div>
                                 <div className="p-4 flex flex-col gap-1 col-span-2 sm:col-span-1">
                                     <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
@@ -243,14 +253,15 @@ export default function AdminPendingPayouts() {
                                         id={`release-payout-${session.session_id}`}
                                         onClick={() => handleRelease(session)}
                                         disabled={!!releasing[session.session_id] || releasedIds.has(session.session_id)}
-                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase tracking-wide rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30"
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold uppercase tracking-wide rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-emerald-500/20 hover:shadow-emerald-500/30"
+                                        title="Verify class duration and fund tutor wallet"
                                     >
                                         {releasing[session.session_id] ? (
                                             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                         ) : (
-                                            <CreditCard size={12} />
+                                            <CheckCircle size={13} />
                                         )}
-                                        Release Payout
+                                        Verify & Fund Wallet
                                     </button>
                                 </div>
                             </div>
