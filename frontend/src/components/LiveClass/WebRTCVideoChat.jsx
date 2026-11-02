@@ -356,6 +356,14 @@ const WebRTCVideoChat = ({
     const [activeSpeakerId, setActiveSpeakerId] = useState(null);
     const [pinnedPeerId, setPinnedPeerId] = useState(null);
     const [zoomViewMode, setZoomViewMode] = useState('speaker'); // 'speaker' | 'gallery'
+    const [canShareScreen, setCanShareScreen] = useState(false);
+
+    useEffect(() => {
+        const supported = typeof navigator !== 'undefined' &&
+            !!navigator.mediaDevices &&
+            typeof navigator.mediaDevices.getDisplayMedia === 'function';
+        setCanShareScreen(supported);
+    }, []);
 
     const audioContextRef = useRef(null);
     const audioNodesRef = useRef({});
@@ -1104,16 +1112,24 @@ const WebRTCVideoChat = ({
     const toggleScreenShare = useCallback(async () => {
         if (!isScreenSharing) {
             if (!navigator?.mediaDevices?.getDisplayMedia) {
-                alert("Screen sharing is not natively supported by this browser or mobile platform. For screen sharing, please open Hidayah on Chrome, Edge, or a desktop browser.");
                 return;
             }
 
+            let screenStream = null;
             try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { cursor: "always", displaySurface: "monitor" },
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
                     audio: false
-                }).catch(() => navigator.mediaDevices.getDisplayMedia({ video: true }));
+                });
+            } catch (err) {
+                if (err.name === 'NotAllowedError' || err.name === 'AbortError') return; // user cancelled prompt
+                console.warn("Screen share cancelled or failed:", err);
+                return;
+            }
 
+            if (!screenStream) return;
+
+            try {
                 const screenTrack = screenStream?.getVideoTracks()[0];
                 if (!screenTrack) return;
 
@@ -1169,7 +1185,7 @@ const WebRTCVideoChat = ({
             } catch (err) {
                 if (err.name !== 'NotAllowedError') {
                     console.error("Screen sharing error:", err);
-                    alert("Could not start screen sharing: " + (err.message || err.name));
+                    setMediaNotice("Could not start screen sharing: " + (err.message || err.name));
                 }
             }
         } else {
@@ -1254,10 +1270,10 @@ const WebRTCVideoChat = ({
     const remoteKeys = Object.keys(remoteStreams);
     const totalParticipants = 1 + remoteKeys.length;
 
-    // Zoom Active Speaker determination:
-    // Pinned user takes precedence, then active speaker, then first remote user, then local user
+    // Manual Pin Only — no auto-speaker switching.
+    // Default: remote peer is fullscreen (tutor sees student big, student sees tutor big).
+    // Only manual pin overrides the default.
     const effectiveStageId = pinnedPeerId 
-        || (activeSpeakerId && (activeSpeakerId === 'local' || remoteStreams[activeSpeakerId]) ? activeSpeakerId : null)
         || (remoteKeys.length > 0 ? remoteKeys[0] : 'local');
 
     return (
@@ -1469,14 +1485,16 @@ const WebRTCVideoChat = ({
                     <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Video</span>
                 </button>
 
-                <button 
-                    onClick={toggleScreenShare} 
-                    className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${isScreenSharing ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
-                    title="Share Screen"
-                >
-                    <MonitorUp size={18} />
-                    <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Share</span>
-                </button>
+                {canShareScreen && (
+                    <button 
+                        onClick={toggleScreenShare} 
+                        className={`group w-11 h-11 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center transition-all active:scale-90 ${isScreenSharing ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'}`}
+                        title="Share Screen"
+                    >
+                        <MonitorUp size={18} />
+                        <span className="text-[7px] font-bold mt-0.5 uppercase opacity-0 group-hover:opacity-100 transition-opacity tracking-tighter">Share</span>
+                    </button>
+                )}
 
                 <div className="w-px h-8 bg-slate-800" />
 

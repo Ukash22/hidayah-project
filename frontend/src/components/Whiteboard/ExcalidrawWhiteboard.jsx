@@ -707,10 +707,15 @@ const ExcalidrawWhiteboard = ({
                 link: null,
             };
             const elements = api.getSceneElements();
-            api.updateScene({ elements: [...elements, textElement] });
+            const nextElements = [...elements, textElement];
+            api.updateScene({ elements: nextElements });
+            saveCurrentPageElements();
+            if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
+                broadcastTeacherSnapshot(nextElements);
+            }
             toast.success('Inserted note onto canvas!');
         }
-    }, [toast]);
+    }, [saveCurrentPageElements, broadcastTeacherSnapshot, toast]);
 
     // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {

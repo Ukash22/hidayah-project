@@ -16,28 +16,31 @@ export default function TutorRequests() {
     const [declineModal, setDeclineModal] = useState({ open: false, bookingId: null, studentName: '', reason: '' });
     const [declining, setDeclining] = useState(false);
 
-    const getAuthHeader = useCallback(() => token ? { Authorization: `Bearer ${token}` } : {}, [token]);
-
-    const fetchRequests = useCallback(async () => {
+    const fetchRequests = useCallback(async (statusFilter) => {
         if (!token) return;
+        setLoading(true);
         try {
-            const res = await api.get(`/api/classes/booking/approval/`);
+            const res = await api.get(`/api/classes/booking/approval/?status=${statusFilter || activeSubTab}`);
             setRequests(asList(res.data));
         } catch (err) {
             console.error('Requests fetch failed', err);
         } finally {
             setLoading(false);
         }
-    }, [token, getAuthHeader]);
+    }, [token, activeSubTab]);
 
-    useEffect(() => { fetchRequests(); }, [fetchRequests]);
+    useEffect(() => { fetchRequests(activeSubTab); }, [activeSubTab, token]);
+
+    const handleTabChange = (tab) => {
+        setActiveSubTab(tab);
+    };
 
     const handleApprove = async (id) => {
         if (!await confirm("Approve this student's request? Student will be prompted to pay.", { confirmLabel: 'Approve' })) return;
         try {
             await api.post(`/api/classes/booking/${id}/approve/`, {});
             toast.success('Request approved! Awaiting student payment.');
-            fetchRequests();
+            fetchRequests(activeSubTab);
         } catch (err) {
             toast.error('Failed to approve: ' + (getApiError(err, 'Error')));
         }
@@ -54,7 +57,7 @@ export default function TutorRequests() {
             });
             toast.info('Request declined. Student has been notified.');
             closeDecline();
-            fetchRequests();
+            fetchRequests(activeSubTab);
         } catch (err) {
             toast.error('Failed to decline: ' + getApiError(err, 'Error'));
         } finally {
@@ -62,12 +65,8 @@ export default function TutorRequests() {
         }
     };
 
-    const filtered = requests.filter(r => {
-        if (activeSubTab === 'pending') return !r.approved;
-        if (activeSubTab === 'approved') return r.approved && !r.paid;
-        if (activeSubTab === 'active') return r.approved && r.paid;
-        return true;
-    });
+    // Data is already filtered server-side by the ?status= param
+    const filtered = requests;
 
     if (loading) return (
         <div className="p-4 space-y-2">
@@ -84,7 +83,7 @@ export default function TutorRequests() {
                 {['pending', 'approved', 'active'].map(sub => (
                     <button
                         key={sub}
-                        onClick={() => setActiveSubTab(sub)}
+                        onClick={() => handleTabChange(sub)}
                         className={`px-6 py-2.5 rounded-xl text-[11px] font-semibold uppercase tracking-wide transition-all whitespace-nowrap ${activeSubTab === sub ? 'bg-primary text-white shadow-lg' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         {sub === 'pending' ? 'New Requests' : sub === 'approved' ? 'Approved' : 'Active'}

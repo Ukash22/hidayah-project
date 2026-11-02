@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import api, { asList, getApiError } from '../../services/api';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar as IconCalendar, Clock as IconClock, Users, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Calendar as IconCalendar, Clock as IconClock, Users, ChevronDown, ChevronUp, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import { PageHeader } from '../../components/layout';
