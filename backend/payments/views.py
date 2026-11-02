@@ -446,25 +446,44 @@ class InitiateBookingPaymentView(APIView):
         return Response({"error": result.get("message")}, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyBookingPaymentView(APIView):
-    """Student: Verify Paystack payment for a Booking"""
+    """Student: Verify Paystack payment for a Booking with strict security & anti-hack validations"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, reference):
         result = PaystackService.verify_payment(reference)
         
         if result["success"] and result["verified"]:
-            # Extract booking_id from reference or metadata if available
-            # For simplicity, let's assume reference BOOKING-{id}-...
             try:
                 booking_id = reference.split('-')[1]
-                booking = Booking.objects.get(id=booking_id)
-                
-                if not booking.paid:
-                    process_payment(booking)
-                
-                return Response({"success": True, "message": "Payment verified and booking updated"})
-            except:
-                return Response({"error": "Invalid booking reference"}, status=400)
+                booking = Booking.objects.select_for_update().get(id=booking_id)
+
+                # Anti-hack 1: Ownership check
+                if booking.student != request.user and not request.user.is_staff:
+                    logger.warning(f"Unauthorized booking verification attempt by {request.user.id} on booking {booking.id}")
+                    return Response({"error": "Unauthorized payment verification"}, status=403)
+
+                # Anti-hack 2: Amount verification
+                verified_amount = Decimal(str(result.get("amount", 0)))
+                if verified_amount > 0 and verified_amount < booking.price:
+                    logger.critical(f"TAMPERING DETECTED: Reference {reference} paid ₦{verified_amount} but booking requires ₦{booking.price}")
+                    return Response({"error": "Payment amount is less than booking price."}, status=400)
+
+                # Complete payment flow (updates payment, fulfills booking, schedules sessions, platform escrow)
+                flow_result = complete_payment_flow(
+                    user=request.user,
+                    amount=verified_amount if verified_amount > 0 else booking.price,
+                    reference=reference,
+                    gateway_ref=str(result.get("transaction_id", ""))
+                )
+
+                return Response({
+                    "success": True,
+                    "verified": True,
+                    "message": "Payment verified and booking successfully fulfilled"
+                })
+            except Exception as e:
+                logger.exception(f"VerifyBookingPaymentView error for {reference}: {e}")
+                return Response({"error": "Invalid booking payment reference"}, status=400)
                 
         return Response({"error": "Payment verification failed"}, status=400)
                 
@@ -1027,7 +1046,7 @@ class AdminPlatformSettingsView(APIView):
 
 
 class AdminPendingPayoutsView(APIView):
-    """Admin: List all sessions awaiting payout release, with full duration & financial details."""
+    """Admin: List all sessions awaiting verification & payout release, with full duration, hourly rate & financial details."""
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1042,11 +1061,13 @@ class AdminPendingPayoutsView(APIView):
         data = []
         for s in sessions:
             tutor_profile = getattr(s.tutor, 'tutor_profile', None)
+            hourly_rate = float(getattr(tutor_profile, 'hourly_rate', 3000) or 3000)
             data.append({
                 "session_id": s.id,
                 "tutor_id": s.tutor.id,
                 "tutor_name": s.tutor.get_full_name() or s.tutor.username,
                 "tutor_email": s.tutor.email,
+                "tutor_hourly_rate": hourly_rate,
                 "tutor_bank_name": getattr(tutor_profile, 'bank_name', None),
                 "tutor_account_number": getattr(tutor_profile, 'account_number', None),
                 "tutor_account_name": getattr(tutor_profile, 'account_name', None),
@@ -1055,7 +1076,8 @@ class AdminPendingPayoutsView(APIView):
                 "scheduled_at": s.scheduled_at,
                 "completed_at": s.completed_at,
                 "scheduled_duration_minutes": s.duration,
-                "actual_duration_minutes": s.actual_duration_minutes,
+                "actual_duration_minutes": s.actual_duration_minutes or s.duration,
+                "completion_notes": s.completion_notes or "",
                 "fee_amount": float(s.fee_amount),
                 "commission_amount": float(s.commission_amount),
                 "commission_rate": float(s.admin_percentage_at_completion),
@@ -1067,17 +1089,18 @@ class AdminPendingPayoutsView(APIView):
 
 
 class AdminReleasePayoutView(APIView):
-    """Admin: Release a specific session payout to the tutor's wallet."""
+    """Admin: Verify completed session and release payout to the tutor's wallet."""
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, session_id):
         from .logic import release_session_payout
         try:
-            result = release_session_payout(session_id, admin_user=request.user)
+            custom_payout = request.data.get('approved_payout')
+            result = release_session_payout(session_id, admin_user=request.user, approved_payout=custom_payout)
             if not result.get("success"):
                 return Response({"error": result.get("message")}, status=400)
             return Response({
-                "message": f"Payout of ₦{result['net_payout']:,.2f} released to tutor wallet.",
+                "message": f"Payout of ₦{result['net_payout']:,.2f} verified and released to tutor wallet.",
                 "net_payout": result["net_payout"],
                 "tutor_balance": result["tutor_balance"],
             })

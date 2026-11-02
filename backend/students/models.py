@@ -110,6 +110,7 @@ class Enrollment(models.Model):
     preferred_start_date = models.DateField(blank=True, null=True)
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    auto_renew = models.BooleanField(default=False, help_text="Auto-renew classes for next month")
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     @property

@@ -115,6 +115,7 @@ class Booking(models.Model):
     
     approved = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
+    auto_renew = models.BooleanField(default=False, help_text="Auto-renew booking and classes for next month")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

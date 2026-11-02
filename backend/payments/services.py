@@ -45,29 +45,15 @@ def fulfill_all_student_enrollments(student_user):
 def process_payment(booking):
     """
     Process payment for a booking:
-    1. Calculate commission and credit tutor.
+    1. Payment goes to the Platform (Escrow). Tutor is NOT credited upfront.
+       Tutor wallet is only funded after tutor finishes class and admin verifies.
     2. Update StudentProfile (tutor, course, status).
-    3. Create Enrollment record.
-    4. Generate initial ScheduledSessions (4 weeks) based on the booking schedule.
-    5. Mark booking as paid.
+    3. Create / update Enrollment record (sync auto_renew).
+    4. Calculate fee_per_session and generate initial ScheduledSessions (4 weeks).
+    5. Mark booking as paid and approved.
     """
-    # 1. Get Dynamic Commission Rate
-    rate = get_commission_rate(booking) 
-    commission = (booking.price * rate) / Decimal("100.00")
-    tutor_amount = booking.price - commission
-
-    # 1. Update tutor wallet
-    wallet, created = Wallet.objects.get_or_create(user=booking.tutor)
-    wallet.balance += tutor_amount
-    wallet.save()
-
-    # Save transaction (credit)
-    Transaction.objects.create(
-        user=booking.tutor,
-        amount=tutor_amount,
-        transaction_type='SESSION_PAYOUT',
-        description=f'Payment for Booking: {booking.subject}'
-    )
+    from decimal import Decimal
+    # Funds remain in Platform Escrow. Tutor is paid upon session completion & admin verification.
 
     # 2. Update Student Profile
     try:
@@ -138,18 +124,20 @@ def process_payment(booking):
             }
         )
         
-        # If it was already existing as PENDING, force it to APPROVED now that payment is done
-        if not created and enrollment.status != 'APPROVED':
-            enrollment.status = 'APPROVED'
-            enrollment.save()
+        # Sync auto_renew setting from booking to enrollment
+        enrollment.auto_renew = getattr(booking, 'auto_renew', False)
+        enrollment.save()
 
-        # 4. Generate Initial Scheduled Sessions (4 Weeks)
-        # Calculate per-session fee if applicable
+        # 4. Generate Initial Scheduled Sessions (4 Weeks) with accurate per-session fee
+        total_sessions = max(1, days_per_week * 4)
+        fee_per_session = Decimal(str(booking.price)) / Decimal(str(total_sessions))
+
         generate_recurring_sessions(
             student=booking.student,
             tutor=booking.tutor,
             subject_obj=subject_obj,
             schedule_data=booking.schedule,
+            fee_per_session=fee_per_session,
             weeks=4,
             start_date=booking.preferred_start_date
         )
@@ -157,9 +145,9 @@ def process_payment(booking):
     except StudentProfile.DoesNotExist:
         pass
 
-    # 5. Mark booking as paid and archived
+    # 5. Mark booking as paid and approved
     booking.paid = True
-    booking.approved = True # Ensure it's approved if paid
+    booking.approved = True
     booking.save()
     
     # 6. Final safety check on profile

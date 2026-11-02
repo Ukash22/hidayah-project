@@ -1,8 +1,9 @@
 import React from 'react';
 import { Globe, Phone, MapPin, Image as ImageIcon } from 'lucide-react';
 import { COUNTRIES } from '../../constants/registration';
+import DefaultFileUploadBox from './FileUploadBox';
 
-const ProfileFields = ({ formData, handleChange, handleFileChange, files, FileUploadBox: _FileUploadBox }) => {
+const ProfileFields = ({ formData, handleChange, handleFileChange, files, FileUploadBox = DefaultFileUploadBox }) => {
     return (
         <div className="space-y-6">
             <div className="grid md:grid-cols-2 gap-4">

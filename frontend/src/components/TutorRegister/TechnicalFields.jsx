@@ -1,7 +1,8 @@
 import React from 'react';
 import { Monitor, Network, Video, Music } from 'lucide-react';
+import DefaultFileUploadBox from './FileUploadBox';
 
-const TechnicalFields = ({ formData, handleChange, handleFileChange, files, FileUploadBox: _FileUploadBox }) => {
+const TechnicalFields = ({ formData, handleChange, handleFileChange, files, FileUploadBox = DefaultFileUploadBox }) => {
     return (
         <div className="space-y-8">
             <div className="mb-8 p-6 rounded-2xl border border-rose-500/20 bg-rose-500/5">

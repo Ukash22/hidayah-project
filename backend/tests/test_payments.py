@@ -90,7 +90,7 @@ class WalletPolicyTests(TestCase):
         from students.models import StudentProfile
         from payments.models import Wallet
         student = make_user('student1', role='STUDENT')
-        profile = StudentProfile.objects.create(user=student)
+        profile, _ = StudentProfile.objects.get_or_create(user=student)
         self._wallet(student, 1000)
 
         self.client.force_authenticate(make_user('admin1', role='ADMIN'))
@@ -103,8 +103,8 @@ class WalletPolicyTests(TestCase):
 
 
 class SessionCompletionPayoutTests(TestCase):
-    """Money path: completing a session debits the student, credits the tutor
-    net of commission, records both transactions, and is not repeatable."""
+    """Money path: completing a session debits the student, sets PENDING_REVIEW,
+    and admin verification releases net payout to tutor wallet."""
 
     def setUp(self):
         from decimal import Decimal
@@ -136,22 +136,34 @@ class SessionCompletionPayoutTests(TestCase):
 
     def test_completion_math_and_state(self):
         from payments.models import Wallet, Transaction
+        from payments.logic import release_session_payout
         res = self._complete()
         self.assertEqual(res.status_code, 200, res.content)
         body = res.json()
         self.assertEqual(body['fee'], 1000.0)
         self.assertEqual(body['commission'], 200.0)   # 20% tutor override
         self.assertEqual(body['net_payout'], 800.0)
+        self.assertEqual(body['payout_status'], 'PENDING_REVIEW')
 
         self.assertEqual(float(Wallet.objects.get(user=self.student).balance), 4000.0)
-        self.assertEqual(float(Wallet.objects.get(user=self.tutor).balance), 800.0)
+        # Tutor not credited until admin verification
+        self.assertEqual(float(Wallet.objects.get(user=self.tutor).balance), 0.0)
 
         self.session.refresh_from_db()
         self.assertEqual(self.session.status, 'COMPLETED')
-        self.assertEqual(self.session.payout_status, 'RELEASED')
+        self.assertEqual(self.session.payout_status, 'PENDING_REVIEW')
         self.assertEqual(float(self.session.commission_amount), 200.0)
 
         self.assertTrue(Transaction.objects.filter(reference=f'DEBIT-SESS-{self.session.id}').exists())
+
+        # Admin verifies and releases payout
+        admin_user = make_user('admin_payout', role='ADMIN')
+        release_res = release_session_payout(self.session.id, admin_user=admin_user)
+        self.assertTrue(release_res['success'])
+
+        self.assertEqual(float(Wallet.objects.get(user=self.tutor).balance), 800.0)
+        self.session.refresh_from_db()
+        self.assertEqual(self.session.payout_status, 'RELEASED')
         self.assertTrue(Transaction.objects.filter(reference=f'PAYOUT-SESS-{self.session.id}').exists())
 
     def test_double_completion_rejected(self):
@@ -159,8 +171,8 @@ class SessionCompletionPayoutTests(TestCase):
         self._complete()
         res = self._complete()
         self.assertEqual(res.status_code, 400)
-        # no double payout
-        self.assertEqual(float(Wallet.objects.get(user=self.tutor).balance), 800.0)
+        # no double payout, tutor balance remains 0 before admin release
+        self.assertEqual(float(Wallet.objects.get(user=self.tutor).balance), 0.0)
 
     def test_other_tutor_cannot_complete_someone_elses_session(self):
         other = make_user('tutor2', role='TUTOR')

@@ -324,7 +324,14 @@ const LocalVideoTile = ({
     );
 };
 
-const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, layoutMode: _layoutMode = 'classroom' }) => {
+const WebRTCVideoChat = ({ 
+    roomId, 
+    isVideoOpen: _isVideoOpen, 
+    setIsVideoOpen, 
+    layoutMode: _layoutMode = 'classroom',
+    onScreenShareStateChange,
+    externalToggleScreenShareRef
+}) => {
     // isCallEnded = user explicitly clicked Leave; distinct from panel being hidden
     const [isCallEnded, setIsCallEnded] = useState(false);
     const { user } = useAuth();
@@ -332,9 +339,13 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, la
     // Media State
     const [localStream, setLocalStream] = useState(null);
     const [remoteStreams, setRemoteStreams] = useState({});
+    const remoteStreamsRef = useRef({});
+    useEffect(() => { remoteStreamsRef.current = remoteStreams; }, [remoteStreams]);
+
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [remoteScreenSharer, setRemoteScreenSharer] = useState(null);
     const [messages, setMessages] = useState([]);
     const [showChat, setShowChat] = useState(false);
     const [raisedHands, setRaisedHands] = useState({});
@@ -352,6 +363,7 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, la
     
     const localVideoRef = useRef(null);
     const localStreamRef = useRef(null);
+    const screenStreamRef = useRef(null);
     const peerConnections = useRef({});
     const iceCandidateQueue = useRef({});
     const chatEndRef = useRef(null);
@@ -881,6 +893,18 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, la
                 setRaisedHands(prev => { const next = {...prev}; delete next[peerId]; return next; });
             }, 5000);
         }
+        else if (type === 'screen_share_status') {
+            const isSharing = Boolean(data.isSharing);
+            if (isSharing) {
+                setRemoteScreenSharer({
+                    peerId,
+                    name: name || 'Participant',
+                    stream: remoteStreamsRef.current[peerId]?.stream || null
+                });
+            } else {
+                setRemoteScreenSharer(prev => (prev?.peerId === peerId ? null : prev));
+            }
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -1023,48 +1047,151 @@ const WebRTCVideoChat = ({ roomId, isVideoOpen: _isVideoOpen, setIsVideoOpen, la
         }
     };
 
-    const toggleScreenShare = async () => {
-        if (!isScreenSharing) {
+    const stopScreenShare = useCallback(() => {
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach(t => {
+                try { t.stop(); } catch (_e) {}
+            });
+            screenStreamRef.current = null;
+        }
+
+        const stream = localStreamRef.current || localStream;
+        const videoTrack = stream ? stream.getVideoTracks()[0] : null;
+
+        Object.entries(peerConnections.current).forEach(([pId, pc]) => {
             try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                const screenTrack = screenStream.getVideoTracks()[0];
+                const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video') ||
+                                    pc.getTransceivers().find(t => t.sender && (!t.sender.track || t.sender.track.kind === 'video'))?.sender;
+
+                if (videoSender) {
+                    if (videoTrack) {
+                        videoSender.replaceTrack(videoTrack);
+                    } else {
+                        videoSender.replaceTrack(null);
+                        const transceiver = pc.getTransceivers().find(t => t.sender === videoSender);
+                        if (transceiver) transceiver.direction = 'recvonly';
+                    }
+
+                    pc.createOffer().then(offer => {
+                        pc.setLocalDescription(offer);
+                        sendMessageRef.current?.(JSON.stringify({
+                            type: 'offer',
+                            peerId: myIdRef.current,
+                            targetId: pId,
+                            name: myNameRef.current,
+                            sdp: pc.localDescription
+                        }));
+                    }).catch(() => {});
+                }
+            } catch (err) {
+                console.warn("Reverting track on peer error:", err);
+            }
+        });
+
+        if (localVideoRef.current && stream) {
+            localVideoRef.current.srcObject = stream;
+        }
+        setIsScreenSharing(false);
+
+        sendMessageRef.current?.(JSON.stringify({
+            type: 'screen_share_status',
+            peerId: myIdRef.current,
+            name: myNameRef.current,
+            isSharing: false
+        }));
+    }, [localStream]);
+
+    const toggleScreenShare = useCallback(async () => {
+        if (!isScreenSharing) {
+            if (!navigator?.mediaDevices?.getDisplayMedia) {
+                alert("Screen sharing is not natively supported by this browser or mobile platform. For screen sharing, please open Hidayah on Chrome, Edge, or a desktop browser.");
+                return;
+            }
+
+            try {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: "always", displaySurface: "monitor" },
+                    audio: false
+                }).catch(() => navigator.mediaDevices.getDisplayMedia({ video: true }));
+
+                const screenTrack = screenStream?.getVideoTracks()[0];
                 if (!screenTrack) return;
-                
+
+                screenStreamRef.current = screenStream;
+
                 screenTrack.onended = () => {
                     stopScreenShare();
                 };
 
-                // Replace video track for all peers
-                Object.values(peerConnections.current).forEach(pc => {
-                    const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-                    if (sender) sender.replaceTrack(screenTrack);
-                });
-                
-                if (localVideoRef.current) localVideoRef.current.srcObject = screenStream;
+                // Replace or add video track for all connected peers
+                for (const [pId, pc] of Object.entries(peerConnections.current)) {
+                    try {
+                        const videoSender = pc.getSenders().find(s => s.track && s.track.kind === 'video') ||
+                                            pc.getTransceivers().find(t => t.sender && (!t.sender.track || t.sender.track.kind === 'video'))?.sender;
+
+                        if (videoSender) {
+                            const transceiver = pc.getTransceivers().find(t => t.sender === videoSender);
+                            if (transceiver && transceiver.direction === 'recvonly') {
+                                transceiver.direction = 'sendrecv';
+                            }
+                            await videoSender.replaceTrack(screenTrack);
+                        } else {
+                            pc.addTrack(screenTrack, screenStream);
+                        }
+
+                        // Renegotiate so remote peer receives new track
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        sendMessageRef.current?.(JSON.stringify({
+                            type: 'offer',
+                            peerId: myIdRef.current,
+                            targetId: pId,
+                            name: myNameRef.current,
+                            sdp: pc.localDescription
+                        }));
+                    } catch (peerErr) {
+                        console.warn("Error negotiating screen share with peer", pId, peerErr);
+                    }
+                }
+
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = screenStream;
+                }
                 setIsScreenSharing(true);
+
+                // Broadcast screen share presence to board and video
+                sendMessageRef.current?.(JSON.stringify({
+                    type: 'screen_share_status',
+                    peerId: myIdRef.current,
+                    name: myNameRef.current,
+                    isSharing: true
+                }));
             } catch (err) {
-                // User cancelling the screen-share prompt triggers NotAllowedError
                 if (err.name !== 'NotAllowedError') {
                     console.error("Screen sharing error:", err);
+                    alert("Could not start screen sharing: " + (err.message || err.name));
                 }
             }
         } else {
             stopScreenShare();
         }
-    };
+    }, [isScreenSharing, stopScreenShare]);
 
-    const stopScreenShare = () => {
-        const stream = localStreamRef.current || localStream;
-        const videoTrack = stream ? stream.getVideoTracks()[0] : null;
-        Object.values(peerConnections.current).forEach(pc => {
-            const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender) sender.replaceTrack(videoTrack || null);
+    // Keep parent component (LiveClassRoom and board) notified of screen share state
+    useEffect(() => {
+        onScreenShareStateChange?.({
+            isScreenSharing,
+            localScreenStream: isScreenSharing ? (screenStreamRef.current || localVideoRef.current?.srcObject || null) : null,
+            remoteScreenSharer
         });
-        if (localVideoRef.current && stream) {
-            localVideoRef.current.srcObject = stream;
+    }, [isScreenSharing, remoteScreenSharer, onScreenShareStateChange]);
+
+    // Provide external imperative toggle ref to parent
+    useEffect(() => {
+        if (externalToggleScreenShareRef) {
+            externalToggleScreenShareRef.current = toggleScreenShare;
         }
-        setIsScreenSharing(false);
-    };
+    }, [externalToggleScreenShareRef, toggleScreenShare]);
 
     const handleChatSubmit = (e) => {
         e.preventDefault();

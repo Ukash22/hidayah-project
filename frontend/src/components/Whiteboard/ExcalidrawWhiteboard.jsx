@@ -12,11 +12,139 @@ import QuranMushaf from '../QuranMushaf';
 import WhiteboardMediaHub from './WhiteboardMediaHub';
 import ScientificCalculator from './ScientificCalculator';
 
-const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
+// ── Floating Screen Share Stage ────────────────────────────────────────────
+// Renders a draggable, resizable floating video window for screen shares.
+// Shown to all participants: teacher sees their own preview; students see remote.
+const FloatingScreenStage = ({ isLocalSharing, localStream, remoteSharer, onClose, onStopShare }) => {
+    const videoRef = useRef(null);
+    const containerRef = useRef(null);
+    const [isMinimised, setIsMinimised] = React.useState(false);
+    const [pos, setPos] = React.useState({ x: 60, y: 60 });
+    const [size, setSize] = React.useState({ w: 420, h: 260 });
+    const dragRef = useRef(null);
+    const resizeRef = useRef(null);
+
+    // Attach the correct MediaStream to the <video> element
+    useEffect(() => {
+        if (!videoRef.current) return;
+        const stream = isLocalSharing ? localStream : (remoteSharer?.stream || null);
+        if (stream) {
+            videoRef.current.srcObject = stream;
+        }
+    }, [isLocalSharing, localStream, remoteSharer]);
+
+    // ── Drag logic ─────────────────────────────────────────────────────────
+    const startDrag = (e) => {
+        if (e.target.closest('button')) return;
+        e.preventDefault();
+        const startX = e.clientX - pos.x;
+        const startY = e.clientY - pos.y;
+        const onMove = (ev) => setPos({ x: ev.clientX - startX, y: ev.clientY - startY });
+        const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    };
+
+    // ── Resize logic ────────────────────────────────────────────────────────
+    const startResize = (e) => {
+        e.stopPropagation(); e.preventDefault();
+        const startX = e.clientX; const startY = e.clientY;
+        const startW = size.w; const startH = size.h;
+        const onMove = (ev) => setSize({ w: Math.max(260, startW + ev.clientX - startX), h: Math.max(160, startH + ev.clientY - startY) });
+        const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    };
+
+    const sharerName = isLocalSharing ? 'Your Screen' : (remoteSharer?.name || 'Screen Share');
+
+    return (
+        <div
+            ref={containerRef}
+            style={{ position: 'fixed', left: pos.x, top: pos.y, width: isMinimised ? 220 : size.w, zIndex: 5500, userSelect: 'none' }}
+            className="rounded-2xl overflow-hidden shadow-2xl border border-purple-500/50 bg-slate-950 flex flex-col animate-in fade-in zoom-in-95 duration-200"
+            onMouseDown={startDrag}
+        >
+            {/* Title bar */}
+            <div className="flex items-center justify-between px-3 py-2 bg-purple-950/90 cursor-grab active:cursor-grabbing select-none">
+                <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                    <span className="text-[11px] font-bold text-purple-200 uppercase tracking-wider truncate max-w-[120px]">
+                        🖥️ {sharerName}
+                    </span>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                    <button
+                        onClick={() => setIsMinimised(p => !p)}
+                        className="w-6 h-6 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-white text-[10px] font-bold transition-all flex items-center justify-center"
+                        title={isMinimised ? 'Expand' : 'Minimise'}
+                    >
+                        {isMinimised ? '▲' : '▼'}
+                    </button>
+                    {onStopShare && (
+                        <button
+                            onClick={onStopShare}
+                            className="w-6 h-6 rounded-lg bg-rose-600/80 hover:bg-rose-500 text-white text-[10px] font-bold transition-all flex items-center justify-center"
+                            title="Stop sharing"
+                        >
+                            ⏹
+                        </button>
+                    )}
+                    <button
+                        onClick={onClose}
+                        className="w-6 h-6 rounded-lg bg-slate-700/80 hover:bg-slate-500 text-slate-300 hover:text-white text-[10px] font-bold transition-all flex items-center justify-center"
+                        title="Hide (does not stop share)"
+                    >
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            {/* Video area */}
+            {!isMinimised && (
+                <div className="relative bg-black" style={{ height: size.h - 36 }}>
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted={isLocalSharing}
+                        className="w-full h-full object-contain"
+                    />
+                    {/* Resize handle */}
+                    <div
+                        onMouseDown={startResize}
+                        className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-50 hover:opacity-100"
+                        style={{ background: 'linear-gradient(135deg, transparent 50%, #a855f7 50%)' }}
+                    />
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+const ExcalidrawWhiteboard = ({ 
+    roomId, 
+    role, 
+    userName,
+    screenShareState,
+    onToggleScreenShare 
+}) => {
     const toast = useToast();
     const confirm = useConfirm();
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
+    const imageFileInputRef = useRef(null);
+    const [isScreenStageClosed, setIsScreenStageClosed] = useState(false);
+
+    // Re-open floating screen stage whenever a new screen share begins
+    const activeScreenSharer = screenShareState?.remoteScreenSharer;
+    const isLocalSharing = screenShareState?.isScreenSharing;
+    useEffect(() => {
+        if (activeScreenSharer || isLocalSharing) {
+            setIsScreenStageClosed(false);
+        }
+    }, [activeScreenSharer?.peerId, isLocalSharing]);
 
     // ── Multi-page state ──────────────────────────────────────────────────
     const [pages, setPages] = useState([{ id: 'page-1', name: 'Page 1', elements: [] }]);
@@ -237,6 +365,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 const payload = data.data || data;
 
                 if (action === 'push_board' && roleRef.current === 'STUDENT' && api) {
+                    if (payload.files && Object.keys(payload.files).length > 0) {
+                        try { api.addFiles(Object.values(payload.files)); } catch (_e) {}
+                    }
                     api.updateScene({ elements: payload.snapshot });
                 } else if (action === 'clear_boards' && roleRef.current === 'STUDENT' && api) {
                     api.updateScene({ elements: [] });
@@ -254,6 +385,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                     setExamTimer(payload.duration * 60);
                     setIsExamActive(true);
                     if (roleRef.current === 'STUDENT' && api) {
+                        if (payload.files && Object.keys(payload.files).length > 0) {
+                            try { api.addFiles(Object.values(payload.files)); } catch (_e) {}
+                        }
                         api.updateScene({ elements: payload.snapshot });
                         toast.warning(`Exam started! You have ${payload.duration} minutes.`);
                     } else if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
@@ -293,6 +427,9 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                 }
                 
                 if (payload.is_teacher_snapshot && roleRef.current === 'STUDENT') {
+                    if (payload.files && teacherViewAPIRef.current && Object.keys(payload.files).length > 0) {
+                        try { teacherViewAPIRef.current.addFiles(Object.values(payload.files)); } catch (_e) {}
+                    }
                     setTeacherBoardSnapshot(payload.snapshot);
                 }
             }
@@ -356,10 +493,14 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
         lastSentLengthRef.current = elements.length;
         lastSyncTime.current = Date.now();
 
+        const api = excalidrawAPIRef.current;
+        const files = api?.getFiles ? api.getFiles() : {};
+
         sendMessageRef.current?.(JSON.stringify({
             type: 'draw',
             is_teacher_snapshot: true,
-            snapshot: elements
+            snapshot: elements,
+            files: files
         }));
     }, []);
 
@@ -471,38 +612,72 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
 
         if (item.type === 'image' && item.url) {
             const fileId = "file-" + Math.random().toString(36).substr(2, 9);
-            api.addFiles([{
+            const fileData = {
                 id: fileId,
                 dataURL: item.url,
                 mimeType: item.mimeType || 'image/png',
                 created: Date.now(),
                 lastRetrieved: Date.now(),
-            }]);
-
-            const imgElement = {
-                type: "image",
-                x: 140 + Math.random() * 40,
-                y: 120 + Math.random() * 40,
-                width: 540,
-                height: 400,
-                fileId: fileId,
-                scale: [1, 1],
-                isDeleted: false,
-                fillStyle: "hachure",
-                strokeWidth: 1,
-                strokeStyle: "solid",
-                roughness: 0,
-                opacity: 100,
-                groupIds: [],
-                strokeColor: "#000000",
-                backgroundColor: "transparent",
-                version: 1,
-                versionNonce: Math.floor(Math.random() * 1000000),
-                id: "img-" + Math.random().toString(36).substr(2, 9),
             };
-            const elements = api.getSceneElements();
-            api.updateScene({ elements: [...elements, imgElement] });
-            toast.success(`Inserted ${item.title || 'document page'} onto canvas!`);
+            try { api.addFiles([fileData]); } catch (_e) {}
+
+            const insertImgWithDimensions = (w, h) => {
+                const imgElement = {
+                    type: "image",
+                    x: 160 + Math.random() * 30,
+                    y: 120 + Math.random() * 30,
+                    width: w,
+                    height: h,
+                    fileId: fileId,
+                    status: "saved",
+                    scale: [1, 1],
+                    crop: null,
+                    isDeleted: false,
+                    fillStyle: "hachure",
+                    strokeWidth: 1,
+                    strokeStyle: "solid",
+                    roughness: 0,
+                    opacity: 100,
+                    groupIds: [],
+                    strokeColor: "#000000",
+                    backgroundColor: "transparent",
+                    version: 1,
+                    versionNonce: Math.floor(Math.random() * 1000000),
+                    id: "img-" + Math.random().toString(36).substr(2, 9),
+                    updated: Date.now(),
+                    boundElements: null,
+                    link: null,
+                };
+                const elements = api.getSceneElements();
+                const nextElements = [...elements, imgElement];
+                api.updateScene({ elements: nextElements });
+                saveCurrentPageElements();
+
+                if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
+                    broadcastTeacherSnapshot(nextElements);
+                }
+                toast.success(`Inserted ${item.title || 'image'} onto canvas!`);
+            };
+
+            const img = new Image();
+            img.onload = () => {
+                const maxW = 540;
+                const maxH = 420;
+                let w = img.naturalWidth || 500;
+                let h = img.naturalHeight || 380;
+                const ratio = (w / (h || 1)) || 1;
+                if (w > maxW) {
+                    w = maxW;
+                    h = Math.round(w / ratio);
+                }
+                if (h > maxH) {
+                    h = maxH;
+                    w = Math.round(h * ratio);
+                }
+                insertImgWithDimensions(w, h);
+            };
+            img.onerror = () => insertImgWithDimensions(500, 380);
+            img.src = item.url;
         } else if (item.type === 'text' && item.text) {
             const textElement = {
                 id: "text-" + Math.random().toString(36).substr(2, 9),
@@ -563,7 +738,8 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
     const handlePush = (mode) => {
         if (excalidrawAPI) {
             const elements = excalidrawAPI.getSceneElements();
-            sendMessage(JSON.stringify({ type: 'command', action: 'push_board', snapshot: elements, mode: mode }));
+            const files = excalidrawAPI.getFiles ? excalidrawAPI.getFiles() : {};
+            sendMessage(JSON.stringify({ type: 'command', action: 'push_board', snapshot: elements, files, mode: mode }));
             toast.success('Pushed to all students!');
         }
     };
@@ -824,6 +1000,18 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
             {/* Scientific Calculator Popup */}
             {showCalculator && (
                 <ScientificCalculator onClose={() => setShowCalculator(false)} />
+            )}
+
+            {/* ── Floating Screen Share Stage ── */}
+            {/* Shows EITHER the local screen preview (teacher sharing) OR the remote screen (students watching) */}
+            {!isScreenStageClosed && (activeScreenSharer || isLocalSharing) && (
+                <FloatingScreenStage
+                    isLocalSharing={isLocalSharing}
+                    localStream={screenShareState?.localScreenStream}
+                    remoteSharer={activeScreenSharer}
+                    onClose={() => setIsScreenStageClosed(true)}
+                    onStopShare={isLocalSharing ? onToggleScreenShare : null}
+                />
             )}
 
             {/* ── Main Workspace: Full Canvas for Maximum Writing Space ─ */}
@@ -1088,6 +1276,27 @@ const ExcalidrawWhiteboard = ({ roomId, role, userName }) => {
                                     >
                                         <span className="text-base">⚠️</span>
                                         <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Clear All</span>
+                                    </button>
+                                </>
+                            )}
+
+                            {/* 10. Screen Share */}
+                            {onToggleScreenShare && (
+                                <>
+                                    <div className="w-6 h-px bg-slate-700/80 my-0.5" />
+                                    <button
+                                        onClick={onToggleScreenShare}
+                                        className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all border ${
+                                            isLocalSharing
+                                                ? 'bg-purple-600 text-white border-purple-500 shadow-lg shadow-purple-600/40 ring-2 ring-purple-400'
+                                                : 'bg-slate-800 hover:bg-purple-700 text-slate-300 hover:text-white border-slate-700'
+                                        }`}
+                                        title={isLocalSharing ? 'Stop Screen Share' : 'Share Your Screen'}
+                                    >
+                                        <span className="text-base">{isLocalSharing ? '⏹️' : '🖥️'}</span>
+                                        <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">
+                                            {isLocalSharing ? 'Stop' : 'Share'}
+                                        </span>
                                     </button>
                                 </>
                             )}
