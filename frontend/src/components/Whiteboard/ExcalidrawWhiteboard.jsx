@@ -15,72 +15,176 @@ import ScientificCalculator from './ScientificCalculator';
 // ── Floating Screen Share Stage ────────────────────────────────────────────
 // Renders a draggable, resizable floating video window for screen shares.
 // Shown to all participants: teacher sees their own preview; students see remote.
+// Enhanced for mobile devices: touch drag/resize, responsive bounds, and maximize mode.
 const FloatingScreenStage = ({ isLocalSharing, localStream, remoteSharer, onClose, onStopShare }) => {
     const videoRef = useRef(null);
     const containerRef = useRef(null);
     const [isMinimised, setIsMinimised] = React.useState(false);
-    const [pos, setPos] = React.useState({ x: 60, y: 60 });
-    const [size, setSize] = React.useState({ w: 420, h: 260 });
-    const dragRef = useRef(null);
-    const resizeRef = useRef(null);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
+    // Responsive initial size & position (fits mobile screens < 768px perfectly)
+    const [size, setSize] = React.useState(() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        if (isMobile) {
+            const w = Math.min(window.innerWidth - 20, 360);
+            const h = Math.round((w * 9) / 16) + 38;
+            return { w, h };
+        }
+        return { w: 420, h: 260 };
+    });
+
+    const [pos, setPos] = React.useState(() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        return isMobile ? { x: 10, y: 55 } : { x: 60, y: 60 };
+    });
 
     // Attach the correct MediaStream to the <video> element
     useEffect(() => {
         if (!videoRef.current) return;
         const stream = isLocalSharing ? localStream : (remoteSharer?.stream || null);
-        if (stream) {
+        if (stream && videoRef.current.srcObject !== stream) {
             videoRef.current.srcObject = stream;
+            videoRef.current.play().catch(e => console.warn("Floating video play prevented:", e));
         }
     }, [isLocalSharing, localStream, remoteSharer]);
 
-    // ── Drag logic ─────────────────────────────────────────────────────────
+    // ── Drag logic (supports both Mouse and Touch for mobile) ────────────────
     const startDrag = (e) => {
         if (e.target.closest('button')) return;
-        e.preventDefault();
-        const startX = e.clientX - pos.x;
-        const startY = e.clientY - pos.y;
-        const onMove = (ev) => setPos({ x: ev.clientX - startX, y: ev.clientY - startY });
-        const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
+        if (isExpanded) return;
+        const isTouch = Boolean(e.touches && e.touches.length > 0);
+        const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+        const startX = clientX - pos.x;
+        const startY = clientY - pos.y;
+
+        const onMove = (ev) => {
+            const cx = (ev.touches && ev.touches.length > 0) ? ev.touches[0].clientX : ev.clientX;
+            const cy = (ev.touches && ev.touches.length > 0) ? ev.touches[0].clientY : ev.clientY;
+            const maxX = Math.max(0, window.innerWidth - (isMinimised ? 220 : size.w) - 5);
+            const maxY = Math.max(0, window.innerHeight - 40);
+            setPos({
+                x: Math.min(Math.max(5, cx - startX), maxX),
+                y: Math.min(Math.max(5, cy - startY), maxY)
+            });
+        };
+
+        const onEnd = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
+            window.removeEventListener('touchmove', onMove);
+            window.removeEventListener('touchend', onEnd);
+        };
+
+        if (isTouch) {
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
+        } else {
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+        }
     };
 
-    // ── Resize logic ────────────────────────────────────────────────────────
+    // ── Resize logic (supports both Mouse and Touch for mobile) ──────────────
     const startResize = (e) => {
-        e.stopPropagation(); e.preventDefault();
-        const startX = e.clientX; const startY = e.clientY;
-        const startW = size.w; const startH = size.h;
-        const onMove = (ev) => setSize({ w: Math.max(260, startW + ev.clientX - startX), h: Math.max(160, startH + ev.clientY - startY) });
-        const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
+        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
+        const isTouch = Boolean(e.touches && e.touches.length > 0);
+        const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+        const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+        const startX = clientX;
+        const startY = clientY;
+        const startW = size.w;
+        const startH = size.h;
+
+        const onMove = (ev) => {
+            const cx = (ev.touches && ev.touches.length > 0) ? ev.touches[0].clientX : ev.clientX;
+            const cy = (ev.touches && ev.touches.length > 0) ? ev.touches[0].clientY : ev.clientY;
+            const maxW = Math.max(220, window.innerWidth - pos.x - 10);
+            const maxH = Math.max(140, window.innerHeight - pos.y - 10);
+            setSize({
+                w: Math.min(Math.max(220, startW + cx - startX), maxW),
+                h: Math.min(Math.max(140, startH + cy - startY), maxH)
+            });
+        };
+
+        const onEnd = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
+            window.removeEventListener('touchmove', onMove);
+            window.removeEventListener('touchend', onEnd);
+        };
+
+        if (isTouch) {
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
+        } else {
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+        }
     };
 
     const sharerName = isLocalSharing ? 'Your Screen' : (remoteSharer?.name || 'Screen Share');
 
+    // Dynamic style based on expanded state
+    const currentStyle = isExpanded
+        ? {
+            position: 'fixed',
+            left: 8,
+            top: 50,
+            width: 'calc(100vw - 16px)',
+            height: 'calc(100vh - 110px)',
+            zIndex: 5500,
+            userSelect: 'none'
+        }
+        : {
+            position: 'fixed',
+            left: pos.x,
+            top: pos.y,
+            width: isMinimised ? 220 : size.w,
+            zIndex: 5500,
+            userSelect: 'none'
+        };
+
     return (
         <div
             ref={containerRef}
-            style={{ position: 'fixed', left: pos.x, top: pos.y, width: isMinimised ? 220 : size.w, zIndex: 5500, userSelect: 'none' }}
+            style={currentStyle}
             className="rounded-2xl overflow-hidden shadow-2xl border border-purple-500/50 bg-slate-950 flex flex-col animate-in fade-in zoom-in-95 duration-200"
-            onMouseDown={startDrag}
         >
-            {/* Title bar */}
-            <div className="flex items-center justify-between px-3 py-2 bg-purple-950/90 cursor-grab active:cursor-grabbing select-none">
-                <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                    <span className="text-[11px] font-bold text-purple-200 uppercase tracking-wider truncate max-w-[120px]">
+            {/* Title bar with drag handle */}
+            <div
+                className="flex items-center justify-between px-3 py-2 bg-purple-950/90 cursor-grab active:cursor-grabbing select-none"
+                style={{ touchAction: 'none' }}
+                onMouseDown={startDrag}
+                onTouchStart={startDrag}
+            >
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse flex-shrink-0" />
+                    <span className="text-[11px] font-bold text-purple-200 uppercase tracking-wider truncate max-w-[130px] sm:max-w-[200px]">
                         🖥️ {sharerName}
                     </span>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
+                    {/* Maximize / Restore Toggle (especially useful on mobile) */}
                     <button
-                        onClick={() => setIsMinimised(p => !p)}
-                        className="w-6 h-6 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-white text-[10px] font-bold transition-all flex items-center justify-center"
-                        title={isMinimised ? 'Expand' : 'Minimise'}
+                        onClick={() => setIsExpanded(p => !p)}
+                        className="w-6 h-6 rounded-lg bg-purple-800/80 hover:bg-purple-700 text-purple-200 hover:text-white text-[10px] font-bold transition-all flex items-center justify-center"
+                        title={isExpanded ? 'Restore Size' : 'Maximize Screen Share'}
                     >
-                        {isMinimised ? '▲' : '▼'}
+                        {isExpanded ? '🗗' : '🗖'}
                     </button>
+                    {!isExpanded && (
+                        <button
+                            onClick={() => setIsMinimised(p => !p)}
+                            className="w-6 h-6 rounded-lg bg-slate-700/80 hover:bg-slate-600 text-slate-300 hover:text-white text-[10px] font-bold transition-all flex items-center justify-center"
+                            title={isMinimised ? 'Expand' : 'Minimise'}
+                        >
+                            {isMinimised ? '▲' : '▼'}
+                        </button>
+                    )}
                     {onStopShare && (
                         <button
                             onClick={onStopShare}
@@ -102,26 +206,35 @@ const FloatingScreenStage = ({ isLocalSharing, localStream, remoteSharer, onClos
 
             {/* Video area */}
             {!isMinimised && (
-                <div className="relative bg-black" style={{ height: size.h - 36 }}>
+                <div
+                    className="relative bg-black flex-1 min-h-0 flex items-center justify-center overflow-hidden"
+                    style={{ height: isExpanded ? 'calc(100% - 36px)' : size.h - 36 }}
+                >
                     <video
                         ref={videoRef}
                         autoPlay
                         playsInline
-                        muted={isLocalSharing}
+                        muted
                         className="w-full h-full object-contain"
                     />
-                    {/* Resize handle */}
-                    <div
-                        onMouseDown={startResize}
-                        className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-50 hover:opacity-100"
-                        style={{ background: 'linear-gradient(135deg, transparent 50%, #a855f7 50%)' }}
-                    />
+                    {/* Resize handle (only visible when not maximized) */}
+                    {!isExpanded && (
+                        <div
+                            onMouseDown={startResize}
+                            onTouchStart={startResize}
+                            style={{
+                                background: 'linear-gradient(135deg, transparent 50%, #a855f7 50%)',
+                                touchAction: 'none'
+                            }}
+                            className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize opacity-60 hover:opacity-100 flex items-end justify-end p-0.5"
+                            title="Drag to resize"
+                        />
+                    )}
                 </div>
             )}
         </div>
     );
 };
-
 
 const ExcalidrawWhiteboard = ({ 
     roomId, 

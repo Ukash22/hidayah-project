@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getAccess } from '../../services/tokenStore';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, MessageSquare, Hand, X } from 'lucide-react';
 
-const RemoteVideoTile = ({ id: _id, data, isStage = false, isPinned = false, isSpeaking = false, onPin, raisedHand }) => {
+const RemoteVideoTile = ({ id: _id, data, isStage = false, isPinned = false, isSpeaking = false, isScreenShare = false, onPin, raisedHand }) => {
     const videoRef = useRef(null);
     const audioRef = useRef(null);
     const [hasActiveVideo, setHasActiveVideo] = useState(false);
@@ -65,7 +65,7 @@ const RemoteVideoTile = ({ id: _id, data, isStage = false, isPinned = false, isS
                     playsInline 
                     onPlaying={() => setHasActiveVideo(true)}
                     onLoadedData={() => setHasActiveVideo(true)}
-                    className={`w-full h-full object-contain md:object-cover transition-opacity duration-300 ${hasActiveVideo ? 'opacity-100' : 'opacity-0'}`}
+                    className={`w-full h-full ${isScreenShare ? 'object-contain' : 'object-contain md:object-cover'} transition-opacity duration-300 ${hasActiveVideo ? 'opacity-100' : 'opacity-0'}`}
                 />
 
                 {!hasActiveVideo && (
@@ -82,6 +82,14 @@ const RemoteVideoTile = ({ id: _id, data, isStage = false, isPinned = false, isS
                         <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
                             {isHost ? '★ Host Speaker · Audio Live' : 'Participant · Audio Live'}
                         </span>
+                    </div>
+                )}
+
+                {/* Screen Share Indicator Badge */}
+                {isScreenShare && (
+                    <div className="absolute top-3 left-3 bg-purple-600/90 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-lg border border-purple-400 backdrop-blur-md z-10 animate-pulse">
+                        <span>🖥️</span>
+                        <span>Screen: {data?.name || 'Participant'}</span>
                     </div>
                 )}
 
