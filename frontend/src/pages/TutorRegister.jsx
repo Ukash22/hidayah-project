@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import { 
     Sparkles as IconSparkles, Briefcase as IconBriefcase, ArrowRight as IconArrowRight, X as IconX,
+    CheckCircle2 as IconCheckCircle2,
 } from 'lucide-react';
 
 // Core Components & Services
