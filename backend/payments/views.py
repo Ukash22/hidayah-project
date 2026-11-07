@@ -167,7 +167,12 @@ class VerifyPaymentView(APIView):
                     "verified": True,
                     "message": "Payment verified and processed successfully",
                     "amount": float(payment.amount),
-                    "paid_at": payment.completed_at
+                    "paid_at": payment.completed_at,
+                    "payment": {
+                        "reference": reference,
+                        "method": payment.payment_method,
+                        "amount": float(payment.amount),
+                    }
                 })
                 
             # Verify payment with Paystack
@@ -196,12 +201,23 @@ class VerifyPaymentView(APIView):
                 )
 
                 if flow_result.get("success"):
+                    # Fetch the now-completed payment for the receipt
+                    try:
+                        completed_payment = Payment.objects.get(transaction_id=reference, student=user)
+                    except Payment.DoesNotExist:
+                        completed_payment = None
+
                     return Response({
                         "success": True,
                         "verified": True,
                         "message": flow_result.get("message", "Payment verified and processed successfully"),
                         "amount": float(amount),
-                        "paid_at": result.get("paid_at")
+                        "paid_at": result.get("paid_at"),
+                        "payment": {
+                            "reference": reference,
+                            "method": completed_payment.payment_method if completed_payment else "PAYSTACK",
+                            "amount": float(amount),
+                        }
                     })
                 else:
                     error_msg = flow_result.get("message", "Processing failed")

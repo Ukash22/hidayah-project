@@ -111,7 +111,26 @@ const PaymentPage = () => {
 
                 const response = await api.post(walletEndpoint, {}, { headers: { Authorization: `Bearer ${token}` } });
                 if (response.data.success) {
-                    navigate(user?.role === 'PARENT' ? '/parent' : '/student', { state: { message: 'Payment processed successfully using your wallet balance!' } });
+                    // Navigate to the payment success/receipt screen instead of silently redirecting
+                    navigate('/payment/callback', {
+                        state: {
+                            walletSuccess: true,
+                            amount: loadAmount,
+                            subject: bookingDetail?.subject,
+                            tutorName: bookingDetail?.tutor_name,
+                            method: 'WALLET',
+                            paymentData: {
+                                amount: loadAmount,
+                                reference: response.data.reference || `WLT-${Date.now()}`,
+                                payment: {
+                                    method: 'WALLET',
+                                    amount: loadAmount,
+                                    reference: response.data.reference || `WLT-${Date.now()}`
+                                },
+                                booking: bookingDetail
+                            }
+                        }
+                    });
                     return;
                 }
             }
