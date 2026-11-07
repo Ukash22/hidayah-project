@@ -6,25 +6,42 @@ from .models import ScheduledSession, RescheduleRequest, Booking, Batch
 
 class BookingSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.get_full_name', read_only=True)
-    tutor_name = serializers.CharField(source='tutor.get_full_name', read_only=True)
+    tutor_name = serializers.SerializerMethodField()
     student_email = serializers.EmailField(source='student.email', read_only=True)
     tutor_class_link = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    approval_message = serializers.SerializerMethodField()
     
     class Meta:
         model = Booking
         fields = '__all__'
         read_only_fields = ('created_at',)
 
+    def get_tutor_name(self, obj):
+        if obj.tutor:
+            return obj.tutor.get_full_name() or obj.tutor.username
+        return "Unassigned (Admin Assigning)"
+
     def get_status(self, obj):
-        if obj.paid:
+        if obj.paid and obj.approved:
             return 'ACTIVE'
-        if obj.approved:
-            return 'APPROVED'
-        return 'PENDING'
+        if obj.paid and not obj.approved:
+            if getattr(obj, 'tutor_declined', False):
+                return 'TUTOR_BUSY_AWAITING_ADMIN'
+            return 'AWAITING_APPROVAL'
+        if not obj.paid and obj.approved:
+            return 'APPROVED_PENDING_PAYMENT'
+        return 'PENDING_PAYMENT'
+
+    def get_approval_message(self, obj):
+        if obj.paid and not obj.approved:
+            if getattr(obj, 'tutor_declined', False):
+                return "Your requested tutor is currently busy. An Admin will assign a replacement tutor for your class shortly."
+            return "Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you."
+        return None
 
     def get_tutor_class_link(self, obj):
-        if hasattr(obj.tutor, 'tutor_profile'):
+        if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
             return obj.tutor.tutor_profile.live_class_link
         return None
 

@@ -42,20 +42,23 @@ def fulfill_all_student_enrollments(student_user):
         logger.exception("Payment fulfillment failed")
         return {"success": False, "error": str(e)}
 
-def process_payment(booking):
+def fulfill_and_generate_sessions_for_booking(booking):
     """
-    Process payment for a booking:
-    1. Payment goes to the Platform (Escrow). Tutor is NOT credited upfront.
-       Tutor wallet is only funded after tutor finishes class and admin verifies.
-    2. Update StudentProfile (tutor, course, status).
-    3. Create / update Enrollment record (sync auto_renew).
-    4. Calculate fee_per_session and generate initial ScheduledSessions (4 weeks).
-    5. Mark booking as paid and approved.
+    Fulfill an approved and paid booking:
+    1. Update StudentProfile (assigned_tutor, enrolled_courses, payment_status='PAID').
+    2. Create / update Enrollment record (sync auto_renew).
+    3. Generate initial ScheduledSessions (4 weeks) with accurate per-session fee.
+    4. Ensure booking.paid = True and booking.approved = True.
+    5. Send notifications to student and tutor.
     """
     from decimal import Decimal
-    # Funds remain in Platform Escrow. Tutor is paid upon session completion & admin verification.
+    from programs.models import Subject
+    from classes.models import ScheduledSession
 
-    # 2. Update Student Profile
+    if not booking.tutor:
+        logger.warning(f"Cannot generate sessions for booking {booking.id} without an assigned tutor.")
+        return False
+
     try:
         profile = StudentProfile.objects.get(user=booking.student)
         profile.assigned_tutor = booking.tutor
@@ -64,14 +67,11 @@ def process_payment(booking):
         # Try to find the Subject object to associate correctly
         subject_obj = Subject.objects.filter(name__icontains=booking.subject).first()
         if not subject_obj:
-            # Fallback: Create placeholder subject so enrollment is NOT skipped
-            # Need to provide a Program as it's a required field
             from programs.models import Program
             default_program, _ = Program.objects.get_or_create(
                 name="General Education",
                 defaults={'program_type': 'WESTERN'}
             )
-            
             subject_obj, _ = Subject.objects.get_or_create(
                 name=booking.subject,
                 defaults={
@@ -84,17 +84,13 @@ def process_payment(booking):
         if not profile.enrolled_courses.filter(id=subject_obj.id).exists():
             profile.enrolled_courses.add(subject_obj)
         profile.enrolled_course = subject_obj.name
-            
         profile.save()
 
-        # 3. Create Enrollment Record
-        # Calculate an estimated hourly rate for the record
+        # Create or update Enrollment Record
         est_hourly = 3000
         if booking.hours_per_week and booking.hours_per_week > 0:
-            # Assume price is for 1 month (4 weeks)
             est_hourly = booking.price / (Decimal(str(booking.hours_per_week)) * Decimal('4'))
 
-        # Extract schedule info from the JSON string
         days_list = []
         if booking.schedule:
             try:
@@ -108,8 +104,7 @@ def process_payment(booking):
         days_per_week = len(days_list) if days_list else 1
         preferred_days_str = ", ".join(days_list) if days_list else "Days TBA"
 
-        # Check for existing enrollment or create new one
-        enrollment, created = Enrollment.objects.get_or_create(
+        enrollment, _ = Enrollment.objects.get_or_create(
             student=profile,
             subject=subject_obj,
             tutor=booking.tutor,
@@ -123,45 +118,72 @@ def process_payment(booking):
                 'preferred_start_date': booking.preferred_start_date
             }
         )
-        
-        # Sync auto_renew setting from booking to enrollment
+        enrollment.status = 'APPROVED'
+        enrollment.tutor = booking.tutor
         enrollment.auto_renew = getattr(booking, 'auto_renew', False)
         enrollment.save()
 
-        # 4. Generate Initial Scheduled Sessions (4 Weeks) with accurate per-session fee
-        total_sessions = max(1, days_per_week * 4)
-        fee_per_session = Decimal(str(booking.price)) / Decimal(str(total_sessions))
-
-        generate_recurring_sessions(
+        # Generate ScheduledSessions (4 Weeks) only if not already generated
+        existing_sessions_count = ScheduledSession.objects.filter(
             student=booking.student,
             tutor=booking.tutor,
-            subject_obj=subject_obj,
-            schedule_data=booking.schedule,
-            fee_per_session=fee_per_session,
-            weeks=4,
-            start_date=booking.preferred_start_date
-        )
+            subject=subject_obj,
+            status='PENDING'
+        ).count()
+
+        if existing_sessions_count == 0:
+            total_sessions = max(1, days_per_week * 4)
+            fee_per_session = Decimal(str(booking.price)) / Decimal(str(total_sessions))
+
+            generate_recurring_sessions(
+                student=booking.student,
+                tutor=booking.tutor,
+                subject_obj=subject_obj,
+                schedule_data=booking.schedule,
+                fee_per_session=fee_per_session,
+                weeks=4,
+                start_date=booking.preferred_start_date
+            )
+            logger.info(f"Generated 4-week sessions for booking {booking.id}")
 
     except StudentProfile.DoesNotExist:
-        pass
+        logger.warning(f"StudentProfile not found for booking {booking.id}")
+        profile = None
 
-    # 5. Mark booking as paid and approved
+    # Mark booking as approved and paid
     booking.paid = True
     booking.approved = True
+    booking.tutor_declined = False
     booking.save()
-    
-    # 6. Final safety check on profile
-    if profile.payment_status != 'PAID':
-        profile.payment_status = 'PAID'
-        profile.save()
 
-    # 7. WhatsApp notifications (non-blocking — errors are logged, not raised)
+    # Dispatch Notifications
     try:
-        student_phone = getattr(booking.student, 'phone_number', None) or getattr(profile, 'phone_number', None)
-        tutor_phone   = getattr(booking.tutor, 'phone_number', None)
-        student_name  = booking.student.get_full_name() or booking.student.email
-        tutor_name    = booking.tutor.get_full_name() or booking.tutor.email
-        amount_str    = f"₦{booking.price:,.0f}"
+        from accounts.models import Notification
+        tutor_name = booking.tutor.get_full_name() or booking.tutor.username
+        student_name = booking.student.get_full_name() or booking.student.username
+        
+        Notification.create(
+            user=booking.student,
+            title="Classes Scheduled & Ready!",
+            message=f"Your booking for {booking.subject} with {tutor_name} is confirmed! Your upcoming class sessions have been scheduled.",
+            link="/student/classes"
+        )
+        Notification.create(
+            user=booking.tutor,
+            title="New Student Classes Scheduled",
+            message=f"Classes with {student_name} for {booking.subject} have been generated and added to your schedule.",
+            link="/tutor/schedule"
+        )
+    except Exception as ne:
+        logger.warning(f"Notification error on booking {booking.id}: {ne}")
+
+    # WhatsApp notifications (non-blocking)
+    try:
+        student_phone = getattr(booking.student, 'phone_number', None) or (profile and getattr(profile, 'phone_number', None))
+        tutor_phone = getattr(booking.tutor, 'phone_number', None)
+        student_name = booking.student.get_full_name() or booking.student.email
+        tutor_name = booking.tutor.get_full_name() or booking.tutor.email
+        amount_str = f"₦{booking.price:,.0f}"
 
         if student_phone:
             notify_payment_confirmed(
@@ -180,5 +202,51 @@ def process_payment(booking):
     except Exception as wa_err:
         logger.warning(f"WhatsApp notification skipped for booking {booking.id}: {wa_err}")
 
-    logger.info(f"Successfully processed payment for booking {booking.id}. Enrollment created and sessions generated.")
+    return True
+
+
+def process_payment(booking):
+    """
+    Process payment for a booking:
+    1. Mark booking as paid (funds held in platform escrow).
+    2. If booking is ALREADY approved (by tutor or admin), immediately generate classes.
+    3. If booking is NOT yet approved, notify tutor & admin to approve or assign a tutor.
+       Classes will generate upon approval/assignment.
+    """
+    booking.paid = True
+    booking.save()
+
+    # If already approved and tutor is assigned, fulfill immediately
+    if booking.approved and booking.tutor:
+        fulfill_and_generate_sessions_for_booking(booking)
+    else:
+        # Awaiting tutor approval or admin assignment
+        try:
+            from accounts.models import Notification
+            student_name = booking.student.get_full_name() or booking.student.username
+            tutor_name = booking.tutor.get_full_name() if booking.tutor else "TBA"
+
+            Notification.create(
+                user=booking.student,
+                title="Payment Confirmed — Awaiting Tutor Approval",
+                message=f"Payment for {booking.subject} received! Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you.",
+                link="/student/overview"
+            )
+
+            if booking.tutor:
+                Notification.create(
+                    user=booking.tutor,
+                    title="Paid Booking Request",
+                    message=f"{student_name} has paid for {booking.subject} and is waiting for your approval.",
+                    link="/tutor/requests"
+                )
+
+            Notification.notify_admins(
+                title="New Paid Booking Awaiting Approval",
+                message=f"{student_name} paid ₦{booking.price:,.2f} for {booking.subject} (Tutor: {tutor_name}). Awaiting confirmation or tutor assignment.",
+                link="/admin/bookings"
+            )
+        except Exception as ne:
+            logger.warning(f"Notification error on booking payment {booking.id}: {ne}")
+
     return True

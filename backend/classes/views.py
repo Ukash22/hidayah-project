@@ -346,7 +346,7 @@ class BookingRequestView(APIView):
             learning_level=learning_level,
             class_structure=class_structure,
             preferred_start_date=preferred_start_date,
-            approved=True # AUTO-APPROVE
+            approved=False
         )
 
         try:
@@ -355,25 +355,25 @@ class BookingRequestView(APIView):
             tutor_name = tutor_profile.user.get_full_name() or tutor_profile.user.username
             Notification.create(
                 user=tutor_profile.user,
-                title="New Class Booking",
-                message=f"{student_name} booked sessions for {subject}.",
+                title="New Class Booking Request",
+                message=f"{student_name} requested sessions for {subject}.",
                 link="/tutor/requests"
             )
             Notification.notify_admins(
-                title="New Class Booking",
+                title="New Class Booking Request",
                 message=f"{student_name} booked {subject} with tutor {tutor_name}.",
-                link="/admin/classes"
+                link="/admin/bookings"
             )
             Notification.create(
                 user=request.user,
                 title="Booking Placed",
-                message=f"Your booking for {subject} with {tutor_name} has been placed.",
-                link="/student/schedule"
+                message=f"Your booking for {subject} with {tutor_name} has been placed. Please complete payment to confirm your booking.",
+                link="/student/overview"
             )
         except Exception as bne:
             logger.warning("Failed to dispatch booking notifications: %s", bne)
 
-        return Response({"message": "Booking successful and automatically approved", "id": booking.id}, status=201)
+        return Response({"message": "Booking created successfully. Please complete payment.", "id": booking.id}, status=201)
 
     def get(self, request):
         from .models import Booking
@@ -409,40 +409,72 @@ class BookingApprovalView(APIView):
         
         if 'approve' in action:
             booking.approved = True
+            booking.tutor_declined = False
             booking.save()
+
+            # If student has already paid, generate the classes!
+            if booking.paid:
+                from payments.services import fulfill_and_generate_sessions_for_booking
+                fulfill_and_generate_sessions_for_booking(booking)
+
             try:
                 from accounts.models import Notification
                 tutor_name = request.user.get_full_name() or request.user.username
                 Notification.create(
                     user=booking.student,
-                    title="Booking Approved",
-                    message=f"Tutor {tutor_name} approved your booking for {booking.subject}.",
-                    link="/student/schedule"
+                    title="Booking Approved!",
+                    message=f"Tutor {tutor_name} approved your booking for {booking.subject}." + (" Your classes are scheduled and ready!" if booking.paid else " Please complete payment to start classes."),
+                    link="/student/classes" if booking.paid else "/student/overview"
                 )
             except Exception:
                 pass
-            return Response({"message": "Booking approved. Student notified."})
+            return Response({"message": "Booking approved. Student notified." + (" Classes generated." if booking.paid else "")})
+
         elif 'reject' in action:
             rejection_reason = (request.data.get('rejection_reason') or '').strip()
-            # Notify the student before deleting so they see the reason in their bell
             from accounts.models import Notification
             tutor_name = request.user.get_full_name() or request.user.username
-            note_msg = f"Your booking request for {booking.subject} was declined by {tutor_name}."
-            if rejection_reason:
-                note_msg += f" Reason: {rejection_reason}"
-            Notification.objects.create(
-                user=booking.student,
-                title="Booking Request Declined",
-                message=note_msg,
-            )
-            booking.delete()
-            return Response({"message": "Booking rejected."})
+            student_name = booking.student.get_full_name() or booking.student.username
+
+            if booking.paid:
+                # If paid, do NOT delete the booking! Keep it so Admin can assign a new tutor!
+                booking.tutor_declined = True
+                booking.approved = False
+                booking.save()
+
+                note_msg = f"Tutor {tutor_name} is currently busy/unavailable for {booking.subject}. An Admin will assign a replacement tutor for your class shortly."
+                if rejection_reason:
+                    note_msg += f" (Tutor note: {rejection_reason})"
+
+                Notification.objects.create(
+                    user=booking.student,
+                    title="Tutor Unavailable — Admin Assigning New Tutor",
+                    message=note_msg,
+                    link="/student/overview"
+                )
+                Notification.notify_admins(
+                    title="Paid Booking Needs Tutor Assignment",
+                    message=f"Tutor {tutor_name} was busy and declined paid booking for {student_name} ({booking.subject}). Please assign a replacement tutor.",
+                    link="/admin/bookings"
+                )
+                return Response({"message": "Booking declined. Admin notified to assign a replacement tutor for the student."})
+            else:
+                note_msg = f"Your booking request for {booking.subject} was declined by {tutor_name}."
+                if rejection_reason:
+                    note_msg += f" Reason: {rejection_reason}"
+                Notification.objects.create(
+                    user=booking.student,
+                    title="Booking Request Declined",
+                    message=note_msg,
+                )
+                booking.delete()
+                return Response({"message": "Booking rejected."})
         
         return Response({"error": "Invalid action"}, status=400)
 
 
 class AdminBookingRequestView(APIView):
-    """Admin: Get all pending bookings or approve/reject them"""
+    """Admin: Get all pending bookings, assign/reassign tutors, or approve/reject them"""
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
@@ -452,6 +484,12 @@ class AdminBookingRequestView(APIView):
         
         if status_filter == 'pending':
             bookings = Booking.objects.filter(approved=False).order_by('-created_at')
+        elif status_filter == 'paid_awaiting_approval':
+            # Paid by student, but awaiting tutor approval or reassignment
+            bookings = Booking.objects.filter(paid=True, approved=False).order_by('-created_at')
+        elif status_filter == 'tutor_busy':
+            # Tutor declined / busy, needs admin assignment
+            bookings = Booking.objects.filter(tutor_declined=True).order_by('-created_at')
         elif status_filter == 'approved':
              bookings = Booking.objects.filter(approved=True, paid=False).order_by('-created_at')
         elif status_filter == 'active':
@@ -463,41 +501,54 @@ class AdminBookingRequestView(APIView):
 
     def post(self, request, booking_id):
         from .models import Booking
+        from .serializers import BookingSerializer
         from django.contrib.auth import get_user_model
+        from payments.services import fulfill_and_generate_sessions_for_booking
         User = get_user_model()
         
         booking = get_object_or_404(Booking, id=booking_id)
         
-        # 1. Handle Updates (Tutor/Subject Reassignment)
+        # 1. Handle Updates (Tutor/Subject Assignment or Reassignment)
         new_tutor_id = request.data.get('tutor_id')
         new_subject = request.data.get('subject')
+        action = request.data.get('action') # 'approve', 'assign', 'reject'
         
         if new_tutor_id:
             try:
                 new_tutor = User.objects.get(id=new_tutor_id, role='TUTOR')
                 booking.tutor = new_tutor
+                booking.tutor_declined = False
             except User.DoesNotExist:
                 return Response({"error": "Tutor not found"}, status=404)
         
         if new_subject:
             booking.subject = new_subject
-            
-        if new_tutor_id or new_subject:
-            booking.save()
 
-        # 2. Handle Action (Approve/Reject)
-        action = request.data.get('action') # 'approve' or 'reject'
-
-        if action == 'approve':
-            booking.approved = True
-            booking.save()
-            return Response({"message": "Booking approved by Admin", "approved": True})
-        elif action == 'reject':
+        if action == 'reject':
             booking.delete()
             return Response({"message": "Booking rejected by Admin", "approved": False})
+            
+        if action == 'approve' or new_tutor_id:
+            booking.approved = True
+            booking.tutor_declined = False
+            booking.save()
+            
+            # If the booking is paid, immediately generate the classes!
+            if booking.paid and booking.tutor:
+                fulfill_and_generate_sessions_for_booking(booking)
+                return Response({
+                    "message": f"Tutor {booking.tutor.get_full_name() or booking.tutor.username} assigned and classes generated successfully.",
+                    "booking": BookingSerializer(booking).data
+                })
+            else:
+                return Response({
+                    "message": "Booking approved by Admin. Awaiting student payment to generate classes.",
+                    "booking": BookingSerializer(booking).data
+                })
         
-        if new_tutor_id or new_subject:
-             return Response({"message": "Booking updated successfully", "booking": BookingSerializer(booking).data})
+        if new_subject:
+            booking.save()
+            return Response({"message": "Booking subject updated successfully", "booking": BookingSerializer(booking).data})
              
         return Response({"error": "Invalid action or no update provided"}, status=400)
 class SessionCompleteView(APIView):

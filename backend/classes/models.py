@@ -102,7 +102,7 @@ class Batch(models.Model):
 
 class Booking(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_bookings')
-    tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_bookings')
+    tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_bookings', null=True, blank=True)
     subject = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     
@@ -116,10 +116,12 @@ class Booking(models.Model):
     approved = models.BooleanField(default=False)
     paid = models.BooleanField(default=False)
     auto_renew = models.BooleanField(default=False, help_text="Auto-renew booking and classes for next month")
+    tutor_declined = models.BooleanField(default=False, help_text="Set if tutor declined/busy, awaiting admin reassignment")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.student.username} requests {self.subject} with {self.tutor.username}"
+        tutor_name = self.tutor.username if self.tutor else "Unassigned"
+        return f"{self.student.username} requests {self.subject} with {tutor_name}"
 
     def save(self, *args, **kwargs):
         """Auto-calculate price based on tutor rate, session duration, and schedule count (4-week block)"""
@@ -129,7 +131,7 @@ class Booking(models.Model):
             
             # 1. Get tutor's hourly rate (Default to 1500 if not set)
             tutor_rate = Decimal('1500.00')
-            if hasattr(self.tutor, 'tutor_profile') and self.tutor.tutor_profile.hourly_rate:
+            if self.tutor and hasattr(self.tutor, 'tutor_profile') and self.tutor.tutor_profile.hourly_rate:
                 tutor_rate = self.tutor.tutor_profile.hourly_rate
             
             # 2. Extract number of days from JSON schedule

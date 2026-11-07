@@ -272,8 +272,8 @@ class PaymentStatusView(APIView):
         try:
             profile = StudentProfile.objects.get(user=user)
             
-            # Sum up all approved but unpaid bookings for this student
-            unpaid_bookings_total = Booking.objects.filter(student=user, approved=True, paid=False).aggregate(total=Sum('price'))['total'] or 0.0
+            # Sum up all unpaid bookings for this student (cleared as soon as paid=True)
+            unpaid_bookings_total = Booking.objects.filter(student=user, paid=False).aggregate(total=Sum('price'))['total'] or 0.0
             
             return Response({
                 "payment_status": profile.payment_status,
@@ -407,18 +407,19 @@ class InitiateBookingPaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, booking_id):
-        booking = get_object_or_404(Booking, id=booking_id, student=request.user, approved=True)
+        booking = get_object_or_404(Booking, id=booking_id, student=request.user)
         
         if booking.paid:
             return Response({"error": "Booking is already paid"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Pre-payment availability check
-        import json
-        from classes.utils import check_tutor_conflict
-        schedule_data = json.loads(booking.schedule) if isinstance(booking.schedule, str) else booking.schedule
-        has_conflict, conflict_msg = check_tutor_conflict(booking.tutor, schedule_data)
-        if has_conflict:
-            return Response({"error": f"Tutor is no longer available: {conflict_msg}"}, status=status.HTTP_400_BAD_REQUEST)
+        # Pre-payment availability check (if tutor already chosen)
+        if booking.tutor:
+            import json
+            from classes.utils import check_tutor_conflict
+            schedule_data = json.loads(booking.schedule) if isinstance(booking.schedule, str) else booking.schedule
+            has_conflict, conflict_msg = check_tutor_conflict(booking.tutor, schedule_data)
+            if has_conflict:
+                return Response({"error": f"Tutor is no longer available: {conflict_msg}"}, status=status.HTTP_400_BAD_REQUEST)
 
         ref = f"BOOKING-{booking.id}-{int(timezone.now().timestamp())}"
         
@@ -497,7 +498,7 @@ class ProcessWalletPaymentView(APIView):
         from .services import process_payment
         from classes.models import Booking
         
-        booking = get_object_or_404(Booking, id=booking_id, student=request.user, approved=True)
+        booking = get_object_or_404(Booking, id=booking_id, student=request.user)
         if booking.paid:
             return Response({"error": "Already paid"}, status=400)
             
