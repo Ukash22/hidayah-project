@@ -98,7 +98,18 @@ export default function TutorRequests() {
                             <div className="flex items-center gap-6">
                                 <div className="bg-primary/10 w-16 h-16 rounded-card flex items-center justify-center border border-primary/10"><User size={28} className="text-primary" /></div>
                                 <div>
-                                    <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">{req.student_name}</h4>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">{req.student_name}</h4>
+                                        {req.paid ? (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                                ✅ Paid · Classes Generate On Approval
+                                            </span>
+                                        ) : (
+                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+                                                💳 Unpaid Request
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-slate-500 text-[11px] font-semibold uppercase tracking-wide flex items-center gap-2 mt-1">
                                         <span>📩 Received: {new Date(req.created_at).toLocaleDateString()}</span>
                                         <span className="text-slate-200">|</span>

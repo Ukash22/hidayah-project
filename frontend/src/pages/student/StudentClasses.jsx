@@ -88,6 +88,20 @@ export default function StudentClasses() {
             <title>My Classes — Hidayah</title>
             <PageHeader title="Live Learning Sessions" description="Your upcoming and scheduled class sessions." />
 
+            {bookings.some(b => b.paid && !b.approved) && (
+                <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-sm">
+                    <span className="text-xl">⏳</span>
+                    <div>
+                        <h4 className="font-bold text-sm">
+                            {bookings.filter(b => b.paid && !b.approved).map(b => b.subject).join(', ')} — Paid & Awaiting Tutor Confirmation
+                        </h4>
+                        <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                            Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you. Your live class schedule will appear here as soon as approved!
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {batches.length > 0 && (
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">

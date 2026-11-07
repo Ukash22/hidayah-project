@@ -305,9 +305,9 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
             except Exception as e:
                 logger.error(f"Initial enrollment fulfillment failed for {user.username}: {e}")
             
-        # [NEW LOGIC] Check for and fulfill pending bookings now that balance is updated
+        # Check for and fulfill unpaid bookings now that balance is updated
         from classes.models import Booking
-        pending_bookings = Booking.objects.filter(student=user, approved=True, paid=False).order_by('created_at')
+        pending_bookings = Booking.objects.filter(student=user, paid=False).order_by('created_at')
         
         for pending in pending_bookings:
             if wallet.balance >= pending.price:
