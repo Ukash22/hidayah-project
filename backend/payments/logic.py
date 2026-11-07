@@ -306,31 +306,35 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
                 logger.error(f"Initial enrollment fulfillment failed for {user.username}: {e}")
             
         # Check for and fulfill unpaid bookings now that balance is updated
-        from classes.models import Booking
-        pending_bookings = Booking.objects.filter(student=user, paid=False).order_by('created_at')
-        
-        for pending in pending_bookings:
-            if wallet.balance >= pending.price:
-                try:
-                    with transaction.atomic():
-                        # Deduct from wallet
-                        wallet.balance -= pending.price
-                        wallet.save()
-                        
-                        # Fulfill using existing service logic
-                        from .services import process_payment
-                        process_payment(pending)
-                        
-                        # Record the debit transaction
-                        Transaction.objects.create(
-                            user=user,
-                            amount=pending.price,
-                            transaction_type='SESSION_DEBIT',
-                            description=f"Automated Fulfillment: {pending.subject}",
-                            reference=f"AUTO-{pending.id}"
-                        )
-                except Exception as e:
-                    logger.error(f"Auto-fulfillment of pending booking {pending.id} failed: {e}")
+        # (Only for non-booking payments — wallet top-ups. For booking payments, 
+        # process_payment handles fulfillment directly.)
+        if not is_booking:
+            from classes.models import Booking
+            user_wallet, _ = Wallet.objects.get_or_create(user=user)
+            pending_bookings = Booking.objects.filter(student=user, paid=False).order_by('created_at')
+            
+            for pending in pending_bookings:
+                if user_wallet.balance >= pending.price:
+                    try:
+                        with transaction.atomic():
+                            # Deduct from wallet
+                            user_wallet.balance -= pending.price
+                            user_wallet.save()
+                            
+                            # Fulfill using existing service logic
+                            from .services import process_payment
+                            process_payment(pending)
+                            
+                            # Record the debit transaction
+                            Transaction.objects.create(
+                                user=user,
+                                amount=pending.price,
+                                transaction_type='SESSION_DEBIT',
+                                description=f"Automated Fulfillment: {pending.subject}",
+                                reference=f"AUTO-{pending.id}"
+                            )
+                    except Exception as e:
+                        logger.error(f"Auto-fulfillment of pending booking {pending.id} failed: {e}")
                     
     except StudentProfile.DoesNotExist:
         logger.warning(f"StudentProfile not found for {user.username}. Skipping post-payment automation.")
