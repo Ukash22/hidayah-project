@@ -273,18 +273,18 @@ def process_payment(booking):
     """
     Process payment for a booking:
     1. Mark booking as paid (funds held in platform escrow).
-    2. If booking is ALREADY approved (by tutor or admin), immediately generate classes.
-    3. If booking is NOT yet approved, notify tutor & admin to approve or assign a tutor.
-       Classes will generate upon approval/assignment.
+    2. If booking is ALREADY approved by Admin, immediately generate classes.
+    3. If booking is NOT yet approved, notify student, tutor & admin: Waiting for Admin Approval.
+       Classes will generate upon Admin approval.
     """
     booking.paid = True
     booking.save()
 
-    # If already approved and tutor is assigned, fulfill immediately
+    # If already approved by admin and tutor is assigned, fulfill immediately
     if booking.approved and booking.tutor:
         fulfill_and_generate_sessions_for_booking(booking)
     else:
-        # Awaiting tutor approval or admin assignment
+        # Awaiting Admin approval
         try:
             from accounts.models import Notification
             student_name = booking.student.get_full_name() or booking.student.username
@@ -292,22 +292,22 @@ def process_payment(booking):
 
             Notification.create(
                 user=booking.student,
-                title="Payment Confirmed — Wait for Tutor Approval or Admin",
-                message=f"Payment for {booking.subject} received! Wait for tutor approval or admin. If the tutor is busy, admin will assign a new tutor for you. Your class link will be generated once approved.",
+                title="Payment Confirmed — Waiting for Admin Approval",
+                message=f"Payment for {booking.subject} received! Status: Waiting for Admin Approval. Your class link will be generated once approved by Admin.",
                 link="/student/overview"
             )
 
             if booking.tutor:
                 Notification.create(
                     user=booking.tutor,
-                    title="Paid Booking Request — Awaiting Approval",
-                    message=f"{student_name} has paid for {booking.subject} and is waiting for your approval. Class links will generate upon approval.",
+                    title="Paid Booking Request — Waiting for Admin Approval",
+                    message=f"{student_name} has paid for {booking.subject}. Waiting for Admin approval before class links and sessions are generated.",
                     link="/tutor/requests"
                 )
 
             Notification.notify_admins(
-                title="New Paid Booking Awaiting Approval",
-                message=f"{student_name} paid ₦{booking.price:,.2f} for {booking.subject} (Tutor: {tutor_name}). Wait for tutor approval or admin assignment.",
+                title="New Paid Booking Awaiting Admin Approval",
+                message=f"{student_name} paid ₦{booking.price:,.2f} for {booking.subject} (Tutor: {tutor_name}). Waiting for Admin approval to generate class sessions.",
                 link="/admin/bookings"
             )
         except Exception as ne:

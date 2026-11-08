@@ -4,7 +4,7 @@
 import logging
 logger = logging.getLogger(__name__)
 
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -413,51 +413,9 @@ class BookingApprovalView(APIView):
         action = request.resolver_match.url_name
         
         if 'approve' in action:
-            booking.approved = True
-            booking.tutor_declined = False
-            booking.save()
-
-            class_link = ""
-            # If student has already paid, generate the classes & link!
-            if booking.paid:
-                from payments.services import fulfill_and_generate_sessions_for_booking
-                fulfill_and_generate_sessions_for_booking(booking)
-                first_session = ScheduledSession.objects.filter(
-                    student=booking.student, tutor=booking.tutor, status='PENDING'
-                ).order_by('scheduled_at').first()
-                if first_session:
-                    class_link = first_session.meeting_link or ""
-
-            try:
-                from accounts.models import Notification
-                tutor_name = request.user.get_full_name() or request.user.username
-                student_name = booking.student.get_full_name() or booking.student.username
-                if booking.paid:
-                    Notification.create(
-                        user=booking.student,
-                        title="Booking Approved & Class Link Ready!",
-                        message=f"Tutor {tutor_name} approved your booking for {booking.subject}. Your class link has been generated: {class_link}",
-                        link=f"/live/{first_session.id}" if first_session else "/student/classes"
-                    )
-                    Notification.create(
-                        user=request.user,
-                        title="Booking Approved & Class Link Ready",
-                        message=f"You approved booking with {student_name} for {booking.subject}. Your class link has been generated: {class_link}",
-                        link=f"/live/{first_session.id}" if first_session else "/tutor/schedule"
-                    )
-                else:
-                    Notification.create(
-                        user=booking.student,
-                        title="Booking Request Accepted — Pending Payment",
-                        message=f"Tutor {tutor_name} accepted your booking for {booking.subject}. Status is Pending Payment — please complete payment to generate your class link.",
-                        link=f"/payment?booking_id={booking.id}"
-                    )
-            except Exception:
-                pass
             return Response({
-                "message": f"Booking approved. Student notified." + (f" Class link generated: {class_link}" if booking.paid else " Pending student payment."),
-                "class_link": class_link
-            })
+                "error": "Only Administrators can approve class bookings. This booking is waiting for Admin approval."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         elif 'reject' in action:
             rejection_reason = (request.data.get('rejection_reason') or '').strip()
@@ -575,8 +533,9 @@ class AdminBookingRequestView(APIView):
                 )
                 class_link = sync_result.get('class_link', '')
                 tutor_name = booking.tutor.get_full_name() or booking.tutor.username
+                action_text = f"Tutor {tutor_name} assigned" if (new_tutor_id and new_tutor_id != getattr(old_tutor, 'id', None)) else "Booking approved"
                 return Response({
-                    "message": f"Tutor {tutor_name} assigned and class link generated. Student and tutor notified.",
+                    "message": f"{action_text} and class link generated. Student and tutor notified.",
                     "class_link": class_link,
                     "booking": BookingSerializer(booking).data
                 })

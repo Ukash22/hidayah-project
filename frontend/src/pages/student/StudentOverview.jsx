@@ -304,12 +304,12 @@ export default function StudentOverview() {
                             </div>
                         )}
 
-                        {/* Paid Bookings Awaiting Tutor Approval / Admin Assignment */}
+                        {/* Paid Bookings Awaiting Admin Approval */}
                         {bookings.some(b => b.paid && !b.approved) && (
                             <div className="bg-amber-500/10 border border-amber-500/30 rounded-card-lg p-6 md:p-8 shadow-sm">
                                 <h3 className="text-lg font-display font-bold text-amber-900 dark:text-amber-200 mb-4 flex items-center gap-3">
                                     <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                                    Wait for Tutor Approval or Admin
+                                    Waiting for Admin Approval
                                 </h3>
                                 <div className="space-y-4">
                                     {bookings.filter(b => b.paid && !b.approved).map(b => (
@@ -320,15 +320,15 @@ export default function StudentOverview() {
                                                         Paid · ₦{parseFloat(b.price || 0).toLocaleString()}
                                                     </span>
                                                     <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-300">
-                                                        ⏳ Wait for Tutor Approval or Admin
+                                                        ⏳ Waiting for Admin Approval
                                                     </span>
                                                 </div>
                                                 <h4 className="text-slate-900 dark:text-slate-100 font-bold text-base">{b.subject}</h4>
-                                                <p className="text-xs text-slate-500 font-medium">Requested Tutor: {b.tutor_name || 'TBA'}</p>
+                                                <p className="text-xs text-slate-500 font-medium">Assigned Tutor: {b.tutor_name || 'TBA'}</p>
                                                 <div className="mt-3 bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-200/80 dark:border-amber-500/30">
                                                     <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
                                                         <span>ℹ️</span>
-                                                        <span>{b.approval_message || "Wait for tutor approval or admin. If the tutor is busy, admin will assign a new tutor for you. Your class link will be generated once approved."}</span>
+                                                        <span>{b.approval_message || "Waiting for Admin approval. Your class link will be generated once approved by Admin."}</span>
                                                     </p>
                                                 </div>
                                             </div>
@@ -550,7 +550,7 @@ export default function StudentOverview() {
                                                             setEnrollData(prev => ({ ...prev, schedule: s }));
                                                         }}>
                                                         <option value="">Select Day</option>
-                                                        {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d}>{d}</option>)}
+                                                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => <option key={d}>{d}</option>)}
                                                     </select>
                                                     <input id={`schedule_time_${index}`} name={`schedule_time_${index}`} type="time"
                                                         className="w-32 bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 font-bold text-slate-900 dark:text-slate-100 focus:border-primary/30 outline-none"

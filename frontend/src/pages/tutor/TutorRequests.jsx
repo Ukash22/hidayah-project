@@ -35,17 +35,6 @@ export default function TutorRequests() {
         setActiveSubTab(tab);
     };
 
-    const handleApprove = async (id) => {
-        if (!await confirm("Approve this student's request? When approved, class link will be generated for paid bookings.", { confirmLabel: 'Approve' })) return;
-        try {
-            const res = await api.post(`/api/classes/booking/${id}/approve/`, {});
-            toast.success(res.data.message || 'Request approved! Class link generated.');
-            fetchRequests(activeSubTab);
-        } catch (err) {
-            toast.error('Failed to approve: ' + (getApiError(err, 'Error')));
-        }
-    };
-
     const openDecline = (req) => setDeclineModal({ open: true, bookingId: req.id, studentName: req.student_name, reason: '' });
     const closeDecline = () => setDeclineModal({ open: false, bookingId: null, studentName: '', reason: '' });
 
@@ -101,11 +90,11 @@ export default function TutorRequests() {
                                     <div className="flex items-center gap-2 mb-1">
                                         <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">{req.student_name}</h4>
                                         {req.paid ? (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                                                ✅ Paid · Class Link Generates On Approval
+                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                                ⏳ Paid · Waiting for Admin Approval
                                             </span>
                                         ) : (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/20">
                                                 💳 Pending Payment
                                             </span>
                                         )}
@@ -158,11 +147,27 @@ export default function TutorRequests() {
                             <div className="flex flex-col justify-center gap-3">
                                 {activeSubTab === 'pending' ? (
                                     <>
-                                        <button onClick={() => handleApprove(req.id)} className="w-full bg-primary text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                                            Approve Request
-                                        </button>
-                                        <button onClick={() => openDecline(req)} className="w-full bg-slate-50 dark:bg-slate-800/60 text-red-500 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all border border-red-100">
-                                            Decline
+                                        {req.paid ? (
+                                            <div className="w-full text-center p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                                                <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+                                                    ⏳ Waiting for Admin Approval
+                                                </div>
+                                                <div className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                                    Class link will generate once Admin approves.
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="w-full text-center p-3 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700">
+                                                <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">
+                                                    💳 Pending Student Payment
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">
+                                                    Waiting for student payment.
+                                                </div>
+                                            </div>
+                                        )}
+                                        <button onClick={() => openDecline(req)} className="w-full bg-slate-50 dark:bg-slate-800/60 text-red-500 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-red-50 transition-all border border-red-100">
+                                            Decline (Busy)
                                         </button>
                                     </>
                                 ) : activeSubTab === 'approved' ? (

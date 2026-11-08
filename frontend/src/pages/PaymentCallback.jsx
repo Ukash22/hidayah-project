@@ -8,11 +8,10 @@ const PaymentCallback = () => {
     const [searchParams] = useSearchParams();
     const location = useLocation();
     const navigate = useNavigate();
-    const { token } = useAuth();
+    const { token, user, loading: authLoading } = useAuth();
     const [status, setStatus] = useState('verifying'); // verifying, success, failed, error
     const [message, setMessage] = useState('');
     const [paymentData, setPaymentData] = useState(null);
-    const { user } = useAuth();
     const autoRedirectTimer = useRef(null);
 
     // Support wallet payment success passed via navigation state
@@ -32,47 +31,45 @@ const PaymentCallback = () => {
         // Skip if already handled via wallet navigation state
         if (location.state?.walletSuccess) return;
 
-        const reference = searchParams.get('reference');
+        const reference = searchParams.get('reference') || searchParams.get('trxref');
 
         if (!reference) {
             setStatus('failed');
-            setMessage('No payment reference found');
+            setMessage('No payment reference found in the callback URL.');
             return;
         }
 
-        if (!token) {
-            // Token not yet available – redirect to login with return path
-            navigate(`/login?next=/payment/callback?reference=${reference}`);
-            return;
-        }
+        // If auth is still initializing, wait
+        if (authLoading) return;
 
         try {
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
             const response = await api.get(
                 `/api/payments/verify/${reference}/`,
-                { headers: { Authorization: `Bearer ${token}` } }
+                { headers }
             );
 
             if (response.data.verified) {
                 setStatus('success');
                 setPaymentData(response.data);
-                setMessage('Payment verified successfully!');
+                setMessage('Payment verified successfully! Waiting for Admin approval.');
 
                 const destination = user?.role === 'PARENT' ? '/parent' : '/student';
                 autoRedirectTimer.current = setTimeout(() => navigate(destination), 7000);
             } else {
                 setStatus('failed');
-                setMessage('Payment verification failed. Please contact support.');
+                setMessage(response.data.message || 'Payment verification failed. Please contact support.');
             }
         } catch (err) {
             console.error("Payment Verification Error:", err);
-            // Verification did not complete — this is NOT the same as a failed payment.
-            // A 4xx from our API means the gateway rejected the reference; anything else
-            // (network error, 5xx) means we simply couldn't confirm yet.
-            const isRejected = err.response && err.response.status < 500;
+            // Verification did not complete
+            const isRejected = err.response && err.response.status < 500 && err.response.status !== 401;
             if (isRejected) {
                 const data = err.response.data;
                 setStatus('failed');
                 setMessage(data.error || data.detail || data.message || 'Payment verification failed.');
+            } else if (err.response?.status === 401) {
+                navigate(`/login?next=/payment/callback?reference=${reference}`);
             } else {
                 setStatus('error');
                 setMessage(
@@ -91,9 +88,11 @@ const PaymentCallback = () => {
     };
 
     useEffect(() => {
-        verifyPayment();
+        if (!authLoading) {
+            verifyPayment();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [authLoading, token]);
 
 
     const handleDownloadReceipt = async () => {
@@ -156,7 +155,7 @@ const PaymentCallback = () => {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
             doc.setTextColor(100, 100, 100);
-            doc.text("Your booking is now waiting for tutor approval or admin. Classes and link will be generated once approved.", 105, doc.lastAutoTable.finalY + 30, { align: "center" });
+            doc.text("Your booking is now waiting for Admin approval. Classes and link will be generated once approved by Admin.", 105, doc.lastAutoTable.finalY + 30, { align: "center" });
 
             doc.save(`Hidayah_Receipt_${ref}.pdf`);
         } catch (err) {
@@ -188,11 +187,10 @@ const PaymentCallback = () => {
 
                                 {/* Approval notice */}
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-                                    <p className="text-xs font-bold text-amber-700 mb-1">⏳ Wait for Tutor Approval or Admin</p>
+                                    <p className="text-xs font-bold text-amber-700 mb-1">⏳ Waiting for Admin Approval</p>
                                     <p className="text-xs text-amber-600 leading-relaxed">
-                                        Your payment has been received. Your booking is now waiting for tutor confirmation or admin approval.
-                                        If the tutor is busy, an admin will assign a new tutor for you.
-                                        Your classes and class link will be generated once approved.
+                                        Your payment has been received! Your booking is now waiting for Admin approval.
+                                        Your classes and class link will be generated once approved by Admin.
                                     </p>
                                 </div>
 

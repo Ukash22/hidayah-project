@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 from rest_framework import serializers as drf_serializers
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework import permissions
 from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
@@ -30,7 +31,8 @@ from .logic import process_session_completion, complete_payment_flow
 from students.models import StudentProfile
 from classes.models import Booking
 from applications.email_service import send_payment_confirmation_email
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework import permissions
 from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 
@@ -150,18 +152,28 @@ class InitiatePaymentView(APIView):
     'amount': drf_serializers.FloatField(required=False),
 })})
 class VerifyPaymentView(APIView):
-    """Verify a Paystack payment"""
-    permission_classes = [IsAuthenticated]
+    """Verify a Paystack payment with robust fallback support"""
+    permission_classes = [permissions.AllowAny]
     
     def get(self, request, reference):
-        user = request.user
-        
         try:
-            logger.debug("Verifying payment ref=%s for user=%s", reference, user.username)
+            logger.debug("Verifying payment ref=%s", reference)
             
-            # [NEW] Check local db first to return early if already processed
-            payment = Payment.objects.filter(transaction_id=reference, student=user).first()
+            # 1. Check local db first to return early if already processed
+            payment = Payment.objects.filter(transaction_id=reference).first()
             if payment and payment.status == 'COMPLETED':
+                booking = None
+                if reference.startswith('BOOKING-'):
+                    try:
+                        b_id = reference.split('-')[1]
+                        booking = Booking.objects.filter(id=b_id).first()
+                        if booking and not booking.paid:
+                            from .services import process_payment
+                            process_payment(booking)
+                            booking.refresh_from_db()
+                    except Exception as be:
+                        logger.warning("Error checking booking in early-return VerifyPaymentView: %s", be)
+
                 return Response({
                     "success": True,
                     "verified": True,
@@ -172,10 +184,16 @@ class VerifyPaymentView(APIView):
                         "reference": reference,
                         "method": payment.payment_method,
                         "amount": float(payment.amount),
-                    }
+                    },
+                    "booking": {
+                        "id": booking.id,
+                        "paid": booking.paid,
+                        "approved": booking.approved,
+                        "subject": booking.subject,
+                    } if booking else None
                 })
                 
-            # Verify payment with Paystack
+            # 2. Verify payment with Paystack
             result = PaystackService.verify_payment(reference)
             logger.debug("Paystack verification for ref=%s: success=%s verified=%s", reference, result.get("success"), result.get("verified"))
             
@@ -183,6 +201,7 @@ class VerifyPaymentView(APIView):
                 return Response({
                     "error": result.get("message", "Verification failed")
                 }, status=status.HTTP_400_BAD_REQUEST)
+
             if result["verified"]:
                 # Use the unified flow for atomicity and profile updates
                 amount = Decimal(str(result["amount"]))
@@ -191,7 +210,35 @@ class VerifyPaymentView(APIView):
                     try:
                         p = Payment.objects.get(transaction_id=reference)
                         amount = p.amount
-                    except: pass
+                    except Exception:
+                        pass
+
+                # Resolve user for this transaction
+                user = None
+                booking = None
+                if reference.startswith('BOOKING-'):
+                    try:
+                        b_id = reference.split('-')[1]
+                        booking = Booking.objects.filter(id=b_id).first()
+                        if booking:
+                            user = booking.student
+                    except Exception:
+                        pass
+
+                if not user:
+                    if request.user and request.user.is_authenticated:
+                        user = request.user
+                    elif payment and payment.student:
+                        user = payment.student
+                    else:
+                        customer_email = result.get("customer_email")
+                        if customer_email:
+                            from django.contrib.auth import get_user_model
+                            User = get_user_model()
+                            user = User.objects.filter(email__iexact=customer_email).first()
+
+                if not user:
+                    return Response({"error": "Cannot identify user for this payment."}, status=400)
 
                 flow_result = complete_payment_flow(
                     user=user,
@@ -200,10 +247,15 @@ class VerifyPaymentView(APIView):
                     gateway_ref=str(result.get("transaction_id", ""))
                 )
 
+                # Explicit guarantee: ensure booking.paid is True
+                if booking and not booking.paid:
+                    from .services import process_payment
+                    process_payment(booking)
+                    booking.refresh_from_db()
+
                 if flow_result.get("success"):
-                    # Fetch the now-completed payment for the receipt
                     try:
-                        completed_payment = Payment.objects.get(transaction_id=reference, student=user)
+                        completed_payment = Payment.objects.get(transaction_id=reference)
                     except Payment.DoesNotExist:
                         completed_payment = None
 
@@ -217,7 +269,13 @@ class VerifyPaymentView(APIView):
                             "reference": reference,
                             "method": completed_payment.payment_method if completed_payment else "PAYSTACK",
                             "amount": float(amount),
-                        }
+                        },
+                        "booking": {
+                            "id": booking.id,
+                            "paid": booking.paid,
+                            "approved": booking.approved,
+                            "subject": booking.subject,
+                        } if booking else None
                     })
                 else:
                     error_msg = flow_result.get("message", "Processing failed")
@@ -464,7 +522,7 @@ class InitiateBookingPaymentView(APIView):
 
 class VerifyBookingPaymentView(APIView):
     """Student: Verify Paystack payment for a Booking with strict security & anti-hack validations"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, reference):
         result = PaystackService.verify_payment(reference)
@@ -474,10 +532,11 @@ class VerifyBookingPaymentView(APIView):
                 booking_id = reference.split('-')[1]
                 booking = Booking.objects.select_for_update().get(id=booking_id)
 
-                # Anti-hack 1: Ownership check
-                if booking.student != request.user and not request.user.is_staff:
-                    logger.warning(f"Unauthorized booking verification attempt by {request.user.id} on booking {booking.id}")
-                    return Response({"error": "Unauthorized payment verification"}, status=403)
+                # Anti-hack 1: Ownership check only if authenticated
+                if request.user and request.user.is_authenticated:
+                    if booking.student != request.user and not request.user.is_staff:
+                        logger.warning(f"Unauthorized booking verification attempt by {request.user.id} on booking {booking.id}")
+                        return Response({"error": "Unauthorized payment verification"}, status=403)
 
                 # Anti-hack 2: Amount verification
                 verified_amount = Decimal(str(result.get("amount", 0)))
@@ -487,16 +546,27 @@ class VerifyBookingPaymentView(APIView):
 
                 # Complete payment flow (updates payment, fulfills booking, schedules sessions, platform escrow)
                 flow_result = complete_payment_flow(
-                    user=request.user,
+                    user=booking.student,
                     amount=verified_amount if verified_amount > 0 else booking.price,
                     reference=reference,
                     gateway_ref=str(result.get("transaction_id", ""))
                 )
 
+                if not booking.paid:
+                    from .services import process_payment
+                    process_payment(booking)
+                    booking.refresh_from_db()
+
                 return Response({
                     "success": True,
                     "verified": True,
-                    "message": "Payment verified and booking successfully fulfilled"
+                    "message": "Payment verified and booking marked as paid. Waiting for Admin approval.",
+                    "booking": {
+                        "id": booking.id,
+                        "paid": booking.paid,
+                        "approved": booking.approved,
+                        "subject": booking.subject,
+                    }
                 })
             except Exception as e:
                 logger.exception(f"VerifyBookingPaymentView error for {reference}: {e}")
