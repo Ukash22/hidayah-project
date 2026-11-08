@@ -3,6 +3,7 @@
 # pylint: skip-file
 from rest_framework import serializers
 from .models import StudentProfile
+from classes.models import ScheduledSession
 
 from accounts.serializers import UserSerializer
 from tutors.serializers import PublicTutorSerializer, resolve_media_url
@@ -77,16 +78,24 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     tutor_class_link = serializers.SerializerMethodField()
     def get_tutor_class_link(self, obj):
-        if obj.tutor and hasattr(obj.tutor, 'tutor_profile') and obj.tutor.tutor_profile.live_class_link:
-            return obj.tutor.tutor_profile.live_class_link
-        # Fallback to first pending session's meeting link
-        first_session = ScheduledSession.objects.filter(
-            student=obj.student.user, subject=obj.subject, status='PENDING'
-        ).order_by('scheduled_at').first()
-        if first_session and first_session.meeting_link:
-            return first_session.meeting_link
-        if hasattr(obj.student, 'meeting_link') and obj.student.meeting_link:
-            return obj.student.meeting_link
+        try:
+            if obj.tutor and hasattr(obj.tutor, 'tutor_profile') and obj.tutor.tutor_profile.live_class_link:
+                return obj.tutor.tutor_profile.live_class_link
+            # Fallback to first pending session's meeting link
+            student_user = getattr(obj.student, 'user', None) if obj.student else None
+            if student_user:
+                first_session = ScheduledSession.objects.filter(
+                    student=student_user, status='PENDING'
+                )
+                if obj.subject:
+                    first_session = first_session.filter(subject=obj.subject)
+                first_session = first_session.order_by('scheduled_at').first()
+                if first_session and first_session.meeting_link:
+                    return first_session.meeting_link
+            if hasattr(obj.student, 'meeting_link') and obj.student.meeting_link:
+                return obj.student.meeting_link
+        except Exception:
+            pass
         return None
 
     upcoming_sessions = serializers.SerializerMethodField()
