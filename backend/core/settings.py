@@ -310,6 +310,9 @@ DATABASES = {
         disable_server_side_cursors=True  # Required for PgBouncer / Render poolers
     )
 }
+if 'sqlite' in DATABASES['default'].get('ENGINE', ''):
+    DATABASES['default']['NAME'] = str(BASE_DIR / 'db.sqlite3')
+
 # Only PostgreSQL supports the connect_timeout option; SQLite ignores or
 # errors on unknown OPTIONS keys, breaking local dev and test runs.
 if 'postgresql' in DATABASES['default'].get('ENGINE', ''):
