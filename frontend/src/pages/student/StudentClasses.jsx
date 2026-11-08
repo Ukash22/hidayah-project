@@ -116,21 +116,21 @@ export default function StudentClasses() {
                 </div>
             ))}
 
-            {/* Paid Bookings - Wait for Tutor Approval or Admin */}
+            {/* Paid Bookings - Waiting for Admin Approval */}
             {bookings.some(b => b.paid && !b.approved) && (
                 <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-sm">
                     <span className="text-xl">⏳</span>
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-200">
-                                Wait for Tutor Approval or Admin
+                                Waiting for Admin Approval
                             </span>
                         </div>
                         <h4 className="font-bold text-sm">
-                            {bookings.filter(b => b.paid && !b.approved).map(b => b.subject).join(', ')} — Paid & Waiting for Approval
+                            {bookings.filter(b => b.paid && !b.approved).map(b => b.subject).join(', ')} — Paid & Waiting for Admin Approval
                         </h4>
                         <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
-                            Wait for tutor approval or admin. If the tutor is busy, admin will assign a new tutor for you. Your class link will generate as soon as approved!
+                            Waiting for Admin approval. Your class link and sessions will be generated as soon as approved by Admin!
                         </p>
                     </div>
                 </div>

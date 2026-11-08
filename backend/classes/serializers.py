@@ -40,7 +40,7 @@ class BookingSerializer(serializers.ModelSerializer):
         if obj.paid and not obj.approved:
             if getattr(obj, 'tutor_declined', False):
                 return 'Tutor Busy — Admin Assigning'
-            return 'Wait for tutor approval or admin'
+            return 'Waiting for Admin Approval'
         if not obj.paid and obj.approved:
             return 'Pending Payment'
         return 'Pending Payment'
@@ -49,9 +49,9 @@ class BookingSerializer(serializers.ModelSerializer):
         if obj.paid and not obj.approved:
             if getattr(obj, 'tutor_declined', False):
                 return "Your requested tutor is currently busy. An Admin will assign a replacement tutor for your class shortly."
-            return "Wait for approval of your tutor or admin. If the tutor is busy, admin will assign a new tutor for you."
+            return "Waiting for Admin Approval. Your class link will be generated once approved by Admin."
         if not obj.paid:
-            return "Pending payment. Please complete payment to confirm your booking and generate class links."
+            return "Pending payment. Please complete payment to confirm your booking and send for Admin approval."
         return None
 
     def get_tutor_class_link(self, obj):

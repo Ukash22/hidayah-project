@@ -57,7 +57,7 @@ class BookingLifecycleEnhancedTests(APITestCase):
             role='ADMIN'
         )
 
-    def test_booking_payment_and_tutor_approval_generates_classes(self):
+    def test_booking_payment_and_admin_only_approval_generates_classes(self):
         # 1. Student creates booking for a subject
         self.client.force_authenticate(user=self.student_user)
         schedule = [{"day": "Monday", "time": "10:00"}]
@@ -85,28 +85,82 @@ class BookingLifecycleEnhancedTests(APITestCase):
 
         booking.refresh_from_db()
         self.assertTrue(booking.paid)
-        self.assertFalse(booking.approved) # Paid, but waiting for tutor approval
+        self.assertFalse(booking.approved) # Paid, but waiting for Admin approval
 
-        # Ensure NO classes are generated before approval
+        # Ensure NO classes are generated before Admin approval
         session_count = ScheduledSession.objects.filter(student=self.student_user).count()
         self.assertEqual(session_count, 0)
 
-        # 3. Check serializer status and approval message
+        # 3. Check serializer status and approval message: Waiting for Admin Approval
         list_res = self.client.get('/api/classes/booking/request/')
         student_booking_data = [b for b in list_res.data if b['id'] == booking.id][0]
         self.assertEqual(student_booking_data['status'], 'AWAITING_APPROVAL')
-        self.assertIn("Wait for approval of your tutor", student_booking_data['approval_message'])
+        self.assertEqual(student_booking_data['status_display'], 'Waiting for Admin Approval')
+        self.assertIn("Waiting for Admin Approval", student_booking_data['approval_message'])
 
-        # 4. Tutor approves the booking request
+        # 4. Tutor tries to approve -> FORBIDDEN! Only Admin can approve classes
         self.client.force_authenticate(user=self.tutor_user1)
-        app_res = self.client.post(f'/api/classes/booking/{booking.id}/approve/')
-        self.assertEqual(app_res.status_code, 200)
+        tutor_app_res = self.client.post(f'/api/classes/booking/{booking.id}/approve/')
+        self.assertEqual(tutor_app_res.status_code, 403)
+        booking.refresh_from_db()
+        self.assertFalse(booking.approved)
+        self.assertEqual(ScheduledSession.objects.filter(student=self.student_user).count(), 0)
+
+        # 5. Admin approves the booking request -> classes & links generate!
+        self.client.force_authenticate(user=self.admin_user)
+        admin_res = self.client.post(f'/api/classes/admin/bookings/{booking.id}/action/', {
+            'action': 'approve'
+        }, format='json')
+        self.assertEqual(admin_res.status_code, 200)
 
         booking.refresh_from_db()
         self.assertTrue(booking.approved)
         self.assertTrue(booking.paid)
 
         # Classes MUST now be generated!
+        sessions = ScheduledSession.objects.filter(student=self.student_user, tutor=self.tutor_user1)
+        self.assertGreater(sessions.count(), 0)
+        self.assertTrue(all(bool(s.meeting_link) for s in sessions))
+
+    def test_paystack_verification_marks_booking_paid_and_waiting_for_admin_approval(self):
+        # 1. Student creates booking
+        booking = Booking.objects.create(
+            student=self.student_user,
+            tutor=self.tutor_user1,
+            subject='Chemistry',
+            price=Decimal('12000.00'),
+            schedule=json.dumps([{"day": "Wednesday", "time": "15:00"}]),
+            hours_per_week=1,
+            hours_per_session=Decimal('1.0'),
+            approved=False,
+            paid=False
+        )
+        self.assertFalse(booking.paid)
+
+        # 2. Simulate Paystack verification callback
+        from django.utils import timezone
+        ref = f"BOOKING-{booking.id}-{int(timezone.now().timestamp())}"
+        
+        # Call verification endpoint without auth (public callback support)
+        self.client.logout()
+        verify_res = self.client.get(f'/api/payments/verify/{ref}/')
+        self.assertEqual(verify_res.status_code, 200)
+        self.assertTrue(verify_res.data.get('verified'))
+
+        # Booking is now paid in DB, but awaiting Admin approval
+        booking.refresh_from_db()
+        self.assertTrue(booking.paid)
+        self.assertFalse(booking.approved)
+
+        # Admin approves the booking
+        self.client.force_authenticate(user=self.admin_user)
+        admin_res = self.client.post(f'/api/classes/admin/bookings/{booking.id}/action/', {
+            'action': 'approve'
+        }, format='json')
+        self.assertEqual(admin_res.status_code, 200)
+
+        booking.refresh_from_db()
+        self.assertTrue(booking.approved)
         sessions = ScheduledSession.objects.filter(student=self.student_user, tutor=self.tutor_user1)
         self.assertGreater(sessions.count(), 0)
 

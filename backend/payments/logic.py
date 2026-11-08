@@ -309,7 +309,6 @@ def complete_payment_flow(user, amount, reference, gateway_ref=None):
         # (Only for non-booking payments — wallet top-ups. For booking payments, 
         # process_payment handles fulfillment directly.)
         if not is_booking:
-            from classes.models import Booking
             user_wallet, _ = Wallet.objects.get_or_create(user=user)
             pending_bookings = Booking.objects.filter(student=user, paid=False).order_by('created_at')
             

@@ -104,7 +104,7 @@ export default function AdminBookings() {
             {/* Status Tabs */}
             <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-fit mb-6 gap-1 flex-wrap">
                 {[
-                    { key: 'paid_awaiting_approval', label: '⏳ Wait for Tutor Approval or Admin' },
+                    { key: 'paid_awaiting_approval', label: '⏳ Waiting for Admin Approval' },
                     { key: 'pending', label: '💳 Pending Payment' },
                     { key: 'tutor_busy', label: '⚠️ Tutor Busy / Needs Reassignment' },
                     { key: 'approved', label: '🔵 Approved (Unpaid)' },
@@ -178,19 +178,19 @@ export default function AdminBookings() {
                                         </td>
                                         <td className="py-3.5 px-4 text-center">
                                             <div className={`text-[9px] font-bold px-2.5 py-1 rounded-full inline-block uppercase tracking-wider ${booking.status === 'ACTIVE'
-                                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
-                                                    : booking.status === 'AWAITING_APPROVAL' || booking.status === 'TUTOR_BUSY_AWAITING_ADMIN'
-                                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse'
-                                                        : booking.status === 'APPROVED_PENDING_PAYMENT' || booking.status === 'PENDING_PAYMENT'
-                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                                                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700'
+                                                : booking.status === 'AWAITING_APPROVAL' || booking.status === 'TUTOR_BUSY_AWAITING_ADMIN'
+                                                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse'
+                                                    : booking.status === 'APPROVED_PENDING_PAYMENT' || booking.status === 'PENDING_PAYMENT'
+                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
+                                                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
                                                 }`}>
                                                 {booking.status === 'AWAITING_APPROVAL'
-                                                    ? 'Wait for tutor approval or admin'
+                                                    ? 'Waiting for Admin Approval'
                                                     : booking.status === 'PENDING_PAYMENT'
                                                         ? 'Pending Payment'
                                                         : booking.status === 'TUTOR_BUSY_AWAITING_ADMIN'
-                                                            ? 'Tutor Busy'
+                                                            ? 'Tutor Busy — Admin Assigning'
                                                             : (booking.status_display || booking.status)}
                                             </div>
                                         </td>
