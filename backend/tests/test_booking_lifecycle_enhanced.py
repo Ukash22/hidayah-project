@@ -149,4 +149,66 @@ class BookingLifecycleEnhancedTests(APITestCase):
         # Classes MUST now be generated for tutor 2!
         sessions = ScheduledSession.objects.filter(student=self.student_user, tutor=self.tutor_user2)
         self.assertGreater(sessions.count(), 0)
+        self.assertTrue(all(bool(s.meeting_link) for s in sessions))
+
+    def test_admin_can_change_tutor_at_any_time_and_notifies_with_class_link(self):
+        from accounts.models import Notification
+        from classes.utils import sync_student_tutor_change
+        from programs.models import Program, Subject
+        import datetime
+        from django.utils import timezone
+
+        prog, _ = Program.objects.get_or_create(name='General', defaults={'program_type': 'WESTERN'})
+        subj, _ = Subject.objects.get_or_create(name='Mathematics', defaults={'program': prog})
+
+        # 1. Setup active session with tutor 1
+        session = ScheduledSession.objects.create(
+            student=self.student_user,
+            tutor=self.tutor_user1,
+            subject=subj,
+            scheduled_at=timezone.now() + datetime.timedelta(days=2),
+            duration=60,
+            status='PENDING',
+            meeting_link='http://localhost:5173/live/old-link'
+        )
+
+        # 2. Admin changes tutor to tutor 2
+        result = sync_student_tutor_change(
+            student_user=self.student_user,
+            new_tutor_user=self.tutor_user2,
+            old_tutor_user=self.tutor_user1,
+            subject_name='Mathematics'
+        )
+
+        self.assertTrue(result['success'])
+        self.assertIsNotNone(result['class_link'])
+
+        # Session should be reassigned to tutor 2 and link regenerated
+        session.refresh_from_db()
+        self.assertEqual(session.tutor, self.tutor_user2)
+        self.assertIsNotNone(session.meeting_link)
+        self.assertIn(str(session.id), session.meeting_link)
+
+        # Student notification must contain the new class link
+        student_notif = Notification.objects.filter(
+            user=self.student_user,
+            title__icontains="Tutor Changed"
+        ).first()
+        self.assertIsNotNone(student_notif)
+        self.assertIn(session.meeting_link, student_notif.message)
+
+        # New tutor notification must contain the class link
+        new_tutor_notif = Notification.objects.filter(
+            user=self.tutor_user2,
+            title__icontains="New Student Assigned"
+        ).first()
+        self.assertIsNotNone(new_tutor_notif)
+        self.assertIn(session.meeting_link, new_tutor_notif.message)
+
+        # Old tutor notification exists
+        old_tutor_notif = Notification.objects.filter(
+            user=self.tutor_user1,
+            title__icontains="Student Reassigned"
+        ).first()
+        self.assertIsNotNone(old_tutor_notif)
 

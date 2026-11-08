@@ -102,7 +102,7 @@ const PaymentCallback = () => {
             const { jsPDF } = await import('jspdf');
             const { default: autoTable } = await import('jspdf-autotable');
             const doc = new jsPDF();
-            
+
             const pd = paymentData || location.state?.paymentData || {};
             const ref = pd.payment?.reference || pd.reference || searchParams.get('reference') || 'N/A';
             const amount = pd.payment?.amount || pd.amount || location.state?.amount || 0;
@@ -113,23 +113,23 @@ const PaymentCallback = () => {
             // Brand Header
             doc.setFillColor(16, 185, 129); // Emerald
             doc.rect(0, 0, 210, 40, 'F');
-            
+
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(22);
             doc.setFont("helvetica", "bold");
             doc.text("HIDAYAH INTERNATIONAL", 105, 18, { align: "center" });
             doc.setFontSize(10);
             doc.text("TUTOR PLATFORM | ISLAMIC & WESTERN EDUCATION", 105, 28, { align: "center" });
-            
+
             // Receipt Info
             doc.setTextColor(50, 50, 50);
             doc.setFontSize(16);
             doc.text("OFFICIAL TRANSACTION RECEIPT", 20, 55);
-            
+
             doc.setFontSize(10);
             doc.text(`Receipt Date: ${new Date().toLocaleString()}`, 20, 65);
             doc.text(`Reference ID: #${ref}`, 20, 72);
-            
+
             // Grid Data
             const rows = [
                 ["Transaction For", `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.username],
@@ -140,7 +140,7 @@ const PaymentCallback = () => {
                 ...(tutorName ? [["Tutor", tutorName]] : []),
                 ["Status", "SUCCESSFUL / VERIFIED"],
             ];
-            
+
             autoTable(doc, {
                 startY: 85,
                 head: [['Description', 'Detail']],
@@ -149,15 +149,15 @@ const PaymentCallback = () => {
                 headStyles: { fillColor: [15, 23, 42] },
                 styles: { fontSize: 10, cellPadding: 5 }
             });
-            
+
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
             doc.text("Thank you for choosing Hidayah International.", 105, doc.lastAutoTable.finalY + 20, { align: "center" });
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9);
             doc.setTextColor(100, 100, 100);
-            doc.text("Your booking is now pending tutor approval. Classes will be generated once approved.", 105, doc.lastAutoTable.finalY + 30, { align: "center" });
-            
+            doc.text("Your booking is now waiting for tutor approval or admin. Classes and link will be generated once approved.", 105, doc.lastAutoTable.finalY + 30, { align: "center" });
+
             doc.save(`Hidayah_Receipt_${ref}.pdf`);
         } catch (err) {
             console.error("Receipt generation failed:", err);
@@ -188,11 +188,11 @@ const PaymentCallback = () => {
 
                                 {/* Approval notice */}
                                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-left">
-                                    <p className="text-xs font-bold text-amber-700 mb-1">⏳ Awaiting Tutor Approval</p>
+                                    <p className="text-xs font-bold text-amber-700 mb-1">⏳ Wait for Tutor Approval or Admin</p>
                                     <p className="text-xs text-amber-600 leading-relaxed">
-                                        Your payment has been received. Your booking is now waiting for tutor confirmation.
+                                        Your payment has been received. Your booking is now waiting for tutor confirmation or admin approval.
                                         If the tutor is busy, an admin will assign a new tutor for you.
-                                        Your classes will be generated once approved.
+                                        Your classes and class link will be generated once approved.
                                     </p>
                                 </div>
 

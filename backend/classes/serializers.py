@@ -10,6 +10,7 @@ class BookingSerializer(serializers.ModelSerializer):
     student_email = serializers.EmailField(source='student.email', read_only=True)
     tutor_class_link = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
     approval_message = serializers.SerializerMethodField()
     
     class Meta:
@@ -33,16 +34,35 @@ class BookingSerializer(serializers.ModelSerializer):
             return 'APPROVED_PENDING_PAYMENT'
         return 'PENDING_PAYMENT'
 
+    def get_status_display(self, obj):
+        if obj.paid and obj.approved:
+            return 'Active'
+        if obj.paid and not obj.approved:
+            if getattr(obj, 'tutor_declined', False):
+                return 'Tutor Busy — Admin Assigning'
+            return 'Wait for tutor approval or admin'
+        if not obj.paid and obj.approved:
+            return 'Pending Payment'
+        return 'Pending Payment'
+
     def get_approval_message(self, obj):
         if obj.paid and not obj.approved:
             if getattr(obj, 'tutor_declined', False):
                 return "Your requested tutor is currently busy. An Admin will assign a replacement tutor for your class shortly."
-            return "Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you."
+            return "Wait for approval of your tutor or admin. If the tutor is busy, admin will assign a new tutor for you."
+        if not obj.paid:
+            return "Pending payment. Please complete payment to confirm your booking and generate class links."
         return None
 
     def get_tutor_class_link(self, obj):
-        if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
+        if obj.tutor and hasattr(obj.tutor, 'tutor_profile') and obj.tutor.tutor_profile.live_class_link:
             return obj.tutor.tutor_profile.live_class_link
+        # Fallback to first pending session's generated meeting link
+        first_session = ScheduledSession.objects.filter(
+            student=obj.student, tutor=obj.tutor, status='PENDING'
+        ).order_by('scheduled_at').first()
+        if first_session and first_session.meeting_link:
+            return first_session.meeting_link
         return None
 
 class ScheduledSessionSerializer(serializers.ModelSerializer):

@@ -77,8 +77,16 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     tutor_class_link = serializers.SerializerMethodField()
     def get_tutor_class_link(self, obj):
-        if obj.tutor and hasattr(obj.tutor, 'tutor_profile'):
+        if obj.tutor and hasattr(obj.tutor, 'tutor_profile') and obj.tutor.tutor_profile.live_class_link:
             return obj.tutor.tutor_profile.live_class_link
+        # Fallback to first pending session's meeting link
+        first_session = ScheduledSession.objects.filter(
+            student=obj.student.user, subject=obj.subject, status='PENDING'
+        ).order_by('scheduled_at').first()
+        if first_session and first_session.meeting_link:
+            return first_session.meeting_link
+        if hasattr(obj.student, 'meeting_link') and obj.student.meeting_link:
+            return obj.student.meeting_link
         return None
 
     upcoming_sessions = serializers.SerializerMethodField()

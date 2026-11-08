@@ -156,16 +156,6 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
                 dt_time = parse_time_slot(time_str)
                 session_at = timezone.make_aware(datetime.datetime.combine(session_date, dt_time))
 
-                final_meeting_link = meeting_link
-                final_whiteboard_link = whiteboard_link
-
-                if not final_meeting_link:
-                    room_id = f"class-{subject_obj.name.replace(' ', '-').lower()}-{uuid.uuid4().hex[:8]}"
-                    from django.conf import settings
-                    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
-                    final_meeting_link = f"{frontend_url}/live/{room_id}"
-                    final_whiteboard_link = final_meeting_link
-
                 session = ScheduledSession.objects.create(
                     student=student,
                     tutor=tutor,
@@ -173,13 +163,28 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
                     scheduled_at=session_at,
                     duration=60,
                     fee_amount=Decimal(str(fee_per_session or 0)),
-                    meeting_link=final_meeting_link,
-                    whiteboard_link=final_whiteboard_link,
+                    meeting_link=meeting_link,
+                    whiteboard_link=whiteboard_link,
                     status='PENDING'
                 )
+
+                if not session.meeting_link:
+                    from django.conf import settings
+                    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                    session.meeting_link = f"{frontend_url}/live/{session.id}"
+                    session.whiteboard_link = session.meeting_link
+                    session.save(update_fields=['meeting_link', 'whiteboard_link'])
+
                 sessions_created.append(session)
             except Exception as e:
                 logger.warning("Error creating session for %s %s: %s", day_name, time_str, e)
+
+    if sessions_created and hasattr(student, 'student_profile') and sessions_created[0].meeting_link:
+        try:
+            student.student_profile.meeting_link = sessions_created[0].meeting_link
+            student.student_profile.save(update_fields=['meeting_link'])
+        except Exception:
+            pass
 
     if sessions_created:
         try:
