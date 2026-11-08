@@ -187,13 +187,30 @@ def fulfill_and_generate_sessions_for_booking(booking):
                 logger.info(f"Generated {sessions_generated} sessions for booking {booking.id}")
             else:
                 sessions_generated = existing_count
-                logger.info(f"Sessions already exist for booking {booking.id} ({existing_count} pending) — skipping.")
+                logger.info(f"Sessions already exist for booking {booking.id} ({existing_count} pending) — verifying class links.")
+                from django.conf import settings
+                frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+                tutor_custom_link = getattr(booking.tutor, 'tutor_profile', None) and booking.tutor.tutor_profile.live_class_link
+                for sess in ScheduledSession.objects.filter(student=booking.student, tutor=booking.tutor, subject=subject_obj, status='PENDING'):
+                    if not sess.meeting_link:
+                        sess_link = tutor_custom_link or f"{frontend_url}/live/{sess.id}"
+                        sess.meeting_link = sess_link
+                        sess.whiteboard_link = sess_link
+                        sess.save(update_fields=['meeting_link', 'whiteboard_link'])
 
             # --- Mark booking fully confirmed ---
             booking.paid = True
             booking.approved = True
             booking.tutor_declined = False
             booking.save()
+
+            # Ensure profile meeting_link is updated
+            first_pending = ScheduledSession.objects.filter(
+                student=booking.student, tutor=booking.tutor, subject=subject_obj, status='PENDING'
+            ).order_by('scheduled_at').first()
+            if first_pending and first_pending.meeting_link and profile:
+                profile.meeting_link = first_pending.meeting_link
+                profile.save(update_fields=['meeting_link'])
 
     except Exception as exc:
         logger.exception(f"fulfill_and_generate_sessions_for_booking failed for booking {booking.id}: {exc}")
@@ -204,17 +221,24 @@ def fulfill_and_generate_sessions_for_booking(booking):
         from accounts.models import Notification
         tutor_name = booking.tutor.get_full_name() or booking.tutor.username
         student_name = booking.student.get_full_name() or booking.student.username
+
+        first_session = ScheduledSession.objects.filter(
+            student=booking.student, tutor=booking.tutor, subject=subject_obj, status='PENDING'
+        ).order_by('scheduled_at').first()
+        class_link = first_session.meeting_link if first_session else ""
+        first_id = first_session.id if first_session else None
+
         Notification.create(
             user=booking.student,
-            title="Classes Scheduled & Ready!",
-            message=f"Your booking for {booking.subject} with {tutor_name} is confirmed! {sessions_generated} class sessions have been scheduled.",
-            link="/student/classes"
+            title="Classes Scheduled & Link Ready!",
+            message=f"Your booking for {booking.subject} with {tutor_name} is approved and confirmed! Your class link has been generated: {class_link}",
+            link=f"/live/{first_id}" if first_id else "/student/classes"
         )
         Notification.create(
             user=booking.tutor,
-            title="New Student Classes Scheduled",
-            message=f"Classes with {student_name} for {booking.subject} have been generated ({sessions_generated} sessions) and added to your schedule.",
-            link="/tutor/schedule"
+            title="New Student Classes Scheduled & Link Ready",
+            message=f"Classes with {student_name} for {booking.subject} have been generated. Your class link has been generated: {class_link}",
+            link=f"/live/{first_id}" if first_id else "/tutor/schedule"
         )
     except Exception as ne:
         logger.warning(f"Notification error on booking {booking.id}: {ne}")
@@ -268,22 +292,22 @@ def process_payment(booking):
 
             Notification.create(
                 user=booking.student,
-                title="Payment Confirmed — Awaiting Tutor Approval",
-                message=f"Payment for {booking.subject} received! Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you.",
+                title="Payment Confirmed — Wait for Tutor Approval or Admin",
+                message=f"Payment for {booking.subject} received! Wait for tutor approval or admin. If the tutor is busy, admin will assign a new tutor for you. Your class link will be generated once approved.",
                 link="/student/overview"
             )
 
             if booking.tutor:
                 Notification.create(
                     user=booking.tutor,
-                    title="Paid Booking Request",
-                    message=f"{student_name} has paid for {booking.subject} and is waiting for your approval.",
+                    title="Paid Booking Request — Awaiting Approval",
+                    message=f"{student_name} has paid for {booking.subject} and is waiting for your approval. Class links will generate upon approval.",
                     link="/tutor/requests"
                 )
 
             Notification.notify_admins(
                 title="New Paid Booking Awaiting Approval",
-                message=f"{student_name} paid ₦{booking.price:,.2f} for {booking.subject} (Tutor: {tutor_name}). Awaiting confirmation or tutor assignment.",
+                message=f"{student_name} paid ₦{booking.price:,.2f} for {booking.subject} (Tutor: {tutor_name}). Wait for tutor approval or admin assignment.",
                 link="/admin/bookings"
             )
         except Exception as ne:

@@ -88,15 +88,49 @@ export default function StudentClasses() {
             <title>My Classes — Hidayah</title>
             <PageHeader title="Live Learning Sessions" description="Your upcoming and scheduled class sessions." />
 
+            {/* Unpaid Bookings - Pending Payment (one card per unpaid booking) */}
+            {bookings.filter(b => !b.paid).map(b => (
+                <div key={b.id} className="mb-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                        <span className="text-xl">💳</span>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                                    Pending Payment
+                                </span>
+                            </div>
+                            <h4 className="font-bold text-sm">
+                                {b.subject} — Pending Payment
+                            </h4>
+                            <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                                Please complete your payment so tutor or admin can approve the booking and generate your class link.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => navigate(`/payment?booking_id=${b.id}`)}
+                        className="px-5 py-2 bg-primary hover:bg-primary-dark text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap shadow-sm"
+                    >
+                        Pay Now →
+                    </button>
+                </div>
+            ))}
+
+            {/* Paid Bookings - Wait for Tutor Approval or Admin */}
             {bookings.some(b => b.paid && !b.approved) && (
                 <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-sm">
                     <span className="text-xl">⏳</span>
                     <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-200">
+                                Wait for Tutor Approval or Admin
+                            </span>
+                        </div>
                         <h4 className="font-bold text-sm">
-                            {bookings.filter(b => b.paid && !b.approved).map(b => b.subject).join(', ')} — Paid & Awaiting Tutor Confirmation
+                            {bookings.filter(b => b.paid && !b.approved).map(b => b.subject).join(', ')} — Paid & Waiting for Approval
                         </h4>
                         <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
-                            Wait for approval of your tutor. If the tutor is busy, admin will assign a new tutor for you. Your live class schedule will appear here as soon as approved!
+                            Wait for tutor approval or admin. If the tutor is busy, admin will assign a new tutor for you. Your class link will generate as soon as approved!
                         </p>
                     </div>
                 </div>

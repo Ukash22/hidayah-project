@@ -36,10 +36,10 @@ export default function TutorRequests() {
     };
 
     const handleApprove = async (id) => {
-        if (!await confirm("Approve this student's request? Student will be prompted to pay.", { confirmLabel: 'Approve' })) return;
+        if (!await confirm("Approve this student's request? When approved, class link will be generated for paid bookings.", { confirmLabel: 'Approve' })) return;
         try {
-            await api.post(`/api/classes/booking/${id}/approve/`, {});
-            toast.success('Request approved! Awaiting student payment.');
+            const res = await api.post(`/api/classes/booking/${id}/approve/`, {});
+            toast.success(res.data.message || 'Request approved! Class link generated.');
             fetchRequests(activeSubTab);
         } catch (err) {
             toast.error('Failed to approve: ' + (getApiError(err, 'Error')));
@@ -102,11 +102,11 @@ export default function TutorRequests() {
                                         <h4 className="text-2xl font-display font-bold text-slate-900 dark:text-slate-100">{req.student_name}</h4>
                                         {req.paid ? (
                                             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
-                                                ✅ Paid · Classes Generate On Approval
+                                                ✅ Paid · Class Link Generates On Approval
                                             </span>
                                         ) : (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
-                                                💳 Unpaid Request
+                                            <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                                                💳 Pending Payment
                                             </span>
                                         )}
                                     </div>

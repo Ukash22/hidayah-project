@@ -355,25 +355,30 @@ class BookingRequestView(APIView):
             tutor_name = tutor_profile.user.get_full_name() or tutor_profile.user.username
             Notification.create(
                 user=tutor_profile.user,
-                title="New Class Booking Request",
-                message=f"{student_name} requested sessions for {subject}.",
+                title="New Class Booking Request (Pending Payment)",
+                message=f"{student_name} requested sessions for {subject} (Pending Payment).",
                 link="/tutor/requests"
             )
             Notification.notify_admins(
-                title="New Class Booking Request",
-                message=f"{student_name} booked {subject} with tutor {tutor_name}.",
+                title="New Class Booking Request (Pending Payment)",
+                message=f"{student_name} booked {subject} with tutor {tutor_name} (Pending Payment).",
                 link="/admin/bookings"
             )
             Notification.create(
                 user=request.user,
-                title="Booking Placed",
-                message=f"Your booking for {subject} with {tutor_name} has been placed. Please complete payment to confirm your booking.",
-                link="/student/overview"
+                title="Booking Placed — Pending Payment",
+                message=f"Your booking for {subject} with {tutor_name} has been placed. Status: Pending Payment. Please complete payment to proceed.",
+                link=f"/payment?booking_id={booking.id}"
             )
         except Exception as bne:
             logger.warning("Failed to dispatch booking notifications: %s", bne)
 
-        return Response({"message": "Booking created successfully. Please complete payment.", "id": booking.id}, status=201)
+        return Response({
+            "message": "Booking created successfully. Pending payment.",
+            "id": booking.id,
+            "status": "PENDING_PAYMENT",
+            "status_display": "Pending Payment"
+        }, status=201)
 
     def get(self, request):
         from .models import Booking
@@ -412,23 +417,47 @@ class BookingApprovalView(APIView):
             booking.tutor_declined = False
             booking.save()
 
-            # If student has already paid, generate the classes!
+            class_link = ""
+            # If student has already paid, generate the classes & link!
             if booking.paid:
                 from payments.services import fulfill_and_generate_sessions_for_booking
                 fulfill_and_generate_sessions_for_booking(booking)
+                first_session = ScheduledSession.objects.filter(
+                    student=booking.student, tutor=booking.tutor, status='PENDING'
+                ).order_by('scheduled_at').first()
+                if first_session:
+                    class_link = first_session.meeting_link or ""
 
             try:
                 from accounts.models import Notification
                 tutor_name = request.user.get_full_name() or request.user.username
-                Notification.create(
-                    user=booking.student,
-                    title="Booking Approved!",
-                    message=f"Tutor {tutor_name} approved your booking for {booking.subject}." + (" Your classes are scheduled and ready!" if booking.paid else " Please complete payment to start classes."),
-                    link="/student/classes" if booking.paid else "/student/overview"
-                )
+                student_name = booking.student.get_full_name() or booking.student.username
+                if booking.paid:
+                    Notification.create(
+                        user=booking.student,
+                        title="Booking Approved & Class Link Ready!",
+                        message=f"Tutor {tutor_name} approved your booking for {booking.subject}. Your class link has been generated: {class_link}",
+                        link=f"/live/{first_session.id}" if first_session else "/student/classes"
+                    )
+                    Notification.create(
+                        user=request.user,
+                        title="Booking Approved & Class Link Ready",
+                        message=f"You approved booking with {student_name} for {booking.subject}. Your class link has been generated: {class_link}",
+                        link=f"/live/{first_session.id}" if first_session else "/tutor/schedule"
+                    )
+                else:
+                    Notification.create(
+                        user=booking.student,
+                        title="Booking Request Accepted — Pending Payment",
+                        message=f"Tutor {tutor_name} accepted your booking for {booking.subject}. Status is Pending Payment — please complete payment to generate your class link.",
+                        link=f"/payment?booking_id={booking.id}"
+                    )
             except Exception:
                 pass
-            return Response({"message": "Booking approved. Student notified." + (" Classes generated." if booking.paid else "")})
+            return Response({
+                "message": f"Booking approved. Student notified." + (f" Class link generated: {class_link}" if booking.paid else " Pending student payment."),
+                "class_link": class_link
+            })
 
         elif 'reject' in action:
             rejection_reason = (request.data.get('rejection_reason') or '').strip()
@@ -512,6 +541,7 @@ class AdminBookingRequestView(APIView):
         new_tutor_id = request.data.get('tutor_id')
         new_subject = request.data.get('subject')
         action = request.data.get('action') # 'approve', 'assign', 'reject'
+        old_tutor = booking.tutor
         
         if new_tutor_id:
             try:
@@ -533,16 +563,46 @@ class AdminBookingRequestView(APIView):
             booking.tutor_declined = False
             booking.save()
             
-            # If the booking is paid, immediately generate the classes!
+            # If the booking is paid, immediately reassign/generate sessions and class links!
             if booking.paid and booking.tutor:
-                fulfill_and_generate_sessions_for_booking(booking)
+                from classes.utils import sync_student_tutor_change
+                sync_result = sync_student_tutor_change(
+                    student_user=booking.student,
+                    new_tutor_user=booking.tutor,
+                    old_tutor_user=old_tutor if (old_tutor and old_tutor != booking.tutor) else None,
+                    subject_name=booking.subject,
+                    booking=booking
+                )
+                class_link = sync_result.get('class_link', '')
+                tutor_name = booking.tutor.get_full_name() or booking.tutor.username
                 return Response({
-                    "message": f"Tutor {booking.tutor.get_full_name() or booking.tutor.username} assigned and classes generated successfully.",
+                    "message": f"Tutor {tutor_name} assigned and class link generated. Student and tutor notified.",
+                    "class_link": class_link,
                     "booking": BookingSerializer(booking).data
                 })
             else:
+                try:
+                    from accounts.models import Notification
+                    student_name = booking.student.get_full_name() or booking.student.username
+                    tutor_name = booking.tutor.get_full_name() or booking.tutor.username if booking.tutor else "Assigned Tutor"
+                    Notification.create(
+                        user=booking.student,
+                        title="Tutor Assigned — Pending Payment",
+                        message=f"Admin assigned tutor {tutor_name} for {booking.subject}. Please complete payment so classes and links can be generated.",
+                        link=f"/payment?booking_id={booking.id}"
+                    )
+                    if booking.tutor:
+                        Notification.create(
+                            user=booking.tutor,
+                            title="New Student Booking Assigned",
+                            message=f"Admin assigned student {student_name} ({booking.subject}) to you. Status is Pending Payment.",
+                            link="/tutor/requests"
+                        )
+                except Exception as ne:
+                    logger.warning("Notification error in AdminBookingRequestView: %s", ne)
+
                 return Response({
-                    "message": "Booking approved by Admin. Awaiting student payment to generate classes.",
+                    "message": "Booking updated by Admin. Pending student payment.",
                     "booking": BookingSerializer(booking).data
                 })
         

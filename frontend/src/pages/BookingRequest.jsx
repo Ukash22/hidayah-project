@@ -171,10 +171,11 @@ const BookingRequest = () => {
                 class_structure: bookingData.class_structure,
                 hours_per_session: bookingData.hours_per_session
             };
-            await api.post(`/api/classes/booking/request/`, payload);
-            toast.success('Booking request sent! Your dashboard will show your upcoming sessions once confirmed.');
+            const res = await api.post(`/api/classes/booking/request/`, payload);
+            toast.success('Booking placed! Status: Pending Payment. Please complete payment to proceed.');
             setSelectedTutor(null);
-            navigate('/student/overview');
+            const newBookingId = res.data?.id;
+            navigate(newBookingId ? `/payment?booking_id=${newBookingId}` : '/student/overview');
         } catch (err) {
             toast.error('Failed to send request: ' + (getApiError(err, 'Error')));
         } finally {

@@ -1,25 +1,161 @@
-from .models import ScheduledSession
+import logging
 from django.utils import timezone
+from django.conf import settings
+from .models import ScheduledSession, Booking
 
-def sync_student_tutor_change(student_user, new_tutor_user):
+logger = logging.getLogger(__name__)
+
+def sync_student_tutor_change(student_user, new_tutor_user, old_tutor_user=None, subject_name=None, booking=None):
     """
-    Automated logic to reassign all upcoming/PENDING sessions from old tutor to new one.
-    Triggered when an Admin changes the student's assigned tutor.
+    Automated logic to reassign a student to a new tutor (triggered at any time by Admin):
+    1. Reassign upcoming/PENDING sessions to new_tutor_user.
+    2. Generate/update valid classroom links for each session for tutor and student.
+    3. If no pending sessions exist yet (e.g. paid booking or approved enrollment), generate them with links.
+    4. Update StudentProfile (assigned_tutor, meeting_link).
+    5. Update Enrollment(s) to new_tutor_user.
+    6. Update Booking(s) to new_tutor_user.
+    7. Notify the student and tutor (and old tutor if changed) with the generated class link.
     """
-    # Find all PENDING sessions for this student
+    frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
+
+    # Tutor's custom meeting link if provided (e.g. Zoom/Google Meet), otherwise internal WebRTC room
+    tutor_custom_link = None
+    if hasattr(new_tutor_user, 'tutor_profile') and new_tutor_user.tutor_profile.live_class_link:
+        tutor_custom_link = new_tutor_user.tutor_profile.live_class_link
+
+    from django.db.models import Q
+    # 1. Reassign all upcoming/PENDING sessions for this student
     pending_sessions = ScheduledSession.objects.filter(
-        student=student_user, 
+        student=student_user,
         status='PENDING'
     )
-    
-    count = pending_sessions.update(
-        tutor=new_tutor_user,
-        meeting_link=None, # Force new links to be generated if they were tutor-specific
-        whiteboard_link=None
-    )
-    
-    print(f"DEBUG: Reassigned {count} sessions for {student_user.username} to {new_tutor_user.username}")
-    return count
+    if subject_name:
+        pending_sessions = pending_sessions.filter(Q(subject__name__icontains=subject_name) | Q(subject__isnull=True))
+
+    primary_class_link = None
+    first_session_id = None
+    count = 0
+
+    for session in pending_sessions:
+        session.tutor = new_tutor_user
+        session_link = tutor_custom_link or f"{frontend_url}/live/{session.id}"
+        session.meeting_link = session_link
+        session.whiteboard_link = session_link
+        session.save(update_fields=['tutor', 'meeting_link', 'whiteboard_link'])
+        count += 1
+        if not primary_class_link:
+            primary_class_link = session_link
+            first_session_id = session.id
+
+    # 2. If no pending sessions exist yet, ensure or generate them
+    if not primary_class_link:
+        if booking and booking.paid:
+            from payments.services import fulfill_and_generate_sessions_for_booking
+            booking.tutor = new_tutor_user
+            booking.approved = True
+            booking.tutor_declined = False
+            booking.save()
+            fulfill_and_generate_sessions_for_booking(booking)
+        else:
+            from classes.scheduler import ensure_student_sessions
+            ensure_student_sessions(student_user)
+
+        first_sess = ScheduledSession.objects.filter(
+            student=student_user,
+            tutor=new_tutor_user,
+            status='PENDING'
+        ).order_by('scheduled_at').first()
+
+        if first_sess:
+            first_session_id = first_sess.id
+            primary_class_link = first_sess.meeting_link or tutor_custom_link or f"{frontend_url}/live/{first_sess.id}"
+            if not first_sess.meeting_link:
+                first_sess.meeting_link = primary_class_link
+                first_sess.whiteboard_link = primary_class_link
+                first_sess.save(update_fields=['meeting_link', 'whiteboard_link'])
+        else:
+            primary_class_link = tutor_custom_link or f"{frontend_url}/live/student-{student_user.id}"
+
+    # 3. Update StudentProfile
+    try:
+        from students.models import StudentProfile
+        profile = StudentProfile.objects.filter(user=student_user).first()
+        if profile:
+            profile.assigned_tutor = new_tutor_user
+            profile.meeting_link = primary_class_link
+            profile.save(update_fields=['assigned_tutor', 'meeting_link'])
+    except Exception as pe:
+        logger.warning("Error updating StudentProfile in sync_student_tutor_change: %s", pe)
+
+    # 4. Update Enrollments
+    try:
+        from students.models import Enrollment
+        enr_qs = Enrollment.objects.filter(student__user=student_user)
+        if subject_name:
+            enr_qs = enr_qs.filter(subject__name__icontains=subject_name)
+        enr_qs.update(tutor=new_tutor_user)
+    except Exception as ee:
+        logger.warning("Error updating Enrollments in sync_student_tutor_change: %s", ee)
+
+    # 5. Update Bookings
+    try:
+        b_qs = Booking.objects.filter(student=student_user)
+        if subject_name:
+            b_qs = b_qs.filter(subject__icontains=subject_name)
+        b_qs.update(tutor=new_tutor_user, tutor_declined=False)
+    except Exception as be:
+        logger.warning("Error updating Bookings in sync_student_tutor_change: %s", be)
+
+    # 6. Notifications with generated class link for student & tutor
+    try:
+        from accounts.models import Notification
+        new_tutor_name = new_tutor_user.get_full_name() or new_tutor_user.username
+        student_name = student_user.get_full_name() or student_user.username
+        subj_str = f" for {subject_name}" if subject_name else ""
+        student_link = f"/live/{first_session_id}" if first_session_id else "/student/classes"
+        tutor_link = f"/live/{first_session_id}" if first_session_id else "/tutor/schedule"
+
+        # Student notification
+        Notification.create(
+            user=student_user,
+            title="Tutor Changed & Class Link Ready",
+            message=f"Admin has assigned {new_tutor_name} as your tutor{subj_str}. Your class link has been generated: {primary_class_link}",
+            link=student_link
+        )
+
+        # New Tutor notification
+        Notification.create(
+            user=new_tutor_user,
+            title="New Student Assigned & Class Link Ready",
+            message=f"Admin assigned student {student_name} to you{subj_str}. Your class link has been generated: {primary_class_link}",
+            link=tutor_link
+        )
+
+        # Old Tutor notification (if reassigned from another tutor)
+        if old_tutor_user and old_tutor_user != new_tutor_user:
+            Notification.create(
+                user=old_tutor_user,
+                title="Student Reassigned",
+                message=f"Student {student_name}{subj_str} has been reassigned to another tutor by Admin.",
+                link="/tutor/schedule"
+            )
+
+        # Admin notification
+        Notification.notify_admins(
+            title="Tutor Reassignment Completed",
+            message=f"Student {student_name} reassigned to tutor {new_tutor_name}{subj_str}. Class link: {primary_class_link}",
+            link="/admin/classes"
+        )
+    except Exception as ne:
+        logger.warning("Notification error in sync_student_tutor_change: %s", ne)
+
+    logger.info("Reassigned %s sessions for %s to %s. Link: %s", count, student_user.username, new_tutor_user.username, primary_class_link)
+    return {
+        "success": True,
+        "count": count,
+        "class_link": primary_class_link,
+        "first_session_id": first_session_id
+    }
 import json
 from .models import Booking, ScheduledSession
 

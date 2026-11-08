@@ -97,13 +97,14 @@ class AdminStudentDetailView(generics.RetrieveUpdateAPIView):
         instance = serializer.save()
         new_tutor = instance.assigned_tutor
         
-        # If the tutor has changed, synchronize all pending sessions
+        # If the tutor has changed, synchronize all pending sessions, generate class link, and notify student & tutor.
+        # sync_student_tutor_change already handles session generation internally, so we don't call
+        # ensure_student_sessions afterwards to avoid duplicate session creation.
         if old_tutor != new_tutor and new_tutor:
             from classes.utils import sync_student_tutor_change
-            sync_student_tutor_change(instance.user, new_tutor)
-
-        # If an assigned tutor is present, ensure enrollment and sessions exist
-        if new_tutor:
+            sync_student_tutor_change(instance.user, new_tutor, old_tutor_user=old_tutor)
+        elif new_tutor:
+            # Tutor unchanged but profile updated — still ensure enrollment/sessions exist
             try:
                 from classes.scheduler import ensure_student_sessions
                 ensure_student_sessions(instance.user)
