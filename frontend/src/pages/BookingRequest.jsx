@@ -162,6 +162,8 @@ const BookingRequest = () => {
 
         setRequesting(true);
         try {
+            const isFamily = bookingData.class_structure === 'FAMILY_SHARED' || bookingData.class_structure === 'FAMILY_BUNDLE' || bookingData.booking_type === 'FAMILY_SHARED' || bookingData.booking_type === 'FAMILY_BUNDLE';
+            const bookingType = isFamily ? (bookingData.booking_type || bookingData.class_structure) : 'INDIVIDUAL';
             const payload = {
                 tutor_id: tutor.id,
                 subject: bookingData.subject,
@@ -169,7 +171,10 @@ const BookingRequest = () => {
                 preferred_start_date: bookingData.preferred_start_date,
                 learning_level: bookingData.learning_level,
                 class_structure: bookingData.class_structure,
-                hours_per_session: bookingData.hours_per_session
+                hours_per_session: bookingData.hours_per_session,
+                booking_type: bookingType,
+                student_count: bookingData.student_count || (isFamily ? 2 : 1),
+                student_ids: bookingData.student_ids || []
             };
             const res = await api.post(`/api/classes/booking/request/`, payload);
             toast.success('Booking placed! Status: Pending Payment. Please complete payment to proceed.');

@@ -90,7 +90,7 @@ def normalize_schedule_data(schedule_data, fallback_time="10:00 AM"):
     return slots
 
 
-def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_per_session=0, weeks=4, start_date=None):
+def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_per_session=0, weeks=4, start_date=None, batch=None):
     """
     Generates a series of ScheduledSession objects based on a weekly schedule.
     - student: User object
@@ -100,6 +100,7 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
     - fee_per_session: Decimal amount to attribute to each session
     - weeks: Number of weeks to generate (Default 4)
     - start_date: Optional specific start date (date object or string)
+    - batch: Optional Batch object if part of a group/cohort
     """
     normalized_slots = normalize_schedule_data(schedule_data)
     if not normalized_slots:
@@ -165,6 +166,7 @@ def generate_recurring_sessions(student, tutor, subject_obj, schedule_data, fee_
                     fee_amount=Decimal(str(fee_per_session or 0)),
                     meeting_link=meeting_link,
                     whiteboard_link=whiteboard_link,
+                    batch=batch,
                     status='PENDING'
                 )
 
@@ -210,13 +212,27 @@ def ensure_student_sessions(student_user):
     """
     Self-healing helper:
     Checks if a student has an assigned tutor or enrollments but no upcoming sessions.
-    If sessions are missing, auto-generates 4 weeks of sessions so their dashboard shows their classes.
+    If sessions are missing and the student is paid & approved, auto-generates 4 weeks of sessions.
     """
     from students.models import StudentProfile, Enrollment
+    from classes.models import Booking
+    from django.db.models import Q
     from programs.models import Subject, Program
 
     profile = StudentProfile.objects.filter(user=student_user).first()
     if not profile:
+        return []
+
+    # Strict payment & approval guard: do NOT generate free sessions for unpaid/unapproved students
+    has_paid_approved_booking = Booking.objects.filter(
+        Q(student=student_user) | Q(participating_students=student_user),
+        paid=True,
+        approved=True
+    ).exists()
+    is_profile_eligible = (profile.payment_status == 'PAID' and profile.approval_status == 'APPROVED')
+
+    if not has_paid_approved_booking and not is_profile_eligible:
+        logger.debug("ensure_student_sessions skipped for %s — unpaid or awaiting approval", student_user)
         return []
 
     created_sessions = []

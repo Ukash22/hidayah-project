@@ -49,15 +49,35 @@ export default function RegisterStep2({
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <Field label="Class Type">
                     <select className={inputCls} value={learning.classType} onChange={e => setLearning(l => ({ ...l, classType: e.target.value }))}>
-                        <option value="ONE_ON_ONE">One-on-One</option>
-                        <option value="GROUP">Group</option>
+                        <option value="ONE_ON_ONE">One-on-One Class</option>
+                        <option value="FAMILY_SHARED">Family Plan (Learn Together — Sibling Discount)</option>
+                        <option value="FAMILY_BUNDLE">Family Plan (Separate 1-on-1s)</option>
+                        <option value="GROUP">Group Class</option>
                     </select>
                 </Field>
-                <Field label="Level">
-                    <select className={inputCls} value={learning.level} onChange={e => setLearning(l => ({ ...l, level: e.target.value }))}>
-                        {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-                    </select>
-                </Field>
+                {(learning.classType === 'FAMILY_SHARED' || learning.classType === 'FAMILY_BUNDLE') ? (
+                    <Field label="Family Members (Siblings)">
+                        <select className={inputCls} value={learning.familyMembersCount || 2} onChange={e => setLearning(l => ({ ...l, familyMembersCount: parseInt(e.target.value) }))}>
+                            <option value="2">2 Siblings / Children</option>
+                            <option value="3">3 Siblings / Children</option>
+                            <option value="4">4 Siblings / Children</option>
+                            <option value="5">5+ Siblings / Children</option>
+                        </select>
+                    </Field>
+                ) : (
+                    <Field label="Level">
+                        <select className={inputCls} value={learning.level} onChange={e => setLearning(l => ({ ...l, level: e.target.value }))}>
+                            {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                        </select>
+                    </Field>
+                )}
+                {(learning.classType === 'FAMILY_SHARED' || learning.classType === 'FAMILY_BUNDLE') && (
+                    <Field label="Level">
+                        <select className={inputCls} value={learning.level} onChange={e => setLearning(l => ({ ...l, level: e.target.value }))}>
+                            {LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
+                        </select>
+                    </Field>
+                )}
                 {EXAM_LEVELS.includes(learning.level) && (
                     <Field label="Target Exam Year">
                         <input type="number" className={inputCls} value={learning.targetExamYear} onChange={e => setLearning(l => ({ ...l, targetExamYear: e.target.value }))} min="2024" max="2035" />
@@ -74,25 +94,94 @@ export default function RegisterStep2({
             </div>
 
             {/* Price preview */}
-            {hourlyRate ? (
-                <div className="mb-6 flex items-center justify-between bg-primary/5 border border-primary/15 rounded-xl px-5 py-3.5">
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                            {learning.classType === 'ONE_ON_ONE' ? 'One-on-One' : 'Group'} Rate
-                        </p>
-                        <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                            ₦{hourlyRate.toLocaleString()} × {learning.hoursPerSession} hr
-                            {learning.hoursPerSession !== '1' ? 's' : ''} per session
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-xl font-bold text-primary">
-                            ₦{(hourlyRate * parseFloat(learning.hoursPerSession)).toLocaleString()}
-                        </p>
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Per session</p>
-                    </div>
-                </div>
-            ) : null}
+            {(() => {
+                const baseRate = pricingTiers['ONE_ON_ONE'] || hourlyRate || 3000;
+                const hrs = parseFloat(learning.hoursPerSession || '1');
+                const count = parseInt(learning.familyMembersCount || 2);
+
+                if (learning.classType === 'FAMILY_SHARED') {
+                    const multiplier = 1.0 + (count >= 2 ? 0.35 : 0) + (count >= 3 ? 0.25 : 0) + (count >= 4 ? 0.20 * (count - 3) : 0);
+                    const sessionCost = Math.round(baseRate * hrs * multiplier);
+                    const undiscountedCost = Math.round(baseRate * hrs * count);
+                    const savingsPercent = Math.round(((undiscountedCost - sessionCost) / undiscountedCost) * 100);
+
+                    return (
+                        <div className="mb-6 flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-5 py-3.5">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
+                                        Family Shared Rate ({count} Siblings)
+                                    </p>
+                                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                        Save {savingsPercent}%
+                                    </span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                                    Base ₦{baseRate.toLocaleString()} × {hrs}h + sibling add-on per session
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-slate-400 line-through">₦{undiscountedCost.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-emerald-700">₦{sessionCost.toLocaleString()}</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-600">Per session</p>
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (learning.classType === 'FAMILY_BUNDLE') {
+                    const discountRate = count >= 4 ? 0.20 : count >= 3 ? 0.15 : 0.10;
+                    const undiscountedCost = Math.round(baseRate * hrs * count);
+                    const sessionCost = Math.round(undiscountedCost * (1 - discountRate));
+                    const savingsPercent = Math.round(discountRate * 100);
+
+                    return (
+                        <div className="mb-6 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl px-5 py-3.5">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-[11px] font-bold uppercase tracking-wide text-blue-800">
+                                        Family Multi-Student Bundle ({count} Children)
+                                    </p>
+                                    <span className="text-[9px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">
+                                        Save {savingsPercent}%
+                                    </span>
+                                </div>
+                                <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                                    {count} individual 1-on-1 sessions bundled
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs text-slate-400 line-through">₦{undiscountedCost.toLocaleString()}</p>
+                                <p className="text-xl font-bold text-blue-700">₦{sessionCost.toLocaleString()}</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600">Total per session slot</p>
+                            </div>
+                        </div>
+                    );
+                }
+
+                if (hourlyRate) {
+                    return (
+                        <div className="mb-6 flex items-center justify-between bg-primary/5 border border-primary/15 rounded-xl px-5 py-3.5">
+                            <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                    {learning.classType === 'ONE_ON_ONE' ? 'One-on-One' : 'Group'} Rate
+                                </p>
+                                <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                                    ₦{hourlyRate.toLocaleString()} × {learning.hoursPerSession} hr
+                                    {learning.hoursPerSession !== '1' ? 's' : ''} per session
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xl font-bold text-primary">
+                                    ₦{(hourlyRate * parseFloat(learning.hoursPerSession)).toLocaleString()}
+                                </p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Per session</p>
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            })()}
 
             {/* Subjects */}
             <div className="mb-6">

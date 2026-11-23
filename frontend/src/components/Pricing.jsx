@@ -10,6 +10,11 @@ const FALLBACK_PLANS = [
         description: 'Dedicated one-on-one sessions with a personal tutor. Maximum focus, maximum results.',
     },
     {
+        class_type: 'FAMILY_SHARED',
+        hourly_rate: '4050',
+        description: 'Siblings learn together with a dedicated tutor. Progressive discounts for each additional child.',
+    },
+    {
         class_type: 'GROUP',
         hourly_rate: '1800',
         description: 'Learn alongside peers in small, interactive group sessions. Affordable and effective.',
@@ -28,6 +33,19 @@ const PLAN_META = {
             'Progress reports monthly',
             'WhatsApp direct support',
             'AI Hub access included',
+        ],
+    },
+    FAMILY_SHARED: {
+        label: 'Family Plan',
+        icon: Users,
+        highlight: false,
+        badge: 'Save up to 55%',
+        perks: [
+            'Siblings learn together in one session',
+            'Sibling discount on 2nd & 3rd child',
+            'Unified parent billing & timetable',
+            'Personalized family syllabus',
+            'AI Hub access for each sibling',
         ],
     },
     GROUP: {

@@ -7,6 +7,33 @@ import WebRTCVideoChat from '../components/LiveClass/WebRTCVideoChat';
 import ExcalidrawWhiteboard from '../components/Whiteboard/ExcalidrawWhiteboard';
 import { Timer, CheckCircle, Clock } from 'lucide-react';
 
+// Isolated Classroom Timer: updates only its own badge to avoid re-rendering the whole classroom and WebRTC/Whiteboard every second
+const ClassroomTimer = React.memo(({ onElapsedTick }) => {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds(prev => {
+        const next = prev + 1;
+        if (onElapsedTick) onElapsedTick(next);
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [onElapsedTick]);
+
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  const formatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  return (
+    <div className="flex items-center gap-1 px-1.5 sm:px-2 py-0.5 bg-slate-800/80 rounded-lg text-slate-300 border border-slate-700/60 text-[10px] font-mono">
+      <Timer size={11} className="text-emerald-400" />
+      <span>{formatted}</span>
+    </div>
+  );
+});
+
 /**
  * LiveClassRoom
  * ─────────────
@@ -27,28 +54,19 @@ const LiveClassRoom = () => {
   // Mobile active view: 'whiteboard' | 'video'
   const [mobileView, setMobileView] = useState('whiteboard');
 
-  // Elapsed timer tracking
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Elapsed timer tracking stored in ref to prevent full page re-renders
+  const elapsedSecondsRef = React.useRef(0);
+  const handleElapsedTick = React.useCallback((s) => {
+    elapsedSecondsRef.current = s;
+  }, []);
+
   const [showFinishModal, setShowFinishModal] = useState(false);
   const [finishMinutes, setFinishMinutes] = useState(40);
   const [completionNotes, setCompletionNotes] = useState('');
   const [submittingFinish, setSubmittingFinish] = useState(false);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setElapsedSeconds(s => s + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimer = (totalSecs) => {
-    const mins = Math.floor(totalSecs / 60);
-    const secs = totalSecs % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const handleOpenFinish = () => {
-    const mins = Math.max(1, Math.round(elapsedSeconds / 60));
+    const mins = Math.max(1, Math.round(elapsedSecondsRef.current / 60));
     setFinishMinutes(mins);
     setShowFinishModal(true);
   };
@@ -99,19 +117,16 @@ const LiveClassRoom = () => {
     <div className="flex flex-col h-[100dvh] w-full bg-[#0f172a] overflow-hidden font-sans">
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <header className="flex-shrink-0 h-12 md:h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-3 md:px-6 z-[3000] gap-2">
+      <header className="flex-shrink-0 h-12 md:h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-2 sm:px-3 md:px-6 z-[3000] gap-1 sm:gap-2">
 
         {/* Left: LIVE badge + room name + timer */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex-shrink-0 flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border border-emerald-500/20">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex-shrink-0 flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-1.5 sm:px-2 py-0.5 rounded-lg text-[9px] font-bold uppercase tracking-wider border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             LIVE
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-800/80 rounded-lg text-slate-300 border border-slate-700/60 text-[10px] font-mono">
-            <Timer size={11} className="text-emerald-400" />
-            <span>{formatTimer(elapsedSeconds)}</span>
-          </div>
-          <h2 className="text-white font-bold text-[11px] md:text-sm truncate max-w-[80px] sm:max-w-[180px]">
+          <ClassroomTimer onElapsedTick={handleElapsedTick} />
+          <h2 className="text-white font-bold text-[11px] md:text-sm truncate hidden xs:block max-w-[80px] sm:max-w-[180px]">
             Room: {roomId}
           </h2>
         </div>
@@ -139,13 +154,13 @@ const LiveClassRoom = () => {
           <div className="flex md:hidden bg-slate-800 p-0.5 rounded-xl border border-slate-700">
             <button
               onClick={() => setMobileView('whiteboard')}
-              className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all ${mobileView === 'whiteboard' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}
+              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all ${mobileView === 'whiteboard' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}
             >
               ✏️ Board
             </button>
             <button
               onClick={() => setMobileView('video')}
-              className={`px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all ${mobileView === 'video' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}
+              className={`px-2.5 sm:px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wide transition-all ${mobileView === 'video' ? 'bg-white text-slate-900 shadow' : 'text-slate-400'}`}
             >
               📹 Video
             </button>
@@ -153,15 +168,16 @@ const LiveClassRoom = () => {
         </div>
 
         {/* Right: Tutor Finish Class Button + exit */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           {isTutorOrAdmin && (
             <button
               onClick={handleOpenFinish}
-              className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[9px] md:text-[10px] font-bold uppercase tracking-wide transition-all shadow-md shadow-emerald-600/30 border border-emerald-400"
+              className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-[9px] md:text-[10px] font-bold uppercase tracking-wide transition-all shadow-md shadow-emerald-600/30 border border-emerald-400"
               title="Finish class session and submit minutes for admin verification"
             >
               <CheckCircle size={12} />
-              <span>Finish Class</span>
+              <span className="hidden sm:inline">Finish Class</span>
+              <span className="sm:hidden">Finish</span>
             </button>
           )}
 
@@ -170,7 +186,7 @@ const LiveClassRoom = () => {
           </div>
           <button
             onClick={handleExitRoom}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 rounded-xl text-red-400 hover:text-white text-[9px] md:text-[10px] font-bold uppercase tracking-wide transition-all"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500 border border-red-500/20 hover:border-red-500 rounded-xl text-red-400 hover:text-white text-[9px] md:text-[10px] font-bold uppercase tracking-wide transition-all"
             title="Leave room"
           >
             <span>✕</span>
@@ -182,12 +198,36 @@ const LiveClassRoom = () => {
       {/* ── Main Workspace: Whiteboard + Video (Single Unified Mount) ──── */}
       <div className="flex flex-1 overflow-hidden relative">
 
-        {/* Whiteboard Container — Single Mount */}
-        <div className={`relative transition-all duration-300 bg-[#f8fafc] ${
-          layoutMode === 'gallery' ? 'md:hidden' : 'md:flex-1'
+        {/* Whiteboard Container — Single Mount (Never unmounted, never display:none on mobile) */}
+        <div className={`transition-all duration-300 bg-[#f8fafc] ${
+          layoutMode === 'gallery' ? 'md:hidden' : 'md:flex-1 md:relative'
         } ${
-          mobileView === 'whiteboard' ? 'flex-1 z-10' : 'hidden md:flex'
+          mobileView === 'whiteboard'
+            ? 'flex-1 z-10 relative opacity-100 pointer-events-auto h-full flex flex-col'
+            : 'absolute inset-0 z-0 opacity-0 pointer-events-none md:relative md:opacity-100 md:pointer-events-auto md:flex md:flex-col'
         }`}>
+          {/* Screen Share Alert Banner on mobile whiteboard view */}
+          {screenShareState.remoteScreenSharer && mobileView === 'whiteboard' && (
+            <div className="md:hidden absolute top-2 left-2 right-2 z-[2500] bg-purple-950/95 border border-purple-500/80 backdrop-blur-md rounded-2xl p-2.5 shadow-2xl flex items-center justify-between gap-2 animate-in slide-in-from-top-3 duration-200">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-white truncate">
+                    🖥️ {screenShareState.remoteScreenSharer.name || 'Tutor'} is sharing screen
+                  </p>
+                  <p className="text-[9px] text-purple-200">Live presentation active</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMobileView('video')}
+                className="flex-shrink-0 px-3 py-1.5 bg-purple-500 hover:bg-purple-400 text-white font-bold text-[10px] uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1"
+              >
+                <span>View Screen</span>
+                <span>➔</span>
+              </button>
+            </div>
+          )}
+
           <ExcalidrawWhiteboard 
             roomId={roomId} 
             role={user?.role} 
@@ -198,30 +238,34 @@ const LiveClassRoom = () => {
 
           {/* Floating "Live Call Active" pill on mobile while on whiteboard tab */}
           <div className="md:hidden absolute bottom-4 right-4 z-[2000] flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700 shadow-2xl">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">
-              {screenShareState.isScreenSharing ? 'Sharing Screen' : screenShareState.remoteScreenSharer ? 'Screen Live' : 'Call Active'}
+            <span className={`w-2 h-2 rounded-full ${screenShareState.remoteScreenSharer ? 'bg-purple-400 animate-ping' : 'bg-emerald-400 animate-pulse'} flex-shrink-0`} />
+            <span className={`text-[10px] font-bold uppercase tracking-widest ${screenShareState.remoteScreenSharer ? 'text-purple-300' : 'text-emerald-400'}`}>
+              {screenShareState.isScreenSharing ? 'Sharing Screen' : screenShareState.remoteScreenSharer ? '🖥️ Screen Live' : 'Call Active'}
             </span>
             <button
               onClick={() => setMobileView('video')}
-              className="ml-1 px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[9px] font-bold uppercase rounded-lg transition-all"
+              className={`ml-1 px-2.5 py-1 text-white text-[9px] font-bold uppercase rounded-lg transition-all ${
+                screenShareState.remoteScreenSharer 
+                  ? 'bg-purple-600 hover:bg-purple-500 shadow-md shadow-purple-600/30 animate-pulse' 
+                  : 'bg-emerald-600 hover:bg-emerald-500'
+              }`}
             >
-              Open
+              {screenShareState.remoteScreenSharer ? 'View Screen' : 'Open'}
             </button>
           </div>
         </div>
 
-        {/* Video Sidebar / Gallery — Single Mount */}
-        <div className={`flex flex-col bg-slate-900 transition-all duration-300 relative ${
+        {/* Video Sidebar / Gallery — Single Mount (Keeps audio/video active in background on mobile) */}
+        <div className={`flex flex-col bg-slate-900 transition-all duration-300 ${
           layoutMode === 'gallery'
-            ? 'md:flex-1'
+            ? 'md:flex-1 md:relative'
             : isVideoOpen
-              ? 'md:w-[380px] md:xl:w-[420px] md:border-l md:border-slate-800'
-              : 'md:w-0 md:overflow-hidden'
+              ? 'md:w-[380px] md:xl:w-[420px] md:border-l md:border-slate-800 md:relative'
+              : 'md:w-0 md:overflow-hidden md:relative'
         } ${
           mobileView === 'video'
-            ? 'flex-1 z-20'
-            : 'hidden md:flex'
+            ? 'flex-1 z-20 relative opacity-100 pointer-events-auto h-full'
+            : 'absolute inset-0 z-0 opacity-0 pointer-events-none md:relative md:opacity-100 md:pointer-events-auto md:flex'
         }`}>
           <WebRTCVideoChat
             roomId={roomId}

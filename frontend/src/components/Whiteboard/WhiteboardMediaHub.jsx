@@ -977,11 +977,11 @@ const WhiteboardMediaHub = ({
                     {onClose && (
                         <button
                             onClick={() => {
-                                if (isTeacher && isSharingLive && sendMessage) {
+                                if (isSharingLive && sendMessage) {
                                     sendMessage(JSON.stringify({
                                         type: 'command',
                                         action: 'whiteboard_media_close',
-                                        senderName: userName || 'Teacher',
+                                        senderName: userName || 'Participant',
                                         senderRole: role
                                     }));
                                 }

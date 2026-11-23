@@ -18,9 +18,12 @@ class PaystackService:
         """
         Initialize a Paystack payment transaction
         """
-        # MOCK MODE CHECK
-        if getattr(settings, 'PAYSTACK_MOCK_MODE', False):
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'https://hidayah-frontend.onrender.com')
+        # MOCK MODE CHECK — also falls back to mock if no real key is configured
+        secret_key = getattr(settings, 'PAYSTACK_SECRET_KEY', None)
+        mock_mode = getattr(settings, 'PAYSTACK_MOCK_MODE', False)
+
+        if mock_mode or not secret_key or secret_key.startswith('sk_test_placeholder'):
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
             print(f"MOCK PAYSTACK: Initializing payment for {email} (Ref: {reference})")
             return {
                 "success": True,
@@ -77,14 +80,18 @@ class PaystackService:
         """
         Verify a payment transaction
         """
-        # MOCK MODE CHECK
-        if getattr(settings, 'PAYSTACK_MOCK_MODE', False):
-            print(f"MOCK PAYSTACK: Verifying payment {reference}")
+        # MOCK MODE CHECK — also falls back to mock if no secret key is configured
+        # so local dev never accidentally calls the real Paystack API and gets 400.
+        secret_key = getattr(settings, 'PAYSTACK_SECRET_KEY', None)
+        mock_mode = getattr(settings, 'PAYSTACK_MOCK_MODE', False)
+
+        if mock_mode or not secret_key or secret_key.startswith('sk_test_placeholder'):
+            print(f"MOCK PAYSTACK: Verifying payment {reference} (mock_mode={mock_mode}, has_key={bool(secret_key)})")
             from django.utils import timezone
             return {
                 "success": True,
                 "verified": True,
-                "amount": Decimal("0.00"), # Amount doesn't verify in mock easily without db lookup, but view handles it
+                "amount": Decimal("0.00"),  # View substitutes booking.price when amount==0
                 "reference": reference,
                 "transaction_id": f"mock_trans_{reference}",
                 "paid_at": timezone.now().isoformat(),
@@ -92,9 +99,9 @@ class PaystackService:
             }
 
         url = f"{PaystackService.BASE_URL}/transaction/verify/{reference}"
-        
+
         headers = {
-            "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"
+            "Authorization": f"Bearer {secret_key}"
         }
         
         try:

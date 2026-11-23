@@ -481,7 +481,16 @@ class InitiateBookingPaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, booking_id):
-        booking = get_object_or_404(Booking, id=booking_id, student=request.user)
+        booking = get_object_or_404(Booking, id=booking_id)
+        user = request.user
+        can_pay = (
+            booking.student_id == user.id or
+            booking.parent_id == user.id or
+            booking.participating_students.filter(id=user.id).exists() or
+            user.is_staff
+        )
+        if not can_pay:
+            return Response({"error": "You do not have permission to pay for this booking."}, status=status.HTTP_403_FORBIDDEN)
         
         if booking.paid:
             return Response({"error": "Booking is already paid"}, status=status.HTTP_400_BAD_REQUEST)
@@ -524,12 +533,18 @@ class VerifyBookingPaymentView(APIView):
     """Student: Verify Paystack payment for a Booking with strict security & anti-hack validations"""
     permission_classes = [permissions.AllowAny]
 
+    @transaction.atomic
     def get(self, request, reference):
+        logger.info(f"VerifyBookingPaymentView: verifying reference={reference}")
         result = PaystackService.verify_payment(reference)
-        
+        logger.info(f"VerifyBookingPaymentView: paystack result success={result.get('success')}, verified={result.get('verified')}")
+
         if result["success"] and result["verified"]:
             try:
-                booking_id = reference.split('-')[1]
+                parts = reference.split('-')
+                if len(parts) < 2:
+                    return Response({"error": "Malformed booking reference."}, status=400)
+                booking_id = parts[1]
                 booking = Booking.objects.select_for_update().get(id=booking_id)
 
                 # Anti-hack 1: Ownership check only if authenticated
@@ -539,15 +554,17 @@ class VerifyBookingPaymentView(APIView):
                         return Response({"error": "Unauthorized payment verification"}, status=403)
 
                 # Anti-hack 2: Amount verification
+                # In mock mode verify_payment returns amount=0 — we substitute booking.price, so the check below is safe.
                 verified_amount = Decimal(str(result.get("amount", 0)))
+                effective_amount = verified_amount if verified_amount > 0 else booking.price
                 if verified_amount > 0 and verified_amount < booking.price:
                     logger.critical(f"TAMPERING DETECTED: Reference {reference} paid ₦{verified_amount} but booking requires ₦{booking.price}")
                     return Response({"error": "Payment amount is less than booking price."}, status=400)
 
                 # Complete payment flow (updates payment, fulfills booking, schedules sessions, platform escrow)
-                flow_result = complete_payment_flow(
+                complete_payment_flow(
                     user=booking.student,
-                    amount=verified_amount if verified_amount > 0 else booking.price,
+                    amount=effective_amount,
                     reference=reference,
                     gateway_ref=str(result.get("transaction_id", ""))
                 )
@@ -557,6 +574,7 @@ class VerifyBookingPaymentView(APIView):
                     process_payment(booking)
                     booking.refresh_from_db()
 
+                logger.info(f"VerifyBookingPaymentView: booking {booking.id} paid={booking.paid}")
                 return Response({
                     "success": True,
                     "verified": True,
@@ -568,11 +586,15 @@ class VerifyBookingPaymentView(APIView):
                         "subject": booking.subject,
                     }
                 })
+            except Booking.DoesNotExist:
+                logger.error(f"VerifyBookingPaymentView: Booking not found for reference {reference}")
+                return Response({"error": "Booking not found for this payment reference."}, status=404)
             except Exception as e:
                 logger.exception(f"VerifyBookingPaymentView error for {reference}: {e}")
-                return Response({"error": "Invalid booking payment reference"}, status=400)
-                
-        return Response({"error": "Payment verification failed"}, status=400)
+                return Response({"error": "Could not complete booking payment verification."}, status=400)
+
+        logger.error(f"VerifyBookingPaymentView: verification failed for {reference}: {result.get('message')}")
+        return Response({"error": result.get("message", "Payment verification failed")}, status=400)
                 
 class ProcessWalletPaymentView(APIView):
     """Pay for a Booking using Wallet Balance"""
@@ -584,7 +606,17 @@ class ProcessWalletPaymentView(APIView):
         from .services import process_payment
         from classes.models import Booking
         
-        booking = get_object_or_404(Booking, id=booking_id, student=request.user)
+        booking = get_object_or_404(Booking, id=booking_id)
+        user = request.user
+        can_pay = (
+            booking.student_id == user.id or
+            booking.parent_id == user.id or
+            booking.participating_students.filter(id=user.id).exists() or
+            user.is_staff
+        )
+        if not can_pay:
+            return Response({"error": "You do not have permission to pay for this booking."}, status=status.HTTP_403_FORBIDDEN)
+
         if booking.paid:
             return Response({"error": "Already paid"}, status=400)
             

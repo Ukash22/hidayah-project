@@ -298,15 +298,65 @@ class AdminUnifiedClassListView(APIView):
         return Response(combined)
 
 
+class FamilyPricingQuoteView(APIView):
+    """
+    API to calculate dynamic family/sibling tutoring fees based on family members and learning mode.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        from .family_pricing import calculate_family_fee
+        from tutors.models import TutorProfile
+
+        tutor_id = request.data.get('tutor_id')
+        hourly_rate = request.data.get('hourly_rate')
+        if not hourly_rate and tutor_id:
+            try:
+                prof = TutorProfile.objects.get(pk=tutor_id)
+                hourly_rate = prof.hourly_rate
+            except TutorProfile.DoesNotExist:
+                hourly_rate = 1500.00
+
+        hours_per_session = request.data.get('hours_per_session', 1.0)
+        schedule = request.data.get('schedule', [])
+        days_per_week = request.data.get('days_per_week')
+        if not days_per_week:
+            days_per_week = len(schedule) if isinstance(schedule, list) and schedule else 1
+
+        student_count = request.data.get('student_count', 1)
+        student_ids = request.data.get('student_ids')
+        if student_ids and isinstance(student_ids, list):
+            student_count = max(1, len(student_ids))
+
+        booking_type = request.data.get('booking_type', 'FAMILY_SHARED')
+        weeks = request.data.get('weeks', 4)
+
+        result = calculate_family_fee(
+            tutor_hourly_rate=hourly_rate or 1500,
+            hours_per_session=hours_per_session,
+            days_per_week=days_per_week,
+            student_count=student_count,
+            booking_type=booking_type,
+            weeks=weeks
+        )
+        return Response(result)
+
+    def get(self, request):
+        return self.post(request)
+
+
 class BookingRequestView(APIView):
-    """Student: Create and view class bookings"""
+    """Student or Parent: Create and view class bookings (supports individual and family plans)"""
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         import json
         from tutors.models import TutorProfile
         from .models import Booking
+        from .family_pricing import calculate_family_fee
+        from django.contrib.auth import get_user_model
         
+        User = get_user_model()
         tutor_id = request.data.get('tutor_id')
         subject = request.data.get('subject')
         schedule = request.data.get('schedule', [])
@@ -314,32 +364,63 @@ class BookingRequestView(APIView):
         learning_level = request.data.get('learning_level', 'Primary School')
         class_structure = request.data.get('class_structure', 'One-on-One')
         hours_per_session = request.data.get('hours_per_session', 1.0)
-        
-        
+        booking_type = request.data.get('booking_type', 'INDIVIDUAL')
+        student_ids = request.data.get('student_ids', [])
         
         tutor_profile = get_object_or_404(TutorProfile, pk=tutor_id)
         
-        # 1. CHECK CONFLICTS FIRST
+        # 1. Resolve participating students & parent
+        participating_students = []
+        if student_ids and isinstance(student_ids, list):
+            participating_students = list(User.objects.filter(id__in=student_ids))
+
+        if participating_students:
+            primary_student = participating_students[0]
+            parent_user = request.user if getattr(request.user, 'role', '') == 'PARENT' else None
+        else:
+            primary_student = request.user
+            parent_user = getattr(request.user, 'student_profile', None) and request.user.student_profile.parent
+            participating_students = [primary_student]
+
+        # 2. CHECK CONFLICTS FIRST
         from .utils import check_tutor_conflict, calculate_schedule_hours
         has_conflict, conflict_msg = check_tutor_conflict(tutor_profile.user, schedule)
         
         if has_conflict:
             return Response({"error": f"{conflict_msg} Please choose another time or another tutor."}, status=400)
             
-        # 2. CALCULATE PRICE & HOURS
-        # Calculate exactly based on From to To time ranges
+        # 3. CALCULATE PRICE & HOURS (with international family pricing)
         hours_per_week = calculate_schedule_hours(schedule)
+        days_count = len(schedule) if isinstance(schedule, list) and schedule else 1
+        requested_count = request.data.get('student_count')
+        if requested_count:
+            try:
+                student_count = max(int(requested_count), len(participating_students))
+            except (ValueError, TypeError):
+                student_count = max(1, len(participating_students))
+        else:
+            student_count = max(1, len(participating_students))
+
+        quote = calculate_family_fee(
+            tutor_hourly_rate=tutor_profile.hourly_rate,
+            hours_per_session=hours_per_session,
+            days_per_week=days_count,
+            student_count=student_count,
+            booking_type=booking_type,
+            weeks=4
+        )
         
         from decimal import Decimal
-        from django.conf import settings as _s
-        # Price calculation: monthly estimate (BILLING_WEEKS_PER_CYCLE weeks, default 4)
-        total_price = Decimal(str(tutor_profile.hourly_rate)) * hours_per_week * _s.BILLING_WEEKS_PER_CYCLE
-        
         booking = Booking.objects.create(
-            student=request.user,
+            student=primary_student,
+            parent=parent_user,
+            booking_type=booking_type,
             tutor=tutor_profile.user,
             subject=subject,
-            price=total_price,
+            price=Decimal(str(quote['final_price'])),
+            original_price=Decimal(str(quote['original_price'])),
+            sibling_discount_amount=Decimal(str(quote['discount_amount'])),
+            sibling_discount_percentage=Decimal(str(quote['discount_percentage'])),
             schedule=json.dumps(schedule) if isinstance(schedule, list) else json.dumps([]),
             hours_per_week=hours_per_week,
             hours_per_session=hours_per_session,
@@ -348,6 +429,8 @@ class BookingRequestView(APIView):
             preferred_start_date=preferred_start_date,
             approved=False
         )
+        if participating_students:
+            booking.participating_students.set(participating_students)
 
         try:
             from accounts.models import Notification
@@ -356,18 +439,18 @@ class BookingRequestView(APIView):
             Notification.create(
                 user=tutor_profile.user,
                 title="New Class Booking Request (Pending Payment)",
-                message=f"{student_name} requested sessions for {subject} (Pending Payment).",
+                message=f"{student_name} requested {booking.get_booking_type_display()} for {subject} (Pending Payment).",
                 link="/tutor/requests"
             )
             Notification.notify_admins(
                 title="New Class Booking Request (Pending Payment)",
-                message=f"{student_name} booked {subject} with tutor {tutor_name} (Pending Payment).",
+                message=f"{student_name} booked {subject} ({booking.get_booking_type_display()}) with tutor {tutor_name} (Pending Payment).",
                 link="/admin/bookings"
             )
             Notification.create(
                 user=request.user,
                 title="Booking Placed — Pending Payment",
-                message=f"Your booking for {subject} with {tutor_name} has been placed. Status: Pending Payment. Please complete payment to proceed.",
+                message=f"Your {booking.get_booking_type_display()} for {subject} with {tutor_name} has been placed. Status: Pending Payment. Please complete payment to proceed.",
                 link=f"/payment?booking_id={booking.id}"
             )
         except Exception as bne:
@@ -377,13 +460,22 @@ class BookingRequestView(APIView):
             "message": "Booking created successfully. Pending payment.",
             "id": booking.id,
             "status": "PENDING_PAYMENT",
-            "status_display": "Pending Payment"
+            "status_display": "Pending Payment",
+            "booking_type": booking.booking_type,
+            "final_price": float(booking.price),
+            "original_price": float(booking.original_price),
+            "discount_amount": float(booking.sibling_discount_amount)
         }, status=201)
 
     def get(self, request):
         from .models import Booking
         from .serializers import BookingSerializer
-        bookings = Booking.objects.filter(student=request.user).order_by('-created_at')
+        from django.db.models import Q
+        bookings = Booking.objects.filter(
+            Q(student=request.user) |
+            Q(parent=request.user) |
+            Q(participating_students=request.user)
+        ).distinct().order_by('-created_at')
         return Response(BookingSerializer(bookings, many=True).data)
 
 class BookingApprovalView(APIView):
@@ -683,7 +775,7 @@ class UserSessionListView(APIView):
         else:
             from students.models import StudentProfile
             profile = StudentProfile.objects.filter(user=user).first()
-            if profile:
+            if profile and profile.payment_status == 'PAID' and profile.approval_status == 'APPROVED':
                 try:
                     from classes.scheduler import ensure_student_sessions
                     ensure_student_sessions(user)

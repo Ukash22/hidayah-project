@@ -38,15 +38,39 @@ const FloatingScreenStage = ({ isLocalSharing, localStream, remoteSharer, onClos
         return isMobile ? { x: 10, y: 55 } : { x: 60, y: 60 };
     });
 
-    // Attach the correct MediaStream to the <video> element
+    // Attach the correct MediaStream to the <video> element with auto-play watchdog
     useEffect(() => {
-        if (!videoRef.current) return;
+        const videoEl = videoRef.current;
+        if (!videoEl) return;
         const stream = isLocalSharing ? localStream : (remoteSharer?.stream || null);
-        if (stream && videoRef.current.srcObject !== stream) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(e => console.warn("Floating video play prevented:", e));
+        if (stream) {
+            if (videoEl.srcObject !== stream) {
+                videoEl.srcObject = stream;
+            }
+            const ensurePlay = () => {
+                if (videoEl.paused) {
+                    videoEl.play().catch(e => console.warn("Floating video play prevented:", e));
+                }
+            };
+            ensurePlay();
+            const vTracks = stream.getVideoTracks();
+            vTracks.forEach(t => {
+                t.addEventListener('unmute', ensurePlay);
+                t.addEventListener('ended', ensurePlay);
+            });
+            const handleVis = () => {
+                if (!document.hidden) ensurePlay();
+            };
+            document.addEventListener('visibilitychange', handleVis);
+            return () => {
+                vTracks.forEach(t => {
+                    t.removeEventListener('unmute', ensurePlay);
+                    t.removeEventListener('ended', ensurePlay);
+                });
+                document.removeEventListener('visibilitychange', handleVis);
+            };
         }
-    }, [isLocalSharing, localStream, remoteSharer]);
+    }, [isLocalSharing, localStream, remoteSharer, remoteSharer?.stream]);
 
     // ── Drag logic (supports both Mouse and Touch for mobile) ────────────────
     const startDrag = (e) => {
@@ -308,6 +332,8 @@ const ExcalidrawWhiteboard = ({
     const [studentThumbnails, setStudentThumbnails] = useState({});
     const [activeStudentId, setActiveStudentId] = useState(null);
     const [teacherBoardSnapshot, setTeacherBoardSnapshot] = useState(null);
+    const accumulatedTeacherFilesRef = useRef({});
+    const [hasUnseenTeacherUpdates, setHasUnseenTeacherUpdates] = useState(false);
 
     const [isLocked, setIsLocked] = useState(false);
     const [isSlowMode, setIsSlowMode] = useState(false);
@@ -411,24 +437,19 @@ const ExcalidrawWhiteboard = ({
         toast.success(`Exam assigned for ${duration} minutes!`);
     };
 
-    // Sync teacher board view for students
+    // Sync teacher board view for students (including files and images)
     useEffect(() => {
         teacherViewAPIRef.current = teacherViewAPI;
-    }, [teacherViewAPI]);
-
-    useEffect(() => {
-        if (teacherViewAPIRef.current && teacherBoardSnapshot && role === 'STUDENT') {
-            let totalVersion = 0;
-            for (let i = 0; i < teacherBoardSnapshot.length; i++) {
-                totalVersion += (teacherBoardSnapshot[i].version || 0) + (teacherBoardSnapshot[i].versionNonce || 0);
+        if (teacherViewAPI) {
+            const files = Object.values(accumulatedTeacherFilesRef.current);
+            if (files.length > 0) {
+                try { teacherViewAPI.addFiles(files); } catch (_e) {}
             }
-            if (totalVersion !== lastAppliedVersionRef.current || teacherBoardSnapshot.length !== lastAppliedLengthRef.current) {
-                lastAppliedVersionRef.current = totalVersion;
-                lastAppliedLengthRef.current = teacherBoardSnapshot.length;
-                teacherViewAPIRef.current.updateScene({ elements: teacherBoardSnapshot });
+            if (teacherBoardSnapshot) {
+                teacherViewAPI.updateScene({ elements: teacherBoardSnapshot });
             }
         }
-    }, [teacherBoardSnapshot, role]);
+    }, [teacherViewAPI, teacherBoardSnapshot]);
 
     // WebSocket URL Calculation — includes JWT for server-side auth
     const socketUrl = React.useMemo(() => {
@@ -540,10 +561,17 @@ const ExcalidrawWhiteboard = ({
                 }
                 
                 if (payload.is_teacher_snapshot && roleRef.current === 'STUDENT') {
-                    if (payload.files && teacherViewAPIRef.current && Object.keys(payload.files).length > 0) {
-                        try { teacherViewAPIRef.current.addFiles(Object.values(payload.files)); } catch (_e) {}
+                    if (payload.files && Object.keys(payload.files).length > 0) {
+                        accumulatedTeacherFilesRef.current = {
+                            ...accumulatedTeacherFilesRef.current,
+                            ...payload.files
+                        };
+                        if (teacherViewAPIRef.current) {
+                            try { teacherViewAPIRef.current.addFiles(Object.values(payload.files)); } catch (_e) {}
+                        }
                     }
                     setTeacherBoardSnapshot(payload.snapshot);
+                    setHasUnseenTeacherUpdates(true);
                 }
             }
         } catch (e) { console.error("WS Message Error:", e); }
@@ -991,12 +1019,15 @@ const ExcalidrawWhiteboard = ({
                                 ✏️ My Board
                             </button>
                             <button
-                                onClick={() => setActiveTab('teacher_board')}
-                                className={`px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
+                                onClick={() => { setActiveTab('teacher_board'); setHasUnseenTeacherUpdates(false); }}
+                                className={`px-2.5 sm:px-3.5 py-1 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all relative ${
                                     activeTab === 'teacher_board' ? 'bg-white text-slate-900 shadow-md' : 'text-slate-400 hover:text-white'
                                 }`}
                             >
-                                👨‍🏫 Teacher Board
+                                <span>👨‍🏫 Teacher Board</span>
+                                {hasUnseenTeacherUpdates && activeTab !== 'teacher_board' && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 absolute top-1 right-1 animate-ping" />
+                                )}
                             </button>
                         </div>
                     ) : (

@@ -44,10 +44,14 @@ const PaymentCallback = () => {
 
         try {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const response = await api.get(
-                `/api/payments/verify/${reference}/`,
-                { headers }
-            );
+            // BOOKING- references must go to the dedicated booking verify endpoint.
+            // Sending them to the generic /verify/ endpoint causes a 400 from Paystack
+            // because BOOKING-{id}-{timestamp} is not a valid Paystack transaction ref.
+            const isBookingRef = reference.startsWith('BOOKING-');
+            const verifyEndpoint = isBookingRef
+                ? `/api/payments/booking/verify/${reference}/`
+                : `/api/payments/verify/${reference}/`;
+            const response = await api.get(verifyEndpoint, { headers });
 
             if (response.data.verified) {
                 setStatus('success');

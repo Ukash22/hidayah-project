@@ -45,7 +45,16 @@ class StudentProfile(models.Model):
     preferred_days = models.CharField(max_length=200, blank=True, null=True, help_text="Comma-separated days e.g. Monday, Wednesday")
     preferred_time = models.CharField(max_length=255, blank=True, null=True)
     preferred_time_exact = models.CharField(max_length=255, blank=True, null=True)
-    class_type = models.CharField(max_length=20, default='ONE_ON_ONE', choices=(('ONE_ON_ONE', 'One-on-One Class'), ('GROUP', 'Group Class')))
+    class_type = models.CharField(
+        max_length=30,
+        default='ONE_ON_ONE',
+        choices=(
+            ('ONE_ON_ONE', 'One-on-One Class'),
+            ('FAMILY_SHARED', 'Family Class (Learn Together)'),
+            ('FAMILY_BUNDLE', 'Family Plan (Separate 1-on-1s)'),
+            ('GROUP', 'Group Class'),
+        )
+    )
     
     # Financials
     @property

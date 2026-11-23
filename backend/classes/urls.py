@@ -22,9 +22,11 @@ from .views import (
     BatchMemberView,
     SchemeOfWorkView,
     SchemeOfWorkToggleView,
+    FamilyPricingQuoteView,
 )
 
 urlpatterns = [
+    path('family-pricing/', FamilyPricingQuoteView.as_view(), name='family_pricing_quote'),
     path('student/reschedule/', StudentRescheduleRequestView.as_view(), name='student_reschedule'),
     path('tutor/reschedule/', TutorRescheduleRequestView.as_view(), name='tutor_reschedule'),
     path('admin/reschedule/<int:request_id>/action/', AdminRescheduleApprovalView.as_view(), name='admin_reschedule_action'),

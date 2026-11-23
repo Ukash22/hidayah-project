@@ -121,77 +121,115 @@ def fulfill_and_generate_sessions_for_booking(booking):
             days_per_week = len(days_list) if days_list else 1
             preferred_days_str = ", ".join(days_list) if days_list else "Days TBA"
 
-            # --- Update StudentProfile (best-effort — does NOT block session generation) ---
-            profile = None
-            try:
-                profile = StudentProfile.objects.get(user=booking.student)
-                profile.assigned_tutor = booking.tutor
-                profile.payment_status = 'PAID'
-                if not profile.enrolled_courses.filter(id=subject_obj.id).exists():
-                    profile.enrolled_courses.add(subject_obj)
-                profile.enrolled_course = subject_obj.name
-                profile.save()
-            except StudentProfile.DoesNotExist:
-                logger.warning(f"StudentProfile not found for booking {booking.id} — skipping profile update.")
+            # Determine participating students (Family support)
+            participating_users = list(booking.participating_students.all())
+            if booking.student and booking.student not in participating_users:
+                participating_users = [booking.student] + participating_users
+            if not participating_users:
+                participating_users = [booking.student]
 
-            # --- Create / update Enrollment (only if profile exists) ---
-            if profile:
-                est_hourly = Decimal('3000')
-                if booking.hours_per_week and Decimal(str(booking.hours_per_week)) > 0:
-                    try:
-                        est_hourly = Decimal(str(booking.price)) / (Decimal(str(booking.hours_per_week)) * Decimal('4'))
-                    except Exception:
-                        pass
+            student_count = len(participating_users)
+            is_family = getattr(booking, 'booking_type', 'INDIVIDUAL') in ('FAMILY_SHARED', 'FAMILY_BUNDLE') or student_count > 1
 
-                enrollment, _ = Enrollment.objects.get_or_create(
-                    student=profile,
-                    subject=subject_obj,
+            # --- Update StudentProfiles & Enrollments for all participating students ---
+            profiles = []
+            for stu_user in participating_users:
+                try:
+                    stu_prof = StudentProfile.objects.get(user=stu_user)
+                    stu_prof.assigned_tutor = booking.tutor
+                    stu_prof.payment_status = 'PAID'
+                    if not stu_prof.enrolled_courses.filter(id=subject_obj.id).exists():
+                        stu_prof.enrolled_courses.add(subject_obj)
+                    stu_prof.enrolled_course = subject_obj.name
+                    stu_prof.save()
+                    profiles.append(stu_prof)
+
+                    # Enrollment record
+                    est_hourly = Decimal('3000')
+                    if booking.hours_per_week and Decimal(str(booking.hours_per_week)) > 0:
+                        try:
+                            est_hourly = Decimal(str(booking.price)) / (Decimal(str(booking.hours_per_week)) * Decimal('4'))
+                        except Exception:
+                            pass
+
+                    enrollment, _ = Enrollment.objects.get_or_create(
+                        student=stu_prof,
+                        subject=subject_obj,
+                        tutor=booking.tutor,
+                        defaults={
+                            'hourly_rate': est_hourly,
+                            'hours_per_week': booking.hours_per_week or 1,
+                            'days_per_week': days_per_week,
+                            'schedule': booking.schedule,
+                            'status': 'APPROVED',
+                            'preferred_days': preferred_days_str,
+                            'preferred_start_date': booking.preferred_start_date,
+                        }
+                    )
+                    enrollment.status = 'APPROVED'
+                    enrollment.tutor = booking.tutor
+                    enrollment.auto_renew = getattr(booking, 'auto_renew', False)
+                    enrollment.save()
+                except StudentProfile.DoesNotExist:
+                    logger.warning(f"StudentProfile not found for user {stu_user.id} in booking {booking.id}")
+
+            profile = profiles[0] if profiles else None
+
+            # --- Create Batch if Family Shared Cohort ---
+            batch_obj = None
+            if getattr(booking, 'booking_type', 'INDIVIDUAL') == 'FAMILY_SHARED' or (is_family and student_count > 1):
+                from classes.models import Batch
+                family_label = f"Family Cohort: {booking.subject}"
+                if booking.parent:
+                    family_label += f" ({booking.parent.get_full_name() or booking.parent.username})"
+                elif booking.student:
+                    family_label += f" ({booking.student.get_full_name() or booking.student.username})"
+
+                batch_obj, _ = Batch.objects.get_or_create(
+                    name=family_label[:100],
                     tutor=booking.tutor,
-                    defaults={
-                        'hourly_rate': est_hourly,
-                        'hours_per_week': booking.hours_per_week or 1,
-                        'days_per_week': days_per_week,
-                        'schedule': booking.schedule,
-                        'status': 'APPROVED',
-                        'preferred_days': preferred_days_str,
-                        'preferred_start_date': booking.preferred_start_date,
-                    }
+                    subject=subject_obj,
+                    defaults={'description': f"Family semi-private cohort for {student_count} students."}
                 )
-                enrollment.status = 'APPROVED'
-                enrollment.tutor = booking.tutor
-                enrollment.auto_renew = getattr(booking, 'auto_renew', False)
-                enrollment.save()
+                batch_obj.students.set(participating_users)
+                batch_obj.is_active = True
+                batch_obj.save()
 
             # --- Generate ScheduledSessions (4 weeks) if not already created ---
             existing_count = ScheduledSession.objects.filter(
-                student=booking.student,
+                student__in=participating_users,
                 tutor=booking.tutor,
                 subject=subject_obj,
                 status='PENDING'
             ).count()
 
             if existing_count == 0:
-                total_sessions = max(1, days_per_week * 4)
-                fee_per_session = Decimal(str(booking.price)) / Decimal(str(total_sessions))
+                total_sessions_per_student = max(1, days_per_week * 4)
+                fee_per_session = Decimal(str(booking.price)) / Decimal(str(total_sessions_per_student * student_count))
 
-                new_sessions = generate_recurring_sessions(
-                    student=booking.student,
-                    tutor=booking.tutor,
-                    subject_obj=subject_obj,
-                    schedule_data=booking.schedule,
-                    fee_per_session=fee_per_session,
-                    weeks=4,
-                    start_date=booking.preferred_start_date
-                )
-                sessions_generated = len(new_sessions)
-                logger.info(f"Generated {sessions_generated} sessions for booking {booking.id}")
+                all_created = []
+                for stu_user in participating_users:
+                    new_sessions = generate_recurring_sessions(
+                        student=stu_user,
+                        tutor=booking.tutor,
+                        subject_obj=subject_obj,
+                        schedule_data=booking.schedule,
+                        fee_per_session=fee_per_session,
+                        weeks=4,
+                        start_date=booking.preferred_start_date,
+                        batch=batch_obj
+                    )
+                    all_created.extend(new_sessions)
+
+                sessions_generated = len(all_created)
+                logger.info(f"Generated {sessions_generated} sessions for family booking {booking.id} ({student_count} students)")
             else:
                 sessions_generated = existing_count
                 logger.info(f"Sessions already exist for booking {booking.id} ({existing_count} pending) — verifying class links.")
                 from django.conf import settings
                 frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
                 tutor_custom_link = getattr(booking.tutor, 'tutor_profile', None) and booking.tutor.tutor_profile.live_class_link
-                for sess in ScheduledSession.objects.filter(student=booking.student, tutor=booking.tutor, subject=subject_obj, status='PENDING'):
+                for sess in ScheduledSession.objects.filter(student__in=participating_users, tutor=booking.tutor, subject=subject_obj, status='PENDING'):
                     if not sess.meeting_link:
                         sess_link = tutor_custom_link or f"{frontend_url}/live/{sess.id}"
                         sess.meeting_link = sess_link
@@ -204,13 +242,14 @@ def fulfill_and_generate_sessions_for_booking(booking):
             booking.tutor_declined = False
             booking.save()
 
-            # Ensure profile meeting_link is updated
-            first_pending = ScheduledSession.objects.filter(
-                student=booking.student, tutor=booking.tutor, subject=subject_obj, status='PENDING'
-            ).order_by('scheduled_at').first()
-            if first_pending and first_pending.meeting_link and profile:
-                profile.meeting_link = first_pending.meeting_link
-                profile.save(update_fields=['meeting_link'])
+            # Ensure profile meeting_link is updated for each student
+            for prof in profiles:
+                first_pending = ScheduledSession.objects.filter(
+                    student=prof.user, tutor=booking.tutor, subject=subject_obj, status='PENDING'
+                ).order_by('scheduled_at').first()
+                if first_pending and first_pending.meeting_link:
+                    prof.meeting_link = first_pending.meeting_link
+                    prof.save(update_fields=['meeting_link'])
 
     except Exception as exc:
         logger.exception(f"fulfill_and_generate_sessions_for_booking failed for booking {booking.id}: {exc}")

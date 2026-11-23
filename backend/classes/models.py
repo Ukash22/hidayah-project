@@ -101,10 +101,23 @@ class Batch(models.Model):
 
 
 class Booking(models.Model):
+    BOOKING_TYPE_CHOICES = (
+        ('INDIVIDUAL', 'Individual (1-on-1)'),
+        ('FAMILY_SHARED', 'Family Shared Class'),
+        ('FAMILY_BUNDLE', 'Family Individual Bundle'),
+    )
+
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_bookings')
+    parent = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='parent_bookings')
+    participating_students = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='family_class_bookings', blank=True)
+    booking_type = models.CharField(max_length=30, choices=BOOKING_TYPE_CHOICES, default='INDIVIDUAL')
+
     tutor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tutor_bookings', null=True, blank=True)
     subject = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    sibling_discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    sibling_discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     
     schedule = models.TextField(blank=True, null=True, help_text="JSON list of {day, time} objects")
     hours_per_week = models.IntegerField(default=1)
@@ -121,13 +134,14 @@ class Booking(models.Model):
 
     def __str__(self):
         tutor_name = self.tutor.username if self.tutor else "Unassigned"
-        return f"{self.student.username} requests {self.subject} with {tutor_name}"
+        return f"{self.student.username} requests {self.subject} with {tutor_name} ({self.booking_type})"
 
     def save(self, *args, **kwargs):
         """Auto-calculate price based on tutor rate, session duration, and schedule count (4-week block)"""
         if not self.price or self.price == 0:
             import json
             from decimal import Decimal
+            from .family_pricing import calculate_family_fee
             
             # 1. Get tutor's hourly rate (Default to 1500 if not set)
             tutor_rate = Decimal('1500.00')
@@ -144,9 +158,23 @@ class Booking(models.Model):
                 except (ValueError, TypeError):
                     pass  # malformed schedule JSON — keep default of 1 day
             
-            # 3. Calculate price: rate * hours_per_session * days * 4 weeks
-            hours = self.hours_per_session or Decimal('1.0')
-            self.price = tutor_rate * hours * Decimal(str(days_count)) * Decimal('4.00')
+            # 3. Calculate price using family_pricing
+            student_count = self.participating_students.count() if self.pk else 1
+            if student_count < 1:
+                student_count = 1
+            
+            pricing = calculate_family_fee(
+                tutor_hourly_rate=tutor_rate,
+                hours_per_session=self.hours_per_session or Decimal('1.0'),
+                days_per_week=days_count,
+                student_count=student_count,
+                booking_type=self.booking_type or 'INDIVIDUAL',
+                weeks=4
+            )
+            self.price = Decimal(str(pricing['final_price']))
+            self.original_price = Decimal(str(pricing['original_price']))
+            self.sibling_discount_amount = Decimal(str(pricing['discount_amount']))
+            self.sibling_discount_percentage = Decimal(str(pricing['discount_percentage']))
             
         super().save(*args, **kwargs)
 

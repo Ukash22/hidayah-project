@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, Users, Info } from 'lucide-react';
+import api from '../services/api';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -26,17 +27,145 @@ export default function BookingModal({
     tutor, bookingData, requesting,
     onUpdateField, onAddSlot, onRemoveSlot, onUpdateSlot, onSubmit, onClose,
 }) {
+    const [children, setChildren] = useState([]);
+    const [minDate] = useState(() => new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+
+    // Fetch children if available for this user
+    useEffect(() => {
+        api.get('/api/parents/dashboard/child_dashboard/')
+            .then(res => {
+                const kids = Array.isArray(res.data) ? res.data : [];
+                setChildren(kids);
+            })
+            .catch(() => setChildren([]));
+    }, []);
+
     useEffect(() => {
         const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
     }, [onClose]);
 
-    const selectedDays = bookingData.schedule.filter(s => s.day).length;
+    // Active configuration
+    const structure = bookingData.class_structure || 'One-on-One';
+    const isFamilyShared = structure === 'FAMILY_SHARED';
+    const isFamilyBundle = structure === 'FAMILY_BUNDLE';
+    const isFamily = isFamilyShared || isFamilyBundle;
+
+    const selectedDays = (bookingData.schedule || []).filter(s => s.day).length;
     const rate = parseFloat(tutor.hourly_rate || 0);
-    const hours = parseFloat(bookingData.hours_per_session || 0);
-    const monthlyTotal = rate * hours * selectedDays * 4;
-    const [minDate] = useState(() => new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+    const hours = parseFloat(bookingData.hours_per_session || 1.0);
+    const familyCount = parseInt(bookingData.student_count || 2);
+
+    // Dynamic fee calculation (Centralized formula matching backend)
+    const pricingCalculation = useMemo(() => {
+        const totalSessions = selectedDays * 4;
+        const baseSessionCost = rate * hours;
+        const singleStudentTotal = baseSessionCost * totalSessions;
+
+        if (!isFamily) {
+            return {
+                isFamily: false,
+                originalTotal: singleStudentTotal,
+                finalTotal: singleStudentTotal,
+                discountAmount: 0,
+                discountPercent: 0,
+                sessionCost: baseSessionCost,
+                label: 'Standard 1-on-1 Rate'
+            };
+        }
+
+        const undiscountedTotal = singleStudentTotal * familyCount;
+
+        if (isFamilyShared) {
+            // Shared Semi-Private Cohort:
+            // 1st child: 1.0, 2nd child: +0.35, 3rd child: +0.25, 4th+ child: +0.20 each
+            let multiplier = 1.0;
+            if (familyCount >= 2) multiplier += 0.35;
+            if (familyCount >= 3) multiplier += 0.25;
+            if (familyCount >= 4) multiplier += 0.20 * (familyCount - 3);
+
+            const sessionCost = Math.round(baseSessionCost * multiplier);
+            const finalTotal = Math.round(sessionCost * totalSessions);
+            const discountAmount = Math.max(0, undiscountedTotal - finalTotal);
+            const discountPercent = undiscountedTotal > 0 ? Math.round((discountAmount / undiscountedTotal) * 100) : 0;
+
+            return {
+                isFamily: true,
+                familyCount,
+                originalTotal: undiscountedTotal,
+                finalTotal,
+                discountAmount,
+                discountPercent,
+                sessionCost,
+                label: `Family Shared Plan (${familyCount} Siblings)`
+            };
+        }
+
+        if (isFamilyBundle) {
+            // Multi-student volume bundle (separate 1-on-1s):
+            // 2 children: 10%, 3 children: 15%, 4+ children: 20%
+            const discountRate = familyCount >= 4 ? 0.20 : familyCount >= 3 ? 0.15 : 0.10;
+            const discountAmount = Math.round(undiscountedTotal * discountRate);
+            const finalTotal = Math.round(undiscountedTotal - discountAmount);
+            const discountPercent = Math.round(discountRate * 100);
+            const sessionCost = totalSessions > 0 ? Math.round(finalTotal / totalSessions) : 0;
+
+            return {
+                isFamily: true,
+                familyCount,
+                originalTotal: undiscountedTotal,
+                finalTotal,
+                discountAmount,
+                discountPercent,
+                sessionCost,
+                label: `Family Bundle Plan (${familyCount} Separate 1-on-1s)`
+            };
+        }
+
+        return {
+            isFamily: false,
+            originalTotal: singleStudentTotal,
+            finalTotal: singleStudentTotal,
+            discountAmount: 0,
+            discountPercent: 0,
+            sessionCost: baseSessionCost,
+            label: 'Standard Rate'
+        };
+    }, [isFamily, isFamilyShared, isFamilyBundle, familyCount, rate, hours, selectedDays]);
+
+    const handleStructureChange = (val) => {
+        onUpdateField(tutor.id, 'class_structure', val);
+        if (val === 'FAMILY_SHARED' || val === 'FAMILY_BUNDLE') {
+            onUpdateField(tutor.id, 'booking_type', val);
+            if (!bookingData.student_count || bookingData.student_count < 2) {
+                onUpdateField(tutor.id, 'student_count', 2);
+            }
+        } else {
+            onUpdateField(tutor.id, 'booking_type', 'INDIVIDUAL');
+            onUpdateField(tutor.id, 'student_count', 1);
+        }
+    };
+
+    const toggleChildSelection = (childUserId) => {
+        const currentIds = bookingData.student_ids || [];
+        const nextIds = currentIds.includes(childUserId)
+            ? currentIds.filter(id => id !== childUserId)
+            : [...currentIds, childUserId];
+        onUpdateField(tutor.id, 'student_ids', nextIds);
+        if (nextIds.length >= 2) {
+            onUpdateField(tutor.id, 'student_count', nextIds.length);
+        }
+    };
+
+    const handleFormSubmit = () => {
+        onSubmit(tutor, {
+            ...bookingData,
+            booking_type: isFamily ? (bookingData.booking_type || structure) : 'INDIVIDUAL',
+            student_count: isFamily ? familyCount : 1,
+            student_ids: bookingData.student_ids || [],
+        });
+    };
 
     return (
         <div className="fixed inset-0 z-[9000] flex items-center justify-center p-4">
@@ -106,18 +235,91 @@ export default function BookingModal({
                                     <option value="NECO" className="bg-slate-900">NECO</option>
                                 </select>
                             </div>
+
                             <div className="space-y-1.5">
                                 <label className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 block">Class Structure</label>
                                 <select
                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[11px] font-semibold text-white uppercase outline-none focus:border-emerald-500 transition-all appearance-none"
-                                    onChange={e => onUpdateField(tutor.id, 'class_structure', e.target.value)}
-                                    value={bookingData.class_structure}
+                                    onChange={e => handleStructureChange(e.target.value)}
+                                    value={structure}
                                 >
-                                    <option value="One-on-One" className="bg-slate-900">One-on-One</option>
+                                    <option value="One-on-One" className="bg-slate-900">One-on-One (Private)</option>
+                                    <option value="FAMILY_SHARED" className="bg-slate-900">Family Plan (Learn Together — Sibling Discount)</option>
+                                    <option value="FAMILY_BUNDLE" className="bg-slate-900">Family Plan (Separate 1-on-1s — Bundle Discount)</option>
                                     <option value="Group" className="bg-slate-900">Group Class</option>
                                 </select>
                             </div>
                         </div>
+
+                        {/* Family Configuration Box */}
+                        {isFamily && (
+                            <div className="bg-gradient-to-br from-emerald-950/40 to-slate-900 border border-emerald-500/30 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <Users size={16} className="text-emerald-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">
+                                            {isFamilyShared ? 'Family Shared Cohort' : 'Family Sibling Bundle'}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                                        Save up to {isFamilyShared ? '55%' : '20%'}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">
+                                        Number of Family Members (Siblings)
+                                    </label>
+                                    <select
+                                        className="w-full bg-slate-800 border border-emerald-500/30 rounded-xl px-4 py-2.5 text-xs font-bold text-white uppercase outline-none focus:border-emerald-500 transition-all"
+                                        value={familyCount}
+                                        onChange={e => onUpdateField(tutor.id, 'student_count', parseInt(e.target.value))}
+                                    >
+                                        <option value="2">2 Siblings (Save 35% on 2nd child)</option>
+                                        <option value="3">3 Siblings (Save 47% total)</option>
+                                        <option value="4">4 Siblings (Save 55% total)</option>
+                                        <option value="5">5+ Siblings</option>
+                                    </select>
+                                </div>
+
+                                {/* Registered children tagging if available */}
+                                {children.length > 0 && (
+                                    <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                        <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 block">
+                                            Attach Registered Children (Optional)
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {children.map(child => {
+                                                const childId = child.user_id || child.user || child.id;
+                                                const isSelected = (bookingData.student_ids || []).includes(childId);
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={childId}
+                                                        onClick={() => toggleChildSelection(childId)}
+                                                        className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all text-left ${isSelected ? 'border-emerald-500 bg-emerald-500/15' : 'border-white/10 bg-white/5 hover:border-white/20'}`}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${isSelected ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-white/20'}`}>
+                                                            {isSelected && '✓'}
+                                                        </div>
+                                                        <span className="text-[11px] font-bold text-white truncate">
+                                                            {child.full_name || child.user_full_name || `Child #${childId}`}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p className="text-[10px] text-slate-400 flex items-center gap-1.5 pt-1">
+                                    <Info size={12} className="text-emerald-400 shrink-0" />
+                                    {isFamilyShared
+                                        ? 'All siblings join the same virtual classroom session simultaneously.'
+                                        : 'Each sibling receives separate private 1-on-1 tutoring sessions with volume discounts.'}
+                                </p>
+                            </div>
+                        )}
 
                         {/* Duration + Start Date */}
                         <div className="grid grid-cols-2 gap-3">
@@ -237,14 +439,39 @@ export default function BookingModal({
                         {selectedDays > 0 && hours > 0 && (
                             <div className="pt-4 border-t border-white/5 flex items-end justify-between">
                                 <div>
-                                    <p className="text-[10px] font-semibold uppercase text-slate-600 mb-1">Monthly Estimate</p>
-                                    <p className="text-[10px] text-slate-600">
-                                        ₦{rate.toLocaleString()} × {hours}h × {selectedDays} days × 4 wks
+                                    <p className="text-[10px] font-semibold uppercase text-slate-500 mb-1">
+                                        {pricingCalculation.label}
                                     </p>
+                                    {pricingCalculation.isFamily ? (
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] text-slate-400">
+                                                {familyCount} Siblings · {selectedDays} days/wk × 4 weeks ({selectedDays * 4} sessions)
+                                            </p>
+                                            <div className="flex items-center gap-1.5 pt-0.5">
+                                                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+                                                    Save {pricingCalculation.discountPercent}% (-₦{pricingCalculation.discountAmount.toLocaleString()})
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[10px] text-slate-400">
+                                            ₦{rate.toLocaleString()} × {hours}h × {selectedDays} days × 4 wks
+                                        </p>
+                                    )}
                                 </div>
+
                                 <div className="text-right">
-                                    <p className="text-2xl font-bold text-white">₦{monthlyTotal.toLocaleString()}</p>
-                                    <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">/ month</p>
+                                    {pricingCalculation.isFamily && pricingCalculation.discountAmount > 0 && (
+                                        <p className="text-xs text-slate-500 line-through">
+                                            ₦{pricingCalculation.originalTotal.toLocaleString()}
+                                        </p>
+                                    )}
+                                    <p className="text-2xl font-bold text-white">
+                                        ₦{pricingCalculation.finalTotal.toLocaleString()}
+                                    </p>
+                                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">
+                                        / month
+                                    </p>
                                 </div>
                             </div>
                         )}
@@ -254,11 +481,15 @@ export default function BookingModal({
                 {/* Sticky footer with submit */}
                 <div className="p-6 border-t border-white/5">
                     <button
-                        onClick={() => onSubmit(tutor, bookingData)}
-                        disabled={requesting}
+                        onClick={handleFormSubmit}
+                        disabled={requesting || selectedDays === 0}
                         className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-[0.3em] shadow-xl shadow-emerald-500/10 active:scale-95 transition-all flex items-center justify-center gap-3"
                     >
-                        {requesting ? 'Sending Request…' : 'Request Class →'}
+                        {requesting ? 'Sending Request…' : (
+                            isFamily
+                                ? `Book Family Class (${familyCount} Siblings) →`
+                                : 'Request Class →'
+                        )}
                     </button>
                 </div>
             </motion.div>

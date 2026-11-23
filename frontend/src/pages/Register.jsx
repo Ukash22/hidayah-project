@@ -259,6 +259,7 @@ export default function Register() {
                     subject: s,
                     preferred_tutor_id: subjectEnrollments[s] || null,
                 })),
+                family_members_count: learning.familyMembersCount || 1,
                 total_amount: 0,
                 ...(isMinor && {
                     parent_first_name: parent.parentFirstName,

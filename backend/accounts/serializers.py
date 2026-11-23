@@ -118,7 +118,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             'parent_first_name', 'parent_last_name', 'parent_email', 
             'parent_password', 'relationship', 'address',
             'days_per_week', 'hours_per_week', 'preferred_days', 'preferred_time', 'preferred_time_exact', 'class_type', 'level', 'preferred_tutor_id', 'subject_enrollments', 'preferred_tutor', 'enrolled_course',
-            'target_exam_type', 'target_exam_year', 'total_amount'
+            'target_exam_type', 'target_exam_year', 'total_amount', 'family_members_count'
         )
     
     # Extra fields not on User model but needed for registration
@@ -136,6 +136,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     target_exam_type = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     target_exam_year = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     total_amount = serializers.DecimalField(required=False, max_digits=10, decimal_places=2, default=0.00)
+    family_members_count = serializers.IntegerField(required=False, default=1)
 
 
     def generate_admission_number(self, course_code="GEN"):
@@ -253,6 +254,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             target_exam_year = validated_data.pop('target_exam_year', None)
             preferred_tutor_id = validated_data.pop('preferred_tutor_id', None)
             preferred_start_date = validated_data.pop('preferred_start_date', None)
+            family_members_count = validated_data.pop('family_members_count', 1)
             
             # Zip preferences into a formal schedule list
             import json
@@ -263,14 +265,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             for i, d in enumerate(days_list):
                 t = times_list[i] if i < len(times_list) else default_time
                 enrollment_schedule.append({"day": d, "time": t})
-            
-            # Calculate first payment (Tuition ONLY, No One-Time Fees)
-            from decimal import Decimal
-            
-            # Pull total amount dynamically calculated from frontend
-            first_payment = validated_data.pop('total_amount', Decimal('1500.00')) 
-            if first_payment <= 0:
-                first_payment = Decimal('1500.00')
             
             # Extract subject enrollments if any
             subject_enrollments = validated_data.pop('subject_enrollments', [])
@@ -283,6 +277,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             # Create Student Profile
             from students.models import StudentProfile
             import uuid
+            from decimal import Decimal
             
             # FIX: Sanitize preferred_tutor_id and verify it exists
             final_tutor = None
@@ -293,6 +288,48 @@ class RegisterSerializer(serializers.ModelSerializer):
                 except (ValueError, TypeError):
                     pass  # non-numeric tutor id — fall through to admin assignment
 
+            # Numeric values for pricing calculations
+            try:
+                d_per_w = max(1, int(days_per_week))
+                h_per_w = float(hours_per_week)
+            except (ValueError, TypeError):
+                d_per_w = 3
+                h_per_w = 1.0
+
+            hours_per_session = h_per_w / d_per_w if d_per_w > 0 else h_per_w
+            if hours_per_session <= 0:
+                hours_per_session = 1.0
+
+            # Determine baseline tutor rate (or level-based rate)
+            base_rate = Decimal('3000.00')
+            if final_tutor and hasattr(final_tutor, 'tutor_profile') and final_tutor.tutor_profile and final_tutor.tutor_profile.hourly_rate:
+                base_rate = final_tutor.tutor_profile.hourly_rate
+            else:
+                level_rate = get_rate_by_level(level)
+                if level_rate:
+                    base_rate = Decimal(str(level_rate))
+
+            # Booking type & family fee calculation
+            booking_type = class_type if class_type in ('FAMILY_SHARED', 'FAMILY_BUNDLE') else 'INDIVIDUAL'
+            try:
+                num_students = max(1, int(family_members_count))
+            except (ValueError, TypeError):
+                num_students = 1
+
+            from classes.family_pricing import calculate_family_fee
+            pricing_quote = calculate_family_fee(
+                tutor_hourly_rate=base_rate,
+                hours_per_session=hours_per_session,
+                days_per_week=d_per_w,
+                student_count=num_students,
+                booking_type=booking_type,
+                weeks=4
+            )
+            calculated_price = pricing_quote['final_price']
+            original_price = pricing_quote['original_price']
+            discount_amount = pricing_quote['discount_amount']
+            discount_percent = pricing_quote['discount_percentage']
+
             profile, _ = StudentProfile.objects.update_or_create(
                 user=user,
                 defaults={
@@ -300,8 +337,8 @@ class RegisterSerializer(serializers.ModelSerializer):
                     'relationship': relationship,
                     'address': address,
                     'enrolled_course': enrolled_course_str,
-                    'days_per_week': days_per_week,
-                    'hours_per_week': hours_per_week,
+                    'days_per_week': d_per_w,
+                    'hours_per_week': Decimal(str(hours_per_week)),
                     'preferred_days': preferred_days,
                     'preferred_time': preferred_time,
                     'preferred_time_exact': preferred_time_exact,
@@ -311,89 +348,130 @@ class RegisterSerializer(serializers.ModelSerializer):
                     'target_exam_year': target_exam_year,
                     'preferred_tutor': final_tutor,
                     'assigned_tutor': final_tutor,
-                    'approval_status': 'APPROVED', # Instant Admission
+                    'approval_status': 'PENDING',
                     'payment_reference': f"HEMI-{uuid.uuid4().hex[:8].upper()}",
-                    'total_amount': Decimal('0.00'), # No Admission Fee
-                    'payment_status': 'PAID' # Instant Access
+                    'total_amount': calculated_price,
+                    'payment_status': 'UNPAID'
                 }
             )
 
-            # Create formal Enrollment objects for each subject (Instant Enrollment)
+            # Create formal Enrollment objects for each subject with status='PENDING'
+            from students.models import Enrollment
+            from programs.models import Subject, Program
+
             if subject_enrollments:
-                from students.models import Enrollment
-                from programs.models import Subject
-                
                 for enrollment in subject_enrollments:
                     subj_name = enrollment.get('subject')
                     pref_t_id = enrollment.get('preferred_tutor_id')
                     
                     if subj_name:
                         try:
-                            t_user = User.objects.filter(id=int(pref_t_id), role='TUTOR').first() if pref_t_id else None
-                            # Robust subject matching
+                            t_user = User.objects.filter(id=int(pref_t_id), role='TUTOR').first() if pref_t_id else final_tutor
                             s_obj = Subject.objects.filter(name__iexact=subj_name).first() or \
                                     Subject.objects.filter(name__icontains=subj_name).first()
                             
-                            # Determine rate for this enrollment (Dynamic based on Level)
-                            current_rate = get_rate_by_level(level)
-                            if t_user and t_user.tutor_profile and t_user.tutor_profile.hourly_rate:
+                            current_rate = base_rate
+                            if t_user and hasattr(t_user, 'tutor_profile') and t_user.tutor_profile and t_user.tutor_profile.hourly_rate:
                                 current_rate = t_user.tutor_profile.hourly_rate
 
-                            # Ensure numeric values for math
-                            try:
-                                d_per_w = int(days_per_week)
-                                h_per_w = float(hours_per_week)
-                            except (ValueError, TypeError):
-                                d_per_w = 3
-                                h_per_w = 1.0
-
-                            # CRITICAL MATH FIX: Backend Enrollment expects Hours PER SESSION
-                            # hours_per_week in serializer is TOTAL WEEKLY HOURS
-                            hours_per_session = h_per_w / d_per_w if d_per_w > 0 else h_per_w
-
                             if s_obj is None:
-                                # Enrollment.subject is NOT NULL — attempting the insert
-                                # would poison the surrounding atomic block and fail the
-                                # entire registration. Skip; admin assigns the subject later.
-                                logger.warning("Auto-enrollment skipped — unknown subject %r", subj_name)
-                                continue
+                                default_prog, _ = Program.objects.get_or_create(
+                                    name="General Education",
+                                    defaults={'program_type': 'WESTERN'}
+                                )
+                                s_obj, _ = Subject.objects.get_or_create(
+                                    name=subj_name,
+                                    defaults={'program': default_prog, 'admin_percentage': 20}
+                                )
 
                             Enrollment.objects.create(
                                 student=profile,
                                 subject=s_obj,
                                 tutor=t_user,
                                 hourly_rate=current_rate,
-                                hours_per_week=Decimal(str(hours_per_session)),
-                                days_per_week=days_per_week,
+                                hours_per_week=Decimal(str(round(hours_per_session, 2))),
+                                days_per_week=d_per_w,
                                 preferred_days=preferred_days,
                                 schedule=json.dumps(enrollment_schedule) if enrollment_schedule else None,
                                 preferred_start_date=preferred_start_date,
-                                status='APPROVED' # Instant Approval
+                                status='PENDING'
                             )
                         except Exception as e:
                             logger.warning("Error creating auto-enrollment for %s: %s", subj_name, e)
+            elif enrolled_course_str:
+                # Default single subject enrollment if no subject_enrollments list
+                try:
+                    s_obj = Subject.objects.filter(name__iexact=enrolled_course_str).first() or \
+                            Subject.objects.filter(name__icontains=enrolled_course_str).first()
+                    if s_obj is None:
+                        default_prog, _ = Program.objects.get_or_create(
+                            name="General Education",
+                            defaults={'program_type': 'WESTERN'}
+                        )
+                        s_obj, _ = Subject.objects.get_or_create(
+                            name=enrolled_course_str,
+                            defaults={'program': default_prog, 'admin_percentage': 20}
+                        )
+                    Enrollment.objects.create(
+                        student=profile,
+                        subject=s_obj,
+                        tutor=final_tutor,
+                        hourly_rate=base_rate,
+                        hours_per_week=Decimal(str(round(hours_per_session, 2))),
+                        days_per_week=d_per_w,
+                        preferred_days=preferred_days,
+                        schedule=json.dumps(enrollment_schedule) if enrollment_schedule else None,
+                        preferred_start_date=preferred_start_date,
+                        status='PENDING'
+                    )
+                except Exception as e:
+                    logger.warning("Error creating default enrollment for %s: %s", enrolled_course_str, e)
 
-            # Generate and Send Admission Letter Immediately
+            # Create Booking instance (Pending Payment & Pending Admin Approval)
+            from classes.models import Booking
+            booking = Booking.objects.create(
+                student=user,
+                parent=parent_user,
+                tutor=final_tutor,
+                subject=enrolled_course_str,
+                price=calculated_price,
+                original_price=original_price,
+                sibling_discount_amount=discount_amount,
+                sibling_discount_percentage=discount_percent,
+                schedule=json.dumps(enrollment_schedule) if enrollment_schedule else json.dumps([]),
+                hours_per_week=Decimal(str(hours_per_week)),
+                hours_per_session=Decimal(str(round(hours_per_session, 2))),
+                learning_level=level or 'PRIMARY',
+                class_structure=class_type or 'ONE_ON_ONE',
+                booking_type=booking_type,
+                preferred_start_date=preferred_start_date,
+                paid=False,
+                approved=False
+            )
+
+            # Generate and Send Admission Letter
             try:
                 from core.utils.pdf_generator import generate_admission_letter
                 from applications.email_service import send_admission_letter_email
                 
-                # Format enrollment data for PDF
                 enrollment_data = []
                 for enr in profile.enrollments.all():
                     enrollment_data.append({
                         'subject_name': enr.subject.name,
                         'tutor_name': f"{enr.tutor.first_name} {enr.tutor.last_name}" if enr.tutor else "TBA",
-                        'monthly_rate': float(enr.monthly_rate),
+                        'hourly_rate': float(enr.hourly_rate or 0),
+                        'hours_per_week': float(enr.hours_per_week or 0),
+                        'weekly_rate': float(enr.weekly_rate or 0),
+                        'monthly_rate': float(enr.monthly_rate or 0),
                         'days': enr.preferred_days or "TBA",
                         'time': profile.preferred_time_exact or "TBA",
                     })
                 
-                payment_url = f"{settings.FRONTEND_URL}/admission-portal" if hasattr(settings, 'FRONTEND_URL') else "https://hidayah-frontend.onrender.com/admission-portal"
+                payment_url = f"{settings.FRONTEND_URL}/payment?booking_id={booking.id}" if hasattr(settings, 'FRONTEND_URL') else f"http://localhost:5173/payment?booking_id={booking.id}"
                 
                 letter_path = generate_admission_letter(user, profile, {
                     'enrollments': enrollment_data,
-                    'total_payment': float(first_payment),
+                    'total_payment': float(calculated_price),
                 }, payment_url=payment_url)
                 
                 profile.admission_letter = letter_path
@@ -403,13 +481,33 @@ class RegisterSerializer(serializers.ModelSerializer):
             except Exception as doc_err:
                 logger.warning("Non-critical error generating instant admission docs: %s", doc_err)
 
-            if final_tutor:
-                try:
-                    from classes.scheduler import ensure_student_sessions
-                    ensure_student_sessions(user)
-                except Exception as sched_err:
-                    logger.warning("Non-critical error generating initial sessions on registration: %s", sched_err)
-                
+            # In-app notifications for Student, Tutor and Admin
+            try:
+                from accounts.models import Notification
+                student_name = user.get_full_name() or user.username
+                tutor_name = final_tutor.get_full_name() if final_tutor else "Assigned Tutor"
+
+                Notification.create(
+                    user=user,
+                    title="Registration Complete — Pending Tuition Payment",
+                    message=f"Welcome to Hidayah! Your booking for {enrolled_course_str} with {tutor_name} has been placed. Status: Pending Payment (₦{calculated_price:,.2f}). Please pay to proceed to scheduling.",
+                    link=f"/payment?booking_id={booking.id}"
+                )
+                if final_tutor:
+                    Notification.create(
+                        user=final_tutor,
+                        title="New Student Registration (Pending Payment)",
+                        message=f"{student_name} registered for {enrolled_course_str} with you (Pending Payment).",
+                        link="/tutor/requests"
+                    )
+                Notification.notify_admins(
+                    title="New Student Registered (Pending Payment)",
+                    message=f"New student {student_name} registered for {enrolled_course_str} (Tutor: {tutor_name}). Pending payment of ₦{calculated_price:,.2f}.",
+                    link="/admin/bookings"
+                )
+            except Exception as ne:
+                logger.warning("Notification error on student registration: %s", ne)
+
             return user
         except serializers.ValidationError:
             raise

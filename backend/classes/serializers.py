@@ -12,11 +12,30 @@ class BookingSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
     approval_message = serializers.SerializerMethodField()
+    participating_students_details = serializers.SerializerMethodField()
+    parent_name = serializers.SerializerMethodField()
+    booking_type_display = serializers.CharField(source='get_booking_type_display', read_only=True)
     
     class Meta:
         model = Booking
         fields = '__all__'
         read_only_fields = ('created_at',)
+
+    def get_participating_students_details(self, obj):
+        return [
+            {
+                'id': s.id,
+                'full_name': s.get_full_name() or s.username,
+                'email': s.email,
+                'username': s.username
+            }
+            for s in obj.participating_students.all()
+        ]
+
+    def get_parent_name(self, obj):
+        if obj.parent:
+            return obj.parent.get_full_name() or obj.parent.username
+        return None
 
     def get_tutor_name(self, obj):
         if obj.tutor:

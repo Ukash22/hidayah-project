@@ -13,10 +13,12 @@ class PricingTier(models.Model):
     """Hourly rate pricing for different class types"""
     CLASS_TYPE_CHOICES = (
         ('ONE_ON_ONE', 'One-on-One Class'),
+        ('FAMILY_SHARED', 'Family Class (Learn Together)'),
+        ('FAMILY_BUNDLE', 'Family Plan (Separate 1-on-1s)'),
         ('GROUP', 'Group Class'),
     )
     
-    class_type = models.CharField(max_length=20, choices=CLASS_TYPE_CHOICES, unique=True)
+    class_type = models.CharField(max_length=30, choices=CLASS_TYPE_CHOICES, unique=True)
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)

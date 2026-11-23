@@ -55,7 +55,7 @@ def create_user_wallet(sender, instance, created, **kwargs):
             StudentProfile.objects.get_or_create(
                 user=instance,
                 defaults={
-                    'approval_status': 'APPROVED',
+                    'approval_status': 'PENDING',
                     'payment_status': 'UNPAID',
                     'enrolled_course': 'General Studies',
                 }
