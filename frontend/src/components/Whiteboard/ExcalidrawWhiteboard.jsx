@@ -3,6 +3,7 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
 import "./whiteboard.css";
+import * as pdfjsLib from 'pdfjs-dist';
 import { getAccess } from '../../services/tokenStore';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
@@ -264,6 +265,7 @@ const ExcalidrawWhiteboard = ({
     roomId, 
     role, 
     userName,
+    userId,
     screenShareState,
     onToggleScreenShare 
 }) => {
@@ -271,8 +273,18 @@ const ExcalidrawWhiteboard = ({
     const confirm = useConfirm();
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
-    const imageFileInputRef = useRef(null);
+    const directFileInputRef = useRef(null);
     const [isScreenStageClosed, setIsScreenStageClosed] = useState(false);
+
+    const normalizedRole = (role || 'STUDENT').toUpperCase();
+    const isTutorOrAdmin = normalizedRole === 'TUTOR' || normalizedRole === 'ADMIN';
+
+    const clientIdRef = useRef(null);
+    if (!clientIdRef.current) {
+        clientIdRef.current = userId 
+            ? `usr_${userId}` 
+            : `${(userName || 'student').toLowerCase().replace(/\s+/g, '_')}_${Math.random().toString(36).substr(2, 6)}`;
+    }
 
     // Re-open floating screen stage whenever a new screen share begins
     const activeScreenSharer = screenShareState?.remoteScreenSharer;
@@ -378,14 +390,14 @@ const ExcalidrawWhiteboard = ({
     // ── Stable refs for values used inside draw hot-path ─────────────────
     // Using refs avoids re-creating handleBoardChange on every render,
     // which would cause Excalidraw to re-attach onChange and shake the canvas.
-    const roleRef        = useRef(role);
+    const roleRef        = useRef((role || 'STUDENT').toUpperCase());
     const isSlowModeRef  = useRef(false);
     const readyStateRef  = useRef(ReadyState.UNINSTANTIATED);
     const excalidrawAPIRef = useRef(null);
     const sendMessageRef = useRef(null);
     const userNameRef    = useRef(userName);
 
-    useEffect(() => { roleRef.current = role; },        [role]);
+    useEffect(() => { roleRef.current = (role || 'STUDENT').toUpperCase(); }, [role]);
     useEffect(() => { isSlowModeRef.current = isSlowMode; }, [isSlowMode]);
     useEffect(() => { userNameRef.current = userName; },  [userName]);
 
@@ -477,13 +489,73 @@ const ExcalidrawWhiteboard = ({
             interval: 20000,
             timeout: 60000,
         },
-        onOpen: () => console.log("✅ Board WS Connected:", socketUrl),
+        onOpen: () => {
+            console.log("✅ Board WS Connected:", socketUrl);
+            const currentRole = (roleRef.current || 'STUDENT').toUpperCase();
+            const myName = userNameRef.current || (currentRole === 'STUDENT' ? 'Student' : 'Tutor');
+            const myClientId = clientIdRef.current || myName;
+
+            sendMessageRef.current?.(JSON.stringify({
+                type: 'command',
+                action: 'presence',
+                clientId: myClientId,
+                name: myName,
+                role: currentRole,
+                timestamp: Date.now()
+            }));
+
+            if (currentRole === 'TUTOR' || currentRole === 'ADMIN') {
+                sendMessageRef.current?.(JSON.stringify({
+                    type: 'command',
+                    action: 'request_student_boards'
+                }));
+            }
+        },
         onError: (e) => console.error("❌ Board WS Error:", e),
     });
 
     // Keep refs in sync with live values so the draw callback never goes stale
     useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
     useEffect(() => { readyStateRef.current = readyState; },   [readyState]);
+
+    // Send presence announcement whenever WebSocket connects / reconnects + periodic heartbeat
+    useEffect(() => {
+        if (readyState !== ReadyState.OPEN) return;
+
+        const sendPresence = () => {
+            if (readyStateRef.current !== ReadyState.OPEN || !sendMessageRef.current) return;
+            const currentRole = (roleRef.current || 'STUDENT').toUpperCase();
+            const myName = userNameRef.current || (currentRole === 'STUDENT' ? 'Student' : 'Tutor');
+            const myClientId = clientIdRef.current || myName;
+
+            sendMessageRef.current(JSON.stringify({
+                type: 'command',
+                action: 'presence',
+                clientId: myClientId,
+                name: myName,
+                role: currentRole,
+                timestamp: Date.now()
+            }));
+
+            if (currentRole === 'TUTOR' || currentRole === 'ADMIN') {
+                sendMessageRef.current(JSON.stringify({
+                    type: 'command',
+                    action: 'request_student_boards'
+                }));
+                const api = excalidrawAPIRef.current;
+                const elems = latestElementsRef.current || (api ? api.getSceneElements() : null);
+                if (elems && elems.length > 0) {
+                    broadcastTeacherSnapshot(elems, true);
+                }
+            } else if (currentRole === 'STUDENT') {
+                scheduleThumbnailExport();
+            }
+        };
+
+        sendPresence();
+        const interval = setInterval(sendPresence, 12000);
+        return () => clearInterval(interval);
+    }, [readyState, broadcastTeacherSnapshot, scheduleThumbnailExport]);
 
     // Handle WebSocket Messages
     // NOTE: excalidrawAPI is intentionally accessed via ref so this effect
@@ -498,7 +570,41 @@ const ExcalidrawWhiteboard = ({
                 const action = data.action || data.data?.action;
                 const payload = data.data || data;
 
-                if (action === 'push_board' && roleRef.current === 'STUDENT' && api) {
+                if (action === 'presence') {
+                    const pRole = (payload.role || '').toUpperCase();
+                    const isStudent = pRole === 'STUDENT';
+                    const isTutor = pRole === 'TUTOR' || pRole === 'ADMIN';
+                    const myRole = (roleRef.current || 'STUDENT').toUpperCase();
+
+                    if (isStudent && (myRole === 'TUTOR' || myRole === 'ADMIN')) {
+                        const studentId = payload.clientId || payload.name || 'Student';
+                        setStudentThumbnails(prev => {
+                            const existing = prev[studentId];
+                            return {
+                                ...prev,
+                                [studentId]: {
+                                    name: payload.name || existing?.name || 'Student',
+                                    updatedAt: Date.now(),
+                                    snapshot: existing?.snapshot || [],
+                                    svg: existing?.svg || null,
+                                    isEmpty: existing ? existing.isEmpty : true,
+                                    connected: true
+                                }
+                            };
+                        });
+                        const api = excalidrawAPIRef.current;
+                        const elems = latestElementsRef.current || (api ? api.getSceneElements() : null);
+                        if (elems && elems.length > 0) {
+                            broadcastTeacherSnapshot(elems, true);
+                        }
+                    } else if (isTutor && myRole === 'STUDENT') {
+                        scheduleThumbnailExport();
+                    }
+                } else if (action === 'request_student_boards') {
+                    if (roleRef.current === 'STUDENT') {
+                        scheduleThumbnailExport();
+                    }
+                } else if (action === 'push_board' && roleRef.current === 'STUDENT' && api) {
                     if (payload.files && Object.keys(payload.files).length > 0) {
                         try { api.addFiles(Object.values(payload.files)); } catch (_e) {}
                     }
@@ -549,13 +655,16 @@ const ExcalidrawWhiteboard = ({
             if (data.type === 'send_draw' || data.type === 'draw') {
                 const payload = data.data || data;
                 if (payload.is_thumbnail && (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN')) {
+                    const studentId = payload.clientId || payload.name || 'Student';
                     setStudentThumbnails(prev => ({
                         ...prev,
-                        [payload.clientId]: {
+                        [studentId]: {
                             svg: payload.svg,
-                            name: payload.name || 'Student',
+                            name: payload.name || prev[studentId]?.name || 'Student',
                             updatedAt: Date.now(),
-                            snapshot: payload.snapshot
+                            snapshot: payload.snapshot || [],
+                            isEmpty: payload.isEmpty || (!payload.snapshot || payload.snapshot.length === 0),
+                            connected: true
                         }
                     }));
                 }
@@ -589,35 +698,7 @@ const ExcalidrawWhiteboard = ({
     //   4. exportToSvg (heavy!) is moved to a 1 500 ms debounced idle task
     //      so it never blocks a drawing stroke.
     //
-    const scheduleThumbnailExport = useCallback(() => {
-        // Debounce: cancel any pending export and schedule a new one
-        if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
-        thumbDebounceRef.current = setTimeout(async () => {
-            const api = excalidrawAPIRef.current;
-            const elements = pendingElementsRef.current;
-            if (!api || !elements || elements.length === 0) return;
-            if (readyStateRef.current !== ReadyState.OPEN) return;
-            try {
-                const svgElement = await exportToSvg({
-                    elements,
-                    appState: api.getAppState(),
-                    files: api.getFiles()
-                });
-                if (sendMessageRef.current) {
-                    sendMessageRef.current(JSON.stringify({
-                        type: 'draw',
-                        is_thumbnail: true,
-                        clientId: userNameRef.current,
-                        name: userNameRef.current || 'Student',
-                        svg: svgElement.outerHTML,
-                        snapshot: elements
-                    }));
-                }
-            } catch (_e) { /* ignore */ }
-        }, 1500); // 1.5 s debounce — thumbnail is low-priority
-    }, []); // stable reference
-
-    const broadcastTeacherSnapshot = useCallback((elements) => {
+    const broadcastTeacherSnapshot = useCallback((elements, force = false) => {
         if (!elements || readyStateRef.current !== ReadyState.OPEN) return;
 
         // Fast change detection using element versions & count to skip redundant broadcasts
@@ -626,7 +707,7 @@ const ExcalidrawWhiteboard = ({
             totalVersion += (elements[i].version || 0) + (elements[i].versionNonce || 0);
         }
 
-        if (totalVersion === lastSentVersionRef.current && elements.length === lastSentLengthRef.current) {
+        if (!force && totalVersion === lastSentVersionRef.current && elements.length === lastSentLengthRef.current) {
             return;
         }
 
@@ -643,6 +724,55 @@ const ExcalidrawWhiteboard = ({
             snapshot: elements,
             files: files
         }));
+    }, []);
+
+    const scheduleThumbnailExport = useCallback(() => {
+        // Debounce: cancel any pending export and schedule a new one
+        if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
+        thumbDebounceRef.current = setTimeout(async () => {
+            const api = excalidrawAPIRef.current;
+            if (!api || readyStateRef.current !== ReadyState.OPEN) return;
+            const elements = pendingElementsRef.current || api.getSceneElements() || [];
+            const myName = userNameRef.current || 'Student';
+            const myClientId = clientIdRef.current || myName;
+
+            try {
+                let svgHtml = '';
+                if (elements.length > 0) {
+                    const svgElement = await exportToSvg({
+                        elements,
+                        appState: api.getAppState(),
+                        files: api.getFiles()
+                    });
+                    svgHtml = svgElement.outerHTML;
+                }
+                if (sendMessageRef.current) {
+                    sendMessageRef.current(JSON.stringify({
+                        type: 'draw',
+                        is_thumbnail: true,
+                        clientId: myClientId,
+                        name: myName,
+                        svg: svgHtml,
+                        snapshot: elements,
+                        isEmpty: elements.length === 0,
+                        updatedAt: Date.now()
+                    }));
+                }
+            } catch (_e) {
+                if (sendMessageRef.current) {
+                    sendMessageRef.current(JSON.stringify({
+                        type: 'draw',
+                        is_thumbnail: true,
+                        clientId: myClientId,
+                        name: myName,
+                        svg: '',
+                        snapshot: elements,
+                        isEmpty: elements.length === 0,
+                        updatedAt: Date.now()
+                    }));
+                }
+            }
+        }, 800); // 800ms debounce
     }, []);
 
     const handleBoardChange = useCallback((elements) => {
@@ -858,6 +988,83 @@ const ExcalidrawWhiteboard = ({
         }
     }, [saveCurrentPageElements, broadcastTeacherSnapshot, toast]);
 
+    const handleDirectFileImport = useCallback(async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        e.target.value = '';
+
+        const fileName = file.name || 'imported_file';
+        const ext = fileName.split('.').pop().toLowerCase();
+
+        // 1. Image import (.png, .jpg, .jpeg, .webp, .svg, .gif, .bmp)
+        if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif', 'bmp'].includes(ext)) {
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                const dataUrl = loadEvent.target.result;
+                handleInsertElementFromMediaHub({
+                    type: 'image',
+                    url: dataUrl,
+                    title: fileName,
+                    mimeType: file.type || 'image/png'
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        // 2. PDF import (.pdf)
+        else if (ext === 'pdf') {
+            toast.info(`Importing ${fileName}...`);
+            try {
+                if (typeof window !== 'undefined' && pdfjsLib?.GlobalWorkerOptions) {
+                    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+                        try {
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+                                'pdfjs-dist/build/pdf.worker.min.mjs',
+                                import.meta.url
+                            ).href;
+                        } catch (_e) {
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
+                        }
+                    }
+                }
+                const buffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
+                const pdfDoc = await loadingTask.promise;
+                const page = await pdfDoc.getPage(1);
+                const viewport = page.getViewport({ scale: 1.5 });
+                const offscreenCanvas = document.createElement('canvas');
+                offscreenCanvas.width = viewport.width;
+                offscreenCanvas.height = viewport.height;
+                const renderContext = {
+                    canvasContext: offscreenCanvas.getContext('2d'),
+                    viewport: viewport
+                };
+                await page.render(renderContext).promise;
+                const dataUrl = offscreenCanvas.toDataURL('image/png');
+
+                handleInsertElementFromMediaHub({
+                    type: 'image',
+                    url: dataUrl,
+                    title: `${fileName} (Page 1)`
+                });
+
+                if (pdfDoc.numPages > 1) {
+                    toast.success(`Page 1 of ${pdfDoc.numPages} placed on canvas! Open Media Hub to view all pages.`);
+                } else {
+                    toast.success(`PDF placed on whiteboard canvas!`);
+                }
+            } catch (pdfErr) {
+                console.error("Direct PDF import failed:", pdfErr);
+                setShowMediaHub(true);
+                toast.warning(`Opened ${fileName} in Media Hub.`);
+            }
+        }
+        // 3. Other Documents & Media (.docx, .xlsx, .pptx, videos, audios)
+        else {
+            setShowMediaHub(true);
+            toast.info(`Opening ${fileName} in Media Hub presentation viewer.`);
+        }
+    }, [handleInsertElementFromMediaHub, toast]);
+
     // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {
         if (!excalidrawAPIRef.current) return;
@@ -932,8 +1139,6 @@ const ExcalidrawWhiteboard = ({
             </div>
         );
     }
-
-    const isTutorOrAdmin = role === 'TUTOR' || role === 'ADMIN';
 
     return (
         <div className="w-full h-full flex flex-col bg-[#0f172a] overflow-hidden relative font-sans">
@@ -1298,6 +1503,23 @@ const ExcalidrawWhiteboard = ({
                                 <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Media</span>
                             </button>
 
+                            {/* 3b. Direct File / Image / PDF Import Button */}
+                            <input
+                                type="file"
+                                ref={directFileInputRef}
+                                onChange={handleDirectFileImport}
+                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,video/*,audio/*"
+                                className="hidden"
+                            />
+                            <button
+                                onClick={() => directFileInputRef.current?.click()}
+                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-teal-600/20 hover:bg-teal-600 text-teal-300 hover:text-white border border-teal-500/30 transition-all shadow-sm"
+                                title="Import File / Image / PDF onto Canvas"
+                            >
+                                <span className="text-base">📎</span>
+                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Import</span>
+                            </button>
+
                             {/* 4. My Exam / Exam */}
                             <button
                                 onClick={() => setShowExamPanel(prev => !prev)}
@@ -1543,45 +1765,63 @@ const ExcalidrawWhiteboard = ({
                         <div className="max-w-6xl mx-auto">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                                 {Object.keys(studentThumbnails).length === 0 ? (
-                                    <div className="col-span-full py-32 text-center bg-white rounded-card sm:rounded-card-lg border-2 border-dashed border-slate-200">
-                                        <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center text-3xl md:text-5xl mx-auto mb-6 shadow-inner">🏫</div>
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2">The Classroom is Empty</h3>
-                                        <p className="text-slate-500 font-bold max-w-xs mx-auto">Waiting for students to join and start drawing on their individual boards.</p>
+                                    <div className="col-span-full py-20 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 p-8 shadow-sm">
+                                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 border border-emerald-100 shadow-sm">🏫</div>
+                                        <h3 className="text-xl font-bold text-slate-900 mb-2">Classroom Waiting Room</h3>
+                                        <p className="text-slate-500 font-medium max-w-sm mx-auto text-sm mb-6">
+                                            Waiting for students to join the whiteboard. As soon as a student connects, their live card will appear here automatically.
+                                        </p>
+                                        <button 
+                                            onClick={() => {
+                                                sendMessageRef.current?.(JSON.stringify({ type: 'command', action: 'request_student_boards' }));
+                                                toast.info("Checking for connected students...");
+                                            }}
+                                            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
+                                        >
+                                            🔄 Refresh Students
+                                        </button>
                                     </div>
                                 ) : (
                                     Object.entries(studentThumbnails).map(([id, data]) => (
-                                        <div key={id} className="bg-white rounded-card sm:rounded-card-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-2xl transition-all group border-b-4 border-b-emerald-500/50">
-                                            <div className="p-4 sm:p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                                <div className="flex items-center gap-3 sm:gap-4">
-                                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1e293b] rounded-xl sm:rounded-2xl flex items-center justify-center text-white font-bold shadow-lg">
-                                                        {data.name?.[0]}
+                                        <div key={id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-xl transition-all group border-b-4 border-b-emerald-500">
+                                            <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md text-sm">
+                                                        {data.name?.[0]?.toUpperCase() || 'S'}
                                                     </div>
-                                                    <span className="font-bold text-slate-800 truncate max-w-[100px]">{data.name}</span>
+                                                    <div>
+                                                        <span className="font-bold text-slate-800 text-sm truncate max-w-[130px] block">{data.name}</span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">Individual Workspace</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 bg-emerald-100 px-2 sm:px-3 py-1 rounded-full">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                    <span className="text-[11px] sm:text-[11px] font-semibold uppercase text-emerald-600 tracking-wide">Active</span>
+                                                <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                                    <span className="text-[10px] font-bold uppercase text-emerald-700 tracking-wider">Connected</span>
                                                 </div>
                                             </div>
-                                            <div className="h-48 bg-white p-2 relative flex items-center justify-center border-b border-slate-100">
+                                            <div className="h-48 bg-slate-50/50 p-2 relative flex items-center justify-center border-b border-slate-100 overflow-hidden">
                                                 {data.svg && data.svg.startsWith('<svg') ? (
                                                     <div dangerouslySetInnerHTML={{ __html: data.svg }} className="w-full h-full object-contain pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity [&>svg]:w-full [&>svg]:h-full" />
                                                 ) : (
-                                                    <div className="text-slate-200 font-bold text-4xl opacity-20 select-none">
-                                                        {data.svg ? 'INVALID DATA' : 'EMPTY'}
+                                                    <div className="text-center p-4 select-none">
+                                                        <div className="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-2xl mx-auto mb-2 text-slate-400 shadow-sm">
+                                                            ✏️
+                                                        </div>
+                                                        <p className="text-xs font-bold text-slate-700">Student Connected</p>
+                                                        <p className="text-[11px] text-slate-400 mt-0.5">Board clean · Ready for drawing</p>
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="p-4 bg-slate-50 flex gap-2">
+                                            <div className="p-3 bg-white flex gap-2 items-center">
                                                 <button 
                                                     onClick={() => handleJoinStudent(id)}
-                                                    className="flex-1 py-2 bg-[#1e293b] text-white text-[11px] font-semibold uppercase tracking-wide rounded-xl hover:bg-slate-700 transition-all shadow-xl shadow-slate-900/20"
+                                                    className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-600/20 active:scale-95 cursor-pointer"
                                                 >
                                                     Coach Student
                                                 </button>
-                                                <button onClick={() => sendReaction(id, '👍')} className="w-10 h-10 bg-white text-xl rounded-xl border border-slate-200 hover:bg-emerald-50 hover:text-emerald-500 hover:scale-110 transition-all">👍</button>
-                                                <button onClick={() => sendReaction(id, '⭐')} className="w-10 h-10 bg-white text-xl rounded-xl border border-slate-200 hover:bg-yellow-50 hover:text-yellow-500 hover:scale-110 transition-all">⭐</button>
-                                                <button onClick={() => sendReaction(id, '❌')} className="w-10 h-10 bg-white text-xl rounded-xl border border-slate-200 hover:bg-red-50 hover:text-red-500 hover:scale-110 transition-all">❌</button>
+                                                <button onClick={() => sendReaction(id, '👍')} className="w-9 h-9 bg-slate-50 text-base rounded-xl border border-slate-200 hover:bg-emerald-50 hover:scale-110 transition-all flex items-center justify-center cursor-pointer" title="Thumbs Up">👍</button>
+                                                <button onClick={() => sendReaction(id, '⭐')} className="w-9 h-9 bg-slate-50 text-base rounded-xl border border-slate-200 hover:bg-amber-50 hover:scale-110 transition-all flex items-center justify-center cursor-pointer" title="Star Award">⭐</button>
+                                                <button onClick={() => sendReaction(id, '❌')} className="w-9 h-9 bg-slate-50 text-base rounded-xl border border-slate-200 hover:bg-rose-50 hover:scale-110 transition-all flex items-center justify-center cursor-pointer" title="Correction">❌</button>
                                             </div>
                                         </div>
                                     ))

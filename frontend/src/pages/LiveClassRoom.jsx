@@ -230,8 +230,11 @@ const LiveClassRoom = () => {
 
           <ExcalidrawWhiteboard 
             roomId={roomId} 
-            role={user?.role} 
-            userName={user?.first_name}
+            role={user?.role ? user.role.toUpperCase() : 'STUDENT'} 
+            userName={user?.first_name 
+              ? `${user.first_name} ${user.last_name || ''}`.trim() 
+              : (user?.username || user?.email?.split('@')[0] || (user?.role === 'TUTOR' ? 'Tutor' : 'Student'))}
+            userId={user?.id}
             screenShareState={screenShareState}
             onToggleScreenShare={handleToggleScreenShare}
           />

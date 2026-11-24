@@ -9,18 +9,20 @@ import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Safe PDF.js worker setup: try Vite-resolved local worker first, then unpkg CDN fallback
-if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-    try {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.min.mjs',
-            import.meta.url
-        ).toString();
-    } catch (_e) {
+// Safe PDF.js worker setup: try Vite-resolved local worker first, then CDN fallback
+if (typeof window !== 'undefined' && pdfjsLib?.GlobalWorkerOptions) {
+    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
         try {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '5.7.284'}/build/pdf.worker.min.mjs`;
-        } catch (_e2) {
-            // safe fallback
+            pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+                'pdfjs-dist/build/pdf.worker.min.mjs',
+                import.meta.url
+            ).href;
+        } catch (_e) {
+            try {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
+            } catch (_e2) {
+                // safe fallback
+            }
         }
     }
 }
