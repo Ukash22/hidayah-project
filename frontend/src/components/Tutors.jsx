@@ -64,8 +64,8 @@ const TutorTrialModal = ({ tutor, onClose }) => {
                     <button onClick={onClose} className="absolute top-5 right-5 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-sm transition-all">✕</button>
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl font-bold text-white overflow-hidden">
-                            {tutor.image ? (
-                                <img src={tutor.image?.startsWith('http') ? tutor.image : `${import.meta.env.VITE_API_BASE_URL}${tutor.image}`} alt={tutor.full_name} className="w-full h-full object-cover" />
+                            {tutor.image && tutor.image !== 'null' && tutor.image !== 'undefined' ? (
+                                <img src={tutor.image.startsWith('http') ? tutor.image : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}${tutor.image.startsWith('/') ? tutor.image : `/${tutor.image}`}`} alt={tutor.full_name} className="w-full h-full object-cover" />
                             ) : tutor.full_name?.[0]}
                         </div>
                         <div>
@@ -253,7 +253,7 @@ const Tutors = () => {
                                 <div className="relative mb-6 mx-auto w-32 h-32">
                                     <div className="absolute inset-0 bg-secondary/20 rounded-full scale-110 group-hover:scale-125 transition-transform duration-500"></div>
                                     <img
-                                        src={tutor.image?.startsWith('http') ? tutor.image : `${import.meta.env.VITE_API_BASE_URL}${tutor.image}`}
+                                        src={(tutor.image && tutor.image !== 'null' && tutor.image !== 'undefined') ? (tutor.image.startsWith('http') ? tutor.image : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}${tutor.image.startsWith('/') ? tutor.image : `/${tutor.image}`}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(tutor.full_name || 'Tutor')}&background=1a5276&color=fff&size=128`}
                                         alt={tutor.full_name}
                                         className="w-full h-full rounded-full object-cover border-4 border-white shadow-md relative z-10"
                                         onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(tutor.full_name)}&background=1a5276&color=fff&size=128`; }}

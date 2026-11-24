@@ -463,6 +463,94 @@ const ExcalidrawWhiteboard = ({
         }
     }, [teacherViewAPI, teacherBoardSnapshot]);
 
+    // ── Optimised board sync ──────────────────────────────────────────────
+    //
+    // KEY FIXES for shaking / delay:
+    //   1. useCallback with EMPTY deps — function reference never changes, so
+    //      Excalidraw never re-attaches onChange (which caused the shake).
+    //   2. All volatile values (role, readyState, isSlowMode) are read from
+    //      refs, not closures, so no stale data and no extra re-renders.
+    //   3. Tutor sync at 120 ms (was 800 ms) for near-real-time feel.
+    //   4. exportToSvg (heavy!) is moved to a 1 500 ms debounced idle task
+    //      so it never blocks a drawing stroke.
+    //
+    const broadcastTeacherSnapshot = useCallback((elements, force = false) => {
+        if (!elements || readyStateRef.current !== ReadyState.OPEN) return;
+
+        // Fast change detection using element versions & count to skip redundant broadcasts
+        let totalVersion = 0;
+        for (let i = 0; i < elements.length; i++) {
+            totalVersion += (elements[i].version || 0) + (elements[i].versionNonce || 0);
+        }
+
+        if (!force && totalVersion === lastSentVersionRef.current && elements.length === lastSentLengthRef.current) {
+            return;
+        }
+
+        lastSentVersionRef.current = totalVersion;
+        lastSentLengthRef.current = elements.length;
+        lastSyncTime.current = Date.now();
+
+        const api = excalidrawAPIRef.current;
+        const files = api?.getFiles ? api.getFiles() : {};
+
+        sendMessageRef.current?.(JSON.stringify({
+            type: 'draw',
+            is_teacher_snapshot: true,
+            snapshot: elements,
+            files: files
+        }));
+    }, []);
+
+    const scheduleThumbnailExport = useCallback(() => {
+        // Debounce: cancel any pending export and schedule a new one
+        if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
+        thumbDebounceRef.current = setTimeout(async () => {
+            const api = excalidrawAPIRef.current;
+            if (!api || readyStateRef.current !== ReadyState.OPEN) return;
+            const elements = pendingElementsRef.current || api.getSceneElements() || [];
+            const myName = userNameRef.current || 'Student';
+            const myClientId = clientIdRef.current || myName;
+
+            try {
+                let svgHtml = '';
+                if (elements.length > 0) {
+                    const svgElement = await exportToSvg({
+                        elements,
+                        appState: api.getAppState(),
+                        files: api.getFiles()
+                    });
+                    svgHtml = svgElement.outerHTML;
+                }
+                if (sendMessageRef.current) {
+                    sendMessageRef.current(JSON.stringify({
+                        type: 'draw',
+                        is_thumbnail: true,
+                        clientId: myClientId,
+                        name: myName,
+                        svg: svgHtml,
+                        snapshot: elements,
+                        isEmpty: elements.length === 0,
+                        updatedAt: Date.now()
+                    }));
+                }
+            } catch (_e) {
+                if (sendMessageRef.current) {
+                    sendMessageRef.current(JSON.stringify({
+                        type: 'draw',
+                        is_thumbnail: true,
+                        clientId: myClientId,
+                        name: myName,
+                        svg: '',
+                        snapshot: elements,
+                        isEmpty: elements.length === 0,
+                        updatedAt: Date.now()
+                    }));
+                }
+            }
+        }, 800); // 800ms debounce
+    }, []);
+
     // WebSocket URL Calculation — includes JWT for server-side auth
     const socketUrl = React.useMemo(() => {
         const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://hidayah-backend1.onrender.com';
@@ -686,94 +774,6 @@ const ExcalidrawWhiteboard = ({
         } catch (e) { console.error("WS Message Error:", e); }
     // Only lastMessage triggers re-run; role/api read from refs to avoid re-subscribing
     }, [lastMessage, toast]);
-
-    // ── Optimised board sync ──────────────────────────────────────────────
-    //
-    // KEY FIXES for shaking / delay:
-    //   1. useCallback with EMPTY deps — function reference never changes, so
-    //      Excalidraw never re-attaches onChange (which caused the shake).
-    //   2. All volatile values (role, readyState, isSlowMode) are read from
-    //      refs, not closures, so no stale data and no extra re-renders.
-    //   3. Tutor sync at 120 ms (was 800 ms) for near-real-time feel.
-    //   4. exportToSvg (heavy!) is moved to a 1 500 ms debounced idle task
-    //      so it never blocks a drawing stroke.
-    //
-    const broadcastTeacherSnapshot = useCallback((elements, force = false) => {
-        if (!elements || readyStateRef.current !== ReadyState.OPEN) return;
-
-        // Fast change detection using element versions & count to skip redundant broadcasts
-        let totalVersion = 0;
-        for (let i = 0; i < elements.length; i++) {
-            totalVersion += (elements[i].version || 0) + (elements[i].versionNonce || 0);
-        }
-
-        if (!force && totalVersion === lastSentVersionRef.current && elements.length === lastSentLengthRef.current) {
-            return;
-        }
-
-        lastSentVersionRef.current = totalVersion;
-        lastSentLengthRef.current = elements.length;
-        lastSyncTime.current = Date.now();
-
-        const api = excalidrawAPIRef.current;
-        const files = api?.getFiles ? api.getFiles() : {};
-
-        sendMessageRef.current?.(JSON.stringify({
-            type: 'draw',
-            is_teacher_snapshot: true,
-            snapshot: elements,
-            files: files
-        }));
-    }, []);
-
-    const scheduleThumbnailExport = useCallback(() => {
-        // Debounce: cancel any pending export and schedule a new one
-        if (thumbDebounceRef.current) clearTimeout(thumbDebounceRef.current);
-        thumbDebounceRef.current = setTimeout(async () => {
-            const api = excalidrawAPIRef.current;
-            if (!api || readyStateRef.current !== ReadyState.OPEN) return;
-            const elements = pendingElementsRef.current || api.getSceneElements() || [];
-            const myName = userNameRef.current || 'Student';
-            const myClientId = clientIdRef.current || myName;
-
-            try {
-                let svgHtml = '';
-                if (elements.length > 0) {
-                    const svgElement = await exportToSvg({
-                        elements,
-                        appState: api.getAppState(),
-                        files: api.getFiles()
-                    });
-                    svgHtml = svgElement.outerHTML;
-                }
-                if (sendMessageRef.current) {
-                    sendMessageRef.current(JSON.stringify({
-                        type: 'draw',
-                        is_thumbnail: true,
-                        clientId: myClientId,
-                        name: myName,
-                        svg: svgHtml,
-                        snapshot: elements,
-                        isEmpty: elements.length === 0,
-                        updatedAt: Date.now()
-                    }));
-                }
-            } catch (_e) {
-                if (sendMessageRef.current) {
-                    sendMessageRef.current(JSON.stringify({
-                        type: 'draw',
-                        is_thumbnail: true,
-                        clientId: myClientId,
-                        name: myName,
-                        svg: '',
-                        snapshot: elements,
-                        isEmpty: elements.length === 0,
-                        updatedAt: Date.now()
-                    }));
-                }
-            }
-        }, 800); // 800ms debounce
-    }, []);
 
     const handleBoardChange = useCallback((elements) => {
         const api = excalidrawAPIRef.current;

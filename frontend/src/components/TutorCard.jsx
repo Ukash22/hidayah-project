@@ -5,9 +5,11 @@ const MediaModal = lazy(() => import('./MediaModal'));
 
 function getImageSrc(tutor) {
     const img = tutor.image || tutor.image_url || tutor.profile_pic;
-    if (!img) return null;
+    if (!img || img === 'null' || img === 'undefined') return null;
     if (img.startsWith('http')) return img;
-    return `${import.meta.env.VITE_API_BASE_URL}${img}`;
+    const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+    const path = img.startsWith('/') ? img : `/${img}`;
+    return `${base}${path}`;
 }
 
 function fmt12h(t) {

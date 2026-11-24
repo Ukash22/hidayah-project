@@ -205,24 +205,40 @@ class AdminClassListView(APIView):
         return Response(ScheduledSessionSerializer(sessions, many=True).data)
 
 class SessionStartView(APIView):
-    """Tutor: Mark a regular session as started"""
+    """Mark a regular session as started / joined"""
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request, session_id):
-        session = get_object_or_404(ScheduledSession, pk=session_id, tutor=request.user)
+        from django.db.models import Q
+        if getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_staff:
+            session = get_object_or_404(ScheduledSession, pk=session_id)
+        else:
+            session = get_object_or_404(
+                ScheduledSession,
+                Q(tutor=request.user) | Q(student=request.user) | Q(student__user=request.user),
+                pk=session_id
+            )
         session.is_started = True
-        session.save()
+        session.save(update_fields=['is_started'])
         return Response({"message": "Session marked as started", "is_started": True})
 
 class TrialStartView(APIView):
-    """Tutor: Mark a trial session as started"""
+    """Mark a trial session as started / joined"""
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request, trial_id):
         from applications.models import TrialApplication
-        trial = get_object_or_404(TrialApplication, pk=trial_id, tutor=request.user)
+        from django.db.models import Q
+        if getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_staff:
+            trial = get_object_or_404(TrialApplication, pk=trial_id)
+        else:
+            trial = get_object_or_404(
+                TrialApplication,
+                Q(tutor=request.user) | Q(student=request.user) | Q(parent=request.user),
+                pk=trial_id
+            )
         trial.is_started = True
-        trial.save()
+        trial.save(update_fields=['is_started'])
         return Response({"message": "Trial session marked as started", "is_started": True})
 
 class AdminUnifiedClassListView(APIView):

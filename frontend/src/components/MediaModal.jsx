@@ -44,7 +44,7 @@ export default function MediaModal({ media, onClose }) {
                             />
                         ) : (
                             <video
-                                src={media.url?.startsWith('http') ? media.url : `${import.meta.env.VITE_API_BASE_URL}${media.url}`}
+                                src={(media.url && media.url !== 'null' && media.url !== 'undefined') ? (media.url.startsWith('http') ? media.url : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}${media.url.startsWith('/') ? media.url : `/${media.url}`}`) : ''}
                                 controls
                                 autoPlay
                                 className="w-full h-full object-contain"
@@ -59,7 +59,7 @@ export default function MediaModal({ media, onClose }) {
                             <h3 className="text-2xl font-bold text-white mb-6">{media.name}</h3>
                             <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
                                 <audio
-                                    src={media.url?.startsWith('http') ? media.url : `${import.meta.env.VITE_API_BASE_URL}${media.url}`}
+                                    src={(media.url && media.url !== 'null' && media.url !== 'undefined') ? (media.url.startsWith('http') ? media.url : `${(import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')}${media.url.startsWith('/') ? media.url : `/${media.url}`}`) : ''}
                                     controls
                                     className="w-full"
                                 />
