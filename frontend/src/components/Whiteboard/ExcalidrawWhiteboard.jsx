@@ -12,6 +12,7 @@ import ExamPanel from './ExamPanel';
 import QuranMushaf from '../QuranMushaf';
 import WhiteboardMediaHub from './WhiteboardMediaHub';
 import ScientificCalculator from './ScientificCalculator';
+import { compressImageDataUrl, compressImageFile } from './whiteboardMediaUtils';
 
 // ── Floating Screen Share Stage ────────────────────────────────────────────
 // Renders a draggable, resizable floating video window for screen shares.
@@ -396,10 +397,12 @@ const ExcalidrawWhiteboard = ({
     const excalidrawAPIRef = useRef(null);
     const sendMessageRef = useRef(null);
     const userNameRef    = useRef(userName);
+    const activeStudentIdRef = useRef(activeStudentId);
 
     useEffect(() => { roleRef.current = (role || 'STUDENT').toUpperCase(); }, [role]);
     useEffect(() => { isSlowModeRef.current = isSlowMode; }, [isSlowMode]);
     useEffect(() => { userNameRef.current = userName; },  [userName]);
+    useEffect(() => { activeStudentIdRef.current = activeStudentId; }, [activeStudentId]);
 
     // Thumbnail export debounce — heavy SVG work runs off the draw hot-path
     const thumbDebounceRef = useRef(null);
@@ -514,11 +517,12 @@ const ExcalidrawWhiteboard = ({
 
             try {
                 let svgHtml = '';
+                const files = api.getFiles ? api.getFiles() : {};
                 if (elements.length > 0) {
                     const svgElement = await exportToSvg({
                         elements,
                         appState: api.getAppState(),
-                        files: api.getFiles()
+                        files: files
                     });
                     svgHtml = svgElement.outerHTML;
                 }
@@ -530,12 +534,14 @@ const ExcalidrawWhiteboard = ({
                         name: myName,
                         svg: svgHtml,
                         snapshot: elements,
+                        files: files,
                         isEmpty: elements.length === 0,
                         updatedAt: Date.now()
                     }));
                 }
             } catch (_e) {
                 if (sendMessageRef.current) {
+                    const files = api?.getFiles ? api.getFiles() : {};
                     sendMessageRef.current(JSON.stringify({
                         type: 'draw',
                         is_thumbnail: true,
@@ -543,6 +549,7 @@ const ExcalidrawWhiteboard = ({
                         name: myName,
                         svg: '',
                         snapshot: elements,
+                        files: files,
                         isEmpty: elements.length === 0,
                         updatedAt: Date.now()
                     }));
@@ -737,6 +744,9 @@ const ExcalidrawWhiteboard = ({
                     if (roleRef.current === 'STUDENT') {
                         setShowMediaHub(false);
                     }
+                } else if (action === 'teacher_imported_file' && roleRef.current === 'STUDENT') {
+                    setHasUnseenTeacherUpdates(true);
+                    toast.info(`Teacher added "${payload.title || 'material'}" to Teacher's Board! Click "Teacher's Board" tab to view.`, { duration: 6000 });
                 }
             }
             
@@ -751,10 +761,20 @@ const ExcalidrawWhiteboard = ({
                             name: payload.name || prev[studentId]?.name || 'Student',
                             updatedAt: Date.now(),
                             snapshot: payload.snapshot || [],
+                            files: payload.files || prev[studentId]?.files || {},
                             isEmpty: payload.isEmpty || (!payload.snapshot || payload.snapshot.length === 0),
                             connected: true
                         }
                     }));
+
+                    if (activeStudentIdRef.current === studentId && api) {
+                        if (payload.files && Object.keys(payload.files).length > 0) {
+                            try { api.addFiles(Object.values(payload.files)); } catch (_e) {}
+                        }
+                        if (payload.snapshot) {
+                            api.updateScene({ elements: payload.snapshot });
+                        }
+                    }
                 }
                 
                 if (payload.is_teacher_snapshot && roleRef.current === 'STUDENT') {
@@ -877,19 +897,30 @@ const ExcalidrawWhiteboard = ({
         toast.success(`Ayah ${verseKey} placed on whiteboard!`);
     }, [toast]);
 
-    const handleInsertElementFromMediaHub = useCallback((item) => {
+    const handleInsertElementFromMediaHub = useCallback(async (item) => {
         const api = excalidrawAPIRef.current;
         if (!api) return;
 
         if (item.type === 'image' && item.url) {
+            let finalDataUrl = item.url;
+            let finalMimeType = item.mimeType || 'image/jpeg';
+            if (finalDataUrl.length > 400000 && !finalDataUrl.startsWith('data:image/svg+xml')) {
+                try {
+                    const comp = await compressImageDataUrl(finalDataUrl, 1200, 0.82);
+                    finalDataUrl = comp.dataURL;
+                    finalMimeType = comp.mimeType;
+                } catch (_e) {}
+            }
+
             const fileId = "file-" + Math.random().toString(36).substr(2, 9);
             const fileData = {
                 id: fileId,
-                dataURL: item.url,
-                mimeType: item.mimeType || 'image/png',
+                dataURL: finalDataUrl,
+                mimeType: finalMimeType,
                 created: Date.now(),
                 lastRetrieved: Date.now(),
             };
+            accumulatedTeacherFilesRef.current[fileId] = fileData;
             try { api.addFiles([fileData]); } catch (_e) {}
 
             const insertImgWithDimensions = (w, h) => {
@@ -925,7 +956,15 @@ const ExcalidrawWhiteboard = ({
                 saveCurrentPageElements();
 
                 if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
-                    broadcastTeacherSnapshot(nextElements);
+                    broadcastTeacherSnapshot(nextElements, true);
+                    sendMessageRef.current?.(JSON.stringify({
+                        type: 'command',
+                        action: 'teacher_imported_file',
+                        title: item.title || 'Image'
+                    }));
+                } else if (roleRef.current === 'STUDENT') {
+                    pendingElementsRef.current = nextElements;
+                    scheduleThumbnailExport();
                 }
                 toast.success(`Inserted ${item.title || 'image'} onto canvas!`);
             };
@@ -948,7 +987,7 @@ const ExcalidrawWhiteboard = ({
                 insertImgWithDimensions(w, h);
             };
             img.onerror = () => insertImgWithDimensions(500, 380);
-            img.src = item.url;
+            img.src = finalDataUrl;
         } else if (item.type === 'text' && item.text) {
             const textElement = {
                 id: "text-" + Math.random().toString(36).substr(2, 9),
@@ -982,11 +1021,11 @@ const ExcalidrawWhiteboard = ({
             api.updateScene({ elements: nextElements });
             saveCurrentPageElements();
             if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
-                broadcastTeacherSnapshot(nextElements);
+                broadcastTeacherSnapshot(nextElements, true);
             }
             toast.success('Inserted note onto canvas!');
         }
-    }, [saveCurrentPageElements, broadcastTeacherSnapshot, toast]);
+    }, [saveCurrentPageElements, broadcastTeacherSnapshot, scheduleThumbnailExport, toast]);
 
     const handleDirectFileImport = useCallback(async (e) => {
         const file = e.target.files?.[0];
@@ -998,17 +1037,27 @@ const ExcalidrawWhiteboard = ({
 
         // 1. Image import (.png, .jpg, .jpeg, .webp, .svg, .gif, .bmp)
         if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif', 'bmp'].includes(ext)) {
-            const reader = new FileReader();
-            reader.onload = (loadEvent) => {
-                const dataUrl = loadEvent.target.result;
+            toast.info(`Preparing ${fileName}...`);
+            try {
+                const compressed = await compressImageFile(file, 1200, 0.82);
                 handleInsertElementFromMediaHub({
                     type: 'image',
-                    url: dataUrl,
+                    url: compressed.dataURL,
                     title: fileName,
-                    mimeType: file.type || 'image/png'
+                    mimeType: compressed.mimeType || 'image/jpeg'
                 });
-            };
-            reader.readAsDataURL(file);
+            } catch (imgErr) {
+                const reader = new FileReader();
+                reader.onload = (loadEvent) => {
+                    handleInsertElementFromMediaHub({
+                        type: 'image',
+                        url: loadEvent.target.result,
+                        title: fileName,
+                        mimeType: file.type || 'image/png'
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
         }
         // 2. PDF import (.pdf)
         else if (ext === 'pdf') {
@@ -1039,12 +1088,13 @@ const ExcalidrawWhiteboard = ({
                     viewport: viewport
                 };
                 await page.render(renderContext).promise;
-                const dataUrl = offscreenCanvas.toDataURL('image/png');
+                const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.82);
 
                 handleInsertElementFromMediaHub({
                     type: 'image',
                     url: dataUrl,
-                    title: `${fileName} (Page 1)`
+                    title: `${fileName} (Page 1)`,
+                    mimeType: 'image/jpeg'
                 });
 
                 if (pdfDoc.numPages > 1) {
@@ -1121,8 +1171,13 @@ const ExcalidrawWhiteboard = ({
         if (!studentData) return;
         setActiveStudentId(id);
         setActiveTab('student_view');
-        if (excalidrawAPI && studentData.snapshot) {
-            excalidrawAPI.updateScene({ elements: studentData.snapshot });
+        if (excalidrawAPI) {
+            if (studentData.files && Object.keys(studentData.files).length > 0) {
+                try { excalidrawAPI.addFiles(Object.values(studentData.files)); } catch (_e) {}
+            }
+            if (studentData.snapshot) {
+                excalidrawAPI.updateScene({ elements: studentData.snapshot });
+            }
         }
     };
 
@@ -1727,7 +1782,19 @@ const ExcalidrawWhiteboard = ({
                 {role === 'STUDENT' && activeTab === 'teacher_board' && (
                     <div className="flex-1 relative hidayah-whiteboard">
                         <Excalidraw 
-                            excalidrawAPI={(api) => setTeacherViewAPI(api)}
+                            excalidrawAPI={(api) => {
+                                setTeacherViewAPI(api);
+                                teacherViewAPIRef.current = api;
+                                if (api) {
+                                    const files = Object.values(accumulatedTeacherFilesRef.current);
+                                    if (files.length > 0) {
+                                        try { api.addFiles(files); } catch (_e) {}
+                                    }
+                                    if (teacherBoardSnapshot) {
+                                        try { api.updateScene({ elements: teacherBoardSnapshot }); } catch (_e) {}
+                                    }
+                                }
+                            }}
                             initialData={{ 
                                 elements: teacherBoardSnapshot || [],
                                 appState: { 
@@ -1840,6 +1907,7 @@ const ExcalidrawWhiteboard = ({
                 {showLibrary && (
                     <LibraryPanel 
                         excalidrawAPI={excalidrawAPI} 
+                        onInsertElementToBoard={handleInsertElementFromMediaHub}
                         onClose={() => setShowLibrary(false)} 
                     />
                 )}

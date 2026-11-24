@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Files, Palette, Library, Image as ImageIcon, FileText, FileUp, X, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
-const LibraryPanel = ({ excalidrawAPI, onClose }) => {
+const LibraryPanel = ({ excalidrawAPI, onClose, onInsertElementToBoard }) => {
     const toast = useToast();
     const [activeTab, setActiveTab] = useState('pages');
     
@@ -71,10 +71,24 @@ const LibraryPanel = ({ excalidrawAPI, onClose }) => {
     const handleFileUpload = (e) => {
         const file = e.target.files?.[0];
         if (!file || !excalidrawAPI) return;
+        e.target.value = '';
 
         if (!file.type.startsWith('image/')) {
             toast.info('For interactive PDFs, Word, Videos, and Audio, please use the Media Hub (📂) on the toolbar!');
-            e.target.value = '';
+            return;
+        }
+
+        if (onInsertElementToBoard) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                onInsertElementToBoard({
+                    type: 'image',
+                    url: event.target.result,
+                    title: file.name || 'Image',
+                    mimeType: file.type || 'image/png'
+                });
+            };
+            reader.readAsDataURL(file);
             return;
         }
 

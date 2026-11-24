@@ -5,7 +5,7 @@ services:
     env: python
     rootDir: backend
     buildCommand: "bash build.sh"
-    startCommand: "daphne core.asgi:application --port $PORT --bind 0.0.0.0"
+    startCommand: "daphne core.asgi:application --port $PORT --bind 0.0.0.0 --websocket_max_frame_size 5242880"
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: core.settings
