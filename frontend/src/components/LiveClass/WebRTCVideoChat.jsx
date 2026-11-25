@@ -1513,17 +1513,19 @@ const WebRTCVideoChat = ({
                         if (transceiver) transceiver.direction = 'recvonly';
                     }
 
-                    pc.createOffer().then(async offer => {
-                        const modOffer = new RTCSessionDescription({ type: offer.type, sdp: optimizeSdp(offer.sdp) });
-                        await pc.setLocalDescription(modOffer);
-                        sendMessageRef.current?.(JSON.stringify({
-                            type: 'offer',
-                            peerId: myIdRef.current,
-                            targetId: pId,
-                            name: myNameRef.current,
-                            sdp: pc.localDescription
-                        }));
-                    }).catch(() => {});
+                    if (pc.signalingState === 'stable') {
+                        pc.createOffer().then(async offer => {
+                            const modOffer = new RTCSessionDescription({ type: offer.type, sdp: optimizeSdp(offer.sdp) });
+                            await pc.setLocalDescription(modOffer);
+                            sendMessageRef.current?.(JSON.stringify({
+                                type: 'offer',
+                                peerId: myIdRef.current,
+                                targetId: pId,
+                                name: myNameRef.current,
+                                sdp: pc.localDescription
+                            }));
+                        }).catch(() => {});
+                    }
                 }
             } catch (err) {
                 console.warn("Reverting track on peer error:", err);
@@ -1609,17 +1611,19 @@ const WebRTCVideoChat = ({
                             if (newSender) applyVideoSenderParams(newSender, true);
                         }
 
-                        // Renegotiate so remote peer receives new track
-                        const offer = await pc.createOffer();
-                        const modOffer = new RTCSessionDescription({ type: offer.type, sdp: optimizeSdp(offer.sdp) });
-                        await pc.setLocalDescription(modOffer);
-                        sendMessageRef.current?.(JSON.stringify({
-                            type: 'offer',
-                            peerId: myIdRef.current,
-                            targetId: pId,
-                            name: myNameRef.current,
-                            sdp: pc.localDescription
-                        }));
+                        // Renegotiate so remote peer receives new track if stable
+                        if (pc.signalingState === 'stable') {
+                            const offer = await pc.createOffer();
+                            const modOffer = new RTCSessionDescription({ type: offer.type, sdp: optimizeSdp(offer.sdp) });
+                            await pc.setLocalDescription(modOffer);
+                            sendMessageRef.current?.(JSON.stringify({
+                                type: 'offer',
+                                peerId: myIdRef.current,
+                                targetId: pId,
+                                name: myNameRef.current,
+                                sdp: pc.localDescription
+                            }));
+                        }
                     } catch (peerErr) {
                         console.warn("Error negotiating screen share with peer", pId, peerErr);
                     }

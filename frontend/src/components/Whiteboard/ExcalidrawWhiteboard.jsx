@@ -3,16 +3,13 @@ import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { Excalidraw, exportToSvg } from '@excalidraw/excalidraw';
 import "@excalidraw/excalidraw/index.css";
 import "./whiteboard.css";
-import * as pdfjsLib from 'pdfjs-dist';
 import { getAccess } from '../../services/tokenStore';
 import { useToast, useConfirm } from '../../context/ToastContext';
 import MathToolsPanel from './MathToolsPanel';
 import LibraryPanel from './LibraryPanel';
 import ExamPanel from './ExamPanel';
 import QuranMushaf from '../QuranMushaf';
-import WhiteboardMediaHub from './WhiteboardMediaHub';
 import ScientificCalculator from './ScientificCalculator';
-import { compressImageDataUrl, compressImageFile } from './whiteboardMediaUtils';
 
 // ── Floating Screen Share Stage ────────────────────────────────────────────
 // Renders a draggable, resizable floating video window for screen shares.
@@ -274,7 +271,6 @@ const ExcalidrawWhiteboard = ({
     const confirm = useConfirm();
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('my_board');
-    const directFileInputRef = useRef(null);
     const [isScreenStageClosed, setIsScreenStageClosed] = useState(false);
 
     const normalizedRole = (role || 'STUDENT').toUpperCase();
@@ -357,8 +353,6 @@ const ExcalidrawWhiteboard = ({
     const [showMathTools, setShowMathTools] = useState(false);
     const [showLibrary, setShowLibrary] = useState(false);
     const [showExamPanel, setShowExamPanel] = useState(false);
-    const [showMediaHub, setShowMediaHub] = useState(false);
-    const [incomingMediaCommand, setIncomingMediaCommand] = useState(null);
     const [examTimer, setExamTimer] = useState(0);
     const [isExamActive, setIsExamActive] = useState(false);
     // New feature states
@@ -728,25 +722,9 @@ const ExcalidrawWhiteboard = ({
                     } else if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
                         setActiveTab('my_class');
                     }
-                } else if (action === 'whiteboard_media_sync') {
-                    setIncomingMediaCommand({
-                        action: 'whiteboard_media_sync',
-                        media: payload.media,
-                        senderName: payload.senderName,
-                        senderRole: payload.senderRole
-                    });
-                    setShowMediaHub(true);
-                } else if (action === 'whiteboard_media_close') {
-                    setIncomingMediaCommand({
-                        action: 'whiteboard_media_close',
-                        senderName: payload.senderName
-                    });
-                    if (roleRef.current === 'STUDENT') {
-                        setShowMediaHub(false);
-                    }
                 } else if (action === 'teacher_imported_file' && roleRef.current === 'STUDENT') {
                     setHasUnseenTeacherUpdates(true);
-                    toast.info(`Teacher added "${payload.title || 'material'}" to Teacher's Board! Click "Teacher's Board" tab to view.`, { duration: 6000 });
+                    toast.info(`Teacher updated Teacher's Board! Click "Teacher's Board" tab to view.`, { duration: 6000 });
                 }
             }
             
@@ -896,224 +874,6 @@ const ExcalidrawWhiteboard = ({
         setShowQuranMushaf(false);
         toast.success(`Ayah ${verseKey} placed on whiteboard!`);
     }, [toast]);
-
-    const handleInsertElementFromMediaHub = useCallback(async (item) => {
-        const api = excalidrawAPIRef.current;
-        if (!api) return;
-
-        if (item.type === 'image' && item.url) {
-            let finalDataUrl = item.url;
-            let finalMimeType = item.mimeType || 'image/jpeg';
-            if (finalDataUrl.length > 400000 && !finalDataUrl.startsWith('data:image/svg+xml')) {
-                try {
-                    const comp = await compressImageDataUrl(finalDataUrl, 1200, 0.82);
-                    finalDataUrl = comp.dataURL;
-                    finalMimeType = comp.mimeType;
-                } catch (_e) {}
-            }
-
-            const fileId = "file-" + Math.random().toString(36).substr(2, 9);
-            const fileData = {
-                id: fileId,
-                dataURL: finalDataUrl,
-                mimeType: finalMimeType,
-                created: Date.now(),
-                lastRetrieved: Date.now(),
-            };
-            accumulatedTeacherFilesRef.current[fileId] = fileData;
-            try { api.addFiles([fileData]); } catch (_e) {}
-
-            const insertImgWithDimensions = (w, h) => {
-                const imgElement = {
-                    type: "image",
-                    x: 160 + Math.random() * 30,
-                    y: 120 + Math.random() * 30,
-                    width: w,
-                    height: h,
-                    fileId: fileId,
-                    status: "saved",
-                    scale: [1, 1],
-                    crop: null,
-                    isDeleted: false,
-                    fillStyle: "hachure",
-                    strokeWidth: 1,
-                    strokeStyle: "solid",
-                    roughness: 0,
-                    opacity: 100,
-                    groupIds: [],
-                    strokeColor: "#000000",
-                    backgroundColor: "transparent",
-                    version: 1,
-                    versionNonce: Math.floor(Math.random() * 1000000),
-                    id: "img-" + Math.random().toString(36).substr(2, 9),
-                    updated: Date.now(),
-                    boundElements: null,
-                    link: null,
-                };
-                const elements = api.getSceneElements();
-                const nextElements = [...elements, imgElement];
-                api.updateScene({ elements: nextElements });
-                saveCurrentPageElements();
-
-                if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
-                    broadcastTeacherSnapshot(nextElements, true);
-                    sendMessageRef.current?.(JSON.stringify({
-                        type: 'command',
-                        action: 'teacher_imported_file',
-                        title: item.title || 'Image'
-                    }));
-                } else if (roleRef.current === 'STUDENT') {
-                    pendingElementsRef.current = nextElements;
-                    scheduleThumbnailExport();
-                }
-                toast.success(`Inserted ${item.title || 'image'} onto canvas!`);
-            };
-
-            const img = new Image();
-            img.onload = () => {
-                const maxW = 540;
-                const maxH = 420;
-                let w = img.naturalWidth || 500;
-                let h = img.naturalHeight || 380;
-                const ratio = (w / (h || 1)) || 1;
-                if (w > maxW) {
-                    w = maxW;
-                    h = Math.round(w / ratio);
-                }
-                if (h > maxH) {
-                    h = maxH;
-                    w = Math.round(h * ratio);
-                }
-                insertImgWithDimensions(w, h);
-            };
-            img.onerror = () => insertImgWithDimensions(500, 380);
-            img.src = finalDataUrl;
-        } else if (item.type === 'text' && item.text) {
-            const textElement = {
-                id: "text-" + Math.random().toString(36).substr(2, 9),
-                type: "text",
-                x: 140 + Math.random() * 40,
-                y: 140 + Math.random() * 40,
-                width: Math.min(650, Math.max(280, item.text.length * 8)),
-                height: 140,
-                text: item.text,
-                fontSize: 18,
-                fontFamily: 1,
-                textAlign: "left",
-                verticalAlign: "top",
-                strokeColor: "#1e293b",
-                backgroundColor: "transparent",
-                fillStyle: "hachure",
-                strokeWidth: 1,
-                strokeStyle: "solid",
-                roughness: 0,
-                opacity: 100,
-                groupIds: [],
-                version: 1,
-                versionNonce: Math.floor(Math.random() * 100000000),
-                isDeleted: false,
-                boundElements: null,
-                updated: Date.now(),
-                link: null,
-            };
-            const elements = api.getSceneElements();
-            const nextElements = [...elements, textElement];
-            api.updateScene({ elements: nextElements });
-            saveCurrentPageElements();
-            if (roleRef.current === 'TUTOR' || roleRef.current === 'ADMIN') {
-                broadcastTeacherSnapshot(nextElements, true);
-            }
-            toast.success('Inserted note onto canvas!');
-        }
-    }, [saveCurrentPageElements, broadcastTeacherSnapshot, scheduleThumbnailExport, toast]);
-
-    const handleDirectFileImport = useCallback(async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        e.target.value = '';
-
-        const fileName = file.name || 'imported_file';
-        const ext = fileName.split('.').pop().toLowerCase();
-
-        // 1. Image import (.png, .jpg, .jpeg, .webp, .svg, .gif, .bmp)
-        if (['png', 'jpg', 'jpeg', 'webp', 'svg', 'gif', 'bmp'].includes(ext)) {
-            toast.info(`Preparing ${fileName}...`);
-            try {
-                const compressed = await compressImageFile(file, 1200, 0.82);
-                handleInsertElementFromMediaHub({
-                    type: 'image',
-                    url: compressed.dataURL,
-                    title: fileName,
-                    mimeType: compressed.mimeType || 'image/jpeg'
-                });
-            } catch (imgErr) {
-                const reader = new FileReader();
-                reader.onload = (loadEvent) => {
-                    handleInsertElementFromMediaHub({
-                        type: 'image',
-                        url: loadEvent.target.result,
-                        title: fileName,
-                        mimeType: file.type || 'image/png'
-                    });
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-        // 2. PDF import (.pdf)
-        else if (ext === 'pdf') {
-            toast.info(`Importing ${fileName}...`);
-            try {
-                if (typeof window !== 'undefined' && pdfjsLib?.GlobalWorkerOptions) {
-                    if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-                        try {
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-                                'pdfjs-dist/build/pdf.worker.min.mjs',
-                                import.meta.url
-                            ).href;
-                        } catch (_e) {
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version || '3.11.174'}/pdf.worker.min.js`;
-                        }
-                    }
-                }
-                const buffer = await file.arrayBuffer();
-                const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buffer) });
-                const pdfDoc = await loadingTask.promise;
-                const page = await pdfDoc.getPage(1);
-                const viewport = page.getViewport({ scale: 1.5 });
-                const offscreenCanvas = document.createElement('canvas');
-                offscreenCanvas.width = viewport.width;
-                offscreenCanvas.height = viewport.height;
-                const renderContext = {
-                    canvasContext: offscreenCanvas.getContext('2d'),
-                    viewport: viewport
-                };
-                await page.render(renderContext).promise;
-                const dataUrl = offscreenCanvas.toDataURL('image/jpeg', 0.82);
-
-                handleInsertElementFromMediaHub({
-                    type: 'image',
-                    url: dataUrl,
-                    title: `${fileName} (Page 1)`,
-                    mimeType: 'image/jpeg'
-                });
-
-                if (pdfDoc.numPages > 1) {
-                    toast.success(`Page 1 of ${pdfDoc.numPages} placed on canvas! Open Media Hub to view all pages.`);
-                } else {
-                    toast.success(`PDF placed on whiteboard canvas!`);
-                }
-            } catch (pdfErr) {
-                console.error("Direct PDF import failed:", pdfErr);
-                setShowMediaHub(true);
-                toast.warning(`Opened ${fileName} in Media Hub.`);
-            }
-        }
-        // 3. Other Documents & Media (.docx, .xlsx, .pptx, videos, audios)
-        else {
-            setShowMediaHub(true);
-            toast.info(`Opening ${fileName} in Media Hub presentation viewer.`);
-        }
-    }, [handleInsertElementFromMediaHub, toast]);
 
     // Auto-select Pen tool for tutors on mount — use ref so no extra render dep
     useEffect(() => {
@@ -1544,37 +1304,6 @@ const ExcalidrawWhiteboard = ({
                                 <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Eraser</span>
                             </button>
 
-                            {/* 3. Media Hub */}
-                            <button
-                                onClick={() => setShowMediaHub(prev => !prev)}
-                                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center transition-all ${
-                                    showMediaHub 
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 ring-2 ring-blue-400' 
-                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white'
-                                }`}
-                                title="Media & Document Hub (PDFs, Images, Media)"
-                            >
-                                <span className="text-base">📂</span>
-                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Media</span>
-                            </button>
-
-                            {/* 3b. Direct File / Image / PDF Import Button */}
-                            <input
-                                type="file"
-                                ref={directFileInputRef}
-                                onChange={handleDirectFileImport}
-                                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,video/*,audio/*"
-                                className="hidden"
-                            />
-                            <button
-                                onClick={() => directFileInputRef.current?.click()}
-                                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex flex-col items-center justify-center bg-teal-600/20 hover:bg-teal-600 text-teal-300 hover:text-white border border-teal-500/30 transition-all shadow-sm"
-                                title="Import File / Image / PDF onto Canvas"
-                            >
-                                <span className="text-base">📎</span>
-                                <span className="text-[7px] font-bold uppercase tracking-tight mt-0.5">Import</span>
-                            </button>
-
                             {/* 4. My Exam / Exam */}
                             <button
                                 onClick={() => setShowExamPanel(prev => !prev)}
@@ -1907,7 +1636,6 @@ const ExcalidrawWhiteboard = ({
                 {showLibrary && (
                     <LibraryPanel 
                         excalidrawAPI={excalidrawAPI} 
-                        onInsertElementToBoard={handleInsertElementFromMediaHub}
                         onClose={() => setShowLibrary(false)} 
                     />
                 )}
@@ -1917,20 +1645,6 @@ const ExcalidrawWhiteboard = ({
                         onAssignExam={handleAssignExam}
                         onClose={() => setShowExamPanel(false)} 
                     />
-                )}
-
-                {/* Media & Document Hub Split Pane / Side Dock */}
-                {showMediaHub && (
-                    <div className="w-full md:w-[480px] lg:w-[580px] xl:w-[680px] flex-shrink-0 h-full border-l border-slate-800 shadow-2xl relative z-30 flex flex-col animate-in slide-in-from-right duration-200">
-                        <WhiteboardMediaHub 
-                            role={role}
-                            userName={userName}
-                            sendMessage={sendMessage}
-                            incomingMediaCommand={incomingMediaCommand}
-                            onInsertElementToBoard={handleInsertElementFromMediaHub}
-                            onClose={() => setShowMediaHub(false)}
-                        />
-                    </div>
                 )}
 
                 </div>{/* end inner flex */}

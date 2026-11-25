@@ -215,7 +215,7 @@ class SessionStartView(APIView):
         else:
             session = get_object_or_404(
                 ScheduledSession,
-                Q(tutor=request.user) | Q(student=request.user) | Q(student__user=request.user),
+                Q(tutor=request.user) | Q(student=request.user),
                 pk=session_id
             )
         session.is_started = True

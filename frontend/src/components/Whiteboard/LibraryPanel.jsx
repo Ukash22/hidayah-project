@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Files, Palette, Library, Image as ImageIcon, FileText, FileUp, X, Plus, Trash2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
-const LibraryPanel = ({ excalidrawAPI, onClose, onInsertElementToBoard }) => {
+const LibraryPanel = ({ excalidrawAPI, onClose }) => {
     const toast = useToast();
     const [activeTab, setActiveTab] = useState('pages');
     
@@ -68,124 +68,10 @@ const LibraryPanel = ({ excalidrawAPI, onClose, onInsertElementToBoard }) => {
         }
     };
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files?.[0];
-        if (!file || !excalidrawAPI) return;
-        e.target.value = '';
-
-        if (!file.type.startsWith('image/')) {
-            toast.info('For interactive PDFs, Word, Videos, and Audio, please use the Media Hub (📂) on the toolbar!');
-            return;
-        }
-
-        if (onInsertElementToBoard) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                onInsertElementToBoard({
-                    type: 'image',
-                    url: event.target.result,
-                    title: file.name || 'Image',
-                    mimeType: file.type || 'image/png'
-                });
-            };
-            reader.readAsDataURL(file);
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            const dataURL = event.target.result;
-            const fileId = "file-" + Math.random().toString(36).substr(2, 9);
-            
-            excalidrawAPI.addFiles([{
-                id: fileId,
-                dataURL: dataURL,
-                mimeType: file.type || 'image/png',
-                created: Date.now(),
-                lastRetrieved: Date.now(),
-            }]);
-
-            const img = new Image();
-            img.onload = () => {
-                const maxW = 450;
-                const maxH = 350;
-                let w = img.naturalWidth || 400;
-                let h = img.naturalHeight || 300;
-                const ratio = (w / (h || 1)) || 1;
-                if (w > maxW) {
-                    w = maxW;
-                    h = Math.round(w / ratio);
-                }
-                if (h > maxH) {
-                    h = maxH;
-                    w = Math.round(h * ratio);
-                }
-
-                const imgElement = {
-                    type: "image",
-                    x: 200,
-                    y: 200,
-                    width: w,
-                    height: h,
-                    fileId: fileId,
-                    status: "saved",
-                    scale: [1, 1],
-                    crop: null,
-                    isDeleted: false,
-                    fillStyle: "hachure",
-                    strokeWidth: 1,
-                    strokeStyle: "solid",
-                    roughness: 0,
-                    opacity: 100,
-                    groupIds: [],
-                    strokeColor: "#000000",
-                    backgroundColor: "transparent",
-                    version: 1,
-                    versionNonce: Math.floor(Math.random() * 1000000),
-                    id: "img-" + Math.random().toString(36).substr(2, 9),
-                    updated: Date.now(),
-                };
-
-                const elements = excalidrawAPI.getSceneElements();
-                excalidrawAPI.updateScene({ elements: [...elements, imgElement] });
-                toast.success('Image placed on whiteboard!');
-            };
-            img.onerror = () => {
-                const imgElement = {
-                    type: "image",
-                    x: 200,
-                    y: 200,
-                    width: 400,
-                    height: 300,
-                    fileId: fileId,
-                    scale: [1, 1],
-                    isDeleted: false,
-                    fillStyle: "hachure",
-                    strokeWidth: 1,
-                    strokeStyle: "solid",
-                    roughness: 0,
-                    opacity: 100,
-                    groupIds: [],
-                    strokeColor: "#000000",
-                    backgroundColor: "transparent",
-                    version: 1,
-                    versionNonce: Math.floor(Math.random() * 1000000),
-                    id: "img-" + Math.random().toString(36).substr(2, 9),
-                };
-                const elements = excalidrawAPI.getSceneElements();
-                excalidrawAPI.updateScene({ elements: [...elements, imgElement] });
-            };
-            img.src = dataURL;
-        };
-        reader.readAsDataURL(file);
-        e.target.value = '';
-    };
-
     const tabs = [
         { id: 'pages', icon: <Files size={16}/>, label: 'Pages' },
         { id: 'color', icon: <Palette size={16}/>, label: 'Background' },
         { id: 'library', icon: <Library size={16}/>, label: 'Library' },
-        { id: 'import', icon: <FileUp size={16}/>, label: 'Import' },
     ];
 
     return (
@@ -308,39 +194,6 @@ const LibraryPanel = ({ excalidrawAPI, onClose, onInsertElementToBoard }) => {
                                     ))}
                                 </div>
                             )}
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'import' && (
-                    <div className="flex flex-col gap-4">
-                        <div className="text-center p-6 border-2 border-dashed border-teal-200 bg-teal-50 rounded-2xl relative hover:bg-teal-100 transition-all cursor-pointer group">
-                            <input 
-                                type="file" 
-                                accept="image/*,application/pdf,.doc,.docx"
-                                onChange={handleFileUpload}
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                            />
-                            <div className="flex flex-col items-center gap-3 text-teal-600">
-                                <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <FileUp size={24} />
-                                </div>
-                                <div>
-                                    <p className="font-bold">Click or Drag to Import</p>
-                                    <p className="text-xs font-medium text-teal-600/70">Images, Word, PDF</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                            <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-2">
-                                <ImageIcon size={16} className="text-blue-500" />
-                                <span className="text-xs font-bold text-slate-600">Images (.png, .jpg)</span>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center gap-2">
-                                <FileText size={16} className="text-rose-500" />
-                                <span className="text-xs font-bold text-slate-600">Documents (.pdf)</span>
-                            </div>
                         </div>
                     </div>
                 )}
